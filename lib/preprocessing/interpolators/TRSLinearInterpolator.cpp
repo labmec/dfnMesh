@@ -125,7 +125,7 @@ void TRSLinearInterpolator::SetRightExtension(Extension right, double val){
     fvalRight = val;
 }
 void TRSLinearInterpolator::Print (std::ostream &out){
-    out<<"El type";
+    
 }
     
 
