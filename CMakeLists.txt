@@ -102,4 +102,4 @@ if(WIN32)
 
 endif()
 
-add_subdirectory(RefDirecional)
+add_subdirectory(directional_ref)
