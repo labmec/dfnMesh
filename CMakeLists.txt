@@ -102,4 +102,16 @@ if(WIN32)
 
 endif()
 
+
+find_package(OpenCV REQUIRED)
+
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+add_subdirectory(lib)
+
 add_subdirectory(directional_ref)
+
+add_subdirectory(Laberinto)
+
+
+

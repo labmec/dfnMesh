@@ -13,13 +13,12 @@ TRSLinearInterpolator::TRSLinearInterpolator(){
 }
 TRSLinearInterpolator::TRSLinearInterpolator(Matrix data){
     fdata=data;
-   
+    
 }
 
 void TRSLinearInterpolator::SetData(Matrix data){
     if(data.Rows()>= 2){
         fdata = data;
-       
     }
     else{
         DebugStop();
@@ -28,7 +27,7 @@ void TRSLinearInterpolator::SetData(Matrix data){
 
 double TRSLinearInterpolator::Val(double x){
     std::tuple<double, double> Intp = ValDeriv(x);
-
+    
     return std::get<0>(Intp);
     
 }
@@ -62,7 +61,7 @@ std::tuple<double, double> TRSLinearInterpolator::ValDeriv(double x){
         double x2 = fdata(1,0);
         double y1 = fdata(0,1);
         double y2 = fdata(1,1);
-
+        
         switch (fextLeft)
         {
             case Enone:
@@ -112,7 +111,7 @@ std::tuple<double, double> TRSLinearInterpolator::ValDeriv(double x){
         }
         
     }
-
+    
     return {returned,deriv};
 }
 void TRSLinearInterpolator::SetLeftExtension(Extension left, double val){
@@ -124,8 +123,21 @@ void TRSLinearInterpolator::SetRightExtension(Extension right, double val){
     fextRight = right;
     fvalRight = val;
 }
-void TRSLinearInterpolator::Print (std::ostream &out){
-    
+void TRSLinearInterpolator::Print(const char *name, std::ostream& out,const MatrixOutputFormat form) const {
+    if(form==MathemathicaInput){
+        
+    }
 }
-    
 
+
+std::function<double(double)> TRSLinearInterpolator::GetFunction(){
+    return [this](double x){
+        return this->Val(x);
+    };
+}
+
+std::function<std::tuple<double, double>(double)> TRSLinearInterpolator::GetFunctionDeriv() {
+    return [this](double x){
+        return this->ValDeriv(x);
+    };
+}
