@@ -53,12 +53,17 @@
 
 #include "TRSLinearInterpolator.h"
 #include "TPZMatLaplacian.h"
+#include "pzpoisson3d.h"
+#include "pzbndcond.h"
+#include "TPZSSpStructMatrix.h"
+#include "pzskylstrmatrix.h"
+#include "TPZSkylineNSymStructMatrix.h"
 
 using namespace std;
 using namespace cv;
 
 // Creating the computational mesh
-TPZCompMesh *DarcyCompMesh(TPZGeoMesh *gmesh);
+TPZCompMesh *CMeshH1(TPZGeoMesh *gmesh, int p_order);
 
 
 TPZCompMesh *MalhaCompU(TPZGeoMesh * gmesh,int pOrder);
@@ -78,12 +83,7 @@ void BuildHybridMesh(TPZCompMesh *cmesh, std::set<int> &MaterialIDs, int Lagrang
 
 int main()
 {
-    const int matIdB = 0;
-    const int matIdN = 1;
-
-    const int dirichlet = 0;
-    const int neumann = 1;
-    
+   
     const int bcDL = -1;
     const int bcB = -2;
     const int bcDR = -3;
@@ -91,6 +91,8 @@ int main()
 
     
     Mat image = imread("normal.png",IMREAD_GRAYSCALE);
+//    Mat image = imread("small.png",IMREAD_GRAYSCALE);
+//    Mat image = imread("single_quad.png",IMREAD_GRAYSCALE);
     int k=0;
     int px=image.size[0];
     int py=image.size[1];
@@ -132,68 +134,120 @@ int main()
     gengrid.SetBC(gmesh, 5, bcB);
     gengrid.SetBC(gmesh, 6, bcDR);
     gengrid.SetBC(gmesh, 7, bcDT);
-    
-        {
-            std::ofstream out("LaberintoTestt.vtk");
-            TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
-        }
     gmesh->BuildConnectivity();
     
+    {
+        
+#ifdef PZDEBUG
+        std::ofstream file("maze.txt");
+        gmesh->Print(file);
+        
+        std::ofstream out("maze.vtk");
+        TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
+#endif
+    }
+
     //Creando a malla computacional
-  
-    TPZCompMesh *cmesh = DarcyCompMesh(gmesh);
-   
-   // cmesh->Print();
-    //cmesh->AutoBuild();
-    std::ofstream out("ComTest.vtk");
-    TPZVTKGeoMesh::PrintCMeshVTK(cmesh, out, true);
-   
-//    TPZAnalysis *an = new TPZAnalysis(cmesh);
-//    an->Run();
-//
+    int p_order = 2;
+    int number_threads = 8;
+    bool must_opt_band_width_Q = true;
+    TPZCompMesh *cmesh = CMeshH1(gmesh,p_order);
+    TPZAnalysis *an = new TPZAnalysis(cmesh,must_opt_band_width_Q);
+    
+#ifdef USING_MKL
+    TPZSymetricSpStructMatrix struct_mat(cmesh);
+    struct_mat.SetNumThreads(number_threads);
+    an->SetStructuralMatrix(struct_mat);
+#else
+    TPZSkylineStructMatrix struct_mat(cmesh);
+    struct_mat.SetNumThreads(number_threads);
+    an->SetStructuralMatrix(struct_mat);
+#endif
+    TPZStepSolver<STATE> step;
+    step.SetDirect(ELDLt);
+    an->SetSolver(step);
+    
+    
+    // Solving the LS
+    an->Assemble();
+    an->Solve();
+    
+    // post-processing step
+    {
+        const int dim = an->Mesh()->Dimension();
+        int div = 2;
+        std::string plotfile = "cg_approximation.vtk";
+        TPZStack<std::string> scalar_names, vec_names;
+        
+        scalar_names.push_back("Solution");
+        vec_names.push_back("MinusKGradU");
+        an->DefineGraphMesh(dim,scalar_names,vec_names,plotfile);
+        an->PostProcess(div,dim);
+        std::cout << "Standard post-processing finished." << std::endl;
+    }
+    
     return 0;
 }
-TPZCompMesh *DarcyCompMesh(TPZGeoMesh *gmesh){
-    int nel=gmesh->NElements();
+TPZCompMesh *CMeshH1(TPZGeoMesh *gmesh, int p_order){
     
-    TPZFMatrix<STATE> val1(2, 2, 0.), val2(2, 1, 0.);
-    TPZFMatrix<STATE> val2s(2, 1, 0.);
-    val2s(0, 0) = 10.0; // vx -> 0
-    val2s(1, 0) = 0.0; // vy -> 0
+    int impervious_mat = 0;
+    int permeable_mat = 1;
+    int dim = gmesh->Dimension();
     
-    //Materiais 1
-    TPZMaterial *material = new TPZMatLaplacian;
-    TPZMatLaplacian *material2 = new TPZMatLaplacian;
-
+    REAL perm_0 = 1.0e-16;
+    REAL perm_1 = 1.0e-13;
     
+    REAL conv=0;
+    TPZVec<REAL> convdir(dim,0.0);
     
-//    material->SetPermeability(500);
-//    material->SetId(0);
-    material2->SetPermeability(50);
-    material2->SetId(1);
-//
-//    TPZMaterial *bc1 = material->CreateBC(material, -1, 1, val2s, val1);
-//
     TPZCompMesh *cmesh = new TPZCompMesh(gmesh);
-//    cmesh->InsertMaterialObject(material);
-//    cmesh->InsertMaterialObject(material2);
-//    cmesh->InsertMaterialObject(bc1);
-//    cmesh->InsertMaterialObject(material4);
-//    cmesh->InsertMaterialObject(material5);
-//    cmesh->InsertMaterialObject(material6);
+    cmesh->SetDimModel(dim);
+    
+    TPZMatPoisson3d *mat_0 = new TPZMatPoisson3d(impervious_mat,dim);
+    TPZMatPoisson3d *mat_1 = new TPZMatPoisson3d(permeable_mat,dim);
+    mat_0->SetParameters(perm_0, conv, convdir);
+    mat_1->SetParameters(perm_1, conv, convdir);
+    
+    //  inserting volumetric materials objects
+    cmesh->InsertMaterialObject(mat_0);
+    cmesh->InsertMaterialObject(mat_1);
+    
+    
+    int type_D = 0;
+    int type_N = 1;
+    TPZFMatrix<STATE> val1(1, 1, 0.), val2(1, 1, 0.);
+    
+    // Insert boundary conditions
+    int right_bc_id = -2;
+    val2(0,0) = 0.0;
+    TPZMaterial * right_bc = mat_0->CreateBC(mat_0, right_bc_id, type_N, val1, val2);
+    cmesh->InsertMaterialObject(right_bc);
+    
+    int left_bc_id = -4;
+    val2(0,0) = 0.0;
+    TPZMaterial * left_bc = mat_0->CreateBC(mat_0, left_bc_id, type_N, val1, val2);
+    cmesh->InsertMaterialObject(left_bc);
+    
+    int bottom_bc_id = -1;
+    val2(0,0) = 1.0;
+    TPZMaterial * bottom_bc = mat_0->CreateBC(mat_0, bottom_bc_id, type_D, val1, val2);
+    cmesh->InsertMaterialObject(bottom_bc);
+    
+    int top_bc_id = -3;
+    val2(0,0) = 0.0;
+    TPZMaterial * top_bc = mat_0->CreateBC(mat_0, top_bc_id, type_D, val1, val2);
+    cmesh->InsertMaterialObject(top_bc);
 
-    cmesh->SetAllCreateFunctionsHDiv();
-   //  cmesh->InsertMaterialObject(material);
     cmesh->SetName("LaberintoTest");
-  //  cmesh->SetDimModel(2);
-    cmesh->SetDefaultOrder(1);
-//    cmesh->SetAllCreateFunctionsContinuous();
-//   int nels= cmesh->NElements();
-//    cmesh->SetReference(gmesh);
+    cmesh->SetAllCreateFunctionsContinuous();
+    cmesh->SetDefaultOrder(p_order);
     cmesh->AutoBuild();
 
+#ifdef PZDEBUG
+    std::ofstream file("cmesh_h.txt");
+    cmesh->Print(file);
+#endif
     
-   
     return cmesh;
 }
 
