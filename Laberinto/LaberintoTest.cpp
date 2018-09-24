@@ -62,82 +62,41 @@
 using namespace std;
 using namespace cv;
 
-// Creating the computational mesh
+// Creating the computational H1 mesh
 TPZCompMesh *CMeshH1(TPZGeoMesh *gmesh, int p_order);
-
-
 TPZCompMesh *MalhaCompU(TPZGeoMesh * gmesh,int pOrder);
 TPZCompMesh *MalhaCompP(TPZGeoMesh * gmesh, int pOrder);
+TPZGeoMesh *GeoMeshFromPng(string name);
 
-void SolveSist(TPZAnalysis &an, TPZCompMesh *fCmesh);
 
-void PosProcess(TPZAnalysis &an, std::string plotfile);
+int H1Test();
+int MixedTest();
 
-void RefinamentoUniforme(TPZGeoMesh  *gMesh, int nh);
+int main(){
+    H1Test();
+}
 
-void TransferFromMeshes(TPZVec<TPZCompMesh *> &cmeshVec, TPZCompMesh *MFMesh);
-
-void TransferFromMultiPhysics(TPZVec<TPZCompMesh *> &cmeshVec, TPZCompMesh *MFMesh);
-
-void BuildHybridMesh(TPZCompMesh *cmesh, std::set<int> &MaterialIDs, int LagrangeMat, int InterfaceMat);
-
-int main()
-{
-   
-    const int bcDL = -1;
-    const int bcB = -2;
-    const int bcDR = -3;
-    const int bcDT = -4;
-
-    
-    Mat image = imread("normal.png",IMREAD_GRAYSCALE);
-//    Mat image = imread("small.png",IMREAD_GRAYSCALE);
-//    Mat image = imread("single_quad.png",IMREAD_GRAYSCALE);
-    int k=0;
-    int px=image.size[0];
-    int py=image.size[1];
-    int p =px*py;
-    vector<int> vec(p,0);
-    
-        for (int i = 0; i<px; ++i) {
-            for (int j = py  ; j>0; --j) {
-                vec[p-k]=(int)image.at<uchar>(Point(j, i))/255;
-                k++;
-                
-            }
-        }
-    
-    
-    // Creating the Geo mesh
-        TPZManVector<REAL,3> x0(3,0.),x1(3,px);
-        x1[2] = 0.;
-        TPZManVector<int,2> nelx(2,py);
-        nelx[0] = px;
-        TPZGenGrid gengrid(nelx,x0,x1);
-        gengrid.SetElementType(EQuadrilateral);
-        TPZGeoMesh *gmesh = new TPZGeoMesh;
-        gmesh->SetDimension(2);
-        gengrid.Read(gmesh);
-    //gengrid.Read(gmesh,2);
-
-        //MatsID
-        int nels = gmesh->NElements();
-    
-        for (int i=0; i<nels; i++) {
-            TPZGeoEl *gel =gmesh->Element(i);
-            gel->SetMaterialId(vec[i]);
-            
-        }
-    
-    
-    gengrid.SetBC(gmesh, 4, bcDL);
-    gengrid.SetBC(gmesh, 5, bcB);
-    gengrid.SetBC(gmesh, 6, bcDR);
-    gengrid.SetBC(gmesh, 7, bcDT);
-    gmesh->BuildConnectivity();
+int MixedTest(){
+    TPZGeoMesh *gmesh = GeoMeshFromPng("normal.png");
     
     {
+#ifdef PZDEBUG
+        std::ofstream file("maze.txt");
+        gmesh->Print(file);
         
+        std::ofstream out("maze.vtk");
+        TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
+#endif
+    }
+    
+    
+}
+
+int H1Test()
+{
+   
+    TPZGeoMesh *gmesh = GeoMeshFromPng("normal.png");
+    {
 #ifdef PZDEBUG
         std::ofstream file("maze.txt");
         gmesh->Print(file);
@@ -149,7 +108,7 @@ int main()
 
     //Creando a malla computacional
     int p_order = 2;
-    int number_threads = 8;
+    int number_threads = 2;
     bool must_opt_band_width_Q = true;
     TPZCompMesh *cmesh = CMeshH1(gmesh,p_order);
     TPZAnalysis *an = new TPZAnalysis(cmesh,must_opt_band_width_Q);
@@ -218,6 +177,7 @@ TPZCompMesh *CMeshH1(TPZGeoMesh *gmesh, int p_order){
     TPZFMatrix<STATE> val1(1, 1, 0.), val2(1, 1, 0.);
     
     // Insert boundary conditions
+    //Neumann boundary conditions (flux = 0)
     int right_bc_id = -2;
     val2(0,0) = 0.0;
     TPZMaterial * right_bc = mat_0->CreateBC(mat_0, right_bc_id, type_N, val1, val2);
@@ -228,12 +188,24 @@ TPZCompMesh *CMeshH1(TPZGeoMesh *gmesh, int p_order){
     TPZMaterial * left_bc = mat_0->CreateBC(mat_0, left_bc_id, type_N, val1, val2);
     cmesh->InsertMaterialObject(left_bc);
     
-    int bottom_bc_id = -1;
-    val2(0,0) = 1.0;
+    int bottom_bc_1id = -1;
+    val2(0,0) = 0.0;
+    TPZMaterial * bottom_bc_1 = mat_0->CreateBC(mat_0, bottom_bc_1id, type_N, val1, val2);
+    cmesh->InsertMaterialObject(bottom_bc_1);
+    
+    int top_bc_1id = -3;
+    val2(0,0) = 0.0;
+    TPZMaterial * top_bc_1 = mat_0->CreateBC(mat_0, top_bc_1id, type_N, val1, val2);
+    cmesh->InsertMaterialObject(top_bc_1);
+    
+
+    //Dirichlet Conditions (p=1 in, p=0 out)
+    int bottom_bc_id = -5;
+    val2(0,0) = 10.0;
     TPZMaterial * bottom_bc = mat_0->CreateBC(mat_0, bottom_bc_id, type_D, val1, val2);
     cmesh->InsertMaterialObject(bottom_bc);
     
-    int top_bc_id = -3;
+    int top_bc_id = -6;
     val2(0,0) = 0.0;
     TPZMaterial * top_bc = mat_0->CreateBC(mat_0, top_bc_id, type_D, val1, val2);
     cmesh->InsertMaterialObject(top_bc);
@@ -242,6 +214,8 @@ TPZCompMesh *CMeshH1(TPZGeoMesh *gmesh, int p_order){
     cmesh->SetAllCreateFunctionsContinuous();
     cmesh->SetDefaultOrder(p_order);
     cmesh->AutoBuild();
+
+    
 
 #ifdef PZDEBUG
     std::ofstream file("cmesh_h.txt");
@@ -258,14 +232,91 @@ TPZCompMesh *MalhaCompU(TPZGeoMesh * gmesh,int pOrder){
     TPZCompEl::SetgOrder(1);
     cmesh->SetDimModel(2);
     cmesh->SetAllCreateFunctionsHDiv();
-    
-    
-    
-    
-
+ 
 }
 TPZCompMesh *MalhaCompP(TPZGeoMesh * gmesh, int pOrder){
     
 }
-
+TPZGeoMesh *GeoMeshFromPng(string name){
+    const int bcDL = -1;
+    const int bcB = -2;
+    const int bcDR = -3;
+    const int bcDT = -4;
+    
+    
+    //  Mat image = imread("normal.png",IMREAD_GRAYSCALE);
+    Mat image = imread(name,IMREAD_GRAYSCALE);
+    //    Mat image = imread("single_quad.png",IMREAD_GRAYSCALE);
+    int k=0;
+    int px=image.size[0];
+    int py=image.size[1];
+    int p =px*py;
+    vector<int> vec(p,0);
+    
+    for (int i = 0; i<px; ++i) {
+        for (int j = py  ; j>0; --j) {
+            vec[p-k]=(int)image.at<uchar>(Point(j, i))/255;
+            k++;
+            
+        }
+    }
+    
+    
+    // Creating the Geo mesh
+    TPZManVector<REAL,3> x0(3,0.),x1(3,px);
+    x1[2] = 0.;
+    TPZManVector<int,2> nelx(2,py);
+    nelx[0] = px;
+    TPZGenGrid gengrid(nelx,x0,x1);
+    gengrid.SetElementType(EQuadrilateral);
+    TPZGeoMesh *gmesh = new TPZGeoMesh;
+    gmesh->SetDimension(2);
+    gengrid.Read(gmesh);
+    //gengrid.Read(gmesh,2);
+    
+    //MatsID
+    int nels = gmesh->NElements();
+    TPZGeoEl *gel_in;
+    TPZGeoEl *gel_out;
+    TPZGeoEl *gel_in1D;
+    TPZGeoEl *gel_out1D;
+    
+    for (int i=0; i<nels; i++) {
+        TPZGeoEl *gel =gmesh->Element(i);
+        gel->SetMaterialId(vec[i]);
+        
+        if (i<= px) {
+            if(vec[i]==1){
+                gel_in =gel;
+            }
+        }
+        
+        if (i >= (px)*(py-1)) {
+            if(vec[i]==1){
+                gel_out=gel;
+            }
+        }
+        
+    }
+    
+    //gengrid.SetBC(TPZGeoMesh *gr, int side, int bc)
+    gengrid.SetBC(gmesh, 4, bcDL);
+    gengrid.SetBC(gmesh, 5, bcB);
+    gengrid.SetBC(gmesh, 6, bcDR);
+    gengrid.SetBC(gmesh, 7, bcDT);
+    
+    
+    int gel_in_index = gel_in->Index();
+    gel_in1D = gmesh->Element(gel_in_index)->Neighbour(4).Element();
+    gel_in1D->SetMaterialId(-5);
+    
+    int gel_out_index = gel_out->Index();
+    gel_out1D = gmesh->Element(gel_out_index)->Neighbour(6).Element();
+    gel_out1D->SetMaterialId(-6);
+    
+    
+    
+    gmesh->BuildConnectivity();
+    return gmesh;
+}
 
