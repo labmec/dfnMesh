@@ -76,7 +76,7 @@ int MixedTest();
 
 int main(){
  H1Test();
- //  MixedTest();
+//   MixedTest();
 }
 
 int MixedTest(){
@@ -106,9 +106,6 @@ int MixedTest(){
     
      TPZCompMesh *MixedMesh = CMeshMultphysics(gmesh,fmeshvec);
     
-//    gmesh->ResetReference();
-//    MixedMesh->LoadReferences();
-    
     std::ofstream file("MixedCMesh.vtk");
     TPZVTKGeoMesh::PrintCMeshVTK(MixedMesh, file);
     
@@ -117,28 +114,27 @@ int MixedTest(){
     
     
     bool must_opt_band_width_Q = true;
-    int number_threads = 0;
-    
-//    MixedMesh->AdjustBoundaryElements();
-//   int n= MixedMesh->NElements();
+    int number_threads = 4;
     TPZAnalysis *an = new TPZAnalysis(MixedMesh,must_opt_band_width_Q);
     
-    TPZFStructMatrix fullMatrix(MixedMesh);
+    std::cout << "number of equations = " << MixedMesh->NEquations() << std::endl;
+    
+    TPZSymetricSpStructMatrix sparse_matrix(MixedMesh);
     TPZStepSolver<STATE> step;
-    fullMatrix.SetNumThreads(number_threads);
-    step.SetDirect(ELU);
-    an->SetStructuralMatrix(fullMatrix);
+    sparse_matrix.SetNumThreads(number_threads);
+    step.SetDirect(ELDLt);
+    an->SetStructuralMatrix(sparse_matrix);
     an->SetSolver(step);
 
    TPZBuildMultiphysicsMesh::TransferFromMultiPhysics(fmeshvec, MixedMesh);
-//
-    
-    
-    
     // Solving the LS
     an->Assemble();
+    
+//    an->Solver().Matrix()->Print("j = ", std::cout,EMathematicaInput);
+//    an->Rhs().Print("r = ", std::cout,EMathematicaInput);
+    
     an->Solve();
-    int nn = an->Mesh()->NElements();
+
     
     //POS
     TPZManVector<std::string,10> scalnames(2), vecnames(1);
@@ -175,8 +171,8 @@ int H1Test()
     }
 
     //Creando a malla computacional
-    int p_order = 1;
-    int number_threads = 1;
+    int p_order = 2;
+    int number_threads = 4;
     bool must_opt_band_width_Q = true;
     TPZCompMesh *cmesh = CMeshH1(gmesh,p_order);
     TPZAnalysis *an = new TPZAnalysis(cmesh,must_opt_band_width_Q);
@@ -330,41 +326,33 @@ TPZCompMesh *CMeshFlux(TPZGeoMesh * gmesh,int pOrder){
     // Insert boundary conditions
     //Neumann boundary conditions (flux = 0)
     int right_bc_id = -2;
-    val2(0,0) = 0.0;
     TPZMaterial * right_bc = mat_0->CreateBC(mat_0, right_bc_id, type_N, val1, val2);
     cmesh->InsertMaterialObject(right_bc);
     
     int left_bc_id = -4;
-    val2(0,0) = 0.0;
     TPZMaterial * left_bc = mat_0->CreateBC(mat_0, left_bc_id, type_N, val1, val2);
     cmesh->InsertMaterialObject(left_bc);
     
     int bottom_bc_1id = -1;
-    val2(0,0) = 0.0;
     TPZMaterial * bottom_bc_1 = mat_0->CreateBC(mat_0, bottom_bc_1id, type_N, val1, val2);
     cmesh->InsertMaterialObject(bottom_bc_1);
     
     int top_bc_1id = -3;
-    val2(0,0) = 0.0;
     TPZMaterial * top_bc_1 = mat_0->CreateBC(mat_0, top_bc_1id, type_N, val1, val2);
     cmesh->InsertMaterialObject(top_bc_1);
     
     
     //Dirichlet Conditions (p=1 in, p=0 out)
     int bottom_bc_id = -5;
-    val2(0,0) = 100.0;
     TPZMaterial * bottom_bc = mat_0->CreateBC(mat_0, bottom_bc_id, type_D, val1, val2);
     cmesh->InsertMaterialObject(bottom_bc);
     
     int top_bc_id = -6;
-    val2(0,0) = 10.0;
     TPZMaterial * top_bc = mat_0->CreateBC(mat_0, top_bc_id, type_D, val1, val2);
     cmesh->InsertMaterialObject(top_bc);
     
     cmesh->SetName("LaberintoTest");
     cmesh->AutoBuild();
-    
-    
     
 #ifdef PZDEBUG
     std::ofstream file("cmesh_flux.txt");
@@ -388,12 +376,9 @@ TPZCompMesh *CMeshPressure(TPZGeoMesh * gmesh, int pOrder){
     
     TPZCompMesh *cmesh = new TPZCompMesh(gmesh);
     cmesh->SetDimModel(dim);
-    
-    
+
     cmesh->SetDefaultOrder(pOrder); //Default polynomial order of the approximation
-    
     cmesh->SetAllCreateFunctionsDiscontinuous();
- //   cmesh->SetAllCreateFunctionsContinuous();
     cmesh->ApproxSpace().CreateDisconnectedElements(true);
 
     
@@ -407,54 +392,53 @@ TPZCompMesh *CMeshPressure(TPZGeoMesh * gmesh, int pOrder){
     cmesh->InsertMaterialObject(mat_1);
     
     
-    int type_D = 0;
-    int type_N = 1;
-    TPZFMatrix<STATE> val1(1, 1, 0.), val2(1, 1, 0.);
-    
-    // Insert boundary conditions
-    //Neumann boundary conditions (flux = 0)
-    int right_bc_id = -2;
-    val2(0,0) = 0.0;
-    TPZMaterial * right_bc = mat_0->CreateBC(mat_0, right_bc_id, type_N, val1, val2);
-    cmesh->InsertMaterialObject(right_bc);
-
-    int left_bc_id = -4;
-    val2(0,0) = 0.0;
-    TPZMaterial * left_bc = mat_0->CreateBC(mat_0, left_bc_id, type_N, val1, val2);
-    cmesh->InsertMaterialObject(left_bc);
-
-    int bottom_bc_1id = -1;
-    val2(0,0) = 0.0;
-    TPZMaterial * bottom_bc_1 = mat_0->CreateBC(mat_0, bottom_bc_1id, type_N, val1, val2);
-    cmesh->InsertMaterialObject(bottom_bc_1);
-
-    int top_bc_1id = -3;
-    val2(0,0) = 0.0;
-    TPZMaterial * top_bc_1 = mat_0->CreateBC(mat_0, top_bc_1id, type_N, val1, val2);
-    cmesh->InsertMaterialObject(top_bc_1);
-
-
-    //Dirichlet Conditions (p=1 in, p=0 out)
-    int bottom_bc_id = -5;
-    val2(0,0) = 100.0;
-    TPZMaterial * bottom_bc = mat_0->CreateBC(mat_0, bottom_bc_id, type_D, val1, val2);
-    cmesh->InsertMaterialObject(bottom_bc);
-
-    int top_bc_id = -6;
-    val2(0,0) = 10.0;
-    TPZMaterial * top_bc = mat_0->CreateBC(mat_0, top_bc_id, type_D, val1, val2);
-    cmesh->InsertMaterialObject(top_bc);
+//    int type_D = 0;
+//    int type_N = 1;
+//    TPZFMatrix<STATE> val1(1, 1, 0.), val2(1, 1, 0.);
+//
+//    // Insert boundary conditions
+//    //Neumann boundary conditions (flux = 0)
+//    int right_bc_id = -2;
+//    val2(0,0) = 0.0;
+//    TPZMaterial * right_bc = mat_0->CreateBC(mat_0, right_bc_id, type_N, val1, val2);
+//    cmesh->InsertMaterialObject(right_bc);
+//
+//    int left_bc_id = -4;
+//    val2(0,0) = 0.0;
+//    TPZMaterial * left_bc = mat_0->CreateBC(mat_0, left_bc_id, type_N, val1, val2);
+//    cmesh->InsertMaterialObject(left_bc);
+//
+//    int bottom_bc_1id = -1;
+//    val2(0,0) = 0.0;
+//    TPZMaterial * bottom_bc_1 = mat_0->CreateBC(mat_0, bottom_bc_1id, type_N, val1, val2);
+//    cmesh->InsertMaterialObject(bottom_bc_1);
+//
+//    int top_bc_1id = -3;
+//    val2(0,0) = 0.0;
+//    TPZMaterial * top_bc_1 = mat_0->CreateBC(mat_0, top_bc_1id, type_N, val1, val2);
+//    cmesh->InsertMaterialObject(top_bc_1);
+//
+//
+//    //Dirichlet Conditions (p=1 in, p=0 out)
+//    int bottom_bc_id = -5;
+//    val2(0,0) = 100.0;
+//    TPZMaterial * bottom_bc = mat_0->CreateBC(mat_0, bottom_bc_id, type_D, val1, val2);
+//    cmesh->InsertMaterialObject(bottom_bc);
+//
+//    int top_bc_id = -6;
+//    val2(0,0) = 10.0;
+//    TPZMaterial * top_bc = mat_0->CreateBC(mat_0, top_bc_id, type_D, val1, val2);
+//    cmesh->InsertMaterialObject(top_bc);
     
     cmesh->SetName("Pressure");
-    
     cmesh->AutoBuild();
     
-
-    cmesh->AdjustBoundaryElements();
-    cmesh->CleanUpUnconnectedNodes();
-    
-
-
+    int ncon = cmesh->NConnects();
+    for(int i=0; i<ncon; i++)
+    {
+        TPZConnect &newnod = cmesh->ConnectVec()[i];
+        newnod.SetLagrangeMultiplier(1);
+    }
     
 #ifdef PZDEBUG
     std::ofstream out("cmeshPress.txt");
@@ -553,8 +537,6 @@ TPZGeoMesh *GeoMeshFromPng(string name){
 TPZCompMesh *CMeshMultphysics(TPZGeoMesh * gmesh, TPZVec<TPZCompMesh *> meshvec){
    
     //Creating computational mesh for multiphysic elements
-    
-    gmesh->ResetReference();
     TPZCompMesh *mphysics = new TPZCompMesh(gmesh);
     
     int impervious_mat = 1;
@@ -562,7 +544,7 @@ TPZCompMesh *CMeshMultphysics(TPZGeoMesh * gmesh, TPZVec<TPZCompMesh *> meshvec)
     int dim = gmesh->Dimension();
     
     REAL perm_0 = 1.0e-3;
-    REAL perm_1 = 10;
+    REAL perm_1 = 1000.0;
     
     REAL conv=0;
     TPZVec<REAL> convdir(dim,0.0);
@@ -603,7 +585,7 @@ TPZCompMesh *CMeshMultphysics(TPZGeoMesh * gmesh, TPZVec<TPZCompMesh *> meshvec)
     mphysics->InsertMaterialObject(left_bc);
     
     int bottom_bc_1id = -1;
-    val2(0,0) = 0.0;
+    val2(0,0) = 0;
     TPZMaterial * bottom_bc_1 = mat_0->CreateBC(mat_0, bottom_bc_1id, type_N, val1, val2);
     mphysics->InsertMaterialObject(bottom_bc_1);
     
@@ -611,7 +593,6 @@ TPZCompMesh *CMeshMultphysics(TPZGeoMesh * gmesh, TPZVec<TPZCompMesh *> meshvec)
     val2(0,0) = 0.0;
     TPZMaterial * top_bc_1 = mat_0->CreateBC(mat_0, top_bc_1id, type_N, val1, val2);
     mphysics->InsertMaterialObject(top_bc_1);
-    
     
     //Dirichlet Conditions (p=1 in, p=0 out)
     int bottom_bc_id = -5;
@@ -625,25 +606,17 @@ TPZCompMesh *CMeshMultphysics(TPZGeoMesh * gmesh, TPZVec<TPZCompMesh *> meshvec)
     mphysics->InsertMaterialObject(top_bc);
     
     mphysics->SetAllCreateFunctionsMultiphysicElem();
+    mphysics->SetDimModel(gmesh->Dimension());
     mphysics->AutoBuild();
-//    mphysics->AdjustBoundaryElements();
-//    mphysics->CleanUpUnconnectedNodes();
     
-        int ncon = mphysics->NConnects();
-        for(int i=0; i<ncon; i++)
-        {
-            TPZConnect &newnod = mphysics->ConnectVec()[i];
-            newnod.SetLagrangeMultiplier(1);
-        }
-    std::cout<<mphysics->NMaterials();
-    
-    // Creating multiphysic elements into mphysics computational mesh
     TPZBuildMultiphysicsMesh::AddElements(meshvec, mphysics);
     TPZBuildMultiphysicsMesh::AddConnects(meshvec,mphysics);
     TPZBuildMultiphysicsMesh::TransferFromMeshes(meshvec, mphysics);
     
-//    gmesh->ResetReference();
-//    mphysics->LoadReferences();
+#ifdef PZDEBUG
+    std::ofstream file("cmesh_mphysics.txt");
+    mphysics->Print(file);
+#endif
     
     return mphysics;
 }
