@@ -35,7 +35,7 @@ double TRSRibFrac::GetTolerance() const{
     return ftolerance;
 }
 
-void TRSRibFrac::Check_ConsistencyData(Matrix data) const {
+void TRSRibFrac::Check_ConsistencyData(Matrix data) {
   
 // Checking vector consistency
     int cols = data.Cols();
@@ -50,7 +50,7 @@ void TRSRibFrac::Check_ConsistencyData(Matrix data) const {
     }
     
 //Ax0 computation
-   feixos(0,0)=data(1,0)-data(0,0);
+    feixos(0,0)=data(1,0)-data(0,0);
     feixos(0,1)=data(1,1)-data(0,1);
     feixos(0,2)=data(1,2)-data(0,2);
     
@@ -122,7 +122,7 @@ bool TRSRibFrac::Check_point_above(TPZVec<double> point) const{
 }
 
 //Checking if the given point is below the plane
-bool TRSRibFrac::Check_point_below(TPZVec<double> point){
+bool TRSRibFrac::Check_point_below(TPZVec<double> point)const{
     bool var = Check_point_above(point);
     if (var == false){
         return true;
@@ -131,7 +131,8 @@ bool TRSRibFrac::Check_point_below(TPZVec<double> point){
         return false;
     }
 }
-bool TRSRibFrac::Check_rib(TPZVec<double> p1, TPZVec<double> p2){
+
+bool TRSRibFrac::Check_rib(TPZVec<double> p1, TPZVec<double> p2) const {
     if(Check_point_below(p1)==true && Check_point_below(p2)==false){
         return true;
     }

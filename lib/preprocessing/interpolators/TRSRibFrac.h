@@ -27,8 +27,8 @@ private:
     double ftolerance=0.0;
     
 public:
-    Matrix fdata;
-    Matrix feixos ;
+   mutable Matrix fdata;
+   mutable Matrix feixos ;
     
     TRSRibFrac();
     TRSRibFrac(Matrix data);
@@ -36,10 +36,10 @@ public:
     Matrix GetPlane() const;
     void SetTolerance(double tolerance);
     double GetTolerance() const;
-    void Check_ConsistencyData( Matrix plane) const;
+    void Check_ConsistencyData( Matrix plane) ;
     bool Check_point_above(TPZVec<double> point) const;
-    bool Check_point_below(TPZVec<double> point);
-    bool Check_rib(const TPZVec<double> &p1, TPZVec<double> p2) const;
+    bool Check_point_below(TPZVec<double> point) const;
+    bool Check_rib( TPZVec<double> p1, TPZVec<double> p2) const;
 };
 
 #endif /* TRSRibFrac_h */
