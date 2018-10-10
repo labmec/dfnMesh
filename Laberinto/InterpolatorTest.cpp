@@ -35,40 +35,20 @@
 using namespace std;
 using namespace cv;
 
-double f(double x);
 int main()
 {
    
-    int nPoints = 1000;
-  
-    Matrix data(nPoints,2);
-    double h = 2*M_PI/nPoints;
-    for (int i = 0; i<nPoints; i++) {
-        data(i,0)= i*h;
-        data(i,1)= f(i*h);
-    }
+    TRSLinearInterpolator Test1;
+    Test1.ReadData("Bg.txt");
+    Test1.GetData().Print(std::cout);
+   // Test1.GetData().Print(std::cout);
+Test1.SetInterpolationType(TRSLinearInterpolator::InterpType::TLinear);
+    Test1.SetLeftExtension(TRSLinearInterpolator::Extension::Slope,0.001);
+    Test1.SetRightExtension(TRSLinearInterpolator::Extension::Linear);
+    auto BgFunction(Test1.GetFunction());
+    std::cout<<BgFunction(50000.0)<<"\n";
    
-    
-    TRSLinearInterpolator CosInter(data);
-    auto CosInterpolator(CosInter.GetFunction());
-    std::cout<<CosInterpolator(4.7)<<"\n";
-    std::cout<<f(4.7)<<"\n";
-    for (int i = 0; i<nPoints; i++) {
-        xData.at<double>(i) = i*h;
-        xData.at<double>(i) = CosInterpolator(i*h);
-        
-    }
-
-    
-    
- 
     return 0;
 }
-
-double f(double x){
-    double y = cos(x);
-    return y;
-}
-
 
 

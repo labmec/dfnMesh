@@ -59,6 +59,7 @@
 #include "TPZSSpStructMatrix.h"
 #include "pzskylstrmatrix.h"
 #include "TPZSkylineNSymStructMatrix.h"
+#include "TPZHybridizeHDiv.h"
 #include "pzbuildmultiphysicsmesh.h"
 
 using namespace std;
@@ -75,13 +76,13 @@ int H1Test();
 int MixedTest();
 
 int main(){
- H1Test();
-//   MixedTest();
+   H1Test();
+ //    MixedTest();
 }
 
 int MixedTest(){
     
-    TPZGeoMesh *gmesh = GeoMeshFromPng("small.png");
+    TPZGeoMesh *gmesh = GeoMeshFromPng("MAZETEST.png");
     int flux_order = 1;
     int p_order = 1;
     
@@ -112,21 +113,38 @@ int MixedTest(){
     std::ofstream out("MixedCMesh.txt");
 //    MixedMesh->Print(out);
     
-    
-    bool must_opt_band_width_Q = true;
-    int number_threads = 4;
-    TPZAnalysis *an = new TPZAnalysis(MixedMesh,must_opt_band_width_Q);
+
     
     std::cout << "number of equations = " << MixedMesh->NEquations() << std::endl;
     
-    TPZSymetricSpStructMatrix sparse_matrix(MixedMesh);
+
+    
+    //Solving the system:
+    bool optimizeBandwidth = true;
+    MixedMesh->InitializeBlock();
+    
+    TPZCompMesh * cmesh_m_Hybrid;
+    TPZManVector<TPZCompMesh*, 3> meshvector_Hybrid(3);
+    TPZHybridizeHDiv hybridizer;
+    tie(cmesh_m_Hybrid, meshvector_Hybrid) = hybridizer.Hybridize(MixedMesh, fmeshvec, true, -1.);
+    cmesh_m_Hybrid->InitializeBlock();
+    
+    bool must_opt_band_width_Q = true;
+    int number_threads = 4;
+    TPZAnalysis *an = new TPZAnalysis(cmesh_m_Hybrid,must_opt_band_width_Q);
+    
+    //
+    TPZSymetricSpStructMatrix sparse_matrix(cmesh_m_Hybrid);
     TPZStepSolver<STATE> step;
     sparse_matrix.SetNumThreads(number_threads);
     step.SetDirect(ELDLt);
     an->SetStructuralMatrix(sparse_matrix);
     an->SetSolver(step);
-
-   TPZBuildMultiphysicsMesh::TransferFromMultiPhysics(fmeshvec, MixedMesh);
+    
+   // TPZBuildMultiphysicsMesh::TransferFromMultiPhysics(fmeshvec, MixedMesh);
+    
+    
+    
     // Solving the LS
     an->Assemble();
     
@@ -158,7 +176,7 @@ int MixedTest(){
 int H1Test()
 {
    
-    TPZGeoMesh *gmesh = GeoMeshFromPng("small.png");
+    TPZGeoMesh *gmesh = GeoMeshFromPng("MAZE2.png");
     {
 #ifdef PZDEBUG
         std::ofstream file("mazeh1.txt");
@@ -171,7 +189,7 @@ int H1Test()
     }
 
     //Creando a malla computacional
-    int p_order = 2;
+    int p_order = 1 ;
     int number_threads = 4;
     bool must_opt_band_width_Q = true;
     TPZCompMesh *cmesh = CMeshH1(gmesh,p_order);
@@ -198,7 +216,7 @@ int H1Test()
     // post-processing step
     {
         const int dim = an->Mesh()->Dimension();
-        int div = 2;
+        int div = 0;
         std::string plotfile = "h1_approximation.vtk";
         TPZStack<std::string> scalar_names, vec_names;
         
@@ -470,7 +488,15 @@ TPZGeoMesh *GeoMeshFromPng(string name){
     
     for (int i = 0; i<px; ++i) {
         for (int j = py  ; j>0; --j) {
-            vec[p-k]=(int)image.at<uchar>(Point(j, i))/255;
+            int val =(int)image.at<uchar>(Point(j, i));
+            if (val>200){
+                val=255;
+            }
+           int pix =val/255;
+            vec[p-k]=pix;
+            
+            
+            
             k++;
         }
     }

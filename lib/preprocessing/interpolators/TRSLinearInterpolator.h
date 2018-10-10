@@ -24,17 +24,20 @@ typedef TPZFMatrix<double> Matrix;
 class TRSLinearInterpolator
 {
 private:
-    Matrix fdata;
-    
+     Matrix fdata;
 public:
-    
+   
+
     //Extrapolation types
     enum Extension {Enone, Linear ,Constant,Slope};
+    enum InterpType {TLinear, THermite};
     enum MatrixOutputFormat {EFormatted, MathemathicaInput};
+    
     Extension fextLeft=Enone;
     double fvalLef=0.0;
     Extension fextRight=Enone;
     double fvalRight=0.0;
+    InterpType fInterType = TLinear;
     
     //constructors
     TRSLinearInterpolator();
@@ -42,6 +45,12 @@ public:
     
     //set interpolate data
     void SetData(Matrix data);
+    
+    //set interpolate data
+    Matrix GetData();
+    
+    //Read data
+    void ReadData(std::string data);
     
     //Return the interpolate val
     double Val(double x);
@@ -53,6 +62,14 @@ public:
     
     //Set the extrapolation: Right type
     void SetRightExtension(Extension right, double val=0.);
+    
+    //Set the extrapolation
+    void SetInterpolationType(InterpType type);
+    
+    TPZVec<double> LagrangeB(Matrix mat, int k,double x);
+    
+    TPZVec<double> HermiteB(Matrix mat, int k,double x);
+    
     
     //print the interpolation function
     void Print(const char *name, std::ostream& out,const MatrixOutputFormat form) const;
