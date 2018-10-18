@@ -87,17 +87,27 @@ int main(){
 //    pcom2[2]=25;
     
 // Creating the Geo mesh
-    int dimel=50;
+    int dimel=25;
     TPZManVector<REAL,3> x0(3,0.),x1(3,22.0);
     x1[2] = 0.;
     TPZManVector<int,2> nelx(2,dimel);
-    //nelx[0] = 4;
     TPZGenGrid gengrid(nelx,x0,x1);
     gengrid.SetElementType(EQuadrilateral);
     TPZGeoMesh *gmesh = new TPZGeoMesh;
     gmesh->SetDimension(2);
     gengrid.Read(gmesh);
-  
+
+    
+    TPZGeoEl *gel = gmesh->Element(0);
+    TPZGeoElSide geoside = gel->Neighbour(8);
+    TRSRibFrac TEST(plane);
+    TEST.SetgeoMesh(gmesh);
+    TEST.CreateSkeleton(1, 2);
+    std::ofstream out("TestSkeleton.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
+    
+    
+    
 
     TPZVec<TPZGeoNode> Node(4);
     TPZVec<REAL> nod(3,0);
@@ -135,8 +145,10 @@ int main(){
     cords[3]=nNods+3;
     
     int64_t Nels = gmesh->NElements();
-    gmesh->CreateGeoElement(EQuadrilateral, cords, 2, Nels);
+    gmesh->CreateGeoElement(EQuadrilateral, cords, 4, Nels);
      TRSRibFrac RibV(plane);
+    
+  //  RibV.HasLowerDimensionNeighbour(geoside);
 //
 //
 //    Setting a second plane
@@ -189,13 +201,11 @@ int main(){
     cords2[3]=nNods2+3;
     
     int64_t Nels2 = gmesh->NElements();
-    gmesh->CreateGeoElement(EQuadrilateral, cords2, 2, Nels2);
-//
-//
-  
-    std::ofstream out("TestJorge.vtk");
-    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
-    TRSRibFrac RibV2(plane);
+    gmesh->CreateGeoElement(EQuadrilateral, cords2, 4, Nels2);
+
+
+     TRSRibFrac RibV2(plane);
+   
   
 //    Setting coplanar Tolerance
     RibV.SetTolerance(0.0001);
@@ -214,15 +224,22 @@ int main(){
                 gmesh->NodeVec()[p2].GetCoordinates(pp2);
                 bool resul = RibV.Check_rib(pp1, pp2);
                 if(resul==true){
+                    gel->SetMaterialId(2);
                 std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
                 }
                 bool resul2 = RibV2.Check_rib(pp1, pp2);
                 if(resul2==true){
+                      gel->SetMaterialId(3);
                     std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 2"<<"\n";
                 }
             }
         }
     }
+    
+//    std::ofstream out("TestJorge.vtk");
+//    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
+ 
+    
 //    RibV.GetPlane().Print(std::cout);
     
 //    bool verific = RibV.Check_rib(pcom, pcom2);

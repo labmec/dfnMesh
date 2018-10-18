@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <tuple>
 #include "pzmatrix.h"
+#include "pzcompel.h"
+#include "pzgeoelbc.h"
 //#include "tpanic.h"
 
 typedef TPZFMatrix<double> Matrix;
@@ -28,11 +30,18 @@ private:
     
 public:
    mutable Matrix fdata;
-   mutable Matrix feixos ;
+   mutable Matrix faxis ;
+    TPZGeoMesh *fmesh;
     
     TRSRibFrac();
     TRSRibFrac(Matrix data);
     void SetPlane(Matrix plane);
+    void SetgeoMesh(TPZGeoMesh *gmesh){
+        fmesh=gmesh;
+    }
+    TPZGeoMesh* GetgeoMesh(){
+        return fmesh;
+    }
     Matrix GetPlane() const;
     void SetTolerance(double tolerance);
     double GetTolerance() const;
@@ -40,6 +49,8 @@ public:
     bool Check_point_above(TPZVec<double> point) const;
     bool Check_point_below(TPZVec<double> point) const;
     bool Check_rib( TPZVec<double> p1, TPZVec<double> p2) const;
+    bool HasLowerDimensionNeighbour(TPZGeoElSide &gelside);
+    void CreateSkeleton(int dimension, int matid);
 };
 
 #endif /* TRSRibFrac_h */
