@@ -38,6 +38,7 @@ double TRSRibFrac::GetTolerance() const{
 /**
  * @brief Consistency of plane points
  * @param Matrix nx3, n is the number of points with the axis x, y , z
+ * @return True if the points are coplanar
  * @return False if the points are not coplanar
  */
 
@@ -51,7 +52,7 @@ void TRSRibFrac::Check_ConsistencyData(Matrix data) {
         DebugStop();
     }
     if(rows < 3 or rows > 4){
-        std::cout<<"Check the input data";
+        std::cout<<"Check the input data (number of plane points";
         DebugStop();
     }
     
@@ -66,15 +67,11 @@ void TRSRibFrac::Check_ConsistencyData(Matrix data) {
     faxis(1,2)=data(rows-1,2)-data(0,2);
     
 //Ax1 normalization
-    double normx = faxis(1,0) - (faxis(0,0))*((faxis(0,0)*faxis(1,0)) + (faxis(0,1)*faxis(1,1)) + (faxis(0,2)*faxis(1,2)));
     
-    double normy = faxis(1,1)- faxis(0,1)*(faxis(0,0)*faxis(1,0) + faxis(0,1)*faxis(1,1) + faxis(0,2)*faxis(1,2));
-    
-    double normz = faxis(1,2)- faxis(0,2)*(faxis(0,0)*faxis(1,0) + faxis(0,1)*faxis(1,1) + faxis(0,2)*faxis(1,2));
-    
-    faxis(1,0)=normx;
-    faxis(1,1)=normy;
-    faxis(1,2)=normz;
+    for (int i=0; i<3; i++) {
+     double norm=faxis(1,i) - (faxis(0,i))*((faxis(0,0)*faxis(1,0)) + (faxis(0,1)*faxis(1,1)) + (faxis(0,2)*faxis(1,2)));
+          faxis(1,i)=norm;
+    };
     
 //Ax2 computation
     faxis(2,0)=faxis(0,1)*faxis(1,2) - faxis(0,2)*faxis(1,1);
@@ -103,6 +100,8 @@ void TRSRibFrac::Check_ConsistencyData(Matrix data) {
     data(rows+rows-1,1)=(data((rows)-1,1)+data(0,1))/2;
     data(rows+rows-1,2)=(data((rows)-1,2)+data(0,2))/2;
     
+//Center point computation
+    
     data.Resize(rows+rows+1, 3);
     for(int i=0; i< rows; i++){
     
@@ -117,7 +116,8 @@ void TRSRibFrac::Check_ConsistencyData(Matrix data) {
 /**
  * @brief Check if a point is above or below a plane
  * @param Point
- * @return True if the point is above the plane and false if is below the planealerta
+ * @return True if the point is above the plane
+ * @return False if the point is below the plane
  */
 
 //Checking if the given point is above the plane
@@ -135,7 +135,8 @@ bool TRSRibFrac::Check_point_above(TPZVec<double> point) const{
 /**
  * @brief Check two points if they are on both sides of the plan
  * @param Point 1 and Point 2
- * @return True if both are on two sides of the plane, false otherwise
+ * @return True if both are on two sides of the plane
+ * @return False otherwise
  */
 
 bool TRSRibFrac::Check_rib(TPZVec<double> p1, TPZVec<double> p2) const {
@@ -147,17 +148,19 @@ bool TRSRibFrac::Check_rib(TPZVec<double> p1, TPZVec<double> p2) const {
     }
     else{
         return false;
-    };
-};
+    }
+}
 
 /**
  * @brief Check if the neighbour has a lower dimension
  * @param Geo element side
  * @return True if has a lower dimension
+ * @return False if has a upper dimension
  */
 
 bool TRSRibFrac::HasLowerDimensionNeighbour(TPZGeoElSide &gelside){
     int dimension = gelside.Dimension();
+   
     if (gelside.Element()->Dimension() == dimension){
         return true;
     }
@@ -175,8 +178,9 @@ bool TRSRibFrac::HasLowerDimensionNeighbour(TPZGeoElSide &gelside){
 
 /**
  * @brief Creates the skeleton mesh
- * @param Dimension and number material ID
- * @return
+ * @param Dimension
+ * @param Material ID number
+ * @return Ribs with a selected material ID
  */
 
 void TRSRibFrac::CreateSkeleton(int dimension, int matid){
@@ -186,7 +190,11 @@ void TRSRibFrac::CreateSkeleton(int dimension, int matid){
             TPZGeoEl *gel = fmesh->Element(iel);
             int nsides = gel->NSides();
             for(int iside=0; iside<nsides; iside++){
+                
                 TPZGeoElSide gelside = gel->Neighbour(iside);
+                std::cout<<gelside.Dimension()<<std::endl;
+                gel->Print();
+                gelside.Print(std::cout);
                 if (gelside.Dimension()==dimension){
                     bool haskel = HasLowerDimensionNeighbour(gelside);
                     if(haskel==false){
@@ -198,6 +206,45 @@ void TRSRibFrac::CreateSkeleton(int dimension, int matid){
         
     }
     else{
-        std::cout<<"";
+        std::cout<<"XXXX";
     }
+}
+
+/**
+ * @brief Calculates the intersection point plane-rib
+ * @param Point above the plane (node rib)
+ * @param Point below the plane (node rib)
+ * @return Intersecting point
+ */
+
+TPZVec<double> TRSRibFrac::CalculateIntersection(TPZVec<double> pa, TPZVec<double> pb){
+
+    
+    double term1 = (pa[0]-pb[0])*faxis(2,0) + (pa[1]-pb[1])*faxis(2,1) + (pa[2]-pb[2])*faxis(2,2);
+    int p8_index = fdata.Rows() - 1;
+    double term2 = ((fdata(p8_index,0)-pb[0])*(faxis(2,0))) + ((fdata(p8_index,1)-pb[1])*(faxis(2,1))) + ((fdata(p8_index,2)-pb[2])*(faxis(2,2)));
+    double alpha = term2/term1;
+    TPZVec<double> Pint(3,0.0);
+    for (int p=0; p<3; p++){
+    Pint[p] = pb[p] + alpha*(pa[p]-pb[p]);
+    return Pint;
+    }
+}
+
+/**
+ * @brief Divide a rib
+ * @param Index of the element to divide (for the moment just ribs)
+ * @param Point of intersection
+ * @return Intersecting point
+ */
+
+void TRSRibFrac::DivideRib(int element_index, TPZVec<double> intersection){
+    TPZGeoEl *gel = fmesh->Element(element_index);
+    if(gel->Dimension()!=1){
+        std::cout<<"Just ribs now!";
+        DebugStop();
+    }
+    TPZVec<TPZGeoEl *> gelsDivide(2);
+    gel->Divide(gelsDivide);
+    
 }

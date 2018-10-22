@@ -64,10 +64,10 @@ int main(){
     
 //    Setting a plane
     Matrix plane(4 ,3);
-    plane(0,0)=22;
+    plane(0,0)=32;
     plane(0,1)=2;
     plane(0,2)=-10;
-    plane(1,0)=22;
+    plane(1,0)=32;
     plane(1,1)=2;
     plane(1,2)=10;
     plane(2,0)=2;
@@ -87,7 +87,7 @@ int main(){
 //    pcom2[2]=25;
     
 // Creating the Geo mesh
-    int dimel=25;
+    int dimel=2;
     TPZManVector<REAL,3> x0(3,0.),x1(3,22.0);
     x1[2] = 0.;
     TPZManVector<int,2> nelx(2,dimel);
@@ -96,17 +96,25 @@ int main(){
     TPZGeoMesh *gmesh = new TPZGeoMesh;
     gmesh->SetDimension(2);
     gengrid.Read(gmesh);
-
     
-    TPZGeoEl *gel = gmesh->Element(0);
-    TPZGeoElSide geoside = gel->Neighbour(8);
+    
+    
+    TPZExtendGridDimension extend(gmesh,5);
+    extend.SetElType(1);
+    TPZGeoMesh *gmesh3d = extend.ExtendedMesh(2);
+    
+    std::ofstream out2("3DNESH.vtk");
+    //TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
+
+    gmesh=gmesh3d;
+    
+    
     TRSRibFrac TEST(plane);
     TEST.SetgeoMesh(gmesh);
-    TEST.CreateSkeleton(1, 2);
-    std::ofstream out("TestSkeleton.vtk");
-    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
-    
-    
+    TEST.CreateSkeleton(2, 5);
+    TEST.CreateSkeleton(1, 6);
+    TPZVTKGeoMesh::PrintGMeshVTK(TEST.GetgeoMesh(), out2, true);
+   
     
 
     TPZVec<TPZGeoNode> Node(4);
@@ -214,6 +222,7 @@ int main(){
     for(int i=0; i< Nels; i++){
          TPZGeoEl *gel = gmesh->Element(i);
         int nSides = gel->NSides();
+         if(gel->Dimension()!=1){continue;}
         for (int side=0; side< nSides; side++){
             if(gel->NSideNodes(side)==2){
                int64_t p1 =  gel->SideNodeIndex(side, 0);
@@ -235,6 +244,9 @@ int main(){
             }
         }
     }
+    std::ofstream out("TestSkeleton.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
+    
     
 //    std::ofstream out("TestJorge.vtk");
 //    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);

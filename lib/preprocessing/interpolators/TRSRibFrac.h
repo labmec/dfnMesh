@@ -31,6 +31,7 @@ private:
 public:
    mutable Matrix fdata;
    mutable Matrix faxis ;
+    
     TPZGeoMesh *fmesh;
     
     TRSRibFrac();
@@ -51,6 +52,9 @@ public:
     bool Check_rib( TPZVec<double> p1, TPZVec<double> p2) const;
     bool HasLowerDimensionNeighbour(TPZGeoElSide &gelside);
     void CreateSkeleton(int dimension, int matid);
+    TPZVec<double> CalculateIntersection(TPZVec<double> p1, TPZVec<double> p2);
+    void DivideRib(int element_index, TPZVec<double> intersection);
+    
 };
 
 #endif /* TRSRibFrac_h */
