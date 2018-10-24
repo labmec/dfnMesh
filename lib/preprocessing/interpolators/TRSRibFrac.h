@@ -19,6 +19,7 @@
 #include "pzmatrix.h"
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
+#include "TRSRibs.h"
 //#include "tpanic.h"
 
 typedef TPZFMatrix<double> Matrix;
@@ -27,12 +28,13 @@ class TRSRibFrac
 {
 private:
     double ftolerance=0.0;
+    TPZVec<TRSRibs> fRibVec;
     
 public:
    mutable Matrix fdata;
    mutable Matrix faxis ;
-    
     TPZGeoMesh *fmesh;
+//    TPZVec<int> fribs_indexes;
     
     TRSRibFrac();
     TRSRibFrac(Matrix data);
@@ -54,6 +56,7 @@ public:
     void CreateSkeleton(int dimension, int matid);
     TPZVec<double> CalculateIntersection(TPZVec<double> p1, TPZVec<double> p2);
     void DivideRib(int element_index, TPZVec<double> intersection);
+    TPZVec<TRSRibs> GetRibsVec();
     
 };
 

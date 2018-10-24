@@ -185,6 +185,7 @@ bool TRSRibFrac::HasLowerDimensionNeighbour(TPZGeoElSide &gelside){
 
 void TRSRibFrac::CreateSkeleton(int dimension, int matid){
     if(fmesh){
+        int nribs = fRibVec.size();
         int nel = fmesh->NElements();
         for(int iel=0; iel<nel; iel++){
             TPZGeoEl *gel = fmesh->Element(iel);
@@ -192,13 +193,30 @@ void TRSRibFrac::CreateSkeleton(int dimension, int matid){
             for(int iside=0; iside<nsides; iside++){
                 
                 TPZGeoElSide gelside = gel->Neighbour(iside);
-                std::cout<<gelside.Dimension()<<std::endl;
-                gel->Print();
-                gelside.Print(std::cout);
+//                std::cout<<gelside.Dimension()<<std::endl;
+//                gel->Print();
+//                gelside.Print(std::cout);
                 if (gelside.Dimension()==dimension){
                     bool haskel = HasLowerDimensionNeighbour(gelside);
                     if(haskel==false){
                         TPZGeoElBC(gelside,matid);
+                        //crea los ribs;
+                        if(gelside.Dimension()==1){
+                            int side = gelside.Side();
+                            int64_t p1 =  gel->SideNodeIndex(side, 0);
+                            int64_t p2 =  gel->SideNodeIndex(side, 1);
+                            TPZVec<REAL> pp1(3);
+                            TPZVec<REAL> pp2(3);
+                            fmesh->NodeVec()[p1].GetCoordinates(pp1);
+                            fmesh->NodeVec()[p2].GetCoordinates(pp2);
+                            TPZVec<TPZVec<double>> vecpoints(2);
+                            vecpoints[0]=pp1;
+                            vecpoints[1]=pp2;
+                            fRibVec.resize(nribs+1);
+                            TRSRibs rib(vecpoints);
+                            nribs=fRibVec.size();
+                            fRibVec[nribs-1]=TRSRibs(rib);
+                        }
                     }
                 }
             }
@@ -230,6 +248,11 @@ TPZVec<double> TRSRibFrac::CalculateIntersection(TPZVec<double> pa, TPZVec<doubl
     return Pint;
     }
 }
+TPZVec<TRSRibs> TRSRibFrac::GetRibsVec(){
+    if(fRibVec.size()>0){
+        return fRibVec;
+    }
+}
 
 /**
  * @brief Divide a rib
@@ -238,13 +261,13 @@ TPZVec<double> TRSRibFrac::CalculateIntersection(TPZVec<double> pa, TPZVec<doubl
  * @return Intersecting point
  */
 
-void TRSRibFrac::DivideRib(int element_index, TPZVec<double> intersection){
-    TPZGeoEl *gel = fmesh->Element(element_index);
-    if(gel->Dimension()!=1){
-        std::cout<<"Just ribs now!";
-        DebugStop();
-    }
-    TPZVec<TPZGeoEl *> gelsDivide(2);
-    gel->Divide(gelsDivide);
-    
-}
+//void TRSRibFrac::DivideRib(int element_index, TPZVec<double> intersection){
+//    TPZGeoEl *gel = fmesh->Element(element_index);
+//    if(gel->Dimension()!=1){
+//        std::cout<<"Just ribs now!";
+//        DebugStop();
+//    }
+//    TPZVec<TPZGeoEl *> gelsDivide(2);
+//    gel->Divide(gelsDivide);
+//
+//}

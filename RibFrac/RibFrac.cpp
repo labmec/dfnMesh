@@ -59,8 +59,22 @@
 #include "pzskylstrmatrix.h"
 #include "TPZSkylineNSymStructMatrix.h"
 #include "TRSRibFrac.h"
+#include "TRSRibs.h"
 
 int main(){
+    TPZVec<TRSRibs> RibsVec;
+    TPZVec<TPZVec<double>> coords(2);
+    TPZVec<double> cord1(3,0.0);
+    cord1[0]=1;
+    coords[0]=cord1;
+    TPZVec<double> cord2(3,0.0);
+    cord2[0]=10;
+   
+    
+    coords[1]=cord2;
+    
+    TPZVec<double> intersection(3,0.0);
+    intersection[0]=5;
     
 //    Setting a plane
     Matrix plane(4 ,3);
@@ -87,7 +101,7 @@ int main(){
 //    pcom2[2]=25;
     
 // Creating the Geo mesh
-    int dimel=2;
+    int dimel=5;
     TPZManVector<REAL,3> x0(3,0.),x1(3,22.0);
     x1[2] = 0.;
     TPZManVector<int,2> nelx(2,dimel);
@@ -101,20 +115,21 @@ int main(){
     
     TPZExtendGridDimension extend(gmesh,5);
     extend.SetElType(1);
-    TPZGeoMesh *gmesh3d = extend.ExtendedMesh(2);
+    TPZGeoMesh *gmesh3d = extend.ExtendedMesh(5);
     
     std::ofstream out2("3DNESH.vtk");
     //TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
 
-    gmesh=gmesh3d;
+    //gmesh=gmesh3d;
     
     
     TRSRibFrac TEST(plane);
     TEST.SetgeoMesh(gmesh);
-    TEST.CreateSkeleton(2, 5);
-    TEST.CreateSkeleton(1, 6);
-    TPZVTKGeoMesh::PrintGMeshVTK(TEST.GetgeoMesh(), out2, true);
-   
+  //  TEST.CreateSkeleton(2, 3);
+    TEST.CreateSkeleton(1, 3);
+    RibsVec = TEST.GetRibsVec();
+    TRSRibs rib1 = RibsVec[0];
+    
     
 
     TPZVec<TPZGeoNode> Node(4);
@@ -154,7 +169,7 @@ int main(){
     
     int64_t Nels = gmesh->NElements();
     gmesh->CreateGeoElement(EQuadrilateral, cords, 4, Nels);
-     TRSRibFrac RibV(plane);
+    TRSRibFrac RibV(plane);
     
   //  RibV.HasLowerDimensionNeighbour(geoside);
 //
@@ -212,9 +227,9 @@ int main(){
     gmesh->CreateGeoElement(EQuadrilateral, cords2, 4, Nels2);
 
 
-     TRSRibFrac RibV2(plane);
+    TRSRibFrac RibV2(plane);
    
-  
+    int nribs = RibsVec.size();
 //    Setting coplanar Tolerance
     RibV.SetTolerance(0.0001);
     RibV2.SetTolerance(0.0001);
@@ -231,8 +246,20 @@ int main(){
                 TPZVec<REAL> pp2(3);
                 gmesh->NodeVec()[p1].GetCoordinates(pp1);
                 gmesh->NodeVec()[p2].GetCoordinates(pp2);
+                
+                TPZVec<TPZVec<double>> vecpoints(2);
+                vecpoints[0]=pp1;
+                vecpoints[1]=pp2;
+                RibsVec.resize(nribs+1);
+                TRSRibs rib(vecpoints);
+                nribs=RibsVec.size();
+                RibsVec[nribs-1]=TRSRibs();
+                
+                
                 bool resul = RibV.Check_rib(pp1, pp2);
                 if(resul==true){
+                    
+                
                     gel->SetMaterialId(2);
                 std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
                 }
@@ -244,8 +271,10 @@ int main(){
             }
         }
     }
-    std::ofstream out("TestSkeleton.vtk");
-    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
+    std::ofstream out("TestSkeleton2.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(TEST.GetgeoMesh(), out, true);
+    
+   // TPZVTKGeoMesh::PrintGMeshVTK(TEST.GetgeoMesh(), out2, true);
     
     
 //    std::ofstream out("TestJorge.vtk");
