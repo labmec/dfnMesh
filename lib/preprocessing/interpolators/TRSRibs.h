@@ -21,35 +21,48 @@
 #include "pzgeoelbc.h"
 //#include "tpanic.h"
 
-typedef TPZFMatrix<double> Matrix;
+typedef TPZFMatrix<REAL> Matrix;
 
+/// TRSRibs class describes the intersection of ribs with a plane
 class TRSRibs
 {
 private:
-    TPZVec<TPZVec<double>> fcoords;
-    TPZVec<double> fIntersectionPoint;
-    TPZVec<TRSRibs> fchild;
-    TPZVec<int> fNode_Index;
-    double fLength;
-    bool fQIsCut=false;
+    
+    /// The index of the one dimensional element
+    int64_t fRibIndex;
 
- 
+    /// Indicates whether the intersection point is in the plane
+    bool fCutisInplane;
+    
+    /// Indices of the subelements
+    TPZManVector<int64_t,2> fSubElements;
     
 public:
+    /// Empty constructor
     TRSRibs();
-    TRSRibs(TPZVec<TPZVec<double>> coords);
-    TRSRibs(TPZVec<TPZVec<double>> coords,TPZVec<double> IntersectionPoint);
-    //@TODO crear destructor;
-    //@TODO crear contructor de copia;
-    void SetRibsCoords(TPZVec<TPZVec<double>> coords);
-    TPZVec<TPZVec<double>> GetRibsCoords();
-    void SetIntersectionPoint( TPZVec<double> ipoint);
-    TPZVec<double> GetIntersectionPoint();
-    void calc_child(TPZVec<TPZVec<double>> coords, TPZVec<double> ipoint);
-    void get_child(TPZVec<TRSRibs> &child);
-    void SetNodeIndexes(TPZVec<int> indexes);
-    TPZVec<int> GetNodeIndexes();
-    void calc_flength();
+    /// Rib defined by the element index, indicating whether the
+    /// intersection point is within the fracture surface
+    TRSRibs(int64_t index, bool inplane);
+    /// Copy constructor
+    TRSRibs(const TRSRibs &copy);
+    /// Assignment operator
+    TRSRibs &operator=(const TRSRibs &copy);
+    
+    /// Define the element index and whether it cuts the plane
+    void SetElementIndex(int64_t elindex, bool cutsplane);
+    
+    /// Element index
+    int64_t ElementIndex() const;
+    
+    /// Intersects the plane or not
+    bool CutsPlane() const;
+    
+    /// Return the subelement indices
+    TPZVec<int64_t> SubElements() const;
+    
+    /// Set the intersection point and the subelement indices
+    void DefineRibDivide(const TPZVec<int64_t> &subels);
+    
     
 };
 
