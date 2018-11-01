@@ -15,20 +15,26 @@
 #include "pzintel.h"
 #include "pzcompel.h"
 
+
+// Constructor
 TRSRibs::TRSRibs(){
     fCutisInplane=false;
 }
+
+// Constructor using an index and a asking if the plane is cut or not
 TRSRibs::TRSRibs(int64_t index, bool inplane){
     fRibIndex=index;
     fCutisInplane=inplane;
 }
+
+// Copy constructor
 TRSRibs::TRSRibs(const TRSRibs &copy){
     fRibIndex=copy.fRibIndex;
     fCutisInplane=copy.fCutisInplane;
     fSubElements = copy.fSubElements;
 }
 
-    
+// Assignment operator
 TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
     fRibIndex=copy.fRibIndex;
     fCutisInplane=copy.fCutisInplane;
@@ -38,51 +44,108 @@ TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
     return *this;
 }
 
+/**
+ * @brief Set the index for an element if the fracture plane is cut by this element
+ * @param Element index
+ * @param Yes or no if the element is cutting the fracture plane
+ */
+
 void TRSRibs::SetElementIndex(int64_t elindex, bool cutsplane){
     fRibIndex=elindex;
     fCutisInplane=cutsplane;
 }
+
+/**
+* @return An index (geomesh associated) elements vector
+*/
+
 int64_t TRSRibs::ElementIndex() const{
     return fRibIndex;
     
 }
+
+/**
+ * @brief Set if the cut is within the plane
+ * @param True or False if the plane is cut
+ */
+
+void TRSRibs::SetCutsPlane(bool is) {
+    fCutisInplane=is;
+}
+/**
+ * @return If the intersection point is within the fracture plane
+ */
+
 bool TRSRibs::CutsPlane() const{
     return fCutisInplane;
 }
+
+/**
+ * @return An index (geomesh associated) subelements vector
+ */
+
 TPZVec<int64_t> TRSRibs::SubElements() const{
     return fSubElements;
 }
+
+/**
+ * @brief Define the divided rib
+ * @param Subelements vector
+ */
+
 void TRSRibs::DefineRibDivide(const TPZVec<int64_t> &subels){
     fSubElements = subels;
 }
 
 /**
- * @brief
- * @param
- * @return
- * @return
+ * @brief Divide a 1D element into 2 1D elements (for now)
+ * @param Mesh
+ * @param Intersection point between the fracture plane and the rib
+ * @param Material id to assign for the new ribs
  */
 
+void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matid){
+    int iel_index = fRibIndex;          //Element index
+    if(!gmesh->Element(iel_index)){     // If the element does not                          exist the code is going to break
+        std::cout<<"No gel asociado a Rib"<<std::endl;
+        DebugStop();
+    }
+    TPZGeoEl *gel = gmesh->Element(iel_index);
+    int64_t nelements = gmesh->NElements();
+    
+    int nNods= gmesh->NNodes();
+    
+    TPZVec<TPZGeoNode> Node(1);
+    Node[0].SetCoord(interpoint);
+    gmesh->NodeVec().Resize(nNods+1);       //Adding an extra node
+    gmesh->NodeVec()[nNods]=Node[0];
+   
+    TPZVec<int64_t> cornerindexes(2);
+    cornerindexes[0] = gel->NodeIndex(0);   //Setting the new rib node as node 0
+    cornerindexes[1] = nNods;               //Setting the new rib node as node 1
+    gmesh->CreateGeoElement(EOned, cornerindexes, matid, nelements);
+    fSubElements.Resize(2);
+    fSubElements[0]=nelements;              //Setting a new subelement
+    
+    cornerindexes[0] = nNods;              //Setting a second new rib node as node 0
+    cornerindexes[1] = gel->NodeIndex(1);  //Setting a second new rib node as node 1
+    nelements++;
+     gmesh->CreateGeoElement(EOned, cornerindexes, matid, nelements);
+    fSubElements[1]=nelements;              //Setting a second new subelement
+}
 
 
 
 
 
-//TRSRibs::TRSRibs(TPZVec<TPZVec<double>> coords){
-//    if(coords.size()!=2){
-//        std::cout<<"Se necesitan dos puntos para definir un rib";
-//        DebugStop();
-//    }
-//    SetRibsCoords(coords);
-//    calc_flength();
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
+
+
+
+
+/// Information of methods used before for further coding
+
+
+
 //
 //TRSRibs::TRSRibs(TPZVec<TPZVec<double>> fathercoords,TPZVec<double> IntersectionPoint){
 //    if(fathercoords.size()!=2){
@@ -97,12 +160,7 @@ void TRSRibs::DefineRibDivide(const TPZVec<int64_t> &subels){
 ////    std::cout<<fathercoords[0][1]<<std::endl;
 ////    std::cout<<fathercoords[0][2]<<std::endl;
 //    calc_child(fathercoords, IntersectionPoint);
-//
-//
-//
-//    //here
-//
-//}
+
 //
 ///**
 // * @brief

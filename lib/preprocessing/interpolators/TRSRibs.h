@@ -40,11 +40,14 @@ private:
 public:
     /// Empty constructor
     TRSRibs();
+    
     /// Rib defined by the element index, indicating whether the
     /// intersection point is within the fracture surface
     TRSRibs(int64_t index, bool inplane);
+    
     /// Copy constructor
     TRSRibs(const TRSRibs &copy);
+    
     /// Assignment operator
     TRSRibs &operator=(const TRSRibs &copy);
     
@@ -55,15 +58,19 @@ public:
     int64_t ElementIndex() const;
     
     /// Intersects the plane or not
+    void SetCutsPlane(bool is) ;
+    
+    /// Intersects the plane or not
     bool CutsPlane() const;
     
     /// Return the subelement indices
     TPZVec<int64_t> SubElements() const;
     
-    /// Set the intersection point and the subelement indices
+    /// Set the subelement indices
     void DefineRibDivide(const TPZVec<int64_t> &subels);
     
-    
+    ///Divide the given rib and generate the subelements
+    void DivideRib(TPZGeoMesh *gmesh, TPZVec<REAL> interpoint,int matid);
 };
 
 #endif /* TRSRibs_h */

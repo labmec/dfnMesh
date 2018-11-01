@@ -20,6 +20,8 @@
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
 #include "TRSRibs.h"
+#include "TRSFace.h"
+
 //#include "tpanic.h"
 
 typedef TPZFMatrix<REAL> Matrix;
@@ -32,6 +34,9 @@ private:
     
     /// Map of relevant intersecting ribs
     std::map<int64_t,TRSRibs> fRibs;
+    
+    /// Map of relevant intersecting ribs
+    std::map<int64_t,TRSFace> fFaces;
 
     /// Contains fracture corner points. Matrix 3xn (n is the number of corner points)
     Matrix fCornerCoordinates;
@@ -49,6 +54,7 @@ public:
     
     /// Empty constructor
     TRSRibFrac();
+    
     /// Define the fracture plane by 4 points
     /// Points should be colinear and define a square
     /// The matrix should be dimension 3x4, each column defining the coordinates
@@ -58,7 +64,7 @@ public:
     /// Copy constructor
     TRSRibFrac(const TRSRibFrac &copy);
     
-    /// put comment please
+    /// Assignment operator
     TRSRibFrac &operator=(const TRSRibFrac &copy);
 
     /// Define the corner coordinates of the fracture
@@ -92,17 +98,20 @@ public:
     /// Return true if the rib intersects the plane
     bool Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) const;
     
+    ///Return true if the surface needs to be divided
+    bool NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) ;
+    
+    
 private:
     
+    /// Return true if the intersection point between ribs is within the plane
+    bool RibInPlane(TPZVec<REAL> point);
     
-    
-    /// ????
-    bool HasLowerDimensionNeighbour(TPZGeoElSide &gelside);
-    
-    
-    
-    
+    /// Checks the neighbour dimension and return if it is equal
+    bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
+   
 public:
+    
     /// Insert element in the geometric mesh of lower dimension
     void CreateSkeletonElements(int dimension, int matid);
     
@@ -112,10 +121,25 @@ public:
     /// Divide the one dimensional element by the intersection with the plane
     TRSRibs DivideRib(int element_index);
     
-    /// Access the ribs data structure
-    void SetRib(TRSRibs rib);
+   /// Verify if the one dimensional element intersects the plane
+    bool CheckElementIntersection(int64_t elindex);
     
+   /// Check whether the point coordinates are within the plane
+    bool IsPointInPlane(TPZVec<REAL> &point);
+    
+   /// Access the ribs data structure
+    void AddRib(TRSRibs rib);
+    
+    /// Set a cut face
+    void AddFace(TRSFace face);
+    
+    /// Mao of ribs
     std::map<int64_t ,TRSRibs> GetRibs();
+    
+    /// Create the children surfaces (not implemented yet)
+    void CreateSurfaces(int matID);
+    
+    TRSRibs *Rib(int index);
     
 };
 

@@ -60,12 +60,14 @@
 #include "TPZSkylineNSymStructMatrix.h"
 #include "TRSRibFrac.h"
 #include "TRSRibs.h"
+#include "TRSFace.h"
+
 using namespace std;
 
 int main(){
 
     
-//    Setting a plane
+//    Coodinates of a plane
     Matrix plane(3 ,4);
     plane(0,0)=10;
     plane(1,0)=-1;
@@ -82,7 +84,7 @@ int main(){
 
     
 // Creating the Geo mesh
-    int dimel=1;
+    int dimel=16;
     TPZManVector<REAL,3> x0(3,0.),x1(3,20.0);
     x1[2] = 0.;
     TPZManVector<int,2> nelx(2,dimel);
@@ -93,6 +95,7 @@ int main(){
     gengrid.Read(gmesh);
     
     
+    /// Mesh 3D
     
 //    TPZExtendGridDimension extend(gmesh,5);
 //    extend.SetElType(1);
@@ -104,23 +107,27 @@ int main(){
     //gmesh=gmesh3d;
     
     
-    TRSRibFrac TEST(plane,gmesh);
-  
-  //  TEST.CreateSkeleton(2, 3);
-    TEST.CreateSkeletonElements(1,5);
-    std::map<int64_t ,TRSRibs> RIBSJORGE = TEST.GetRibs();
-    int nribs =RIBSJORGE.size();
-    std::cout<<"Ribs Information:"<<std::endl;
-    std::cout<<"n Ribs: "<<nribs<<std::endl;
-    for(int irib=1; irib<=nribs; irib++){
-      
-        std::cout<<"Rib Index:  "<<RIBSJORGE[irib].ElementIndex()<<std::endl;
-         std::cout<<"Rib is cut:  "<<RIBSJORGE[irib].CutsPlane()<<std::endl;
-           std::cout<<"Rib sub elements:   "<<RIBSJORGE[irib].SubElements()<<std::endl;
-        std::cout<<"********************************"<<std::endl;
-    }
+  //  Rib.DivideRib(gmesh,interpoint, 100);
+//    std::ofstream out("Skel.vtk");
+//    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out);
+//
+//
+//
+//    std::map<int64_t ,TRSRibs> RIBSJORGE = TEST.GetRibs();
+//    int nribs =RIBSJORGE.size();
+//    std::cout<<"Ribs Information:"<<std::endl;
+//    std::cout<<"n Ribs: "<<nribs<<std::endl;
+//    for(int irib=1; irib<=nribs; irib++){
+//
+//        std::cout<<"Rib Index:  "<<RIBSJORGE[irib].ElementIndex()<<std::endl;
+//         std::cout<<"Rib is cut:  "<<RIBSJORGE[irib].CutsPlane()<<std::endl;
+//           std::cout<<"Rib sub elements:   "<<RIBSJORGE[irib].SubElements()<<std::endl;
+//        std::cout<<"********************************"<<std::endl;
+//    }
     
-   
+
+    //    Setting a plane
+    
     TPZVec<int64_t> nodeindices;
     gmesh->Element(0)->GetNodeIndices(nodeindices);
     
@@ -146,6 +153,7 @@ int main(){
     nod[1]=plane(1,3);
     nod[2]=plane(2,3);
     Node[3].SetCoord(nod);
+    
     int nNods= gmesh->NNodes();
     
     gmesh->NodeVec().Resize(nNods+4);
@@ -160,9 +168,58 @@ int main(){
     cords[2]=nNods+2;
     cords[3]=nNods+3;
     
+
+  
+    TRSRibFrac RibV(plane,gmesh);
+    RibV.CreateSkeletonElements(1, 5);
     int64_t Nels = gmesh->NElements();
     gmesh->CreateGeoElement(EQuadrilateral, cords, 4, Nels);
-//    TRSRibFrac RibV(plane);
+    //verificar ribs cortados
+    
+        for(int i=0; i< Nels; i++){
+             TPZGeoEl *gel = gmesh->Element(i);
+            int nSides = gel->NSides();
+             if(gel->Dimension()!=1){continue;}
+            for (int side=0; side< nSides; side++){
+                if(gel->NSideNodes(side)==2){
+                   int64_t p1 =  gel->SideNodeIndex(side, 0);
+                   int64_t p2 =  gel->SideNodeIndex(side, 1);
+                    TPZVec<REAL> pp1(3);
+                    TPZVec<REAL> pp2(3);
+                    gmesh->NodeVec()[p1].GetCoordinates(pp1);
+                    gmesh->NodeVec()[p2].GetCoordinates(pp2);
+                    bool resul = RibV.Check_rib(pp1, pp2);
+                    if(resul==true){
+                        RibV.Rib(i)->SetCutsPlane(true);
+                        TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
+                        //5O ES EL MATERIAL DE LOS RIBS HIJOS
+                        RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
+                        gel->SetMaterialId(2);
+                    std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
+                    }
+    //                bool resul2 = RibV2.Check_rib(pp1, pp2);
+    //                if(resul2==true){
+    //                      gel->SetMaterialId(3);
+    //                    std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 2"<<"\n";
+    //                }
+                }
+            }
+        }
+    
+    std::ofstream out2("TestRibs.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
+    RibV.CreateSurfaces(20);
+    
+    
+    
+    std::ofstream out("TestSurfaces.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out, true);
+    
+    //
+    
+    
+    
+    
     
   //  RibV.HasLowerDimensionNeighbour(geoside);
 //
