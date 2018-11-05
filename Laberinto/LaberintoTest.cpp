@@ -82,7 +82,7 @@ int main(){
 
 int MixedTest(){
     
-    TPZGeoMesh *gmesh = GeoMeshFromPng("MAZETEST.png");
+    TPZGeoMesh *gmesh = GeoMeshFromPng("MAZE128x128.png");
     int flux_order = 1;
     int p_order = 1;
     
@@ -105,7 +105,7 @@ int MixedTest(){
     fmeshvec[1]=cmesh_presure;
     gmesh->ResetReference();
     
-     TPZCompMesh *MixedMesh = CMeshMultphysics(gmesh,fmeshvec);
+    TPZCompMesh *MixedMesh = CMeshMultphysics(gmesh,fmeshvec);
     
     std::ofstream file("MixedCMesh.vtk");
     TPZVTKGeoMesh::PrintCMeshVTK(MixedMesh, file);
@@ -176,7 +176,7 @@ int MixedTest(){
 int H1Test()
 {
    
-    TPZGeoMesh *gmesh = GeoMeshFromPng("MAZE2.png");
+    TPZGeoMesh *gmesh = GeoMeshFromPng("MAZE128x128.png");
     {
 #ifdef PZDEBUG
         std::ofstream file("mazeh1.txt");
@@ -283,12 +283,12 @@ TPZCompMesh *CMeshH1(TPZGeoMesh *gmesh, int p_order){
 
     //Dirichlet Conditions (p=1 in, p=0 out)
     int bottom_bc_id = -5;
-    val2(0,0) = 100.0;
+    val2(0,0) = 1000.0;
     TPZMaterial * bottom_bc = mat_0->CreateBC(mat_0, bottom_bc_id, type_D, val1, val2);
     cmesh->InsertMaterialObject(bottom_bc);
     
     int top_bc_id = -6;
-    val2(0,0) = 10.0;
+    val2(0,0) = 0.0;
     TPZMaterial * top_bc = mat_0->CreateBC(mat_0, top_bc_id, type_D, val1, val2);
     cmesh->InsertMaterialObject(top_bc);
 
@@ -622,12 +622,12 @@ TPZCompMesh *CMeshMultphysics(TPZGeoMesh * gmesh, TPZVec<TPZCompMesh *> meshvec)
     
     //Dirichlet Conditions (p=1 in, p=0 out)
     int bottom_bc_id = -5;
-    val2(0,0) = 100.0;
+    val2(0,0) = 1000.0;
     TPZMaterial * bottom_bc = mat_0->CreateBC(mat_0, bottom_bc_id, type_D, val1, val2);
     mphysics->InsertMaterialObject(bottom_bc);
     
     int top_bc_id = -6;
-    val2(0,0) = 10.0;
+    val2(0,0) = 0.0;
     TPZMaterial * top_bc = mat_0->CreateBC(mat_0, top_bc_id, type_D, val1, val2);
     mphysics->InsertMaterialObject(top_bc);
     
