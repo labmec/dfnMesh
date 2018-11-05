@@ -38,17 +38,19 @@ using namespace cv;
 int main()
 {
    
-    TRSLinearInterpolator Test1;
-    Test1.ReadData("Bg.txt");
-    Test1.GetData().Print(std::cout);
-   // Test1.GetData().Print(std::cout);
+TRSLinearInterpolator Test1;
+Test1.ReadData("Bg.txt");
+Test1.GetData().Print(std::cout);
+   //Test1.GetData().Print(std::cout);
 Test1.SetInterpolationType(TRSLinearInterpolator::InterpType::TLinear);
-    Test1.SetLeftExtension(TRSLinearInterpolator::Extension::Slope,0.001);
-    Test1.SetRightExtension(TRSLinearInterpolator::Extension::Linear);
-    auto BgFunction(Test1.GetFunction());
-    std::cout<<BgFunction(50000.0)<<"\n";
+Test1.SetLeftExtension(TRSLinearInterpolator::Extension::ESlope,0.001);
+Test1.SetRightExtension(TRSLinearInterpolator::Extension::ELinear);
+auto BgFunction(Test1.GetFunction());
+    
+std::cout<<BgFunction(50000.0)<<"\n";
    
-    return 0;
+return 0;
+    
 }
 
 
