@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <tuple>
 #include "pzmatrix.h"
+#include "TRSLinearInterpolator.h"
 //#include "tpanic.h"
 
 typedef TPZFMatrix<double> Matrix;
@@ -24,23 +25,26 @@ typedef TPZFMatrix<double> Matrix;
 class Interpol3RelPerm
 {
 private:
-     Matrix fdata;
-    typedef std::function<std::tuple<double, double>(double)> functions;
-    functions Krw;
-    functions Krow;
-    functions Krg;
-    functions Krog;
+    TRSLinearInterpolator Krw;
+    TRSLinearInterpolator Krow;
+    TRSLinearInterpolator Krg;
+    TRSLinearInterpolator Krog;
+    
 public:
     //Set Type
+    Interpol3RelPerm(){
+        
+    }
     enum Kralpha {EKrw, EKrow ,EKrg, EKrog};
     enum ModelInterpol {MStoneI, MStoneII};
-    void SetData(std::function<std::tuple<double, double>(double)> function, Kralpha alpa);
+    
+    void SetData(Matrix data, Kralpha alpa);
     double Val(double Sw, double Sg);
     double ValDeriv(double Sw, double Sg);
     
     std::function<double(double)> GetFunction();
-    
-   functions GetFunctionDeriv();
+    std::function<double(double)> GetFunctionDeriv();
+    void ReadData(std::string data);
     
 };
 

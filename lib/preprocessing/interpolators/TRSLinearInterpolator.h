@@ -128,5 +128,7 @@ public:
      */
     std::function<std::tuple<double, double>(double)> GetFunctionDeriv();
     
+    void ReadData2(char *name);
+    
 };
 #endif /* TRSLinearInterpolator_h */

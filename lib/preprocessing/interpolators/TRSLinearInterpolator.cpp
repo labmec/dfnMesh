@@ -46,21 +46,23 @@ Matrix TRSLinearInterpolator::GetData(){
  * @param data is the name of the file with the interpolation data
  */
 void TRSLinearInterpolator::ReadData(std::string name){
+    
     std::ifstream file;
     file.open(name);
-   
+    
     int i=1;
     Matrix data;
     std::string line;
     while (std::getline(file, line))
     {
         std::istringstream iss(line);
-       
+        int val = line.size();
         char l = line[0];
         if (l == '{' or l=='}') {
             std::cout<<"Error: Incorrect Format"<<"\n";
             DebugStop();
         }
+        
         
         if(l != '/'){
        // std::string l =line[0];
@@ -77,7 +79,7 @@ void TRSLinearInterpolator::ReadData(std::string name){
             //break;
         } // error
             
-        if(!c){
+        if(abs(c)<1.1E-10){
             if (data.Cols()!=3){
                 if(a && b){
                     iss >> a >> b ;
@@ -88,11 +90,11 @@ void TRSLinearInterpolator::ReadData(std::string name){
                     }
           
                 }
-                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
+//                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
           }
             
             if(!a or !b){
-                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
+//                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
             }
             
         }
@@ -100,6 +102,7 @@ void TRSLinearInterpolator::ReadData(std::string name){
         
         // process pair (a,b)
     }
+    
     file.close();
    
     if(data.Rows()>0){
@@ -154,9 +157,9 @@ std::tuple<double, double> TRSLinearInterpolator::ValDeriv(double x){
                 double b = (x - x1)/(x2 - x1);
                 returned = a*y1 + b*y2;
                 deriv = (y2-y1)/(x2-x1);
-                break;
+                return {returned,deriv};
+                
                 }
-            break;
             }
         break;
         }
@@ -185,7 +188,7 @@ std::tuple<double, double> TRSLinearInterpolator::ValDeriv(double x){
                             returned = returned+(Vals(j,1))*res[0] +(Vals(j,2))*res[1];
                             deriv = deriv + (Vals(j,1))*res[2] +(Vals(j,2))*res[3];
                         }
-                        break;
+                     return {returned,deriv};
                     }
                 }
                 break;
@@ -353,4 +356,139 @@ std::function<std::tuple<double, double>(double)> TRSLinearInterpolator::GetFunc
     return [this](double x){
         return this->ValDeriv(x);
     };
+}
+
+
+void TRSLinearInterpolator::ReadData2( char *name){
+   
+    std::ifstream file;
+    file.open(name);
+    
+    int i=1;
+    Matrix data;
+    std::string line;
+    int n_cols =0;
+    while (std::getline(file, line))
+    {
+        std::istringstream iss(line);
+        std::istringstream issText(line);
+        char l = line[0];
+        int nchar = line.size();
+        if(l != '/'){
+            
+            //calcula el numero de columnas
+            if(n_cols==0){
+                std::string w;
+                for(int j=0; j< nchar; j++){
+                    w="";
+                    if (issText >> w);
+                    if(w==""){
+                        break;
+                    }
+                    n_cols ++;
+                }
+            }
+        
+            if (n_cols==2) {
+                double a, b;
+                data.Resize(i, 2);
+                if(iss >> a >> b) ;
+                data(i-1,0)=a;
+                data(i-1,1)=b;
+                i=i+1;
+            }
+            if (n_cols==3) {
+                double a, b, c;
+                data.Resize(i, 2);
+                if(iss >> a >> b >> c) ;
+                data(i-1,0)=a;
+                data(i-1,1)=b;
+                data(i-1,2)=c;
+                i=i+1;
+                }
+            }
+         }
+        
+    
+        if(data.Rows()>0){
+            std::cout<<"*************************"<<std::endl;
+            std::cout<<"Reading file... ok!"<<std::endl;
+            std::cout<<"*************************"<<std::endl;
+            SetData(data);
+            data.Print(std::cout);
+        }
+        
+        
+        
+        
+        
+//        char l = line[0];
+//        if (l == '{' or l=='}') {
+//            std::cout<<"Error: Incorrect Format"<<"\n";
+//            DebugStop();
+//        }
+//        if(l != '/'){
+//            // std::string l =line[0];
+//            double a, b, c;
+//            int val = line.size();
+//            int count = 0;
+//            std::string w;
+//            for(int i =0; i< val; i++){
+//                w="";
+//                if (issText >> w >> w >> w);
+//                if(iss >> a);
+//                double valor = a;
+//
+//            }
+//
+//
+//            if ((iss >> a >> b >> c)) {
+//
+//                data.Resize(i, 3);
+//                data(i-1,0)=a;
+//                data(i-1,1)=b;
+//                data(i-1,2)=c;
+//                i=i+1;
+//
+//                //break;
+//            } // error
+//
+//            if(abs(c)<1.1E-10){
+//                if (data.Cols()!=3){
+//                    if(a && b){
+//                        iss >> a >> b ;
+//                        data.Resize(i, 2);
+//                        data(i-1,0)=a;
+//                        data(i-1,1)=b;
+//                        i=i+1;
+//                    }
+//
+//                }
+//                //                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
+//            }
+//
+//            if(!a or !b){
+//                //                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
+//            }
+//
+//        }
+//
+//
+//        // process pair (a,b)
+//    }
+//
+//    file.close();
+//
+//    if(data.Rows()>0){
+//        std::cout<<"*************************"<<std::endl;
+//        std::cout<<"Reading file... ok!"<<std::endl;
+//        std::cout<<"*************************"<<std::endl;
+//        SetData(data);
+//        data.Print(std::cout);
+   
+    
+    // data.Print(std::cout);
+    
+    
+    
 }
