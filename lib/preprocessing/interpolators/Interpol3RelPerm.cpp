@@ -4,7 +4,6 @@
 //
 //  Created by JOSE VILLEGAS on 22/5/18.
 //  Copyright © 2018 JOSE VILLEGAS. All rights reserved.
-//
 
 #include "Interpol3RelPerm.h"
 
@@ -28,129 +27,147 @@ void Interpol3RelPerm::SetData(Matrix data, Kralpha alpa){
     }
 }
 
+void Interpol3RelPerm::SetParam(REAL swc, REAL sorw, REAL sorg){
+  
+    REAL sum = swc + sorw + sorg;
+    if(sum>1.0){DebugStop();}
+    if(!(swc>0.0 && swc<1.0)){DebugStop();}
+            fswc = swc;
+    if(!(sorw>0.0 && sorw<1.0)){DebugStop();}
+    fsorw = sorw;
+    if(!(sorg>0.0 && sorg<1.0)){DebugStop();}
+    fsorg = sorg;
+    
+}
+
+void Interpol3RelPerm::SetKroModel(ModelInterpol model){
+    fKroModel =model;
+}
+
 double Interpol3RelPerm::Val(double Sw, double Sg){
- 
-    // calcula la saturacion inicial de petroleo
+    
     int npointsw = Krw.GetData().Rows();
-    int npointsg = Krw.GetData().Rows();
-    double swc=0.0;
-    for(int i=0; i<npointsw; i++){
-        double sw_min = Krw.GetData().GetVal(i, 1);
-        double sw_anal = Krw.GetData().GetVal(i+1, 1);
-        if (sw_min != sw_anal) {
-            swc = Krw.GetData().GetVal(i, 0);
-            break;
-        }
+    int npointsg = Krg.GetData().Rows();
+    
+    if (fswc==-1){
+        fswc = Krw.GetData().GetVal(0,0);
     }
+
     
-    
-   // double sorg = Krog.GetData().GetVal(npointsg-1, 0);
-    
-    //  Calcula las permeabilidades relativas para los sistemas krw-krow, krg-krog
-    double krocw = Krow.Val(swc);
+    if(Sw<fswc){
+        return 0.0;
+    }
+  
+    double krocw = Krow.Val(fswc);
     double krw  = Krw.Val(Sw);
     double krow = Krow.Val(Sw);
     double krg  = Krg.Val(Sg);
     double krog = Krog.Val(Sg);
     
-//    //Stone I
-//    double alpha, bw, bg, Swe ;
-//    alpha = 1.0 - (Sg / (1-swc - sorg));
-//    
-//    bw = (krow/krocw)/(1-Swe);
-//    bg = (krow/krocw)/(1-Swe);
+    //Stone I
+    double alpha, bw, bg, So, Swe, Sge, Soe, Som ;
     
+    //Normalizando las saturaciones:
+    fsorg= 1.0 - (Krg.GetData().GetVal(npointsg-1, 0)) - fswc ;
+    fsorw= 1.0 - Krw.GetData().GetVal(npointsw-1, 0);
     
+    alpha = 1.0 - (Sg / (1- fswc - fsorg));
     
-    
-     // Stone II
-    double val = (krocw)*((((krow/krocw)+krw)*((krog/krocw)+krg)) - (krw+krg));
-    
-    
-    
-    return val;
-    
-}
-double Interpol3RelPerm::ValDeriv(double Sw, double Sg){
-    
-    int npoints = Krw.GetData().Rows();
-    double swc=0.0;
-    for(int i=0; i<npoints; i++){
-        double sw_min = Krw.GetData().GetVal(i, 1);
-        double sw_anal = Krw.GetData().GetVal(i+1, 1);
-        if (sw_min != sw_anal) {
-            swc = Krw.GetData().GetVal(i, 0);
-            break;
-        }
+    Som = (alpha*fsorw) + ((1-alpha)*fsorg);
+    Swe = (Sw - fswc)/(1.0 - fswc - Som);
+    Sge = (Sg)/(1.0 - fswc - Som);
+    So = 1.0 - Sw - Sg;
+    Soe = (So - Som)/(1.0 - fswc - Som);
+
+    if(So<Som){
+        return 0.0;
     }
     
-    //calcula las derivadas
-    std::pair<int, int> krocw = Krow.ValDeriv(swc);
-    std::pair<int, int> krw  = Krw.ValDeriv(Sw);
-    std::pair<int, int> krow = Krow.ValDeriv(Sw);
-    std::pair<int, int> krg  = Krg.ValDeriv(Sg);
-    std::pair<int, int> krog = Krog.ValDeriv(Sg);
+    bw = (krow/krocw)/(1.0 - Swe);
+    bg = (krog/krocw)/(1.0 - Sge);
     
     
+    double val =0.0;
+    
+    if (fKroModel==MStoneI) {
+         val = krocw*Soe*bg*bw;
+    }
+    
+    if (fKroModel==MStoneII) {
+         val = (krocw)*((((krow/krocw)+krw)*((krog/krocw)+krg)) - (krw+krg));
+    }
+
+    
+    if(val<0.0){
+        val=0.0;
+    }
+    
+    return val;
+
+}
+Matrix Interpol3RelPerm::Deriv(double Sw, double Sg){
+    
+    int npointsw = Krw.GetData().Rows();
+    int npointsg = Krg.GetData().Rows();
+    
+    Matrix deriv(2,3,0.0);
+    
+    double valor = this->Val(Sw, Sg);
+    if (valor==0){
+        return deriv;
+    }
+
+    if (fswc==-1){
+        fswc = Krw.GetData().GetVal(0,0);
+    }
+    if(Sw<fswc){
+        return deriv;
+    }
+    
+    double krocw = Krow.Val(fswc);
+    
+    std::pair<double, double> krw  = Krw.ValDeriv(Sw);
+    std::pair<double, double> krow = Krow.ValDeriv(Sw);
+    std::pair<double, double> krg  = Krg.ValDeriv(Sg);
+    std::pair<double, double> krog = Krog.ValDeriv(Sg);
+
+    double a, b, dKrwdSw, dKrgdSg, dKrodSw, dKrodSg;
+
+    dKrwdSw = std::get<1>(Krw.ValDeriv(Sw));
+    dKrgdSg = std::get<1>(Krg.ValDeriv(Sg));
+    // calcula las derivadas con respecto a kro
+    a = ((std::get<1>(krow))/krocw) + (std::get<1>(krw));
+    b = ((std::get<0>(krog))/krocw) + (std::get<0>(krg));
+    dKrodSw = krocw*((a*b) - (std::get<1>(krw)));
+    
+    a = ((std::get<0>(krow))/krocw) + (std::get<0>(krw));
+    b = ((std::get<1>(krog))/krocw) + (std::get<1>(krg));
+    dKrodSg = krocw*((a*b) - (std::get<1>(krg)));
+    
+    deriv(0,0)=dKrwdSw;
+    deriv(0,1)=dKrodSw;
+    deriv(1,1)=dKrodSg;
+    deriv(1,2)=dKrgdSg;
+    
+    return deriv;
     
 }
 
-void Interpol3RelPerm::ReadData(std::string data){
-    std::ifstream file;
-    file.open(data);
-    
-    int i=1;
-    Matrix mdata;
-    std::string line;
-    int n_cols =0;
-    while (std::getline(file, line))
-    {
-        std::istringstream iss(line);
-        std::istringstream issText(line);
-        char l = line[0];
-        int nchar = line.size();
-        if(l != '/'){
-            
-            //calcula el numero de columnas
-            if(n_cols==0){
-                std::string w;
-                for(int j=0; j< nchar; j++){
-                    w="";
-                    if (issText >> w);
-                    if(w==""){
-                        break;
-                    }
-                    n_cols ++;
-                }
-            }
-            
-            if (n_cols==2) {
-                double a, b;
-                mdata.Resize(i, 2);
-                if(iss >> a >> b) ;
-                mdata(i-1,0)=a;
-                mdata(i-1,1)=b;
-                i=i+1;
-            }
-            if (n_cols==3) {
-                double a, b, c;
-                mdata.Resize(i, 2);
-                if(iss >> a >> b >> c) ;
-                mdata(i-1,0)=a;
-                mdata(i-1,1)=b;
-                mdata(i-1,2)=c;
-                i=i+1;
-            }
-        }
+void Interpol3RelPerm::ReadData(std::string data, Kralpha alpa){
+    switch (alpa) {
+        case EKrw:
+            Krw.ReadData(data);
+            break;
+        case EKrow:
+            Krow.ReadData(data);
+            break;
+        case EKrg:
+            Krg.ReadData(data);
+            break;
+        case EKrog:
+            Krog.ReadData(data);
+            break;
+        default:
+            break;
     }
-    
-    
-    if(mdata.Rows()>0){
-        std::cout<<"*************************"<<std::endl;
-        std::cout<<"Reading file... ok!"<<std::endl;
-        std::cout<<"*************************"<<std::endl;
-       // SetData(mdata);
-        mdata.Print(std::cout);
-    }
-    
 }

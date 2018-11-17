@@ -45,76 +45,6 @@ Matrix TRSLinearInterpolator::GetData(){
 /** @brief Function that reads the interpolation data from a ".txt" file
  * @param data is the name of the file with the interpolation data
  */
-void TRSLinearInterpolator::ReadData(std::string name){
-    
-    std::ifstream file;
-    file.open(name);
-    
-    int i=1;
-    Matrix data;
-    std::string line;
-    while (std::getline(file, line))
-    {
-        std::istringstream iss(line);
-        int val = line.size();
-        char l = line[0];
-        if (l == '{' or l=='}') {
-            std::cout<<"Error: Incorrect Format"<<"\n";
-            DebugStop();
-        }
-        
-        
-        if(l != '/'){
-       // std::string l =line[0];
-        double a, b, c;
-          
-        if ((iss >> a >> b >> c)) {
-            
-            data.Resize(i, 3);
-            data(i-1,0)=a;
-            data(i-1,1)=b;
-            data(i-1,2)=c;
-            i=i+1;
-          
-            //break;
-        } // error
-            
-        if(abs(c)<1.1E-10){
-            if (data.Cols()!=3){
-                if(a && b){
-                    iss >> a >> b ;
-                    data.Resize(i, 2);
-                    data(i-1,0)=a;
-                    data(i-1,1)=b;
-                    i=i+1;
-                    }
-          
-                }
-//                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
-          }
-            
-            if(!a or !b){
-//                std::cout<<"\n"<<"Archivo con problema de lectura: la linea: "<<i<<" ha sido omitida"<<"\n";
-            }
-            
-        }
-       
-        
-        // process pair (a,b)
-    }
-    
-    file.close();
-   
-    if(data.Rows()>0){
-        std::cout<<"*************************"<<std::endl;
-        std::cout<<"Reading file... ok!"<<std::endl;
-        std::cout<<"*************************"<<std::endl;
-        SetData(data);
-        data.Print(std::cout);
-    }
-    
-   // data.Print(std::cout);
-}
 
 /**
  * @brief Interpolation function
@@ -359,7 +289,7 @@ std::function<std::tuple<double, double>(double)> TRSLinearInterpolator::GetFunc
 }
 
 
-void TRSLinearInterpolator::ReadData2( char *name){
+void TRSLinearInterpolator::ReadData(std::string name){
    
     std::ifstream file;
     file.open(name);

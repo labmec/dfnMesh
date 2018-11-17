@@ -29,22 +29,30 @@ private:
     TRSLinearInterpolator Krow;
     TRSLinearInterpolator Krg;
     TRSLinearInterpolator Krog;
-    
+    REAL fswc = -1.0;
+    REAL fsorw = -1.0;
+    REAL fsorg = -1.0;
 public:
-    //Set Type
-    Interpol3RelPerm(){
-        
-    }
+    
+    
     enum Kralpha {EKrw, EKrow ,EKrg, EKrog};
     enum ModelInterpol {MStoneI, MStoneII};
+    ModelInterpol fKroModel;
     
+    //Set Type
+    Interpol3RelPerm(){
+        fKroModel = ModelInterpol::MStoneI;
+    }
+  
     void SetData(Matrix data, Kralpha alpa);
+    void SetParam(REAL swc, REAL sorw, REAL sorg);
+    void SetKroModel(ModelInterpol model);
     double Val(double Sw, double Sg);
-    double ValDeriv(double Sw, double Sg);
+    Matrix Deriv(double Sw, double Sg);
     
     std::function<double(double)> GetFunction();
     std::function<double(double)> GetFunctionDeriv();
-    void ReadData(std::string data);
+    void ReadData(std::string data, Kralpha alpa);
     
 };
 
