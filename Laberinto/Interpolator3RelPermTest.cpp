@@ -178,8 +178,8 @@ int main(){
         std::cout << "Standard post-processing finished." << std::endl;
     }
     
-    
-
+     
+    return 0;
 }
 void LoadRelativePermeabilities(TPZCompMesh *cmesh){
      int nel = cmesh->NElements();
