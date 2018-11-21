@@ -124,6 +124,10 @@ noprefix "false"
 \end_inset
 
  es el tensor de permeabilidad absoluta, 
+\begin_inset Formula $\mu$
+\end_inset
+
+ la viscosidad,
 \begin_inset Formula $p$
 \end_inset
 
@@ -137,7 +141,7 @@ noprefix "false"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{u}=-\mathbf{K}\nabla\left(p-\rho\ g\ z\right)\label{eq:Ley_de_darcy}
+\mathbf{u}=-\mathbf{K}\left(\frac{1}{\mu}\right)\nabla\left(p-\rho\mathbf{g}\right)\label{eq:Ley_de_darcy}
 \end{equation}
 
 \end_inset
@@ -146,16 +150,16 @@ noprefix "false"
 \end_layout
 
 \begin_layout Standard
-La ley de Darcy establece que el flujo es descrito principalmente por el
- gradiente de presión y la permeabilidad absoluta que es una propiedad del
- medio.
+La ley de Darcy establece que el flujo es determinado principalmente por
+ el gradiente de presión y la permeabilidad absoluta que es una propiedad
+ del medio.
  
 \end_layout
 
 \begin_layout Standard
-Algunos años más tarde fue realizada una generalización de la Ley de Darcy
- para representar el flujo de multiples fases en medios porosos, para esto
- fue necesario incluir en la ecuación (
+Algunos años más después del descubimiento de Darcy fue realizada una generaliza
+ción de esta Ley para representar el flujo de multiples fases en medios
+ porosos, para esto fue necesario incluir en la ecuación (
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "eq:Ley_de_darcy"
@@ -181,7 +185,7 @@ movilizarse
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{u_{\alpha}}=-\mathbf{K}k_{r\alpha}\nabla\left(p_{\alpha}-\rho_{\alpha}\ g\ z\right)\label{eq:Ley_de_darcy_generalizada}
+\mathbf{u_{\alpha}}=-\mathbf{K}\left(\frac{k_{r\alpha}}{\mu_{\alpha}}\right)\nabla\left(p_{\alpha}-\rho_{\alpha}\mathbf{g}\right)\label{eq:Ley_de_darcy_generalizada}
 \end{equation}
 
 \end_inset
@@ -211,18 +215,18 @@ noprefix "false"
 \end_inset
 
 ) es realmente un desafío, la industria del petroleo ha puesto particular
- interés en el desarrollo de experimentos de laboratorio que permitan caracteriz
-ar la interaccion de fluidos en medios porosos.
+ interés en la realización de experimentos de laboratorio que permitan caracteri
+zar la interaccion de fluidos en medios porosos.
 \end_layout
 
 \begin_layout Standard
 A pesar de existir actualmente modelos de permeabilidades relativas para
- algunos casos (CITAR), para la realizacion de simulaciones de flujo en
- medios porosos se utilizan como datos de entrada tablas con puntos discretos
- de la permeabilidad relativa medidas a distintas saturaciones, generalmente
- obtenidas de pruebas realizadas en núcleos, y a partir de estas generar
- curvas de permeabilidades relativas que describan de mejor forma el problema
- especifico a simular.
+ algunos casos (Corey, Brooks-Corey, StoneI, StoneII, etc), para la realizacion
+ de simulaciones de flujo en medios porosos se utilizan como datos de entrada
+ tablas con puntos discretos de la permeabilidad relativa medidas a distintas
+ saturaciones, generalmente obtenidas de pruebas realizadas en núcleos (de
+ yacimientos), y a partir de estas generar curvas de permeabilidades relativas
+ que describan de mejor forma el problema especifico a simular.
 \end_layout
 
 \begin_layout Section
@@ -239,7 +243,7 @@ En un yacimiento puede coexistir varios fluidos interactuando entre sí.
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{u_{o}}=-\mathbf{K}k_{ro}\nabla\left(p_{o}-\rho_{o}\ g\ z\right)\label{eq:Ley_de_darcy_oil}
+\mathbf{u_{o}}=-\mathbf{K}\left(\frac{k_{ro}}{\mu_{o}}\right)\nabla\left(p_{o}-\rho_{o}\mathbf{g}\right)\label{eq:Ley_de_darcy_oil}
 \end{equation}
 
 \end_inset
@@ -250,7 +254,7 @@ En un yacimiento puede coexistir varios fluidos interactuando entre sí.
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{u_{w}}=-\mathbf{K}k_{rw}\nabla\left(p_{w}-\rho_{w}\ g\ z\right)\label{eq:Ley_de_darcy_agua}
+\mathbf{u_{w}}=-\mathbf{K}\left(\frac{k_{rw}}{\mu_{rw}}\right)\nabla\left(p_{w}-\rho_{w}\mathbf{g}\right)\label{eq:Ley_de_darcy_agua}
 \end{equation}
 
 \end_inset
@@ -279,7 +283,7 @@ noprefix "false"
 
 \end_inset
 
-) definen el flujo para el caso bifásico, en ambas ecuaciones se tiene el
+) definen el flujo para el caso bifásico, en ambas ecuaciones se tiene un
  termino de permeabilidades relativas, siendo 
 \begin_inset Formula $k_{ro}=k_{ro}(S_{o})$
 \end_inset
@@ -297,20 +301,41 @@ noprefix "false"
 
 \begin_layout Standard
 Para efectos de la simulación numerica de yacimientos pueden considerarse
- modelos simples (CITAR), que no necesariamente representan físicamente
- lo que ocurre en el yacimiento.
- Modelos mas complejos fueron desarrollados (CITAR) a partir de experimentos
- de laboratorio.
+ modelos simples como linear (Ecuaciones 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:LinearSw"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+, 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "LinearSw"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ ) y cuadrático, que no necesariamente representan físicamente lo que ocurre
+ en el yacimiento.
+ Modelos mas complejos fueron desarrollados a partir de experimentos de
+ laboratorio.
  En la practica las permeabilidades relativas varian en cada caso por lo
  que se realizan experimentos en muestras y se tienen puntos disctetos de
- la funcion, de los cuales a partir de un método numérico adecuado permite
- obtener una funcion de permeabilidades relativas.
+ la funcion, de los cuales a partir de un método numérico adecuado se obtienen
+ funciones depermeabilidades relativas.
+ 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-k_{rw}\left(S_{w}\right)=S_{w}
+k_{rw}\left(S_{w}\right)=S_{w}\label{eq:LinearSw}
 \end{equation}
 
 \end_inset
@@ -321,7 +346,7 @@ k_{rw}\left(S_{w}\right)=S_{w}
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-k_{ro}\left(S_{w}\right)=1-S_{w}
+k_{ro}\left(S_{w}\right)=1-S_{w}\label{LinearSw}
 \end{equation}
 
 \end_inset
@@ -459,8 +484,9 @@ En los yacimientos de petroleos generalmente se tiene un porcentaje de agua
 \begin_inset Formula $s_{wc}$
 \end_inset
 
-) la cual no puede ser desplazada, de igual forma existe en algunos casos
- determinado porcentaje de petroleo que no puede ser desplazado (
+) la cual no puede ser desplazada.
+ De igual forma existe en algunos casos determinado porcentaje de petroleo
+ que no puede ser desplazado (
 \begin_inset Formula $s_{or}$
 \end_inset
 
@@ -472,8 +498,7 @@ En los yacimientos de petroleos generalmente se tiene un porcentaje de agua
 \begin_inset Formula $1-s_{or}-s_{wc}$
 \end_inset
 
-), estos conceptos que definen los puntos finales de las curvas de saturaciones
- 
+), estos conceptos que definen los puntos finales (
 \begin_inset Quotes eld
 \end_inset
 
@@ -481,8 +506,17 @@ end-points
 \begin_inset Quotes erd
 \end_inset
 
- pueden ser introducidos en los modelos de permeabilidades relativas a través
- de una normalizacion de la saturacion como sigue:
+) de las curvas de permeabilidades relativas.
+ Las saturaciones en los 
+\begin_inset Quotes eld
+\end_inset
+
+end-points
+\begin_inset Quotes erd
+\end_inset
+
+ son introducidos en los modelos de permeabilidades relativas a través de
+ una normalizacion de la saturacion como sigue:
 \end_layout
 
 \begin_layout Standard
@@ -521,7 +555,7 @@ noprefix "false"
 \begin_inset Formula $\lambda$
 \end_inset
 
-.
+ para el calculo de las permeabilidades relativas.
 \end_layout
 
 \begin_layout Standard
@@ -1350,9 +1384,19 @@ Como ya fue dicho anteriormente estimar las funciones de permeabilidades
 \end_inset
 
 ).
- La figura (XXXXX) muestra esquemas de permeabilidades relativas para el
- caso bifásico, a partir de las cuales puede obtenerse curvas de permeabilidades
- relativas trifasicas.
+ La figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:EsquemaBifasico"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) muestra esquemas de permeabilidades relativas para el caso bifásico, a
+ partir de las cuales a partir de interpolación pueden obtenerse curvas
+ de permeabilidades relativas para el petróleo en el caso trifásico.
 \end_layout
 
 \begin_layout Standard
@@ -1435,7 +1479,14 @@ Sistema petroleo-agua
 \begin_inset Caption Standard
 
 \begin_layout Plain Layout
-Esquema de permeabilidades relativas.(CITAR)
+Esquema de permeabilidades relativas.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:EsquemaBifasico"
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1729,6 +1780,38 @@ son dados por:
 
 \end_layout
 
+\begin_layout Standard
+Nótese que la derivada de la permeabilidad relativa al petroleo con respecto
+ a la saturacion de agua esta dada por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{w}}=k_{rocw}\left(\frac{\partial S_{o}^{*}}{\partial S_{w}}\right)\beta_{w}\beta_{g}+k_{rocw}S_{o}^{*}\left(\frac{\partial\beta_{w}}{\partial S_{w}}\right)\beta_{g}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+y la derivada de la permeabilidad relativa al petroleo con respecto a la
+ saturacion de gas esta dada por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{g}}=k_{rocw}\left(\frac{\partial S_{o}^{*}}{\partial S_{g}}\right)\beta_{w}\beta_{g}+k_{rocw}S_{o}^{*}\beta_{w}\left(\frac{\partial\beta_{g}}{\partial S_{w}}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Modelo de Stone II
 \end_layout
@@ -1787,7 +1870,7 @@ y la derivada de la permeabilidad relativa al petroleo con respecto a la
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{w}}=k_{rocw}\left[\left(\frac{k_{row}\left(S_{w}\right)}{k_{rocw}}+k_{rw}\left(S_{w}\right)\right)\left(\frac{\partial\left(k_{rog}\left(S_{g}\right)\right)}{\partial S_{g}}\left(\frac{1}{k_{rocg}}\right)+\frac{\partial k_{rg}\left(S_{g}\right)}{\partial S_{g}}\right)-\frac{\partial k_{rg}\left(S_{g}\right)}{\partial S_{g}}\right]\label{eq:Stone2-2}
+\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{g}}=k_{rocw}\left[\left(\frac{k_{row}\left(S_{w}\right)}{k_{rocw}}+k_{rw}\left(S_{w}\right)\right)\left(\frac{\partial\left(k_{rog}\left(S_{g}\right)\right)}{\partial S_{g}}\left(\frac{1}{k_{rocg}}\right)+\frac{\partial k_{rg}\left(S_{g}\right)}{\partial S_{g}}\right)-\frac{\partial k_{rg}\left(S_{g}\right)}{\partial S_{g}}\right]\label{eq:Stone2-2}
 \end{equation}
 
 \end_inset
@@ -1800,8 +1883,7 @@ Resultados numéricos
 \end_layout
 
 \begin_layout Standard
-Se tienen los datos de permeabilidades relativas para los casos bifásicos
- petroleo-agua y petroleo-gas en las tablas (
+Se tiene en la tabla (
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "tab:Datos-de-permeabilidadesKrwKrg"
@@ -1811,8 +1893,9 @@ noprefix "false"
 
 \end_inset
 
-) respectivamente y se desea obtener la curva de permeabilidades relativas
- 
+) los datos de permeabilidades relativas para los casos bifásicos petroleo-agua
+ y petroleo-gas respectivamente y se desea obtener la curva de permeabilidades
+ relativas 
 \begin_inset Formula $k_{ro}\left(S_{w},S_{g}\right)$
 \end_inset
 
@@ -1839,9 +1922,9 @@ Interpol3RelPerm
 \begin_inset Quotes erd
 \end_inset
 
- es necesario setar informacion correspondiente a las permeabilidades relativas
- para los casos bifásicos petroleo-agua y petroleo gas, en este caso esos
- datos estan dados por la tabla (
+ es necesario ingresar informacion correspondiente a las permeabilidades
+ relativas para los casos bifásicos petroleo-agua y petroleo gas, en este
+ caso esos datos estan dados por la tabla (
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "tab:Datos-de-permeabilidadesKrwKrg"
@@ -1876,8 +1959,8 @@ TRSLinearInterpolator
 \end_inset
 
  la cual es una clase que permite interpolar a partir de datos discretos
- (puede utilizar interpolacion Linear o interpolacion de Hermite), con esta
- informacion fueron construidos 4 interpoladores lineales: 
+ (interpolacion Linear o interpolacion de Hermite), con esta informacion
+ fueron construidos 4 interpoladores lineales: 
 \begin_inset Formula $k_{rw}\left(S_{w}\right)$
 \end_inset
 
@@ -3294,6 +3377,18 @@ Interpol3RelPerm
 \end_inset
 
 .
+ La figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:ModelostRIFASICO"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) muestra la distribución de permeabilidades relativas usando el método
+ de Stone I y II.
 \end_layout
 
 \begin_layout Standard
@@ -3301,7 +3396,7 @@ Interpol3RelPerm
 placement H
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset Float figure
@@ -3323,7 +3418,10 @@ status collapsed
 \begin_inset Caption Standard
 
 \begin_layout Plain Layout
-Permeabilidades relativas STONEI
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ usando el modelo de STONE I
 \end_layout
 
 \end_inset
@@ -3353,7 +3451,10 @@ status collapsed
 \begin_inset Caption Standard
 
 \begin_layout Plain Layout
-Permeabilidades relativas stoneII
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ usando el modelo de STONE II
 \end_layout
 
 \end_inset
@@ -3386,7 +3487,10 @@ status collapsed
 \begin_inset Caption Standard
 
 \begin_layout Plain Layout
-Permeabilidades relativas STONEI
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ (3d) usando el modelo de STONE I
 \end_layout
 
 \end_inset
@@ -3416,7 +3520,10 @@ status collapsed
 \begin_inset Caption Standard
 
 \begin_layout Plain Layout
-Permeabilidades relativas stoneII
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ (3d) usando el modelo de STONE II
 \end_layout
 
 \end_inset
@@ -3449,7 +3556,7 @@ status collapsed
 \begin_inset Caption Standard
 
 \begin_layout Plain Layout
-Permeabilidades relativas stoneII
+Diferencia entre el modelo Stone I y II (2d)
 \end_layout
 
 \end_inset
@@ -3463,7 +3570,7 @@ Permeabilidades relativas stoneII
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset Graphics
@@ -3479,7 +3586,7 @@ status collapsed
 \begin_inset Caption Standard
 
 \begin_layout Plain Layout
-Permeabilidades relativas stoneII
+Diferencia entre el modelo Stone I y II (3d)
 \end_layout
 
 \end_inset
@@ -3497,6 +3604,13 @@ Permeabilidades relativas stoneII
 
 \begin_layout Plain Layout
 Modelos de permeabilidad relativa trifasico
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:ModelostRIFASICO"
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -3514,7 +3628,10 @@ Conclusiones
 \end_layout
 
 \begin_layout Standard
-Para modelar adecua
+Para modelar adecuadamente las permeabilidades relativas es necesario utilizar
+ un método numérico adecuado para obtener las funciones de interpolación,
+ es importante considerar condiciones de extrapolacion si fuere necesario.
+ Debe tomarse en cuenta que los datos ingresados sean precisos.
 \end_layout
 
 \end_body
