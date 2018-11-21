@@ -171,7 +171,7 @@ int main(){
     {
         const int dim = an->Mesh()->Dimension();
         int div = 0;
-        std::string plotfile = "Kro_test.vtk";
+        std::string plotfile = "Diference.vtk";
         TPZStack<std::string> scalar_names, vec_names;
         
         scalar_names.push_back("Solution");
@@ -190,6 +190,7 @@ void LoadRelativePermeabilities(TPZCompMesh *cmesh){
    
     
     Interpol3RelPerm Test;
+        Interpol3RelPerm Test2;
 //
 //    Test.SetData(Krw.GetData(), Interpol3RelPerm::Kralpha::EKrw);
 //    Test.SetData(Krow.GetData(), Interpol3RelPerm::Kralpha::EKrow);
@@ -200,8 +201,13 @@ void LoadRelativePermeabilities(TPZCompMesh *cmesh){
     Test.ReadData("krow.txt", Interpol3RelPerm::Kralpha::EKrow);
     Test.ReadData("krg.txt", Interpol3RelPerm::Kralpha::EKrg);
     Test.ReadData("krog.txt", Interpol3RelPerm::Kralpha::EKrog);
+    Test.SetKroModel(Interpol3RelPerm::ModelInterpol::MStoneI);
     
-    
+    Test2.ReadData("krw.txt", Interpol3RelPerm::Kralpha::EKrw);
+    Test2.ReadData("krow.txt", Interpol3RelPerm::Kralpha::EKrow);
+    Test2.ReadData("krg.txt", Interpol3RelPerm::Kralpha::EKrg);
+    Test2.ReadData("krog.txt", Interpol3RelPerm::Kralpha::EKrog);
+    Test2.SetKroModel(Interpol3RelPerm::ModelInterpol::MStoneII);
     
     
      TPZFMatrix<STATE> sol;
@@ -218,7 +224,7 @@ void LoadRelativePermeabilities(TPZCompMesh *cmesh){
                 if(sec_number > -1)
                 {
                     int64_t pos = cmesh->Block().Position(sec_number);
-                        sol(pos,0)=calcKro(cel, Test, j);
+                        sol(pos,0)=calcKro(cel, Test, j) - calcKro(cel, Test2, j) ;
                     
                 }
                 

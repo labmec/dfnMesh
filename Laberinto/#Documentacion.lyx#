@@ -5,6 +5,9 @@
 \save_transient_properties true
 \origin unavailable
 \textclass article
+\begin_preamble
+\graphicspath{{first/path/}{second/path/}}
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -28,7 +31,7 @@
 \output_sync 0
 \bibtex_command default
 \index_command default
-\paperfontsize default
+\paperfontsize 12
 \spacing single
 \use_hyperref false
 \pdf_bookmarks true
@@ -121,6 +124,10 @@ noprefix "false"
 \end_inset
 
  es el tensor de permeabilidad absoluta, 
+\begin_inset Formula $\mu$
+\end_inset
+
+ la viscosidad,
 \begin_inset Formula $p$
 \end_inset
 
@@ -134,7 +141,7 @@ noprefix "false"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{u}=-\mathbf{K}\nabla\left(p-\rho\ g\ z\right)\label{eq:Ley_de_darcy}
+\mathbf{u}=-\mathbf{K}\left(\frac{1}{\mu}\right)\nabla\left(p-\rho\mathbf{g}\right)\label{eq:Ley_de_darcy}
 \end{equation}
 
 \end_inset
@@ -143,16 +150,16 @@ noprefix "false"
 \end_layout
 
 \begin_layout Standard
-La ley de Darcy establece que el flujo es descrito principalmente por el
- gradiente de presión y la permeabilidad absoluta que es una propiedad del
- medio.
+La ley de Darcy establece que el flujo es determinado principalmente por
+ el gradiente de presión y la permeabilidad absoluta que es una propiedad
+ del medio.
  
 \end_layout
 
 \begin_layout Standard
-Algunos años más tarde fue realizada una generalización de la Ley de Darcy
- para representar el flujo de multiples fases en medios porosos, para esto
- fue necesario incluir en la ecuación (
+Algunos años más después del descubimiento de Darcy fue realizada una generaliza
+ción de esta Ley para representar el flujo de multiples fases en medios
+ porosos, para esto fue necesario incluir en la ecuación (
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "eq:Ley_de_darcy"
@@ -178,7 +185,7 @@ movilizarse
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{u_{\alpha}}=-\mathbf{K}k_{r\alpha}\nabla\left(p_{\alpha}-\rho_{\alpha}\ g\ z\right)\label{eq:Ley_de_darcy_generalizada}
+\mathbf{u_{\alpha}}=-\mathbf{K}\left(\frac{k_{r\alpha}}{\mu_{\alpha}}\right)\nabla\left(p_{\alpha}-\rho_{\alpha}\mathbf{g}\right)\label{eq:Ley_de_darcy_generalizada}
 \end{equation}
 
 \end_inset
@@ -208,46 +215,3423 @@ noprefix "false"
 \end_inset
 
 ) es realmente un desafío, la industria del petroleo ha puesto particular
- interés en el desarrollo de experimentos de laboratorio que permitan caracteriz
-ar la interaccion de fluidos en medios porosos.
+ interés en la realización de experimentos de laboratorio que permitan caracteri
+zar la interaccion de fluidos en medios porosos.
 \end_layout
 
 \begin_layout Standard
 A pesar de existir actualmente modelos de permeabilidades relativas para
- algunos casos (CITAR), para la realizacion de simulaciones de flujo en
- medios porosos se utilizan como datos de entrada tablas con puntos discretos
- de la permeabilidad relativa medidas a distintas saturaciones, generalmente
- obtenidas de pruebas realizadas en núcleos, y a partir de estas generar
- curvas de permeabilidades relativas que describan de mejor forma el problema
- especifico a simular.
-\end_layout
-
-\begin_layout Standard
-En est
+ algunos casos (Corey, Brooks-Corey, StoneI, StoneII, etc), para la realizacion
+ de simulaciones de flujo en medios porosos se utilizan como datos de entrada
+ tablas con puntos discretos de la permeabilidad relativa medidas a distintas
+ saturaciones, generalmente obtenidas de pruebas realizadas en núcleos (de
+ yacimientos), y a partir de estas generar curvas de permeabilidades relativas
+ que describan de mejor forma el problema especifico a simular.
 \end_layout
 
 \begin_layout Section
 Flujo Bifásico
 \end_layout
 
+\begin_layout Standard
+En un yacimiento puede coexistir varios fluidos interactuando entre sí.
+ Considerando por ejemplo la interaccion agua-petroleo en un desplazamiento
+ inmisible el sistema de ecuaciones para el caso de las velocidades puede
+ ser expresado de la siguiente forma:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{u_{o}}=-\mathbf{K}\left(\frac{k_{ro}}{\mu_{o}}\right)\nabla\left(p_{o}-\rho_{o}\mathbf{g}\right)\label{eq:Ley_de_darcy_oil}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{u_{w}}=-\mathbf{K}\left(\frac{k_{rw}}{\mu_{rw}}\right)\nabla\left(p_{w}-\rho_{w}\mathbf{g}\right)\label{eq:Ley_de_darcy_agua}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+La ecuacion (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Ley_de_darcy_oil"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) y la ecuación (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Ley_de_darcy_agua"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) definen el flujo para el caso bifásico, en ambas ecuaciones se tiene un
+ termino de permeabilidades relativas, siendo 
+\begin_inset Formula $k_{ro}=k_{ro}(S_{o})$
+\end_inset
+
+ y 
+\begin_inset Formula $k_{rw}=k_{rw}(S_{w})$
+\end_inset
+
+ con la restricción 
+\begin_inset Formula $S_{w}+S_{o}=1$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Para efectos de la simulación numerica de yacimientos pueden considerarse
+ modelos simples como linear (Ecuaciones 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:LinearSw"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+, 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "LinearSw"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ ) y cuadrático, que no necesariamente representan físicamente lo que ocurre
+ en el yacimiento.
+ Modelos mas complejos fueron desarrollados a partir de experimentos de
+ laboratorio.
+ En la practica las permeabilidades relativas varian en cada caso por lo
+ que se realizan experimentos en muestras y se tienen puntos disctetos de
+ la funcion, de los cuales a partir de un método numérico adecuado se obtienen
+ funciones depermeabilidades relativas.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+k_{rw}\left(S_{w}\right)=S_{w}\label{eq:LinearSw}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+k_{ro}\left(S_{w}\right)=1-S_{w}\label{LinearSw}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+La Figura ( 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Modelo-Linear"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ ) muestra el modelo de permeabilidades relativas linear y la Figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Modelo-Cuadratico"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) el modelo de permeabildiades relativas cuadraticas.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename OWLinear.png
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Linear
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Modelo-Linear"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename OWCuadratic.png
+	scale 50
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Cuadratico
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Modelo-Cuadratico"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelos de permeabilidades relativas simples
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+En los yacimientos de petroleos generalmente se tiene un porcentaje de agua
+ que se encuentra presente en la fase de petroleo, esta saturacion de agua
+ inicial o saturación de agua connata (
+\begin_inset Formula $s_{wc}$
+\end_inset
+
+) la cual no puede ser desplazada.
+ De igual forma existe en algunos casos determinado porcentaje de petroleo
+ que no puede ser desplazado (
+\begin_inset Formula $s_{or}$
+\end_inset
+
+), por lo que la saturación de agua no puede ser menor que (
+\begin_inset Formula $s_{wc}$
+\end_inset
+
+) y la de petroleo no puede ser mayor a (
+\begin_inset Formula $1-s_{or}-s_{wc}$
+\end_inset
+
+), estos conceptos que definen los puntos finales (
+\begin_inset Quotes eld
+\end_inset
+
+end-points
+\begin_inset Quotes erd
+\end_inset
+
+) de las curvas de permeabilidades relativas.
+ Las saturaciones en los 
+\begin_inset Quotes eld
+\end_inset
+
+end-points
+\begin_inset Quotes erd
+\end_inset
+
+ son introducidos en los modelos de permeabilidades relativas a través de
+ una normalizacion de la saturacion como sigue:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+S_{we}=\frac{S_{w}-s_{wc}}{1-s_{wc}-s_{or}},\ \ \ \ S_{w}>s_{wc}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Modelos mas complejos como el de Brooks-Corey, ecuaciones (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Corey_krw"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) y (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:coreykro"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) incluyen un factor de distribucion de los poros 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ para el calculo de las permeabilidades relativas.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+k_{rw}\left(S_{w}\right)=S_{we}^{(2+3\lambda)/\lambda}\label{eq:Corey_krw}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+k_{ro}\left(S_{w}\right)=\left(1-S_{we}\right)\left(1-S_{we}^{(2+\lambda)/\lambda}\right)\label{eq:coreykro}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+En la figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Modelo-de-Corey"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) se observa la forma del modelo de permeabildiades relativas de Brooks-Corey
+ considerando el factor 
+\begin_inset Formula $\lambda=2$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename OWCorey_L2.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo de Corey con 
+\begin_inset Formula $\lambda=2$
+\end_inset
+
+.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Modelo-de-Corey"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+El modelo de permeabilidades relativas graficado en la figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Modelo-construido_tables"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) fue construido a partir de los datos de la tabla (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Modelo-construido_tables"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+), obtenidos experimentalmente.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="16" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{w}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{rw}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{ro}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.17$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.58$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.20$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.51$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.25$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.41$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.30$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.32$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.35$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.24$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.40$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.01$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.18$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.45$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.02$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.13$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.50$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.04$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.09$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.55$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.06$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.05$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.60$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.10$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.03$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.65$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.15$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.02$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.70$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.21$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.01$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.75$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.28$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.79$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.36$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.82$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.42$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Datos de permeabilidades relativas
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:Datos-de-permeabilidades"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Kr_tables.png
+	scale 35
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo construido a partir de datos de laboratorio
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Modelo-construido_tables"
+
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Flujo Trifásico
 \end_layout
 
-\begin_layout Subsection
-Modelo STONE 1
+\begin_layout Standard
+Como ya fue dicho anteriormente estimar las funciones de permeabilidades
+ relativas es realmente complejo y la mejor forma de obtenerlas es a través
+ de experimentos de laboratorio.
+ Esto puede demandar de mucho tiempo y dinero, por esto para casos practicos
+ los modelos de permeabilidades relativas pueden ser obtenidos como una
+ interpolacion de los casos bifásicos (
+\begin_inset Formula $o-w\ \ y\ \ o-g$
+\end_inset
+
+).
+ La figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:EsquemaBifasico"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) muestra esquemas de permeabilidades relativas para el caso bifásico, a
+ partir de las cuales a partir de interpolación pueden obtenerse curvas
+ de permeabilidades relativas para el petróleo en el caso trifásico.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename oilWaterSystem.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Sistema petroleo-agua
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename OilGasSystem.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Sistema petroleo-agua
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Esquema de permeabilidades relativas.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:EsquemaBifasico"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+En el caso trifásico las permeabilidades relativas tienen que ser graficadas
+ en diagramas ternarios como el de la figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:EsquemaTernaryDiagram"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
+ En la figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Representacion-del-punto"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) se tiene la ubicacion de un punto 
+\begin_inset Formula $S_{w}=0.30,\ S_{g}=0.30,\ S_{o}=0.40$
+\end_inset
+
+ en el diagrama ternario.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename TernaryPlot.png
+	scale 40
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Esquema de un diagrama ternario para el sistema 
+\begin_inset Formula $o,\ w,\ g.$
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:EsquemaTernaryDiagram"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename TernaryPlotPoint.png
+	scale 40
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Representacion del punto 
+\begin_inset Formula $S_{w}=0.30,\ S_{g}=0.30,\ S_{o}=0.40$
+\end_inset
+
+ en el diagrama ternario
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Representacion-del-punto"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Diagrama Ternario
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
-Modelo STONE 2
+Modelo de Stone I
+\end_layout
+
+\begin_layout Standard
+Este modelo fue propuesto por Stone[1970], se considera saturacion de agua
+ connata y la saturacion residual de petróleo por lo que es necesario normalizar
+ las saturaciones como sigue:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+S_{w}^{*}=\frac{S_{w}-s_{wc}}{1-s_{wc}-s_{or}}\ \ \ ,\ S_{w}>s_{wc}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+S_{g}^{*}=\frac{S_{g}}{1-s_{wc}-s_{or}}\ \ \ ,
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+S_{o}^{*}=\frac{S_{o}-s_{or}}{1-s_{wc}-s_{or}}\ \ \ ,\ S_{o}>s_{or}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+En el caso trifásico, la saturacion de água residual es una funcion no linear
+ de la saturacion de gas.
+ Fayers and Matthews [1974] concluyeron que una interpolacion linear entre
+ los valores extremos de 
+\begin_inset Formula $S_{orw}$
+\end_inset
+
+ (saturación residual de petroleo en la fase agua) y 
+\begin_inset Formula $S_{org}$
+\end_inset
+
+(saturación residual en la fase gas).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+S_{om}=\alpha S_{orw}+(1-\alpha)S_{org}\ \ \ ,con\ \alpha=1-\frac{S_{g}}{1-s_{wc}-S_{org}}\ S_{o}>s_{or}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+La permeabilidad relativa al petroleo es obtenida por la siguiente expresion:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+k_{ro}\left(S_{w},S_{g}\right)=k_{rocw}S_{o}^{*}\beta_{w}\beta_{g}\label{eq:StoneI}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+donde 
+\begin_inset Formula $k_{rocw}$
+\end_inset
+
+ es la permeabilidad relativa al petroleo evaluado en la saturacion de agua
+ connata, 
+\series bold
+
+\begin_inset Formula $\beta_{w}$
+\end_inset
+
+ 
+\series default
+y 
+\begin_inset Formula $\beta_{g}$
+\end_inset
+
+son dados por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\beta_{w}=\frac{k_{row}\left(S_{w}\right)/k_{rocw}}{1-S_{w}^{*}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\beta_{g}=\frac{k_{rog}\left(S_{g}\right)/k_{rocw}}{1-S_{g}^{*}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Nótese que la derivada de la permeabilidad relativa al petroleo con respecto
+ a la saturacion de agua esta dada por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{w}}=k_{rocw}\left(\frac{\partial S_{o}^{*}}{\partial S_{w}}\right)\beta_{w}\beta_{g}+k_{rocw}S_{o}^{*}\left(\frac{\partial\beta_{w}}{\partial S_{w}}\right)\beta_{g}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+y la derivada de la permeabilidad relativa al petroleo con respecto a la
+ saturacion de gas esta dada por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{g}}=k_{rocw}\left(\frac{\partial S_{o}^{*}}{\partial S_{g}}\right)\beta_{w}\beta_{g}+k_{rocw}S_{o}^{*}\beta_{w}\left(\frac{\partial\beta_{g}}{\partial S_{w}}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Modelo de Stone II
+\end_layout
+
+\begin_layout Standard
+En este modelo la separacion de la saturacion de petroleo residual no es
+ requerida, la permeabilidad relativa al petroleo es dada por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+k_{ro}\left(S_{w},S_{g}\right)=k_{rocw}\left[\left(\frac{k_{row}\left(S_{w}\right)}{k_{rocw}}+k_{rw}\left(S_{w}\right)\right)\left(\frac{k_{rog}\left(S_{g}\right)}{k_{rocg}}+k_{rg}\left(S_{g}\right)\right)-\left(k_{rw}\left(S_{w}\right)+k_{rg}\left(S_{g}\right)\right)\right]\label{eq:Stone2}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Cuando la equacion (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Stone2"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) retorna un valor negativo, la permeabilidad relativa es considerada cero.
+\end_layout
+
+\begin_layout Standard
+Nótese que la derivada de la permeabilidad relativa al petroleo con respecto
+ a la saturacion de agua esta dada por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{w}}=k_{rocw}\left[\left(\frac{\partial k_{row}\left(S_{w}\right)}{\partial S_{w}}\left(\frac{1}{k_{rocw}}\right)+\frac{\partial k_{rw}\left(S_{w}\right)}{\partial S_{w}}\right)\left(\frac{k_{rog}\left(S_{g}\right)}{k_{rocg}}+k_{rg}\left(S_{g}\right)\right)-\frac{\partial k_{rw}\left(S_{w}\right)}{\partial S_{w}}\right]\label{eq:Stone2-1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+y la derivada de la permeabilidad relativa al petroleo con respecto a la
+ saturacion de gas esta dada por:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\left(k_{ro}\left(S_{w},S_{g}\right)\right)}{\partial S_{g}}=k_{rocw}\left[\left(\frac{k_{row}\left(S_{w}\right)}{k_{rocw}}+k_{rw}\left(S_{w}\right)\right)\left(\frac{\partial\left(k_{rog}\left(S_{g}\right)\right)}{\partial S_{g}}\left(\frac{1}{k_{rocg}}\right)+\frac{\partial k_{rg}\left(S_{g}\right)}{\partial S_{g}}\right)-\frac{\partial k_{rg}\left(S_{g}\right)}{\partial S_{g}}\right]\label{eq:Stone2-2}
+\end{equation}
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
-Tratamiento numérico
+Resultados numéricos
+\end_layout
+
+\begin_layout Standard
+Se tiene en la tabla (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:Datos-de-permeabilidadesKrwKrg"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) los datos de permeabilidades relativas para los casos bifásicos petroleo-agua
+ y petroleo-gas respectivamente y se desea obtener la curva de permeabilidades
+ relativas 
+\begin_inset Formula $k_{ro}\left(S_{w},S_{g}\right)$
+\end_inset
+
+ y sus derivadas utilizando el modelo de Stone I y II.
+ 
+\end_layout
+
+\begin_layout Standard
+Fue creado un proyecto (https://github.com/labmec/ReservoirSimulator), dentro
+ del cual se encuentra la clase 
+\begin_inset Quotes eld
+\end_inset
+
+Interpol3RelPerm.h
+\begin_inset Quotes erd
+\end_inset
+
+ el cual implementa el modelo de Stone I y II.
+ Para crear un objeto de la clase 
+\begin_inset Quotes eld
+\end_inset
+
+Interpol3RelPerm
+\begin_inset Quotes erd
+\end_inset
+
+ es necesario ingresar informacion correspondiente a las permeabilidades
+ relativas para los casos bifásicos petroleo-agua y petroleo gas, en este
+ caso esos datos estan dados por la tabla (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:Datos-de-permeabilidadesKrwKrg"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) , con estos datos a través de la funcion 
+\begin_inset Quotes eld
+\end_inset
+
+ReadData
+\begin_inset Quotes erd
+\end_inset
+
+ de 
+\begin_inset Quotes eld
+\end_inset
+
+Interpol3RelPerm
+\begin_inset Quotes erd
+\end_inset
+
+ son creados objetos del tipo 
+\begin_inset Quotes eld
+\end_inset
+
+TRSLinearInterpolator
+\begin_inset Quotes erd
+\end_inset
+
+ la cual es una clase que permite interpolar a partir de datos discretos
+ (interpolacion Linear o interpolacion de Hermite), con esta informacion
+ fueron construidos 4 interpoladores lineales: 
+\begin_inset Formula $k_{rw}\left(S_{w}\right)$
+\end_inset
+
+, 
+\begin_inset Formula $k_{row}\left(S_{w}\right)$
+\end_inset
+
+, 
+\begin_inset Formula $k_{rg}\left(S_{g}\right)$
+\end_inset
+
+ y 
+\begin_inset Formula $k_{rog}\left(S_{g}\right)$
+\end_inset
+
+, las funciones de interpolacion creadas permiten evaluar las ecuaciones
+ (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:StoneI"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) y (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Stone2"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) en cualquier valor de saturacion como puede observarse en la figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Permeabilidades-Sistema_Bifásico"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align left
+\begin_inset Tabular
+<lyxtabular version="3" rows="16" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{w}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{rw}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{rog}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.17$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.58$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.20$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.51$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.25$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.41$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.30$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.32$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.35$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.24$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.40$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.01$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.18$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.45$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.02$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.13$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.50$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.04$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.09$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.55$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.06$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.05$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.60$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.10$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.03$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.65$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.15$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.02$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.70$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.21$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.01$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.75$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.28$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.79$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.36$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.82$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.42$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Permeabilidades relativas para el sistema petroleo-agua
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset space \hspace{}
+\length 2cm
+\end_inset
+
+
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align right
+\begin_inset Tabular
+<lyxtabular version="3" rows="14" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $S_{g}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{rg}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{rog}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.000$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.58$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.18$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.002$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.387$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.20$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.003$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.309$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.25$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.006$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.203$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.30$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.010$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.143$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.35$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.017$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.102$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.40$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.026$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.072$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.45$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.037$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.050$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.50$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.052$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.034$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.55$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.070$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.021$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.60$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.093$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.014$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.65$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.119$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.006$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.70$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.150$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.000$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Permeabilidades relativas para el sistema petroleo-gas
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Datos de permeabilidades relativas
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:Datos-de-permeabilidadesKrwKrg"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename OWCorey_TableKrw.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Permeabilidades relativas para el sistema petroleo-agua.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename OWCorey_TableKrg.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Permeabilidades relativas para el sistema petroleo-gas
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Permeabilidades relativas para los sistemas bifásicos
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Permeabilidades-Sistema_Bifásico"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Utilizando el objeto 
+\begin_inset Quotes eld
+\end_inset
+
+Interpol3RelPerm
+\begin_inset Quotes erd
+\end_inset
+
+ fue obtenida la siguiente curva de permeabilidades relativas 
+\begin_inset Formula $k_{ro}\left(S_{w},S_{g}\right)$
+\end_inset
+
+.
+ La figura (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:ModelostRIFASICO"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) muestra la distribución de permeabilidades relativas usando el método
+ de Stone I y II.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename STONE1.png
+	scale 14
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ usando el modelo de STONE I
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename STONEII.png
+	scale 14
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ usando el modelo de STONE II
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename STONE13D.png
+	scale 14
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ (3d) usando el modelo de STONE I
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename STONEII3D.png
+	scale 14
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset Formula $k_{ro}(S_{w,S_{g}})$
+\end_inset
+
+ (3d) usando el modelo de STONE II
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename diference.png
+	scale 14
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Diferencia entre el modelo Stone I y II (2d)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Diference3D.png
+	scale 14
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Diferencia entre el modelo Stone I y II (3d)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelos de permeabilidad relativa trifasico
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:ModelostRIFASICO"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
 Conclusiones
+\end_layout
+
+\begin_layout Standard
+Para modelar adecuadamente las permeabilidades relativas es necesario utilizar
+ un método numérico adecuado para obtener las funciones de interpolación,
+ es importante considerar condiciones de extrapolacion si fuere necesario.
+ Debe tomarse en cuenta que los datos ingresados sean precisos.
 \end_layout
 
 \end_body

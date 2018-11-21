@@ -5,6 +5,9 @@
 \save_transient_properties true
 \origin unavailable
 \textclass article
+\begin_preamble
+\graphicspath{{first/path/}{second/path/}}
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -28,9 +31,9 @@
 \output_sync 0
 \bibtex_command default
 \index_command default
-\paperfontsize default
+\paperfontsize 12
 \spacing single
-\use_hyperref true
+\use_hyperref false
 \pdf_bookmarks true
 \pdf_bookmarksnumbered false
 \pdf_bookmarksopen false
@@ -89,6 +92,7 @@
 
 \begin_layout Title
 Interpolación de Pemerabilidades relativas en el flujo multifasico de fluidos
+ en medios porosos
 \end_layout
 
 \begin_layout Author
@@ -100,14 +104,40 @@ Introducción
 \end_layout
 
 \begin_layout Standard
-La Ley de Darcy (1856) permite describir el flujo de fluidos en medios porosos,
- la ecuación ()
+La Ley de Darcy (1856) permite describir el flujo de un fluido en medios
+ porosos a través de la ecuación (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Ley_de_darcy"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+), el esta ecuación 
+\begin_inset Formula $\mathbf{u}$
+\end_inset
+
+ representa el flujo, 
+\begin_inset Formula $\mathbf{K}$
+\end_inset
+
+ es el tensor de permeabilidad absoluta, 
+\begin_inset Formula $p$
+\end_inset
+
+ la presion, 
+\begin_inset Formula $g$
+\end_inset
+
+ la constante gravitacional
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\mathbf{u}=-\mathbf{K}\nabla\left(p-\rho\ g\ z\right)
+\mathbf{u}=-\mathbf{K}\nabla\left(p-\rho\ g\ z\right)\label{eq:Ley_de_darcy}
 \end{equation}
 
 \end_inset
@@ -115,8 +145,383 @@ La Ley de Darcy (1856) permite describir el flujo de fluidos en medios porosos,
 
 \end_layout
 
+\begin_layout Standard
+La ley de Darcy establece que el flujo es descrito principalmente por el
+ gradiente de presión y la permeabilidad absoluta que es una propiedad del
+ medio.
+ 
+\end_layout
+
+\begin_layout Standard
+Algunos años más tarde fue realizada una generalización de la Ley de Darcy
+ para representar el flujo de multiples fases en medios porosos, para esto
+ fue necesario incluir en la ecuación (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Ley_de_darcy"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) un termino o factor de escala que representa la facilidad con la que una
+ fase determinada puede 
+\begin_inset Quotes eld
+\end_inset
+
+movilizarse
+\begin_inset Quotes erd
+\end_inset
+
+ en presencia de las otras fases, este factor es conocido como permeabilidad
+ relativa.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{u_{\alpha}}=-\mathbf{K}k_{r\alpha}\nabla\left(p_{\alpha}-\rho_{\alpha}\ g\ z\right)\label{eq:Ley_de_darcy_generalizada}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+La ecuación (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Ley_de_darcy_generalizada"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) es conocida como la Ley generalizada de Darcy, en la cual para el caso
+ black oil 
+\begin_inset Formula $\alpha=o,w,g$
+\end_inset
+
+.
+ Describir correctamente las funciones de permeabilidades relativas (
+\begin_inset Formula $k_{r\alpha}=k_{r\alpha}(S_{\alpha})$
+\end_inset
+
+) es realmente un desafío, la industria del petroleo ha puesto particular
+ interés en el desarrollo de experimentos de laboratorio que permitan caracteriz
+ar la interaccion de fluidos en medios porosos.
+\end_layout
+
+\begin_layout Standard
+A pesar de existir actualmente modelos de permeabilidades relativas para
+ algunos casos (CITAR), para la realizacion de simulaciones de flujo en
+ medios porosos se utilizan como datos de entrada tablas con puntos discretos
+ de la permeabilidad relativa medidas a distintas saturaciones, generalmente
+ obtenidas de pruebas realizadas en núcleos, y a partir de estas generar
+ curvas de permeabilidades relativas que describan de mejor forma el problema
+ especifico a simular.
+\end_layout
+
 \begin_layout Section
 Flujo Bifásico
+\end_layout
+
+\begin_layout Standard
+En un yacimiento puede coexistir varios fluidos interactuando entre sí.
+ Considerando por ejemplo la interaccion agua-petroleo en un desplazamiento
+ inmisible el sistema de ecuaciones para el caso de las velocidades puede
+ ser expresado de la siguiente forma:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{u_{o}}=-\mathbf{K}k_{ro}\nabla\left(p_{o}-\rho_{o}\ g\ z\right)\label{eq:Ley_de_darcy_oil}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\mathbf{u_{w}}=-\mathbf{K}k_{rw}\nabla\left(p_{w}-\rho_{w}\ g\ z\right)\label{eq:Ley_de_darcy_agua}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+La ecuacion (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Ley_de_darcy_oil"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) y la ecuación (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Ley_de_darcy_agua"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) definen el flujo para el caso bifásico, en ambas ecuaciones se tiene el
+ termino de permeabilidades relativas, siendo 
+\begin_inset Formula $k_{ro}=k_{ro}(S_{o})$
+\end_inset
+
+ y 
+\begin_inset Formula $k_{rw}=k_{rw}(S_{w})$
+\end_inset
+
+ con la restricción 
+\begin_inset Formula $S_{w}+S_{o}=1$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Para efectos de la simulación numerica de yacimientos pueden considerarse
+ modelos simples (CITAR), que no necesariamente representan físicamente
+ lo que ocurre en el yacimiento.
+ Modelos mas complejos fueron desarrollados (CITAR) a partir de experimentos
+ de laboratorio.
+ En la practica las permeabilidades relativas varian en cada caso por lo
+ que se realizan experimentos en muestras y se tienen puntos disctetos de
+ la funcion, de los cuales a partir de un método numérico adecuado permite
+ obtener una funcion de permeabilidades relativas.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename OWLinear.png
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Linear
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Cuadratico
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelos de permeabilidades relativas simples
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Linear
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Cuadratico
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo de Corey 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Linear
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo Cuadratico
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Modelo construido a partir de tablas 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
