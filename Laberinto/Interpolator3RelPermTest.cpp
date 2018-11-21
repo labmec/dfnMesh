@@ -64,6 +64,8 @@
 #include "Interpol3RelPerm.h"
 #include "TRSLinearInterpolator.h"
 #include "pzl2projection.h"
+#include "TPZAnalyticSolution.h"
+
 //solucao exata
 
 void LoadRelativePermeabilities(TPZCompMesh *cmesh);
@@ -71,7 +73,6 @@ void LoadRelativePermeabilities(TPZCompMesh *cmesh);
 double calcKro(TPZCompEl *cel, Interpol3RelPerm Test,int locPoint);
 int main(){
     
-   
    
     TPZGeoMesh *gmesh = new TPZGeoMesh;
     gmesh->SetDimension(2);
@@ -121,6 +122,7 @@ int main(){
             gel->Divide(elements);
         }
     }
+    
 //    std::ofstream out("gmesh.txt");
 //    gmesh->Print(out);
     

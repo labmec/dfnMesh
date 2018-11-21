@@ -171,3 +171,13 @@ void Interpol3RelPerm::ReadData(std::string data, Kralpha alpa){
             break;
     }
 }
+std::function<double(double, double)> Interpol3RelPerm::GetFunction(){
+    return [this](double Sw, double Sg){
+        return this->Val(Sw,Sg);
+    };
+}
+std::function<Matrix(double,double)> Interpol3RelPerm::GetFunctionDeriv(){
+    return [this](double Sw, double Sg){
+        return this->Deriv(Sw,Sg);
+    };
+}

@@ -57,7 +57,6 @@ double TRSLinearInterpolator::Val(double x){
     return std::get<0>(Intp);
     
 }
-
 /**
  * @brief Interpolation function with derivative
  * @param x value to interpolate
