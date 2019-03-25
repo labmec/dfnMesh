@@ -61,6 +61,8 @@
 #include "TPZSkylineNSymStructMatrix.h"
 #include "TPZHybridizeHDiv.h"
 #include "pzbuildmultiphysicsmesh.h"
+#include "TPZMultiphasicFlowAnalysis.h"
+//#include "TPZAxiSymmetricDarcyFlow.h"
 
 using namespace std;
 using namespace cv;
@@ -76,8 +78,27 @@ int H1Test();
 int MixedTest();
 
 int main(){
-   H1Test();
- //    MixedTest();
+    int MixedTest();
+//    TPZMultiphasicFlowAnalysis test;
+//
+//    TPZManVector<REAL,3> x0(3,0.),x1(3,200);
+//    x1[2] = 0.;
+//    TPZManVector<int,2> nelx(2,200);
+//    nelx[0] = 200;
+//    TPZGenGrid gengrid(nelx,x0,x1);
+//    gengrid.SetElementType(EQuadrilateral);
+//    TPZGeoMesh *gmesh = new TPZGeoMesh;
+//    gmesh->SetDimension(2);
+//    gengrid.Read(gmesh);
+//    std::ofstream sim81("sim81test.txt");
+//    std::ofstream sim82("sim81test.vtk");
+//    gmesh->BuildConnectivity();
+//    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, sim82);
+//    gmesh->Print(sim81);
+//    TPZCompMesh *meshsim81 = new TPZCompMesh(gmesh);
+//
+    
+    
 }
 
 int MixedTest(){
@@ -101,7 +122,7 @@ int MixedTest(){
     
   
     TPZVec<TPZCompMesh *> fmeshvec(2);
-    fmeshvec[0]=cmesh_flux;
+    fmeshvec=cmesh_flux;
     fmeshvec[1]=cmesh_presure;
     gmesh->ResetReference();
     

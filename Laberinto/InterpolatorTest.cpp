@@ -23,14 +23,14 @@
 #include <fstream>
 #include <string.h>
 #include <sstream>
-
+#include "TPZVTKGeoMesh.h"
 #include <set>
 #include <map>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <opencv2/plot.hpp>
 #include "TRSLinearInterpolator.h"
-
+#include "pzgengrid.h"
 
 using namespace std;
 using namespace cv;
@@ -38,19 +38,49 @@ using namespace cv;
 int main()
 {
    
-TRSLinearInterpolator Test1;
-Test1.ReadData("Bg.txt");
-Test1.GetData().Print(std::cout);
-   //Test1.GetData().Print(std::cout);
-Test1.SetInterpolationType(TRSLinearInterpolator::InterpType::TLinear);
-Test1.SetLeftExtension(TRSLinearInterpolator::Extension::ESlope,0.001);
-Test1.SetRightExtension(TRSLinearInterpolator::Extension::ELinear);
-auto BgFunction(Test1.GetFunction());
+    // Creating the Geo mesh
+    TPZManVector<REAL,3> x0(3,0.),x1(3,2);
+    x1[2] = 0.;
+    TPZManVector<int,2> nelx(2,4);
+    nelx[0] = 2;
+    TPZGenGrid gengrid(nelx,x0,x1);
+    gengrid.SetElementType(ETriangle);
+    TPZGeoMesh *gmesh = new TPZGeoMesh;
+    gmesh->SetDimension(2);
+    gengrid.Read(gmesh);
     
-std::cout<<BgFunction(50000.0)<<"\n";
+    //gengrid.SetBC(TPZGeoMesh *gr, int side, int bc)
+    gengrid.SetBC(gmesh, 4, -1);
+    gengrid.SetBC(gmesh, 5, -2);
+    gengrid.SetBC(gmesh, 6, -3);
+    gengrid.SetBC(gmesh, 7, -4);
+    
+    
+    std::ofstream out("DamnerMalla.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out);
+    
+    
+    
+    
+    //gengrid.Read(gmesh,2);
+    
+    
+    
+    
+    
+    
+    
+//TRSLinearInterpolator Test1;
+//Test1.ReadData("Bg.txt");
+//Test1.GetData().Print(std::cout);
+//   //Test1.GetData().Print(std::cout);
+//Test1.SetInterpolationType(TRSLinearInterpolator::InterpType::TLinear);
+//Test1.SetLeftExtension(TRSLinearInterpolator::Extension::ESlope,0.001);
+//Test1.SetRightExtension(TRSLinearInterpolator::Extension::ELinear);
+//auto BgFunction(Test1.GetFunction());
+//
+//std::cout<<BgFunction(50000.0)<<"\n";
    
 return 0;
     
 }
-
-
