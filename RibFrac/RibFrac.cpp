@@ -51,7 +51,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "TRSLinearInterpolator.h"
+//#include "TRSLinearInterpolator.h"
 #include "TPZMatLaplacian.h"
 #include "pzpoisson3d.h"
 #include "pzbndcond.h"
