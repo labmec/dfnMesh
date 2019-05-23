@@ -106,8 +106,8 @@ void TRSRibs::DefineRibDivide(const TPZVec<int64_t> &subels){
 
 void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matid){
     int iel_index = fRibIndex;          //Element index
-    if(!gmesh->Element(iel_index)){     // If the element does not                          exist the code is going to break
-        std::cout<<"No gel asociado a Rib"<<std::endl;
+    if(!gmesh->Element(iel_index)){     // If the element does not exist the code is going to break
+        std::cout<<"No gel associated to the Rib"<<std::endl;
         DebugStop();
     }
     TPZGeoEl *gel = gmesh->Element(iel_index);

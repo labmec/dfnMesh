@@ -7,6 +7,7 @@
 //
 
 #include "TRSRibFrac.h"
+#include <math.h>
 
 // Constructor
 TRSRibFrac::TRSRibFrac(){
@@ -94,79 +95,101 @@ REAL TRSRibFrac::GetTolerance() const{
 
 bool TRSRibFrac::Check_ConsistencyData(Matrix CornerCoordinates) {
 
-// Checking vector consistency
-    int cols = CornerCoordinates.Cols();
-    int rows = CornerCoordinates.Rows();
-    Matrix ax(3,3);
-    
-    if(rows != 3){                        //Should be 3 (x y z)
-        std::cout<<"Check the input data";
-        DebugStop();
-    }
-    if(cols < 3 or cols > 4){//To form a plane it is needed at least 3 points but no more than 4
-        std::cout<<"Check the input data (number of plane points, four is enough)";
-        DebugStop();
-    }
-   Matrix MidPoint;                       //Mid points computation
-    if (!(cols ==4 && rows ==3)){
-        std::cout<<"Check the input data (number of plane points, four is enough)";
-        DebugStop();
-    }
-    MidPoint.Resize(3,cols);              //3 rows (x y z), mid points
-
-// Mid points computation for the first three points
-    for(int i=0; i<(cols-1); i++){
-        MidPoint(0,i)=(CornerCoordinates(0,i)+CornerCoordinates(0,i+1))/2;
-        MidPoint(1,i)=(CornerCoordinates(1,i)+CornerCoordinates(1,i+1))/2;
-        MidPoint(2,i)=(CornerCoordinates(2,i)+CornerCoordinates(2,i+1))/2;
-    }
-// Mid points computation for the last point
-    MidPoint(0,cols-1)=(CornerCoordinates(0,(cols)-1)+CornerCoordinates(0,0))/2;
-    MidPoint(1,cols-1)=(CornerCoordinates(1,(cols)-1)+CornerCoordinates(1,0))/2;
-    MidPoint(2,cols-1)=(CornerCoordinates(2,(cols)-1)+CornerCoordinates(2,0))/2;
-
-//Ax0 computation
-    ax(0,0)=MidPoint(0,cols-1)-MidPoint(0,1);
-    ax(1,0)=MidPoint(1,cols-1)-MidPoint(1,1);
-    ax(2,0)=MidPoint(2,cols-1)-MidPoint(2,1);
-
-//Ax1 without normalization
-    ax(0,1)=MidPoint(0,cols-2)-MidPoint(0,0);
-    ax(1,1)=MidPoint(1,cols-2)-MidPoint(1,0);
-    ax(2,1)=MidPoint(2,cols-2)-MidPoint(2,0);
-
-//Ax1 normalization
-    for (int i=0; i<3; i++) {           // i< axis number (x y z)
-        double norm=ax(i,1) - (ax(i,0))*((ax(0,0)*ax(0,1)) + (ax(1,0)*ax(1,1)) + (ax(2,0)*ax(2,1)));
-        ax(i,1)=norm;
-    }
-
-//Ax2 computation
-    ax(0,2)=ax(1,0)*ax(2,1) - ax(2,0)*ax(1,1);
-    ax(1,2)=ax(2,0)*ax(0,1) - ax(0,0)*ax(2,1);
-    ax(2,2)=ax(0,0)*ax(1,1) - ax(1,0)*ax(0,1);
-
-//Coplanar verification
-    double ver = ax(0,2)*(CornerCoordinates(0,2)-CornerCoordinates(0,0))+ax(1,2)*(CornerCoordinates(1,2)-CornerCoordinates(1,0))+ax(2,2)*(CornerCoordinates(2,2)-CornerCoordinates(2,0));
-
-//Cheks if the points are coplanar
-    if(abs(ver) > fTolerance){
-        std::cout<<"The input points are not coplanar"<<"\n"<<std::endl;
-        DebugStop();
-    }
+    // Checking vector consistency
+        int cols = CornerCoordinates.Cols();
+        int rows = CornerCoordinates.Rows();
+        Matrix ax(3,3);
         
-// After checking the consistency the date is set
-        fCornerCoordinates=CornerCoordinates;
-        fAxis=ax;
-        fCenterCo.Resize(3);
-// Center point computation
-    
-        for(int i=0; i< 4; i++){          /// i< axis number (x y z)
-            fCenterCo[0] += (1.0/cols)*fCornerCoordinates(0,i); ///Center point X axis
-            fCenterCo[1] += (1.0/cols)*fCornerCoordinates(1,i); ///Center point Y axis
-            fCenterCo[2] += (1.0/cols)*fCornerCoordinates(2,i); ///Center point Z axis
+        if(rows != 3){                        //Should be 3 (x y z)
+            std::cout<<"Check the input data";
+            DebugStop();
+        }
+        if(cols < 3 or cols > 4){//To form a plane it is needed at least 3 points but no more than 4
+            std::cout<<"Check the input data (number of plane points, four is enough)";
+            DebugStop();
+        }
+    Matrix MidPoint;                       //Mid points computation
+        if (!(cols ==4 && rows ==3)){
+            std::cout<<"Check the input data (number of plane points, four is enough)";
+            DebugStop();
+        }
+        MidPoint.Resize(3,cols);              //3 rows (x y z), mid points
+
+    // Mid points computation for the first three points
+        for(int i=0; i<(cols-1); i++){
+            MidPoint(0,i)=(CornerCoordinates(0,i)+CornerCoordinates(0,i+1))/2;
+            MidPoint(1,i)=(CornerCoordinates(1,i)+CornerCoordinates(1,i+1))/2;
+            MidPoint(2,i)=(CornerCoordinates(2,i)+CornerCoordinates(2,i+1))/2;
+        }
+    // Mid points computation for the last point
+        MidPoint(0,cols-1)=(CornerCoordinates(0,(cols)-1)+CornerCoordinates(0,0))/2;
+        MidPoint(1,cols-1)=(CornerCoordinates(1,(cols)-1)+CornerCoordinates(1,0))/2;
+        MidPoint(2,cols-1)=(CornerCoordinates(2,(cols)-1)+CornerCoordinates(2,0))/2;
+
+    //Ax0 without normalization
+        ax(0,0)=MidPoint(0,cols-1)-MidPoint(0,1);
+        ax(1,0)=MidPoint(1,cols-1)-MidPoint(1,1);
+        ax(2,0)=MidPoint(2,cols-1)-MidPoint(2,1);
+
+    //Ax1 without normalization
+        ax(0,1)=MidPoint(0,cols-2)-MidPoint(0,0);
+        ax(1,1)=MidPoint(1,cols-2)-MidPoint(1,0);
+        ax(2,1)=MidPoint(2,cols-2)-MidPoint(2,0);
+
+    //Ax0 and Ax1 normalization
+        double norm = sqrt(ax(0,0)*ax(0,0)+ax(1,0)*ax(1,0)+ax(2,0)*ax(2,0));
+        for (int i = 0; i < 3; i++) // i< axis number (x y z)
+        { 
+            //double norm = ax(i,1) - ax(i,0)*((ax(0, 0) * ax(0, 1)) + (ax(1, 0) * ax(1, 1)) + (ax(2, 0) * ax(2, 1)));
+            ax(i, 0) = ax(i, 0)/norm;
+        }
+        norm = sqrt(ax(0,1)*ax(0,1)+ax(1,1)*ax(1,1)+ax(2,1)*ax(2,1));
+        for (int i = 0; i < 3; i++) // i< axis number (x y z)
+        { 
+            //double norm = ax(i,1) - ax(i,0)*((ax(0, 0) * ax(0, 1)) + (ax(1, 0) * ax(1, 1)) + (ax(2, 0) * ax(2, 1)));
+            ax(i, 1) = ax(i, 1)/norm;
+        }
+
+    //Ax2 computation
+        ax(0,2)=ax(1,0)*ax(2,1) - ax(2,0)*ax(1,1);
+        ax(1,2)=ax(2,0)*ax(0,1) - ax(0,0)*ax(2,1);
+        ax(2,2)=ax(0,0)*ax(1,1) - ax(1,0)*ax(0,1);
+
+    //Coplanar verification
+        double ver = ax(0,2)*(CornerCoordinates(0,2)-CornerCoordinates(0,0))+ax(1,2)*(CornerCoordinates(1,2)-CornerCoordinates(1,0))+ax(2,2)*(CornerCoordinates(2,2)-CornerCoordinates(2,0));
+
+    //Checks if the points are coplanar
+        if(abs(ver) > fTolerance){
+            std::cout<<"The input points are not coplanar"<<"\n"<<std::endl;
+            DebugStop();
         }
     
+    // After checking the consistency the data is set
+            fCornerCoordinates=CornerCoordinates;
+            fAxis=ax;
+            fCenterCo.Resize(3);
+            // fMidPoints.Resize(3,cols);
+            // fMidPoints = MidPoint;
+
+    //L0 and L1 computation
+        L0 = fabs(
+                    (MidPoint(0,cols-1)-MidPoint(0,1))*ax(0,0)
+                    +(MidPoint(1,cols-1)-MidPoint(1,1))*ax(1,0)
+                    +(MidPoint(2,cols-1)-MidPoint(2,1))*ax(2,0)
+                );
+        L1 = fabs(
+                    (MidPoint(0,cols-2)-MidPoint(0,0))*ax(0,1)
+                    +(MidPoint(1,cols-2)-MidPoint(1,0))*ax(1,1)
+                    +(MidPoint(2,cols-2)-MidPoint(2,0))*ax(2,1)
+                );
+    // Center point computation
+        
+            for(int i=0; i< 4; i++){          /// i< axis number (x y z)
+                fCenterCo[0] += (1.0/cols)*fCornerCoordinates(0,i); ///Center point X axis
+                fCenterCo[1] += (1.0/cols)*fCornerCoordinates(1,i); ///Center point Y axis
+                fCenterCo[2] += (1.0/cols)*fCornerCoordinates(2,i); ///Center point Z axis
+            }
+        
     return true;
 }
 
@@ -180,7 +203,9 @@ bool TRSRibFrac::Check_ConsistencyData(Matrix CornerCoordinates) {
 bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture plane computation
-        double point_distance = (point[0] - fCenterCo[0])*(fAxis.GetVal(0,2)) + (point[1] - fCenterCo[1])*(fAxis.GetVal(1,2)) + (point[2] - fCenterCo[2])*(fAxis.GetVal(2,2));
+        double point_distance = (point[0] - fCenterCo[0])*(fAxis.GetVal(0,2)) 
+                                + (point[1] - fCenterCo[1])*(fAxis.GetVal(1,2)) 
+                                + (point[2] - fCenterCo[2])*(fAxis.GetVal(2,2));
         if (point_distance>0){
             return true;    //If the point is above de plane
         }
@@ -198,13 +223,32 @@ bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
  */
 
 bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) const{
-    
+        double dist0_p1 = fabs(
+                     (p1[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
+                    +(p1[1] - fCenterCo[1])*fAxis.GetVal(1,0)
+                    +(p1[2] - fCenterCo[2])*fAxis.GetVal(2,0));
+        if (dist0_p1>L0/2){return false;}
+        double dist1_p1 = fabs(
+                     (p1[0] - fCenterCo[0])*fAxis.GetVal(0,1)
+                    +(p1[1] - fCenterCo[1])*fAxis.GetVal(1,1)
+                    +(p1[2] - fCenterCo[2])*fAxis.GetVal(2,1));
+        if (dist1_p1>L1/2){return false;}                           //Temporary solution... should really be checking intersection point for this
+        double dist0_p2 = fabs(
+                     (p2[0] - fCenterCo[0])*fAxis.GetVal(0,0)
+                    +(p2[1] - fCenterCo[1])*fAxis.GetVal(1,0)
+                    +(p2[2] - fCenterCo[2])*fAxis.GetVal(2,0));
+        if (dist0_p2>L0/2){return false;}
+        double dist1_p2 = fabs(
+                     (p2[0] - fCenterCo[0])*fAxis.GetVal(0,1)
+                    +(p2[1] - fCenterCo[1])*fAxis.GetVal(1,1)
+                    +(p2[2] - fCenterCo[2])*fAxis.GetVal(2,1));
+        if (dist1_p2>L1/2){return false;}
         if(Check_point_above(p1) != Check_point_above(p2)){
             return true;    //Rib cut by the plane
         }
         else
         {
-            return false;    //Rib does not cut by the plane
+            return false;    //Rib is not cut by the plane
         }
 }
 
@@ -244,15 +288,17 @@ bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> inter
  */
 
 bool TRSRibFrac::RibInPlane(TPZVec<REAL> point){
-    int res;
-        res = ((point[0]-fAxis(0,2))*fCenterCo[0])+((point[1]-fAxis(1,2))*fCenterCo[1])+((point[2]-fAxis(2,2))*fCenterCo[2]);
-
-    if (res==0){
-        return true;
-    }
-    else{
-        return false;
-    }
+    double  dist = fabs(
+                    (point[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
+                    +(point[1] - fCenterCo[1])*fAxis.GetVal(1,0)
+                    +(point[2] - fCenterCo[2])*fAxis.GetVal(2,0));
+    if (dist > L0/2){return false;}
+            dist = fabs(
+                    (point[0] - fCenterCo[0])*fAxis.GetVal(0,1)
+                    +(point[1] - fCenterCo[1])*fAxis.GetVal(1,1)
+                    +(point[2] - fCenterCo[2])*fAxis.GetVal(2,1));
+    if (dist > L1/2){return false;}
+    return true;
 }
 
 /**
@@ -319,8 +365,8 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid){
  * @return Intersecting point
  */
 
-TPZVec<double> TRSRibFrac::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2){
-    
+TPZVec<double> TRSRibFrac::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
+{    
     bool check = Check_rib(p1, p2);     //Checks if the rib is cut
     TPZVec<double> Pint;
     if(check){
@@ -331,10 +377,10 @@ TPZVec<double> TRSRibFrac::CalculateIntersection(const TPZVec<REAL> &p1, const T
         for (int p=0; p<3; p++){
             Pint[p] = p2[p] + alpha*(p1[p]-p2[p]);
         }
-//        std::cout<<"Intersection point: "<<std::endl;
-//        std::cout<<Pint[0]<<std::endl;
-//        std::cout<<Pint[1]<<std::endl;
-//        std::cout<<Pint[2]<<std::endl;
+    //  std::cout<<"Intersection point: "<<std::endl;
+    //  std::cout<<Pint[0]<<std::endl;
+    //  std::cout<<Pint[1]<<std::endl;
+    //  std::cout<<Pint[2]<<std::endl;
     }
     
     return Pint;
@@ -378,18 +424,18 @@ std::map<int64_t ,TRSRibs> TRSRibFrac::GetRibs(){
 //        if(gel->Dimension()!=1){continue;}
 //        TPZFMatrix<REAL> cooridnates;
 //        gel->NodesCoordinates(cooridnates);
-//        TPZVec<REAL>p1;
+//        TPZVec<REAL>point;
 //        TPZVec<REAL>p2;
-//        p1[0]=cooridnates(0,0);
-//        p1[1]=cooridnates(1,0);
-//        p1[2]=cooridnates(2,0);
+//        point[0]=cooridnates(0,0);
+//        point[1]=cooridnates(1,0);
+//        point[2]=cooridnates(2,0);
 //        p2[0]=cooridnates(0,1);
 //        p2[1]=cooridnates(1,1);
 //        p2[2]=cooridnates(2,1);
-//        bool check = Check_rib(p1, p2);
+//        bool check = Check_rib(point, p2);
 //        if(!check){continue;}
 //        TPZVec<REAL> point;
-//        point = CalculateIntersection(p1, p2);
+//        point = CalculateIntersection(point, p2);
 //        bool check2 = RibInPlane(point);
 //        if(!check2){continue;}
 //        TRSRibs rib(iel,check2);
@@ -438,18 +484,18 @@ void TRSRibFrac::CreateSurfaces(int matID){
             }
         }
         
-        if(count == 2){
+        if(count > 0){
             TRSFace face(iel, true);
-            std::cout<<"primer rib: "<<cad[0]<<std::endl;
-            std::cout<<"segundo rib: "<<cad[1]<<std::endl;
+            std::cout<<"first rib: "<<cad[0]<<std::endl;
+            std::cout<<"second rib: "<<cad[1]<<std::endl;
             face.SetRibsInSurface(cad);
             AddFace(face);
             
             gel->SetMaterialId(10);
         }
-        if(!(count==0 or count ==2)){
-            DebugStop();
-        }
+        // if(!(count==0 or count ==2)){
+        //     DebugStop();
+        // }
     }
   
 }

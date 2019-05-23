@@ -69,15 +69,18 @@ int main(){
     
 //    Coodinates of a plane
     Matrix plane(3 ,4);
-    plane(0,0)=10;
-    plane(1,0)=-1;
-    plane(2,0)=-11;
-    plane(0,1)=10;
-    plane(1,1)=-1;
-    plane(2,1)=11;
+    plane(0,0)=10;    //x
+    plane(1,0)=10.5;    //y
+    plane(2,0)=-11;   //z
+
+    plane(0,1)=10;    //x
+    plane(1,1)=10.5;    //y
+    plane(2,1)=11;    //z
+
     plane(0,2)=-1;
     plane(1,2)=10;
     plane(2,2)=11;
+
     plane(0,3)=-1;
     plane(1,3)=10;
     plane(2,3)=-11;
@@ -192,7 +195,7 @@ int main(){
                     if(resul==true){
                         RibV.Rib(i)->SetCutsPlane(true);
                         TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
-                        //5O ES EL MATERIAL DE LOS RIBS HIJOS
+                        //5O is the material of children ribs
                         RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
                         gel->SetMaterialId(2);
                     std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
@@ -206,13 +209,13 @@ int main(){
             }
         }
     
-    std::ofstream out2("TestRibs.vtk");
+    std::ofstream out2("./TestRibs.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
-    RibV.CreateSurfaces(20);
     
     
     
-    std::ofstream out("TestSurfaces.vtk");
+    RibV.CreateSurfaces(20);  
+    std::ofstream out("./TestSurfaces.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out, true);
     
     //

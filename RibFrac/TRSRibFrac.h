@@ -35,10 +35,10 @@ private:
     /// Map of relevant intersecting ribs
     std::map<int64_t,TRSRibs> fRibs;
     
-    /// Map of relevant intersecting ribs
+    /// Map of relevant intersecting faces
     std::map<int64_t,TRSFace> fFaces;
 
-    /// Contains fracture corner points. Matrix 3xn (n is the number of corner points)
+    /// Contains fracture corner points. Matrix 3xn (n is the number of corners)
     Matrix fCornerCoordinates;
     
     /// Contains fracture axis Ax0,Ax1 and Ax2. Matrix 3x3
@@ -50,13 +50,22 @@ private:
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 
+    /// Contains fracture edges midpoints. Matrix 3xn (n is the number of edges)
+    // Matrix fMidPoints;
+
+    /// Distance between edge midpoints parallel to Ax0
+    double L0;
+
+    /// Distance between edge midpoints parallel to Ax1
+    double L1;
+
 public:
     
     /// Empty constructor
     TRSRibFrac();
     
     /// Define the fracture plane by 4 points
-    /// Points should be colinear and define a square
+    /// Points should be coplanar and define a square
     /// The matrix should be dimension 3x4, each column defining the coordinates
     /// of a point
     TRSRibFrac(const Matrix &data, TPZGeoMesh *gmesh);
@@ -133,7 +142,7 @@ public:
     /// Set a cut face
     void AddFace(TRSFace face);
     
-    /// Mao of ribs
+    /// Map of ribs
     std::map<int64_t ,TRSRibs> GetRibs();
     
     /// Create the children surfaces (not implemented yet)

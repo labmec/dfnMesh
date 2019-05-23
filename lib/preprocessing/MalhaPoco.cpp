@@ -29,7 +29,7 @@
 #include "pzgeotetrahedra.h"
 
 
-#include "pzmaterial.h"
+#include "TPZMaterial.h"
 #include "pzelasmat.h"
 #include "pzlog.h"
 
