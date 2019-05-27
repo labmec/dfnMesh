@@ -38,7 +38,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <string.h>
+#include <string>
 #include <sstream>
 
 #include <set>
@@ -67,25 +67,36 @@ using namespace std;
 int main(){
 
     
-//    Coodinates of a plane
+//    Reading coordinates of a plane from txt file
     Matrix plane(3 ,4);
-    plane(0,0)=10;    //x
-    plane(1,0)=10.5;    //y
-    plane(2,0)=-11;   //z
+    int i = 0;
+    int j = 0;
+    string value;
+    ifstream plane_file("fracture.txt");
+    if(!plane_file)
+    {
+      std::cout<<"Error reading file"<<endl;
+      DebugStop();
+    }
+    cout<<"Fracture plane defined as: \n";
+    string line;
+    while(getline(plane_file, line))
+    {
+      std::stringstream ss(line);
+      while(getline(ss, value,' ')){
+        while(value.length()==0){getline(ss,value,' ');}
+        plane(i , j) = std::stod(value);
+        cout<<plane(i,j)<<" , ";
+        j++;
+      }
+      j=0;
+      i++;
+      cout<<endl;
+    }
+    std::cout<<endl;
 
-    plane(0,1)=10;    //x
-    plane(1,1)=10.5;    //y
-    plane(2,1)=11;    //z
 
-    plane(0,2)=-1;
-    plane(1,2)=10;
-    plane(2,2)=11;
 
-    plane(0,3)=-1;
-    plane(1,3)=10;
-    plane(2,3)=-11;
-
-    
 // Creating the Geo mesh
     int dimel=16;
     TPZManVector<REAL,3> x0(3,0.),x1(3,20.0);
@@ -104,7 +115,7 @@ int main(){
 //    extend.SetElType(1);
 //    TPZGeoMesh *gmesh3d = extend.ExtendedMesh(5);
 //
-//    std::ofstream out2("3DNESH.vtk");
+//    std::ofstream out2("3DMESH.vtk");
     //TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
 
     //gmesh=gmesh3d;

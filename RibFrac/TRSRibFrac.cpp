@@ -222,33 +222,37 @@ bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
  * @return False if the rib is not cut by the fracture plane
  */
 
-bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) const{
-        double dist0_p1 = fabs(
+bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
+        //first it may be useful to perform a quick partial check to dismiss most ribs more efficiently
+        double dist0 = fabs(
                      (p1[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
                     +(p1[1] - fCenterCo[1])*fAxis.GetVal(1,0)
                     +(p1[2] - fCenterCo[2])*fAxis.GetVal(2,0));
-        if (dist0_p1>L0/2){return false;}
-        double dist1_p1 = fabs(
+        double dist1 = fabs(
                      (p1[0] - fCenterCo[0])*fAxis.GetVal(0,1)
                     +(p1[1] - fCenterCo[1])*fAxis.GetVal(1,1)
                     +(p1[2] - fCenterCo[2])*fAxis.GetVal(2,1));
-        if (dist1_p1>L1/2){return false;}                           //Temporary solution... should really be checking intersection point for this
-        double dist0_p2 = fabs(
+        if (dist0>L0/2 && dist1>L1/2){return false;}
+        
+        dist0 = fabs(
                      (p2[0] - fCenterCo[0])*fAxis.GetVal(0,0)
                     +(p2[1] - fCenterCo[1])*fAxis.GetVal(1,0)
                     +(p2[2] - fCenterCo[2])*fAxis.GetVal(2,0));
-        if (dist0_p2>L0/2){return false;}
-        double dist1_p2 = fabs(
+        dist1 = fabs(
                      (p2[0] - fCenterCo[0])*fAxis.GetVal(0,1)
                     +(p2[1] - fCenterCo[1])*fAxis.GetVal(1,1)
                     +(p2[2] - fCenterCo[2])*fAxis.GetVal(2,1));
-        if (dist1_p2>L1/2){return false;}
+        if (dist0>L0/2 && dist1>L1/2){return false;}
+        //check for infinite plane
         if(Check_point_above(p1) != Check_point_above(p2)){
-            return true;    //Rib cut by the plane
+            //Rib cut by infinite plane
+            //then calculate intersection point and check if it's within plane boundaries
+            TPZVec<REAL> intersection = CalculateIntersection(p1, p2);
+            return RibInPlane(intersection);
         }
         else
         {
-            return false;    //Rib is not cut by the plane
+            return false;    //Rib is not cut by infinite plane
         }
 }
 
@@ -271,13 +275,10 @@ bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> inter
             count++;
         }
     }
-    if(count == 2){     //Checks if a surface has 2 ribs cut
-        state = true;   //The surface needs to be divided
+    if(count > 0){     //Checks if a surface has ribs cut
+        return true;   //The surface needs to be divided
     }
-    if (!(count == 0 or count ==2)){
-        DebugStop();//Otherwise the surface does not need to be divided
-    }
-    return state;       //Returns true or false
+    return false;
 }
 
 /**
@@ -287,7 +288,7 @@ bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> inter
  * @return False if the rib is without the fracture plane
  */
 
-bool TRSRibFrac::RibInPlane(TPZVec<REAL> point){
+bool TRSRibFrac::RibInPlane(TPZVec<REAL> point) const{
     double  dist = fabs(
                     (point[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
                     +(point[1] - fCenterCo[1])*fAxis.GetVal(1,0)
@@ -323,9 +324,9 @@ bool TRSRibFrac::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
                 return true;
                 neighbour = neighbour.Neighbour();
              }
-        return false;
+             return false;
         }
-    
+    return false;    
 }
 
 /**
@@ -334,24 +335,29 @@ bool TRSRibFrac::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
   * @param Material ID number
   */
 
-void TRSRibFrac::CreateSkeletonElements(int dimension, int matid){
-    
+void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
+{
+
     int nel = fGMesh->NElements();
-    for(int iel=0; iel<nel; iel++){
+    for (int iel = 0; iel < nel; iel++)
+    {
         TPZGeoEl *gel = fGMesh->Element(iel);
         int nsides = gel->NSides();
-            for(int iside=0; iside<nsides; iside++){
-                TPZGeoElSide gelside = gel->Neighbour(iside);
-                    if (gelside.Dimension()==dimension){
-                        bool haskel = HasEqualDimensionNeighbour(gelside);
-                            if(haskel==false){
-                                int nel_mesh = fGMesh->NElements();
-                                
-                                    TPZGeoElBC(gelside,matid);
+        for (int iside = 0; iside < nsides; iside++)
+        {
+            TPZGeoElSide gelside = gel->Neighbour(iside);
+            if (gelside.Dimension() == dimension)
+            {
+                bool haskel = HasEqualDimensionNeighbour(gelside);
+                if (haskel == false)
+                {
+                    int nel_mesh = fGMesh->NElements();
 
-                                    //Setting Ribs
-                                    TRSRibs rib(nel_mesh,false);
-                                    AddRib(rib);
+                    TPZGeoElBC(gelside, matid);
+
+                    //Setting Ribs
+                    TRSRibs rib(nel_mesh, false);
+                    AddRib(rib);
                 }
             }
         }
@@ -367,21 +373,21 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid){
 
 TPZVec<double> TRSRibFrac::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
 {    
-    bool check = Check_rib(p1, p2);     //Checks if the rib is cut
+    //bool check; 
     TPZVec<double> Pint;
-    if(check){
-        double term1 = (p1[0]-p2[0])*fAxis(0,2) + (p1[1]-p2[1])*fAxis(1,2) + (p1[2]-p2[2])*fAxis(2,2);
-        double term2 = ((fCenterCo[0]-p2[0])*(fAxis(0,2))) + ((fCenterCo[1]-p2[1])*(fAxis(1,2))) + ((fCenterCo[2]-p2[2])*(fAxis(2,2)));
-        double alpha = term2/term1;
-        Pint.Resize(3);
-        for (int p=0; p<3; p++){
-            Pint[p] = p2[p] + alpha*(p1[p]-p2[p]);
-        }
+    
+    double term1 = (p1[0]-p2[0])*fAxis(0,2) + (p1[1]-p2[1])*fAxis(1,2) + (p1[2]-p2[2])*fAxis(2,2);
+    double term2 = ((fCenterCo[0]-p2[0])*(fAxis(0,2))) + ((fCenterCo[1]-p2[1])*(fAxis(1,2))) + ((fCenterCo[2]-p2[2])*(fAxis(2,2)));
+    double alpha = term2/term1;
+    Pint.Resize(3);
+    for (int p=0; p<3; p++){
+        Pint[p] = p2[p] + alpha*(p1[p]-p2[p]);
+    }
     //  std::cout<<"Intersection point: "<<std::endl;
     //  std::cout<<Pint[0]<<std::endl;
     //  std::cout<<Pint[1]<<std::endl;
     //  std::cout<<Pint[2]<<std::endl;
-    }
+    
     
     return Pint;
 }

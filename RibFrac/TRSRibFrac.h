@@ -105,7 +105,7 @@ public:
     bool Check_point_above(const TPZVec<REAL> &point) const;
     
     /// Return true if the rib intersects the plane
-    bool Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) const;
+    bool Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
     
     ///Return true if the surface needs to be divided
     bool NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) ;
@@ -114,7 +114,7 @@ public:
 private:
     
     /// Return true if the intersection point between ribs is within the plane
-    bool RibInPlane(TPZVec<REAL> point);
+    bool RibInPlane(TPZVec<REAL> point) const;
     
     /// Checks the neighbour dimension and return if it is equal
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
