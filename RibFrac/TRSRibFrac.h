@@ -113,7 +113,7 @@ public:
     
 private:
     
-    /// Return true if the intersection point between ribs is within the plane
+    /// Return true if rib/plane intersection point is within plane boundaries
     bool RibInPlane(TPZVec<REAL> point) const;
     
     /// Checks the neighbour dimension and return if it is equal

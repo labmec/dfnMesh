@@ -229,12 +229,9 @@ int main(){
     std::ofstream out("./TestSurfaces.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out, true);
     
-    //
-    
-    
-    
-    
-    
+    return 0;
+}
+
   //  RibV.HasLowerDimensionNeighbour(geoside);
 //
 //
@@ -363,6 +360,3 @@ int main(){
 //        TEST.CalculateIntersection(p1, p2);
 //
 //    }
-    
-    return 0;
-}

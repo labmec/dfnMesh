@@ -223,7 +223,7 @@ bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
  */
 
 bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
-        //first it may be useful to perform a quick partial check to dismiss most ribs more efficiently
+        //first it may be useful to perform a partial check to dismiss most ribs with less computation
         double dist0 = fabs(
                      (p1[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
                     +(p1[1] - fCenterCo[1])*fAxis.GetVal(1,0)
@@ -267,15 +267,15 @@ bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
 bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) {
     bool state= false;   //By definition does not need to be divided
     int nribs = interribs.size();
-    int count =0;
+    int nribscut =0;
     for(int i=0; i< nribs; i++){
         int index_anal = interribs[i];
         TRSRibs rib_an = fRibs[index_anal];
         if(rib_an.CutsPlane()==true){
-            count++;
+            nribscut++;
         }
     }
-    if(count > 0){     //Checks if a surface has ribs cut
+    if(nribscut > 0){     //Checks if a surface has ribs cut
         return true;   //The surface needs to be divided
     }
     return false;
@@ -372,8 +372,7 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
  */
 
 TPZVec<double> TRSRibFrac::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
-{    
-    //bool check; 
+{     
     TPZVec<double> Pint;
     
     double term1 = (p1[0]-p2[0])*fAxis(0,2) + (p1[1]-p2[1])*fAxis(1,2) + (p1[2]-p2[2])*fAxis(2,2);
@@ -466,12 +465,13 @@ void TRSRibFrac::CreateSurfaces(int matID){
     
     
     for(int iel = 0; iel<nel; iel++){
-        int count =0;
+        int nribscut =0;
         TPZManVector<int64_t,2> cad;
         cad.Resize(2);
         TPZGeoEl *gel = fGMesh->Element(iel);
         int dim = gel->Dimension();
         if (dim == 1){continue;}
+        //4 is MaterialID for fracture plane
         if(gel->MaterialId()==4){continue;}
         for(int iside=4; iside<8; iside++){
             TPZGeoElSide gelside(gel,iside);
@@ -482,28 +482,31 @@ void TRSRibFrac::CreateSurfaces(int matID){
             int rib_index = neig.Element()->Index();
             TRSRibs ribstatus = fRibs[rib_index];
             if(ribstatus.CutsPlane()==true){
-                cad[count]=rib_index;
-                count++;
-                
-                //verificar como hacer para setar despues
-                
+                cad[nribscut]=rib_index;
+                nribscut++;
             }
         }
         
-        if(count > 0){
+        if(nribscut > 0){
             TRSFace face(iel, true);
-            std::cout<<"first rib: "<<cad[0]<<std::endl;
-            std::cout<<"second rib: "<<cad[1]<<std::endl;
-            face.SetRibsInSurface(cad);
             AddFace(face);
             
-            gel->SetMaterialId(10);
+            if(nribscut == 2)
+            //mid-fracture element
+            {
+                std::cout<<"first rib: "<<cad[0]<<std::endl;
+                std::cout<<"second rib: "<<cad[1]<<std::endl;
+                face.SetRibsInSurface(cad);
+                gel->SetMaterialId(matID);
+            }
+            else if(nribscut == 1)
+            //end-fracture element
+            {
+                std::cout<<"single rib cut: "<<cad[0]<<std::endl;
+                gel->SetMaterialId(matID+15);
+            }
         }
-        // if(!(count==0 or count ==2)){
-        //     DebugStop();
-        // }
     }
-  
 }
 
 TRSRibs *TRSRibFrac::Rib(int index){
