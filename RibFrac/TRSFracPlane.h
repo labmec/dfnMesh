@@ -70,7 +70,7 @@ class TRSFracPlane
 
   private:
     /// Initializes the datastructure of the object
-    bool Check_Data_Consistency(const Matrix &CornerPoints);
+    bool Check_Data_Consistency(Matrix CornerPoints);
 };
 
 #endif /* TRSFracPlane */

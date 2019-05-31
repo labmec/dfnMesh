@@ -53,7 +53,7 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
  * @return True if the four points are coplanar and the data is consistent
  * @return False if the points are not coplanar or the data is not consistent
  */
-bool TRSFracPlane::Check_Data_Consistency(const Matrix &CornerPoints)
+bool TRSFracPlane::Check_Data_Consistency(Matrix CornerPoints)
 {
 	// Checking vector consistency
 	int cols = CornerPoints.Cols();
@@ -72,10 +72,10 @@ bool TRSFracPlane::Check_Data_Consistency(const Matrix &CornerPoints)
 			std::cout<<"Check the input data (number of plane points, four is enough)";
 			DebugStop();
 		}
-		MidPoints.Resize(3,cols);              //3 rows (x y z), mid points
 
     // Mid points computation for the first three points
 		Matrix MidPoints;
+		MidPoints.Resize(3,cols);              //3 rows (x y z), mid points
 		for(int i=0; i<(cols-1); i++){
 			MidPoints(0,i)=(CornerPoints(0,i)+CornerPoints(0,i+1))/2;
 			MidPoints(1,i)=(CornerPoints(1,i)+CornerPoints(1,i+1))/2;
@@ -140,11 +140,3 @@ Matrix TRSFracPlane::GetCorners() const{
     return fCornerPoints;
 }
 
-    // //Define corner coordinates
-    // void SetPlane(Matrix &CornerPoints);
-
-    // //Return corner coordinates
-    // Matrix GetCorners() const;
-
-    // Initializes the datastructure of the object
-    //bool Check_ConsistencyData(Matrix &CornerPoints);
