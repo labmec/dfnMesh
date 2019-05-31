@@ -16,10 +16,10 @@
 #include "pzmanvector.h"
 #include "pzstack.h"
 
-#include "pzanalysis.h"
-#include "pzfstrmatrix.h"
-#include "pzskylstrmatrix.h"
-#include "pzstepsolver.h"
+// #include "pzanalysis.h"
+// #include "pzfstrmatrix.h"
+// #include "pzskylstrmatrix.h"
+// #include "pzstepsolver.h"
 #include "pzgeopyramid.h"
 #include "TPZGeoLinear.h"
 
@@ -31,7 +31,7 @@
 
 #include "pzgengrid.h"
 
-#include <time.h>
+// #include <time.h>
 #include <stdio.h>
 
 #include <math.h>
@@ -52,12 +52,12 @@
 #include <opencv2/opencv.hpp>
 
 //#include "TRSLinearInterpolator.h"
-#include "TPZMatLaplacian.h"
-#include "pzpoisson3d.h"
-#include "pzbndcond.h"
-#include "TPZSSpStructMatrix.h"
-#include "pzskylstrmatrix.h"
-#include "TPZSkylineNSymStructMatrix.h"
+// #include "TPZMatLaplacian.h"
+// #include "pzpoisson3d.h"
+// #include "pzbndcond.h"
+// #include "TPZSSpStructMatrix.h"
+// #include "pzskylstrmatrix.h"
+// #include "TPZSkylineNSymStructMatrix.h"
 #include "TRSRibFrac.h"
 #include "TRSRibs.h"
 #include "TRSFace.h"
@@ -66,59 +66,59 @@ using namespace std;
 
 int main(){
 
-    
-//    Reading coordinates of a plane from txt file
-    Matrix plane(3 ,4);
-    int i = 0;
-    int j = 0;
-    string value;
-    ifstream plane_file("fracture.txt");
-    if(!plane_file)
-    {
-      std::cout<<"Error reading file"<<endl;
-      DebugStop();
-    }
-    cout<<"Fracture plane defined as: \n";
-    string line;
-    while(getline(plane_file, line))
-    {
-      std::stringstream ss(line);
-      while(getline(ss, value,' ')){
-        while(value.length()==0){getline(ss,value,' ');}
-        plane(i , j) = std::stod(value);
-        cout<<plane(i,j)<<" , ";
-        j++;
-      }
-      j=0;
-      i++;
-      cout<<endl;
-    }
-    std::cout<<endl;
+	//    Reading coordinates of a plane from txt file
+	Matrix plane(3, 4);
+	int i = 0;
+	int j = 0;
+	string value;
+	ifstream plane_file("fracture.txt");
+	if (!plane_file)
+	{
+		std::cout << "Error reading file" << endl;
+		DebugStop();
+	}
+	cout << "Fracture plane defined as: \n";
+	string line;
+	while (getline(plane_file, line))
+	{
+		std::stringstream ss(line);
+		while (getline(ss, value, ' '))
+		{
+			while (value.length() == 0)
+			{
+				getline(ss, value, ' ');
+			}
+			plane(i, j) = std::stod(value);
+			cout << plane(i, j) << " , ";
+			j++;
+		}
+		j = 0;
+		i++;
+		cout << endl;
+	}
+	std::cout << endl;
 
+	// Creating the Geo mesh
+	int dimel = 16;
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 20.0);
+	x1[2] = 0.;
+	TPZManVector<int, 2> nelx(2, dimel);
+	TPZGenGrid gengrid(nelx, x0, x1);
+	gengrid.SetElementType(EQuadrilateral);
+	TPZGeoMesh *gmesh = new TPZGeoMesh;
+	gmesh->SetDimension(2);
+	gengrid.Read(gmesh);
 
+	/// Mesh 3D
 
-// Creating the Geo mesh
-    int dimel=16;
-    TPZManVector<REAL,3> x0(3,0.),x1(3,20.0);
-    x1[2] = 0.;
-    TPZManVector<int,2> nelx(2,dimel);
-    TPZGenGrid gengrid(nelx,x0,x1);
-    gengrid.SetElementType(EQuadrilateral);
-    TPZGeoMesh *gmesh = new TPZGeoMesh;
-    gmesh->SetDimension(2);
-    gengrid.Read(gmesh);
-    
-    
-    /// Mesh 3D
-    
-//    TPZExtendGridDimension extend(gmesh,5);
-//    extend.SetElType(1);
-//    TPZGeoMesh *gmesh3d = extend.ExtendedMesh(5);
-//
-//    std::ofstream out2("3DMESH.vtk");
-    //TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
+	//    TPZExtendGridDimension extend(gmesh,5);
+	//    extend.SetElType(1);
+	//    TPZGeoMesh *gmesh3d = extend.ExtendedMesh(5);
+	//
+	//    std::ofstream out2("3DMESH.vtk");
+	//TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
 
-    //gmesh=gmesh3d;
+	//gmesh=gmesh3d;
     
     
   //  Rib.DivideRib(gmesh,interpoint, 100);

@@ -3,7 +3,7 @@
 // RibFrac
 //
 //  Created by JORGE ORDOÑEZ on 22/5/18.
-//  Copyright © 2018 JORGE ORDOÑEZ. All rights reserved.
+//  Modified By: Pedro Lima
 //
 
 #include "TRSRibFrac.h"
@@ -189,7 +189,7 @@ bool TRSRibFrac::Check_ConsistencyData(Matrix CornerCoordinates) {
                 fCenterCo[1] += (1.0/cols)*fCornerCoordinates(1,i); ///Center point Y axis
                 fCenterCo[2] += (1.0/cols)*fCornerCoordinates(2,i); ///Center point Z axis
             }
-        
+
     return true;
 }
 
@@ -223,41 +223,44 @@ bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
  */
 
 bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
-        //first it may be useful to perform a partial check to dismiss most ribs with less computation
-        double dist0 = fabs(
-                     (p1[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
-                    +(p1[1] - fCenterCo[1])*fAxis.GetVal(1,0)
-                    +(p1[2] - fCenterCo[2])*fAxis.GetVal(2,0));
-        double dist1 = fabs(
-                     (p1[0] - fCenterCo[0])*fAxis.GetVal(0,1)
-                    +(p1[1] - fCenterCo[1])*fAxis.GetVal(1,1)
-                    +(p1[2] - fCenterCo[2])*fAxis.GetVal(2,1));
-        if (dist0>L0/2 && dist1>L1/2){return false;}
-        
-        dist0 = fabs(
-                     (p2[0] - fCenterCo[0])*fAxis.GetVal(0,0)
-                    +(p2[1] - fCenterCo[1])*fAxis.GetVal(1,0)
-                    +(p2[2] - fCenterCo[2])*fAxis.GetVal(2,0));
-        dist1 = fabs(
-                     (p2[0] - fCenterCo[0])*fAxis.GetVal(0,1)
-                    +(p2[1] - fCenterCo[1])*fAxis.GetVal(1,1)
-                    +(p2[2] - fCenterCo[2])*fAxis.GetVal(2,1));
-        if (dist0>L0/2 && dist1>L1/2){return false;}
         //check for infinite plane
         if(Check_point_above(p1) != Check_point_above(p2)){
             //Rib cut by infinite plane
             //then calculate intersection point and check if it's within plane boundaries
             TPZVec<REAL> intersection = CalculateIntersection(p1, p2);
-            return RibInPlane(intersection);
+            return IsPointInPlane(intersection);
         }
         else
         {
-            return false;    //Rib is not cut by infinite plane
+            return false;    //Rib is not cut by plane
         }
 }
 
+
 /**
- * @brief Checks if a rib is cut by a fracture plane
+ * @brief Checks if a point is within fracture plane
+ * @param Point vector with the euclidean coordinates
+ * @return True if the point is within fracture plane
+ * @return False if the point is out of fracture plane
+ */
+
+bool TRSRibFrac::IsPointInPlane(TPZVec<REAL> &point) 
+{
+    double  dist = fabs(
+                    (point[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
+                    +(point[1] - fCenterCo[1])*fAxis.GetVal(1,0)
+                    +(point[2] - fCenterCo[2])*fAxis.GetVal(2,0));
+    if (dist > L0/2){return false;}
+            dist = fabs(
+                    (point[0] - fCenterCo[0])*fAxis.GetVal(0,1)
+                    +(point[1] - fCenterCo[1])*fAxis.GetVal(1,1)
+                    +(point[2] - fCenterCo[2])*fAxis.GetVal(2,1));
+    if (dist > L1/2){return false;}
+    return true;
+}
+
+/**
+ * @brief Checks if a surface needs to be divided
  * @param Surface index (integer)
  * @param Cut ribs vector
  * @return True if the surface needs to be divided
@@ -279,27 +282,6 @@ bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> inter
         return true;   //The surface needs to be divided
     }
     return false;
-}
-
-/**
- * @brief Checks if a rib is within the fracture plane
- * @param Point vector with the euclidean coordinates
- * @return True if the rib is within fracture plane
- * @return False if the rib is without the fracture plane
- */
-
-bool TRSRibFrac::RibInPlane(TPZVec<REAL> point) const{
-    double  dist = fabs(
-                    (point[0] - fCenterCo[0])*fAxis.GetVal(0, 0)
-                    +(point[1] - fCenterCo[1])*fAxis.GetVal(1,0)
-                    +(point[2] - fCenterCo[2])*fAxis.GetVal(2,0));
-    if (dist > L0/2){return false;}
-            dist = fabs(
-                    (point[0] - fCenterCo[0])*fAxis.GetVal(0,1)
-                    +(point[1] - fCenterCo[1])*fAxis.GetVal(1,1)
-                    +(point[2] - fCenterCo[2])*fAxis.GetVal(2,1));
-    if (dist > L1/2){return false;}
-    return true;
 }
 
 /**

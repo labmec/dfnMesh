@@ -21,7 +21,7 @@
 #include "pzgeoelbc.h"
 #include "TRSRibs.h"
 #include "TRSFace.h"
-
+#include "TRSFracPlane.h"
 //#include "tpanic.h"
 
 typedef TPZFMatrix<REAL> Matrix;
@@ -113,10 +113,10 @@ public:
     
 private:
     
-    /// Return true if rib/plane intersection point is within plane boundaries
-    bool RibInPlane(TPZVec<REAL> point) const;
+    // ----Deprecated for IsPointInPlane----
+    bool RibInPlane(TPZVec<REAL> &point) const;
     
-    /// Checks the neighbour dimension and return if it is equal
+    /// Checks neighbour's dimension and returns true if it is equal
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
    
 public:
@@ -130,13 +130,10 @@ public:
     /// Divide the one dimensional element by the intersection with the plane
     TRSRibs DivideRib(int element_index);
     
-   /// Verify if the one dimensional element intersects the plane
-    bool CheckElementIntersection(int64_t elindex);
-    
-   /// Check whether the point coordinates are within the plane
+    /// Check whether the point coordinates are within the plane
     bool IsPointInPlane(TPZVec<REAL> &point);
     
-   /// Access the ribs data structure
+    /// Access the ribs data structure
     void AddRib(TRSRibs rib);
     
     /// Set a cut face
@@ -145,7 +142,7 @@ public:
     /// Map of ribs
     std::map<int64_t ,TRSRibs> GetRibs();
     
-    /// Create the children surfaces (not implemented yet)
+    /// Create the children surfaces
     void CreateSurfaces(int matID);
     
     TRSRibs *Rib(int index);
