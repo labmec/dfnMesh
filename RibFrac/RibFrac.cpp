@@ -40,6 +40,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <cstdio>
 
 #include <set>
 #include <map>
@@ -50,7 +51,6 @@
 #include "TPZExtendGridDimension.h"
 
 #include <opencv2/opencv.hpp>
-
 //#include "TRSLinearInterpolator.h"
 // #include "TPZMatLaplacian.h"
 // #include "pzpoisson3d.h"
@@ -62,10 +62,13 @@
 #include "TRSRibs.h"
 #include "TRSFace.h"
 
+MATERIAL ID MAP
+
+
 using namespace std;
 
 int main(){
-
+  
 	//    Reading coordinates of a plane from txt file
 	Matrix plane(3, 4);
 	int i = 0;
@@ -111,14 +114,14 @@ int main(){
 
 	/// Mesh 3D
 
-	//    TPZExtendGridDimension extend(gmesh,5);
-	//    extend.SetElType(1);
-	//    TPZGeoMesh *gmesh3d = extend.ExtendedMesh(5);
-	//
-	//    std::ofstream out2("3DMESH.vtk");
-	//TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
+  TPZExtendGridDimension extend(gmesh, 1);
+  extend.SetElType(1);
+  TPZGeoMesh *gmesh3d = extend.ExtendedMesh(1);
+  gmesh=gmesh3d;
 
-	//gmesh=gmesh3d;
+  // std::ofstream out2("3DMESH.vtk");
+  // TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
+
     
     
   //  Rib.DivideRib(gmesh,interpoint, 100);
@@ -183,17 +186,18 @@ int main(){
     cords[3]=nNods+3;
     
 
-  
-    TRSRibFrac RibV(plane,gmesh);
-    RibV.CreateSkeletonElements(1, 5);
+    TRSFracPlane fracplane(plane);
+    TRSRibFrac RibV(fracplane,gmesh);
+    RibV.CreateSkeletonElements(1, 4);
     int64_t Nels = gmesh->NElements();
-    gmesh->CreateGeoElement(EQuadrilateral, cords, 4, Nels);
+    gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
     //verificar ribs cortados
     
-        for(int i=0; i< Nels; i++){
-             TPZGeoEl *gel = gmesh->Element(i);
+        for(int i = 0; i< Nels; i++){
+            TPZGeoEl *gel = gmesh->Element(i);
             int nSides = gel->NSides();
-             if(gel->Dimension()!=1){continue;}
+            //skip all elements that aren't ribs
+            if(gel->Dimension()!=1){continue;}
             for (int side=0; side< nSides; side++){
                 if(gel->NSideNodes(side)==2){
                    int64_t p1 =  gel->SideNodeIndex(side, 0);
@@ -208,7 +212,7 @@ int main(){
                         TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
                         //5O is the material of children ribs
                         RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
-                        gel->SetMaterialId(2);
+                        gel->SetMaterialId(12);
                     std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
                     }
     //                bool resul2 = RibV2.Check_rib(pp1, pp2);

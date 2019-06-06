@@ -30,34 +30,37 @@ class TRSRibFrac
 {
 private:
     /// Define a default tolerance
-    REAL fTolerance= 1.e-6;
+    REAL fTolerance = 1.e-6;
     
     /// Map of relevant intersecting ribs
     std::map<int64_t,TRSRibs> fRibs;
     
     /// Map of relevant intersecting faces
     std::map<int64_t,TRSFace> fFaces;
-
-    /// Contains fracture corner points. Matrix 3xn (n is the number of corners)
-    Matrix fCornerCoordinates;
-    
-    /// Contains fracture axis Ax0,Ax1 and Ax2. Matrix 3x3
-    Matrix fAxis ;
-    
-    /// The coordinates of the center point (should be 3 coordinates x y z )
-    TPZManVector<REAL,3> fCenterCo;
     
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 
+    /// Quadrilateral plane from a fracture
+    TRSFracPlane fracplane;
+
+    // /// Contains fracture corner points. Matrix 3xn (n is the number of corners)
+    // Matrix fCornerCoordinates;
+    
+    // /// Contains fracture axis Ax0,Ax1 and Ax2. Matrix 3x3
+    // Matrix fAxis ;
+    
+    // /// The coordinates of the center point (should be 3 coordinates x y z )
+    // TPZManVector<REAL,3> fCenterCo;
+
     /// Contains fracture edges midpoints. Matrix 3xn (n is the number of edges)
     // Matrix fMidPoints;
 
-    /// Distance between edge midpoints parallel to Ax0
-    double L0;
+    // /// Distance between edge midpoints parallel to Ax0
+    // double L0;
 
-    /// Distance between edge midpoints parallel to Ax1
-    double L1;
+    // /// Distance between edge midpoints parallel to Ax1
+    // double L1;
 
 public:
     
@@ -68,16 +71,13 @@ public:
     /// Points should be coplanar and define a square
     /// The matrix should be dimension 3x4, each column defining the coordinates
     /// of a point
-    TRSRibFrac(const Matrix &data, TPZGeoMesh *gmesh);
+    TRSRibFrac(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh);
     
     /// Copy constructor
     TRSRibFrac(const TRSRibFrac &copy);
     
     /// Assignment operator
     TRSRibFrac &operator=(const TRSRibFrac &copy);
-
-    /// Define the corner coordinates of the fracture
-    void SetPlane(Matrix plane);
     
     /// Associate the geometric mesh
     void SetgeoMesh(TPZGeoMesh *gmesh){
@@ -90,15 +90,11 @@ public:
     }
     
     /// Return the corner nodes of the fracture
-    Matrix GetPlane() const;
+    TRSFracPlane GetPlane() const;
     
     /// Modify the default tolerance
     void SetTolerance(REAL tolerance);
     REAL GetTolerance() const;
-    
-private:
-    /// Initializes the datastructure of the object
-    bool Check_ConsistencyData(Matrix CornerCoordinates);
     
 public:
     /// Return true if a point is above the fracture plane
@@ -145,6 +141,7 @@ public:
     /// Create the children surfaces
     void CreateSurfaces(int matID);
     
+    /// Pointer to rib of index 'index'
     TRSRibs *Rib(int index);
     
 };

@@ -16,7 +16,7 @@ TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
 		std::cout<<"Error at TRSFracPlane: Bad input data \n";
 		DebugStop();
 	}
-	//If data is consistent, fAxis are computed during consistency check
+	//If data is consistent, fAxis was computed during consistency check
 	fCornerPoints = CornerPoints;
     // Center point computation 
 	fCenterCo.Resize(3);
@@ -37,7 +37,6 @@ TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
 				+(fCornerPoints(1,0)-fCornerPoints(1,3))*fAxis(1,1)
 				+(fCornerPoints(2,0)-fCornerPoints(2,3))*fAxis(2,1)
 			);
-
 }
 
 // Copy constructor
@@ -45,7 +44,21 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
     fCornerPoints = copy.GetCorners();
     fAxis = copy.fAxis;
     fCenterCo = copy.fCenterCo;
+	L0 = copy.L0;
+	L1 = copy.L1;
 }
+
+
+
+ TRSFracPlane &TRSFracPlane::operator=(const TRSFracPlane &copy)
+ {
+	fCornerPoints = copy.GetCorners();
+    fAxis = copy.fAxis;
+    fCenterCo = copy.fCenterCo;
+	L0 = copy.L0;
+	L1 = copy.L1;
+	return *this;
+ }
 
 /**
  * @brief Checks the consistency of the input data
