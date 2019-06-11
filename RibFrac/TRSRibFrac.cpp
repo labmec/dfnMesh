@@ -199,7 +199,6 @@ bool TRSRibFrac::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
 
 void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
 {
-
     int nel = fGMesh->NElements();
     for (int iel = 0; iel < nel; iel++)
     {
@@ -214,12 +213,19 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
                 if (haskel == false)
                 {
                     int nel_mesh = fGMesh->NElements();
-
                     TPZGeoElBC(gelside, matid);
-
-                    //Setting Ribs
-                    TRSRibs rib(nel_mesh, false);
-                    AddRib(rib);
+                    switch (dimension)
+                    {
+                        case 1:{
+                            TRSRibs rib(nel_mesh, false);
+                            AddRib(rib);
+                            break;}
+                        case 2:{
+                            TRSFace face(nel_mesh, false);
+                            AddFace(face);
+                            break;}
+                        default: {DebugStop();}
+                    }
                 }
             }
         }
@@ -332,9 +338,9 @@ void TRSRibFrac::CreateSurfaces(int matID){
         cad.Resize(2);
         TPZGeoEl *gel = fGMesh->Element(iel);
         int dim = gel->Dimension();
-        if (dim == 1){continue;}
-        //4 is MaterialID for fracture plane
-        if(gel->MaterialId()==4){continue;}
+        if (dim != 2){continue;}
+        //40 is MaterialID for fracture plane
+        if(gel->MaterialId()==40){continue;}
         for(int iside=4; iside<8; iside++){
             TPZGeoElSide gelside(gel,iside);
             TPZGeoElSide neig = gelside.Neighbour();

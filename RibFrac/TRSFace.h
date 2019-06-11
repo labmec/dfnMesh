@@ -57,12 +57,12 @@ public:
     /// Set the subelement indices
     void DefineRibDivide(const TPZVec<int64_t> &subels);
     
-    /// Divide the given rib and generate the subelements
+    /// Divide the given surface and generate the subelements
     void DivideSurface(TPZGeoMesh *gmesh, int matid);
     
     /// Set ribs in the surface
     void SetRibsInSurface(TPZManVector<int64_t,2> ribsinsurface);
-     TPZManVector<int64_t,2> RibsInSurface();
+    TPZManVector<int64_t,2> RibsInSurface();
     
 };
 #endif /* TRSFace_h */

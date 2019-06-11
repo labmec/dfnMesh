@@ -6,10 +6,10 @@
 #include "pzgeoel.h"
 #include "pzgnode.h"
 #include "pzgmesh.h"
-#include "pzbiharmonic.h"
+//#include "pzbiharmonic.h"
 #include "pzcmesh.h"
 #include "pzintel.h"
-#include "pzcompel.h"
+//#include "pzcompel.h"
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -20,13 +20,12 @@
 // #include "pzfstrmatrix.h"
 // #include "pzskylstrmatrix.h"
 // #include "pzstepsolver.h"
-#include "pzgeopyramid.h"
+//#include "pzgeopyramid.h"
 #include "TPZGeoLinear.h"
 
-#include <TPZRefPattern.h>
 
 #include "TPZMaterial.h"
-#include "pzelasmat.h"
+//#include "pzelasmat.h"
 #include "pzlog.h"
 
 #include "pzgengrid.h"
@@ -45,6 +44,7 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <TPZRefPattern.h>
 #include "TPZRefPatternDataBase.h"
 #include "TPZRefPatternTools.h"
 #include "TPZVTKGeoMesh.h"
@@ -62,8 +62,14 @@
 #include "TRSRibs.h"
 #include "TRSFace.h"
 
-MATERIAL ID MAP
-
+//MATERIAL ID MAP
+// 1 gmesh
+// 5 uncut ribs
+// 12 also cut ribs?
+// 20 mid-fracture cut faces
+// 35 end-fracture cut faces
+// 40 Fracture plane
+// 50 ribs cut
 
 using namespace std;
 
@@ -116,31 +122,10 @@ int main(){
 
   TPZExtendGridDimension extend(gmesh, 1);
   extend.SetElType(1);
-  TPZGeoMesh *gmesh3d = extend.ExtendedMesh(1);
+  TPZGeoMesh *gmesh3d = extend.ExtendedMesh(3);
   gmesh=gmesh3d;
 
-  // std::ofstream out2("3DMESH.vtk");
-  // TPZVTKGeoMesh::PrintGMeshVTK(gmesh3d, out2, true);
 
-    
-    
-  //  Rib.DivideRib(gmesh,interpoint, 100);
-//    std::ofstream out("Skel.vtk");
-//    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out);
-//
-//
-//
-//    std::map<int64_t ,TRSRibs> RIBSJORGE = TEST.GetRibs();
-//    int nribs =RIBSJORGE.size();
-//    std::cout<<"Ribs Information:"<<std::endl;
-//    std::cout<<"n Ribs: "<<nribs<<std::endl;
-//    for(int irib=1; irib<=nribs; irib++){
-//
-//        std::cout<<"Rib Index:  "<<RIBSJORGE[irib].ElementIndex()<<std::endl;
-//         std::cout<<"Rib is cut:  "<<RIBSJORGE[irib].CutsPlane()<<std::endl;
-//           std::cout<<"Rib sub elements:   "<<RIBSJORGE[irib].SubElements()<<std::endl;
-//        std::cout<<"********************************"<<std::endl;
-//    }
     
 
     //    Setting a plane
@@ -189,8 +174,11 @@ int main(){
     TRSFracPlane fracplane(plane);
     TRSRibFrac RibV(fracplane,gmesh);
     RibV.CreateSkeletonElements(1, 4);
+    RibV.CreateSkeletonElements(2, 4);
     int64_t Nels = gmesh->NElements();
     gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
+    //std::ofstream out3("3DMESH.vtk");
+    //TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
     //verificar ribs cortados
     
         for(int i = 0; i< Nels; i++){
@@ -212,8 +200,8 @@ int main(){
                         TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
                         //5O is the material of children ribs
                         RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
-                        gel->SetMaterialId(12);
-                    std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
+                        gel->SetMaterialId(12); //delete these ribs
+                        std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
                     }
     //                bool resul2 = RibV2.Check_rib(pp1, pp2);
     //                if(resul2==true){
@@ -224,8 +212,8 @@ int main(){
             }
         }
     
-    std::ofstream out2("./TestRibs.vtk");
-    TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
+    // std::ofstream out2("./TestRibs.vtk");
+    // TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
     
     
     
