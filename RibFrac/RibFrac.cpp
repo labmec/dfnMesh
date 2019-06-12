@@ -64,12 +64,13 @@
 
 //MATERIAL ID MAP
 // 1 gmesh
+// 4 skeleton
 // 5 uncut ribs
-// 12 also cut ribs?
+// 12 ribs that will be divided
 // 20 mid-fracture cut faces
 // 35 end-fracture cut faces
 // 40 Fracture plane
-// 50 ribs cut
+// 50 divided ribs
 
 using namespace std;
 
@@ -124,6 +125,8 @@ int main(){
   extend.SetElType(1);
   TPZGeoMesh *gmesh3d = extend.ExtendedMesh(3);
   gmesh=gmesh3d;
+  //std::ofstream out3("3DMESH.vtk");
+  //TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
 
 
     
@@ -175,10 +178,15 @@ int main(){
     TRSRibFrac RibV(fracplane,gmesh);
     RibV.CreateSkeletonElements(1, 4);
     RibV.CreateSkeletonElements(2, 4);
-    int64_t Nels = gmesh->NElements();
-    gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
     //std::ofstream out3("3DMESH.vtk");
     //TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
+    // std::ofstream outtest1("meshPrint.vtk");
+    // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, outtest1, true);
+    // return 0;
+
+
+    int64_t Nels = gmesh->NElements();
+    gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
     //verificar ribs cortados
     
         for(int i = 0; i< Nels; i++){
@@ -196,7 +204,8 @@ int main(){
                     gmesh->NodeVec()[p2].GetCoordinates(pp2);
                     bool resul = RibV.Check_rib(pp1, pp2);
                     if(resul==true){
-                        RibV.Rib(i)->SetCutsPlane(true);
+                        TRSRibs rib(i, true);
+                        RibV.AddRib(rib);
                         TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
                         //5O is the material of children ribs
                         RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);

@@ -38,29 +38,14 @@ private:
     /// Map of relevant intersecting faces
     std::map<int64_t,TRSFace> fFaces;
     
+    /// Map of end-fracture faces
+    std::map<int64_t,TRSFace> fEndFaces;
+
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 
     /// Quadrilateral plane from a fracture
     TRSFracPlane fracplane;
-
-    // /// Contains fracture corner points. Matrix 3xn (n is the number of corners)
-    // Matrix fCornerCoordinates;
-    
-    // /// Contains fracture axis Ax0,Ax1 and Ax2. Matrix 3x3
-    // Matrix fAxis ;
-    
-    // /// The coordinates of the center point (should be 3 coordinates x y z )
-    // TPZManVector<REAL,3> fCenterCo;
-
-    /// Contains fracture edges midpoints. Matrix 3xn (n is the number of edges)
-    // Matrix fMidPoints;
-
-    // /// Distance between edge midpoints parallel to Ax0
-    // double L0;
-
-    // /// Distance between edge midpoints parallel to Ax1
-    // double L1;
 
 public:
     
@@ -109,7 +94,7 @@ public:
     
 private:
     
-    // ----Deprecated for IsPointInPlane----
+    /// ----Deprecated for IsPointInPlane()----
     bool RibInPlane(TPZVec<REAL> &point) const;
     
     /// Checks neighbour's dimension and returns true if it is equal
@@ -132,9 +117,12 @@ public:
     /// Access the ribs data structure
     void AddRib(TRSRibs rib);
     
-    /// Set a cut face
+    /// Access faces' data structure
     void AddFace(TRSFace face);
     
+    /// Access end-fracture faces' data structure
+    void AddEndFace(TRSFace face);
+
     /// Map of ribs
     std::map<int64_t ,TRSRibs> GetRibs();
     

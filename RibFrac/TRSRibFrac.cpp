@@ -214,18 +214,18 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
                 {
                     int nel_mesh = fGMesh->NElements();
                     TPZGeoElBC(gelside, matid);
-                    switch (dimension)
-                    {
-                        case 1:{
-                            TRSRibs rib(nel_mesh, false);
-                            AddRib(rib);
-                            break;}
-                        case 2:{
-                            TRSFace face(nel_mesh, false);
-                            AddFace(face);
-                            break;}
-                        default: {DebugStop();}
-                    }
+                    // switch (dimension)
+                    // {
+                    //     case 1:{
+                    //         TRSRibs rib(nel_mesh, false);
+                    //         AddRib(rib);
+                    //         break;}
+                    //     case 2:{
+                    //         TRSFace face(nel_mesh, false);
+                    //         AddFace(face);
+                    //         break;}
+                    //     default: {DebugStop();}
+                    // }
                 }
             }
         }
@@ -278,6 +278,16 @@ void TRSRibFrac::AddRib(TRSRibs rib){
 void TRSRibFrac::AddFace(TRSFace face){
     int index= face.ElementIndex();
     fFaces[index]=face;
+}
+
+/**
+ * @brief Add faces that are cut at the edges of fracture (using indexes)
+ * @param Face to be set
+ */
+
+void TRSRibFrac::AddEndFace(TRSFace face){
+    int index= face.ElementIndex();
+    fEndFaces[index]=face;
 }
 
 /**
@@ -355,24 +365,26 @@ void TRSRibFrac::CreateSurfaces(int matID){
             }
         }
         
-        if(nribscut > 0){
-            TRSFace face(iel, true);
-            AddFace(face);
-            
-            if(nribscut == 2)
-            //mid-fracture element
-            {
+        switch (nribscut)
+        {
+            case 0: {break;}
+            case 2:{ //mid-fracture element
+                TRSFace face(iel, true);
+                AddFace(face);
                 std::cout<<"first rib: "<<cad[0]<<std::endl;
                 std::cout<<"second rib: "<<cad[1]<<std::endl;
                 face.SetRibsInSurface(cad);
                 gel->SetMaterialId(matID);
+                break;
             }
-            else if(nribscut == 1)
-            //end-fracture element
-            {
+            case 1:{ //end-fracture element
+                TRSFace face(iel, true);
+                AddFace(face);
                 std::cout<<"single rib cut: "<<cad[0]<<std::endl;
                 gel->SetMaterialId(matID+15);
+                break;
             }
+            default: {DebugStop(); break;}
         }
     }
 }
