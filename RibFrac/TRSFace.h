@@ -14,26 +14,32 @@
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
 
-
+/// TRSFace class describes a plane and whether it's cut by a plane. It also carries a method to split itself into smaller sub faces.
 class TRSFace
 {
     
 private:
-    
+    /// Face element index whithin it's gmesh file
     int64_t fFaceIndex;
-    // Indicates whether the intersection point is in the plane
+
+    /// Indicates whether it intersects a plane
     bool fCutisInplane;
+
 //  TPZManVector<int64_t,2> fRibIndexes;
+    
+    /// Vector of it's ribs
     TPZManVector<int64_t,2> fRibs;
+
+    /// Vector of sub faces
     TPZManVector<int64_t,4> fSubFaces;
    
     
 public:
     
-    //Empty constructor
+    /// Empty constructor
     TRSFace();
     
-    //Constructor
+    /// Constructor
     TRSFace(int64_t index, bool inplane);
     
     /// Copy constructor
@@ -57,7 +63,7 @@ public:
     /// Set the subelement indices
     void DefineRibDivide(const TPZVec<int64_t> &subels);
     
-    /// Divide the given surface and generate the subelements
+    /// Divide the given surface and generate subelements
     void DivideSurface(TPZGeoMesh *gmesh, int matid);
     
     /// Set ribs in the surface

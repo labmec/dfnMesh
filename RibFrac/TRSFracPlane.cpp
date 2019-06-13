@@ -1,9 +1,9 @@
-//
-// FracPlane.hpp
-// FracPlane
-//
-// Created by Pedro Lima on 31/May/2019
-//
+/*! 
+ *  @brief     Describes a rectangular plane from four corner points.
+ *  @details   
+ *  @author    Pedro Lima
+ *  @date      2019
+ */
 
 
 #include "TRSFracPlane.h"
@@ -44,8 +44,8 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
     fCornerPoints = copy.GetCorners();
     fAxis = copy.fAxis;
     fCenterCo = copy.fCenterCo;
-	L0 = copy.L0;
-	L1 = copy.L1;
+		L0 = copy.L0;
+		L1 = copy.L1;
 }
 
 

@@ -1,10 +1,12 @@
-//
-// RibFrac.cpp
-// RibFrac
-//
-//  Created by JORGE ORDOÑEZ on 22/5/18.
-//  Modified By: Pedro Lima
-//
+/*! 
+ *  @brief     Compares a geomesh with fracture plane to find intersections.
+ *  @details   Intersection search is performed after creation of skeleton
+ * elements with TRSRibFrac::CreateSkeletonElements. Fracture plane should
+ *  be a TRSFracPlane.
+ *  @authors   Jorge Ordoñez
+ *  @authors   Pedro Lima
+ *  @date      2018-2019
+ */
 
 #include "TRSRibFrac.h"
 #include <math.h>

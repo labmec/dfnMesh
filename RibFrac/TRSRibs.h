@@ -23,7 +23,7 @@
 
 typedef TPZFMatrix<REAL> Matrix;
 
-/// TRSRibs class describes the intersection of ribs with a plane
+/// TRSRibs class describes ribs and whether it's cut by a plane. It also carries a method to split itself into two ribs at a given point.
 class TRSRibs
 {
 private:
@@ -31,7 +31,7 @@ private:
     /// The index of the one dimensional element
     int64_t fRibIndex;
 
-    /// Indicates whether the intersection point is in the plane
+    /// Indicates whether it intersects the plane
     bool fCutisInplane;
     
     /// Indices of the subelements

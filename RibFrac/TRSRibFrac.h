@@ -1,10 +1,8 @@
-//
-//  RibFrac.hpp
-//  RibFrac
-//
-//  Created by JORGE ORDOÑEZ on 22/5/18.
-//  Copyright © 2018 JORGE ORDOÑEZ. All rights reserved.
-//
+/*! 
+ *  @authors    Jorge Ordoñez
+ *  @authors   Pedro Lima
+ *  @date      2018-2019
+ */
 
 #ifndef TRSRibFrac_h
 #define TRSRibFrac_h
@@ -26,6 +24,15 @@
 
 typedef TPZFMatrix<REAL> Matrix;
 
+/*! 
+ *  @brief     Compares a geomesh with fracture plane to find intersections.
+ *  @details   Intersection search is performed after creation of skeleton
+ * elements with TRSRibFrac::CreateSkeletonElements. Fracture plane should
+ *  be a TRSFracPlane.
+ *  @authors   Jorge Ordoñez
+ *  @authors    Pedro Lima
+ *  @date      2018-2019
+ */
 class TRSRibFrac
 {
 private:
@@ -88,7 +95,7 @@ public:
     /// Return true if the rib intersects the plane
     bool Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
     
-    ///Return true if the surface needs to be divided
+    /// Return true if the surface needs to be divided
     bool NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) ;
     
     
@@ -102,10 +109,10 @@ private:
    
 public:
     
-    /// Insert element in the geometric mesh of lower dimension
+    /// Insert intersection elements of lower dimension in the geometric mesh.
     void CreateSkeletonElements(int dimension, int matid);
     
-    /// Compute the intersection point with the plane
+    /// Computes the intersection point with the plane
     TPZVec<REAL> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
     
     /// Divide the one dimensional element by the intersection with the plane

@@ -1,4 +1,4 @@
-//$Id: main.cc,v 1.21 2010-07-22 17:43:43 caju Exp $
+
 #ifdef HAVE_CONFIG_H
 #include <pz_config.h>
 #endif
@@ -184,47 +184,45 @@ int main(){
     // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, outtest1, true);
     // return 0;
 
-
     int64_t Nels = gmesh->NElements();
     gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
-    //verificar ribs cortados
-    
-        for(int i = 0; i< Nels; i++){
-            TPZGeoEl *gel = gmesh->Element(i);
-            int nSides = gel->NSides();
-            //skip all elements that aren't ribs
-            if(gel->Dimension()!=1){continue;}
-            for (int side=0; side< nSides; side++){
-                if(gel->NSideNodes(side)==2){
-                   int64_t p1 =  gel->SideNodeIndex(side, 0);
-                   int64_t p2 =  gel->SideNodeIndex(side, 1);
-                    TPZVec<REAL> pp1(3);
-                    TPZVec<REAL> pp2(3);
-                    gmesh->NodeVec()[p1].GetCoordinates(pp1);
-                    gmesh->NodeVec()[p2].GetCoordinates(pp2);
-                    bool resul = RibV.Check_rib(pp1, pp2);
-                    if(resul==true){
-                        TRSRibs rib(i, true);
-                        RibV.AddRib(rib);
-                        TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
-                        //5O is the material of children ribs
-                        RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
-                        gel->SetMaterialId(12); //delete these ribs
-                        std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
-                    }
-    //                bool resul2 = RibV2.Check_rib(pp1, pp2);
-    //                if(resul2==true){
-    //                      gel->SetMaterialId(3);
-    //                    std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 2"<<"\n";
-    //                }
-                }
-            }
+    RibV.CreateSkeletonElements(1, 4);
+    //search gmesh for cut ribs
+  
+    for(int i = 0; i< Nels; i++){
+      TPZGeoEl *gel = gmesh->Element(i);
+      int nSides = gel->NSides();
+      //skip all elements that aren't ribs
+      if(gel->Dimension()!=1){continue;}
+      for (int side=0; side< nSides; side++){
+        if(gel->NSideNodes(side)==2){
+          int64_t p1 =  gel->SideNodeIndex(side, 0);
+          int64_t p2 =  gel->SideNodeIndex(side, 1);
+          TPZVec<REAL> pp1(3);
+          TPZVec<REAL> pp2(3);
+          gmesh->NodeVec()[p1].GetCoordinates(pp1);
+          gmesh->NodeVec()[p2].GetCoordinates(pp2);
+          bool resul = RibV.Check_rib(pp1, pp2);
+          if(resul==true){
+              TRSRibs rib(i, true);
+              RibV.AddRib(rib);
+              TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
+              //5O is the material of children ribs
+              RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
+              gel->SetMaterialId(12); //delete these ribs
+              std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
+          }
+        // bool resul2 = RibV2.Check_rib(pp1, pp2);
+        // if(resul2==true){
+        //  gel->SetMaterialId(3);
+        //  std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 2"<<"\n";
+        // }
         }
+      }
+    }
     
     // std::ofstream out2("./TestRibs.vtk");
     // TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
-    
-    
     
     RibV.CreateSurfaces(20);  
     std::ofstream out("./TestSurfaces.vtk");

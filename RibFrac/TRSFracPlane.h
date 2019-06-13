@@ -1,9 +1,9 @@
-/*
-FracPlane.hpp
-FracPlane
-
-Created by Pedro Lima on 31/may/2019
-*/ 
+/*! 
+ *  @brief     Describes a rectangular plane from four corner points.
+ *  @details   
+ *  @author    Pedro Lima
+ *  @date      2019
+ */
 
 #ifndef TRSFracPlane_h
 #define TRSFracPlane_h
@@ -22,6 +22,12 @@ Created by Pedro Lima on 31/may/2019
 
 typedef TPZFMatrix<REAL> Matrix;
 
+/*! 
+ *  @brief     Describes a rectangular plane from four corner points.
+ *  @details   
+ *  @author    Pedro Lima
+ *  @date      2019
+ */
 class TRSFracPlane
 {
 
@@ -68,7 +74,6 @@ class TRSFracPlane
     /// Return corner coordinates
     Matrix GetCorners() const;
 
-    /// 
   private:
     /// Initializes the datastructure of the object
     bool Check_Data_Consistency(Matrix CornerPoints);
