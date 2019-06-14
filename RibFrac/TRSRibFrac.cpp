@@ -186,9 +186,8 @@ bool TRSRibFrac::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
         while (neighbour != gelside){
             if (neighbour.Element()->Dimension()==dimension){
                 return true;
-                neighbour = neighbour.Neighbour();
-             }
-             return false;
+            }
+            neighbour = neighbour.Neighbour();
         }
     return false;    
 }
@@ -208,27 +207,15 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
         int nsides = gel->NSides();
         for (int iside = 0; iside < nsides; iside++)
         {
+    
             TPZGeoElSide gelside = gel->Neighbour(iside);
-            if (gelside.Dimension() == dimension)
+
+            if (gelside.Dimension() != dimension){continue;}
+            bool haskel = HasEqualDimensionNeighbour(gelside);
+            if (haskel == false)
             {
-                bool haskel = HasEqualDimensionNeighbour(gelside);
-                if (haskel == false)
-                {
-                    int nel_mesh = fGMesh->NElements();
-                    TPZGeoElBC(gelside, matid);
-                    // switch (dimension)
-                    // {
-                    //     case 1:{
-                    //         TRSRibs rib(nel_mesh, false);
-                    //         AddRib(rib);
-                    //         break;}
-                    //     case 2:{
-                    //         TRSFace face(nel_mesh, false);
-                    //         AddFace(face);
-                    //         break;}
-                    //     default: {DebugStop();}
-                    // }
-                }
+                int nel_mesh = fGMesh->NElements();
+                TPZGeoElBC(gelside, matid);
             }
         }
     }
@@ -245,8 +232,12 @@ TPZVec<double> TRSRibFrac::CalculateIntersection(const TPZVec<REAL> &p1, const T
 {     
     TPZVec<double> Pint;
     
-    double term1 = (p1[0]-p2[0])*fracplane.fAxis(0,2) + (p1[1]-p2[1])*fracplane.fAxis(1,2) + (p1[2]-p2[2])*fracplane.fAxis(2,2);
-    double term2 = ((fracplane.fCenterCo[0]-p2[0])*(fracplane.fAxis(0,2))) + ((fracplane.fCenterCo[1]-p2[1])*(fracplane.fAxis(1,2))) + ((fracplane.fCenterCo[2]-p2[2])*(fracplane.fAxis(2,2)));
+    double term1 = (p1[0]-p2[0])*fracplane.fAxis(0,2) 
+                   +(p1[1]-p2[1])*fracplane.fAxis(1,2) 
+                   +(p1[2]-p2[2])*fracplane.fAxis(2,2);
+    double term2 = ((fracplane.fCenterCo[0]-p2[0])*(fracplane.fAxis(0,2))) 
+                   +((fracplane.fCenterCo[1]-p2[1])*(fracplane.fAxis(1,2)))
+                   +((fracplane.fCenterCo[2]-p2[2])*(fracplane.fAxis(2,2)));
     double alpha = term2/term1;
     Pint.Resize(3);
     for (int p=0; p<3; p++){
@@ -396,6 +387,9 @@ TRSRibs *TRSRibFrac::Rib(int index){
     return &fRibs[index];
 }
 
+void TRSRibFrac::FindEndFracturePoints(TRSFace face){
+    
+}
 
 
 

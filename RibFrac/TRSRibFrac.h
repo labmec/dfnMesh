@@ -1,5 +1,5 @@
 /*! 
- *  @authors    Jorge Ordoñez
+ *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
  *  @date      2018-2019
  */
@@ -30,7 +30,7 @@ typedef TPZFMatrix<REAL> Matrix;
  * elements with TRSRibFrac::CreateSkeletonElements. Fracture plane should
  *  be a TRSFracPlane.
  *  @authors   Jorge Ordoñez
- *  @authors    Pedro Lima
+ *  @authors   Pedro Lima
  *  @date      2018-2019
  */
 class TRSRibFrac
@@ -139,6 +139,8 @@ public:
     /// Pointer to rib of index 'index'
     TRSRibs *Rib(int index);
     
+    /// Finds intersection point of fracture boundaries and geometric mesh faces
+    void FindEndFracturePoints(TRSFace face);
 };
 
 #endif /* TRSRibFrac_h */

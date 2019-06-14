@@ -109,8 +109,8 @@ int main(){
 	std::cout << endl;
 
 	// Creating the Geo mesh
-	int dimel = 16;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 20.0);
+	int dimel = 5;
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 6.0);
 	x1[2] = 0.;
 	TPZManVector<int, 2> nelx(2, dimel);
 	TPZGenGrid gengrid(nelx, x0, x1);
@@ -176,19 +176,22 @@ int main(){
 
     TRSFracPlane fracplane(plane);
     TRSRibFrac RibV(fracplane,gmesh);
-    RibV.CreateSkeletonElements(1, 4);
-    RibV.CreateSkeletonElements(2, 4);
-    //std::ofstream out3("3DMESH.vtk");
-    //TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
-    // std::ofstream outtest1("meshPrint.vtk");
-    // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, outtest1, true);
-    // return 0;
-
+    
     int64_t Nels = gmesh->NElements();
-    gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
+    RibV.CreateSkeletonElements(2, 4);
     RibV.CreateSkeletonElements(1, 4);
+
+    gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
+    gmesh->BuildConnectivity();
+    RibV.CreateSkeletonElements(1, 40);
+    // RibV.CreateSkeletonElements(1, 40);
+    // std::ofstream out3("3DMESH.vtk");
+    // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
+
+
+
+
     //search gmesh for cut ribs
-  
     for(int i = 0; i< Nels; i++){
       TPZGeoEl *gel = gmesh->Element(i);
       int nSides = gel->NSides();
@@ -210,7 +213,7 @@ int main(){
               //5O is the material of children ribs
               RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
               gel->SetMaterialId(12); //delete these ribs
-              std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
+              // std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
           }
         // bool resul2 = RibV2.Check_rib(pp1, pp2);
         // if(resul2==true){
