@@ -113,7 +113,7 @@ public:
     void CreateSkeletonElements(int dimension, int matid);
     
     /// Computes the intersection point with the plane
-    TPZVec<REAL> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
+    TPZVec<REAL> CalculateIntersection(TRSFracPlane &plane, const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
     
     /// Divide the one dimensional element by the intersection with the plane
     TRSRibs DivideRib(int element_index);
@@ -140,7 +140,7 @@ public:
     TRSRibs *Rib(int index);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    void FindEndFracturePoints(TRSFace face);
+    TPZVec<REAL> FindEndFracturePoint(TRSFace face);
 };
 
 #endif /* TRSRibFrac_h */

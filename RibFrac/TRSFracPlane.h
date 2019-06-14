@@ -31,7 +31,7 @@ typedef TPZFMatrix<REAL> Matrix;
 class TRSFracPlane
 {
 
-  public:
+  private:
     /// Contains fracture corner points. Matrix 3xn (n is the number of corners)
     Matrix fCornerPoints;
     
@@ -48,10 +48,10 @@ class TRSFracPlane
     // Matrix fMidPoints;
 
     /// Distance between edge midpoints parallel to Ax0
-    double L0;
+    double fL0;
 
     /// Distance between edge midpoints parallel to Ax1
-    double L1;
+    double fL1;
 
     /// Define a default tolerance
     REAL fTolerance = 1.e-6;
@@ -70,6 +70,21 @@ class TRSFracPlane
 
     // /// Define corner coordinates
     // void SetPlane(Matrix &CornerPoints);
+
+    /// Get axis
+    REAL axis(int row, int col){return fAxis(row,col);}
+
+    /// Get matrix with axis 0, 1 and 2 on each column
+    Matrix axis() const {return fAxis;}
+
+    /// Get center coordinates
+    TPZManVector<REAL, 3> center() const {return fCenterCo;}
+
+    /// Get plane's dimension parallel to Ax0
+    double L0() {return fL0;}
+
+    /// Get plane's dimension parallel to Ax1
+    double L1(){return fL1;}
 
     /// Return corner coordinates
     Matrix GetCorners() const;

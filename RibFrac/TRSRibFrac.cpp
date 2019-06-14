@@ -84,9 +84,9 @@ REAL TRSRibFrac::GetTolerance() const{
 bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture plane computation
-        double point_distance = (point[0] - fracplane.fCenterCo[0])*((fracplane.fAxis).GetVal(0,2)) 
-                                + (point[1] - fracplane.fCenterCo[1])*((fracplane.fAxis).GetVal(1,2)) 
-                                + (point[2] - fracplane.fCenterCo[2])*((fracplane.fAxis).GetVal(2,2));
+        double point_distance = (point[0] - fracplane.center()[0])*((fracplane.axis()).GetVal(0,2)) 
+                                + (point[1] - fracplane.center()[1])*((fracplane.axis()).GetVal(1,2)) 
+                                + (point[2] - fracplane.center()[2])*((fracplane.axis()).GetVal(2,2));
         if (point_distance>0){
             return true;    //If the point is above de plane
         }
@@ -108,7 +108,7 @@ bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
         if(Check_point_above(p1) != Check_point_above(p2)){
             //Rib cut by infinite plane
             //then calculate intersection point and check if it's within plane boundaries
-            TPZVec<REAL> intersection = CalculateIntersection(p1, p2);
+            TPZVec<REAL> intersection = CalculateIntersection(fracplane, p1, p2);
             return IsPointInPlane(intersection);
         }
         else
@@ -128,15 +128,15 @@ bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
 bool TRSRibFrac::IsPointInPlane(TPZVec<REAL> &point) 
 {
     double  dist = fabs(
-                    (point[0] - fracplane.fCenterCo[0])*(fracplane.fAxis).GetVal(0, 0)
-                    +(point[1] - fracplane.fCenterCo[1])*(fracplane.fAxis).GetVal(1,0)
-                    +(point[2] - fracplane.fCenterCo[2])*(fracplane.fAxis).GetVal(2,0));
-    if (dist > fracplane.L0/2){return false;}
+                    (point[0] - fracplane.center()[0])*(fracplane.axis()).GetVal(0, 0)
+                    +(point[1] - fracplane.center()[1])*(fracplane.axis()).GetVal(1,0)
+                    +(point[2] - fracplane.center()[2])*(fracplane.axis()).GetVal(2,0));
+    if (dist > fracplane.L0()/2){return false;}
             dist = fabs(
-                    (point[0] - fracplane.fCenterCo[0])*(fracplane.fAxis).GetVal(0,1)
-                    +(point[1] - fracplane.fCenterCo[1])*(fracplane.fAxis).GetVal(1,1)
-                    +(point[2] - fracplane.fCenterCo[2])*(fracplane.fAxis).GetVal(2,1));
-    if (dist > fracplane.L1/2){return false;}
+                    (point[0] - fracplane.center()[0])*(fracplane.axis()).GetVal(0,1)
+                    +(point[1] - fracplane.center()[1])*(fracplane.axis()).GetVal(1,1)
+                    +(point[2] - fracplane.center()[2])*(fracplane.axis()).GetVal(2,1));
+    if (dist > fracplane.L1()/2){return false;}
     // std::cout<<" ___ ";
     return true;
 }
@@ -175,20 +175,20 @@ bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> inter
 
 bool TRSRibFrac::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
     
-        int dimension = gelside.Dimension();
-    
-        if (gelside.Element()->Dimension() == dimension){
+    int dimension = gelside.Dimension();
+
+    if (gelside.Element()->Dimension() == dimension){
+        return true;
+    }
+
+    TPZGeoElSide neighbour = gelside.Neighbour();
+
+    while (neighbour != gelside){
+        if (neighbour.Element()->Dimension()==dimension){
             return true;
         }
-    
-        TPZGeoElSide neighbour = gelside.Neighbour();
-    
-        while (neighbour != gelside){
-            if (neighbour.Element()->Dimension()==dimension){
-                return true;
-            }
-            neighbour = neighbour.Neighbour();
-        }
+        neighbour = neighbour.Neighbour();
+    }
     return false;    
 }
 
@@ -204,10 +204,13 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
     for (int iel = 0; iel < nel; iel++)
     {
         TPZGeoEl *gel = fGMesh->Element(iel);
+
+        //40 is material id for fracture plane, and it should only have an 1D skeleton.
+        if(gel->MaterialId() == 40 && dimension == 2){continue;}
+
         int nsides = gel->NSides();
         for (int iside = 0; iside < nsides; iside++)
         {
-    
             TPZGeoElSide gelside = gel->Neighbour(iside);
 
             if (gelside.Dimension() != dimension){continue;}
@@ -228,16 +231,16 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
  * @return Intersecting point
  */
 
-TPZVec<double> TRSRibFrac::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
+TPZVec<double> TRSRibFrac::CalculateIntersection(TRSFracPlane &plane, const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
 {     
     TPZVec<double> Pint;
-    
-    double term1 = (p1[0]-p2[0])*fracplane.fAxis(0,2) 
-                   +(p1[1]-p2[1])*fracplane.fAxis(1,2) 
-                   +(p1[2]-p2[2])*fracplane.fAxis(2,2);
-    double term2 = ((fracplane.fCenterCo[0]-p2[0])*(fracplane.fAxis(0,2))) 
-                   +((fracplane.fCenterCo[1]-p2[1])*(fracplane.fAxis(1,2)))
-                   +((fracplane.fCenterCo[2]-p2[2])*(fracplane.fAxis(2,2)));
+
+    double term1 = (p1[0]-p2[0])*plane.axis(0,2) 
+                   +(p1[1]-p2[1])*plane.axis(1,2) 
+                   +(p1[2]-p2[2])*plane.axis(2,2);
+    double term2 = ((plane.center()[0]-p2[0])*(plane.axis(0,2))) 
+                   +((plane.center()[1]-p2[1])*(plane.axis(1,2)))
+                   +((plane.center()[2]-p2[2])*(plane.axis(2,2)));
     double alpha = term2/term1;
     Pint.Resize(3);
     for (int p=0; p<3; p++){
@@ -289,41 +292,7 @@ void TRSRibFrac::AddEndFace(TRSFace face){
  */
 
 std::map<int64_t ,TRSRibs> TRSRibFrac::GetRibs(){
-    return fRibs;
-    
-    /// Needs to be add to a method for further coding
-    
-    
-//    int nel=fGMesh->NElements();
-//    for(int iel=0; iel<nel; iel++){
-//        TPZGeoEl *gel = fGMesh->Element(iel);
-//        if(gel->Dimension()!=1){continue;}
-//        TPZFMatrix<REAL> coordinates;
-//        gel->NodesCoordinates(coordinates);
-//        TPZVec<REAL>point;
-//        TPZVec<REAL>p2;
-//        point[0]=coordinates(0,0);
-//        point[1]=coordinates(1,0);
-//        point[2]=coordinates(2,0);
-//        p2[0]=coordinates(0,1);
-//        p2[1]=coordinates(1,1);
-//        p2[2]=coordinates(2,1);
-//        bool check = Check_rib(point, p2);
-//        if(!check){continue;}
-//        TPZVec<REAL> point;
-//        point = CalculateIntersection(point, p2);
-//        bool check2 = RibInPlane(point);
-//        if(!check2){continue;}
-//        TRSRibs rib(iel,check2);
-//        TPZVec<TPZGeoEl *> gels;
-//
-//      //  rib.DivideRib(fGMesh, 100);
-//        gel->SetMaterialId(100);
-//
-//
-//    }
-    
-    
+    return fRibs;    
 }
 
 /**
@@ -332,6 +301,7 @@ std::map<int64_t ,TRSRibs> TRSRibFrac::GetRibs(){
  */
 
 void TRSRibFrac::CreateSurfaces(int matID){
+    //CreateSkeletonElements(fGMesh->Dimension(), 4);
     int nel = fGMesh->NElements();
     
     
@@ -372,9 +342,12 @@ void TRSRibFrac::CreateSurfaces(int matID){
             }
             case 1:{ //end-fracture element
                 TRSFace face(iel, true);
-                AddFace(face);
+                AddEndFace(face);
                 std::cout<<"single rib cut: "<<cad[0]<<std::endl;
                 gel->SetMaterialId(matID+15);
+                //Is the fracture skeleton built? Code will break otherwise.
+                //TPZVec<REAL> coords = FindEndFracturePoint(face);
+                TPZGeoNode ipoint;
                 break;
             }
             default: {DebugStop(); break;}
@@ -387,32 +360,7 @@ TRSRibs *TRSRibFrac::Rib(int index){
     return &fRibs[index];
 }
 
-void TRSRibFrac::FindEndFracturePoints(TRSFace face){
-    
+TPZVec<REAL> TRSRibFrac::FindEndFracturePoint(TRSFace face){
+
 }
 
-
-
-
-
-
-
-
-
-///**
-// * @brief Divide a rib
-// * @param Index of the element to divide (for the moment just ribs)
-// * @param Point of intersection
-// * @return Intersecting point
-// */
-//
-////void TRSRibFrac::DivideRib(int element_index, TPZVec<double> intersection){
-////    TPZGeoEl *gel = fmesh->Element(element_index);
-////    if(gel->Dimension()!=1){
-////        std::cout<<"Just ribs now!";
-////        DebugStop();
-////    }
-////    TPZVec<TPZGeoEl *> gelsDivide(2);
-////    gel->Divide(gelsDivide);
-////
-////}

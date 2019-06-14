@@ -27,12 +27,12 @@ TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
 	}
 
     //L0 and L1 computation
-	L0 = fabs(
+	fL0 = fabs(
 				(fCornerPoints(0,0)-fCornerPoints(0,1))*fAxis(0,0)
 				+(fCornerPoints(1,0)-fCornerPoints(1,1))*fAxis(1,0)
 				+(fCornerPoints(2,0)-fCornerPoints(2,1))*fAxis(2,0)
 			);
-	L1 = fabs(
+	fL1 = fabs(
 				(fCornerPoints(0,0)-fCornerPoints(0,3))*fAxis(0,1)
 				+(fCornerPoints(1,0)-fCornerPoints(1,3))*fAxis(1,1)
 				+(fCornerPoints(2,0)-fCornerPoints(2,3))*fAxis(2,1)
@@ -41,11 +41,11 @@ TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
 
 // Copy constructor
 TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
-    fCornerPoints = copy.GetCorners();
-    fAxis = copy.fAxis;
-    fCenterCo = copy.fCenterCo;
-		L0 = copy.L0;
-		L1 = copy.L1;
+	fCornerPoints = copy.GetCorners();
+	fAxis = copy.fAxis;
+	fCenterCo = copy.fCenterCo;
+	fL0 = copy.fL0;
+	fL1 = copy.fL1;
 }
 
 
@@ -53,10 +53,10 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
  TRSFracPlane &TRSFracPlane::operator=(const TRSFracPlane &copy)
  {
 	fCornerPoints = copy.GetCorners();
-    fAxis = copy.fAxis;
-    fCenterCo = copy.fCenterCo;
-	L0 = copy.L0;
-	L1 = copy.L1;
+	fAxis = copy.fAxis;
+	fCenterCo = copy.fCenterCo;
+	fL0 = copy.fL0;
+	fL1 = copy.fL1;
 	return *this;
  }
 

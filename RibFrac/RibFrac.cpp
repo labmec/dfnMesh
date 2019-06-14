@@ -76,6 +76,27 @@ using namespace std;
 
 int main(){
   
+  // Creating the Geo mesh
+	int dimel = 5;
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 6.0);
+	x1[2] = 0.;
+	TPZManVector<int, 2> nelx(2, dimel);
+	TPZGenGrid gengrid(nelx, x0, x1);
+	gengrid.SetElementType(EQuadrilateral);
+	TPZGeoMesh *gmesh = new TPZGeoMesh;
+	gmesh->SetDimension(2);
+	gengrid.Read(gmesh);
+
+	/// Mesh 3D
+
+  TPZExtendGridDimension extend(gmesh, 1);
+  extend.SetElType(1);
+  TPZGeoMesh *gmesh3d = extend.ExtendedMesh(3);
+  gmesh = gmesh3d;
+  //std::ofstream out3("3DMESH.vtk");
+  //TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
+
+
 	//    Reading coordinates of a plane from txt file
 	Matrix plane(3, 4);
 	int i = 0;
@@ -107,28 +128,6 @@ int main(){
 		cout << endl;
 	}
 	std::cout << endl;
-
-	// Creating the Geo mesh
-	int dimel = 5;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 6.0);
-	x1[2] = 0.;
-	TPZManVector<int, 2> nelx(2, dimel);
-	TPZGenGrid gengrid(nelx, x0, x1);
-	gengrid.SetElementType(EQuadrilateral);
-	TPZGeoMesh *gmesh = new TPZGeoMesh;
-	gmesh->SetDimension(2);
-	gengrid.Read(gmesh);
-
-	/// Mesh 3D
-
-  TPZExtendGridDimension extend(gmesh, 1);
-  extend.SetElType(1);
-  TPZGeoMesh *gmesh3d = extend.ExtendedMesh(3);
-  gmesh=gmesh3d;
-  //std::ofstream out3("3DMESH.vtk");
-  //TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
-
-
     
 
     //    Setting a plane
@@ -184,7 +183,7 @@ int main(){
     gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
     gmesh->BuildConnectivity();
     RibV.CreateSkeletonElements(1, 40);
-    // RibV.CreateSkeletonElements(1, 40);
+    
     // std::ofstream out3("3DMESH.vtk");
     // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
 
@@ -209,10 +208,11 @@ int main(){
           if(resul==true){
               TRSRibs rib(i, true);
               RibV.AddRib(rib);
-              TPZVec<REAL> ipoint =RibV.CalculateIntersection(pp1, pp2);
+              TPZVec<REAL> ipoint =RibV.CalculateIntersection(fracplane, pp1, pp2);
               //5O is the material of children ribs
               RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
-              gel->SetMaterialId(12); //delete these ribs
+              gel->SetMaterialId(12); //when will we delete these ribs? //gmesh->DeleteElement(gel,i);
+              
               // std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
           }
         // bool resul2 = RibV2.Check_rib(pp1, pp2);
