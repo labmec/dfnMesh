@@ -37,7 +37,7 @@ class TRSRibFrac
 {
 private:
     /// Define a default tolerance
-    REAL fTolerance = 1.e-6;
+    REAL fTolerance = 1.e-4;
     
     /// Map of relevant intersecting ribs
     std::map<int64_t,TRSRibs> fRibs;
@@ -53,6 +53,7 @@ private:
 
     /// Quadrilateral plane from a fracture
     TRSFracPlane fracplane;
+
 
 public:
     
@@ -119,7 +120,7 @@ public:
     TRSRibs DivideRib(int element_index);
     
     /// Check whether the point coordinates are within the plane
-    bool IsPointInPlane(TPZVec<REAL> &point);
+    bool IsPointInPlane(TRSFracPlane &plane, TPZVec<REAL> &point);
     
     /// Access the ribs data structure
     void AddRib(TRSRibs rib);

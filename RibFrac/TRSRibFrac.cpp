@@ -1,7 +1,7 @@
 /*! 
  *  @brief     Compares a geomesh with fracture plane to find intersections.
  *  @details   Intersection search is performed after creation of skeleton
- * elements with TRSRibFrac::CreateSkeletonElements. Fracture plane should
+ *  elements with TRSRibFrac::CreateSkeletonElements. Fracture plane should
  *  be a TRSFracPlane.
  *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
@@ -25,7 +25,7 @@ TRSRibFrac::TRSRibFrac(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
 
 // Copy constructor
 TRSRibFrac::TRSRibFrac(const TRSRibFrac &copy){
-    fGMesh=copy.fGMesh;
+    fGMesh = copy.fGMesh;
 
     fTolerance = copy.GetTolerance();
     fRibs = copy.fRibs;
@@ -36,7 +36,7 @@ TRSRibFrac::TRSRibFrac(const TRSRibFrac &copy){
 
 // Assignment operator
 TRSRibFrac &TRSRibFrac::operator=(const TRSRibFrac &copy){
-    fGMesh=copy.fGMesh;
+    fGMesh = copy.fGMesh;
 
     fTolerance = copy.GetTolerance();
     fRibs = copy.fRibs;
@@ -84,9 +84,9 @@ REAL TRSRibFrac::GetTolerance() const{
 bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture plane computation
-        double point_distance = (point[0] - fracplane.center()[0])*((fracplane.axis()).GetVal(0,2)) 
-                                + (point[1] - fracplane.center()[1])*((fracplane.axis()).GetVal(1,2)) 
-                                + (point[2] - fracplane.center()[2])*((fracplane.axis()).GetVal(2,2));
+        double point_distance = (point[0] - fracplane.GetCorners()(0,1))*((fracplane.axis()).GetVal(0,2)) 
+                                +(point[1] - fracplane.GetCorners()(1,1))*((fracplane.axis()).GetVal(1,2)) 
+                                +(point[2] - fracplane.GetCorners()(2,1))*((fracplane.axis()).GetVal(2,2));
         if (point_distance>0){
             return true;    //If the point is above de plane
         }
@@ -104,41 +104,70 @@ bool TRSRibFrac::Check_point_above(const TPZVec<REAL> &point) const{
  */
 
 bool TRSRibFrac::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
-        //check for infinite plane
-        if(Check_point_above(p1) != Check_point_above(p2)){
-            //Rib cut by infinite plane
-            //then calculate intersection point and check if it's within plane boundaries
-            TPZVec<REAL> intersection = CalculateIntersection(fracplane, p1, p2);
-            return IsPointInPlane(intersection);
-        }
-        else
-        {
-            return false;    //Rib is not cut by plane
-        }
+    //check for infinite plane
+    if(Check_point_above(p1) != Check_point_above(p2)){
+        //Rib cut by infinite plane
+        //then calculate intersection point and check if it's within plane boundaries
+        TPZVec<REAL> intersection = CalculateIntersection(fracplane, p1, p2);
+        return IsPointInPlane(fracplane, intersection);
+    }
+    else
+    {
+        return false;    //Rib is not cut by plane
+    }
 }
 
 
 /**
  * @brief Checks if a point is within fracture plane
+ * @details Enumeration of corner points should follow standard PZ topology, where 
+ * corner nodes are numbered counter-clockwise. (This condition will automatically be 
+ * met for triangles, but not always for quadrilaterals)
  * @param Point vector with the euclidean coordinates
  * @return True if the point is within fracture plane
  * @return False if the point is out of fracture plane
  */
 
-bool TRSRibFrac::IsPointInPlane(TPZVec<REAL> &point) 
+bool TRSRibFrac::IsPointInPlane(TRSFracPlane &plane, TPZVec<REAL> &point) 
 {
-    double  dist = fabs(
-                    (point[0] - fracplane.center()[0])*(fracplane.axis()).GetVal(0, 0)
-                    +(point[1] - fracplane.center()[1])*(fracplane.axis()).GetVal(1,0)
-                    +(point[2] - fracplane.center()[2])*(fracplane.axis()).GetVal(2,0));
-    if (dist > fracplane.L0()/2){return false;}
-            dist = fabs(
-                    (point[0] - fracplane.center()[0])*(fracplane.axis()).GetVal(0,1)
-                    +(point[1] - fracplane.center()[1])*(fracplane.axis()).GetVal(1,1)
-                    +(point[2] - fracplane.center()[2])*(fracplane.axis()).GetVal(2,1));
-    if (dist > fracplane.L1()/2){return false;}
+    int ncorners = plane.GetCorners().Cols();
+    REAL area = 0;
+    for(int i = 0; i<ncorners-1; i++){
+        //Define vectors from the point to a each one of a pair of corners
+        TPZManVector<REAL, 3> ax1(3);
+            ax1[0] = plane.GetCorners()(0,i) - point[0];
+            ax1[1] = plane.GetCorners()(1,i) - point[1];
+            ax1[2] = plane.GetCorners()(2,i) - point[2];
+        TPZManVector<REAL, 3> ax2(3);
+            ax2[0] = plane.GetCorners()(0,i+1) - point[0];
+            ax2[1] = plane.GetCorners()(1,i+1) - point[1];
+            ax2[2] = plane.GetCorners()(2,i+1) - point[2];
+        //Compute area of trangle outlined by these vectors
+        REAL temp = pow(ax1[1]*ax2[2] - ax1[2]*ax2[1],2);
+            temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
+            temp += pow(ax1[0]*ax2[1] - ax1[1]*ax2[0],2);
+                  
+        area += sqrt(temp)/2;
+    }
+    //Then, once more to get initial and last corners
+    TPZManVector<REAL, 3> ax1(3);
+        ax1[0] = plane.GetCorners()(0,ncorners-1) - point[0];
+        ax1[1] = plane.GetCorners()(1,ncorners-1) - point[1];
+        ax1[2] = plane.GetCorners()(2,ncorners-1) - point[2];
+    TPZManVector<REAL, 3> ax2(3);
+        ax2[0] = plane.GetCorners()(0,0) - point[0];
+        ax2[1] = plane.GetCorners()(1,0) - point[1];
+        ax2[2] = plane.GetCorners()(2,0) - point[2];
+    REAL temp = pow(ax1[1]*ax2[2] - ax1[2]*ax2[1],2);
+        temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
+        temp += pow(ax1[0]*ax2[1] - ax1[1]*ax2[0],2);
+                
+    area += sqrt(temp)/2;
     // std::cout<<" ___ ";
-    return true;
+
+    //If total computed area is equal to the plane's area, then
+    //point is in plane
+    return( fabs(area-plane.area()) < fTolerance );
 }
 
 /**
@@ -230,18 +259,17 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
  * @param Point below the plane (vector)
  * @return Intersecting point
  */
-
 TPZVec<double> TRSRibFrac::CalculateIntersection(TRSFracPlane &plane, const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
 {     
     TPZVec<double> Pint;
 
-    double term1 = (p1[0]-p2[0])*plane.axis(0,2) 
+    double term1 = ((plane.GetCorners()(0,1)-p2[0])*(plane.axis(0,2))) 
+                   +((plane.GetCorners()(1,1)-p2[1])*(plane.axis(1,2)))
+                   +((plane.GetCorners()(2,1)-p2[2])*(plane.axis(2,2)));
+    double term2 = (p1[0]-p2[0])*plane.axis(0,2) 
                    +(p1[1]-p2[1])*plane.axis(1,2) 
                    +(p1[2]-p2[2])*plane.axis(2,2);
-    double term2 = ((plane.center()[0]-p2[0])*(plane.axis(0,2))) 
-                   +((plane.center()[1]-p2[1])*(plane.axis(1,2)))
-                   +((plane.center()[2]-p2[2])*(plane.axis(2,2)));
-    double alpha = term2/term1;
+    double alpha = term1/term2;
     Pint.Resize(3);
     for (int p=0; p<3; p++){
         Pint[p] = p2[p] + alpha*(p1[p]-p2[p]);
@@ -250,8 +278,7 @@ TPZVec<double> TRSRibFrac::CalculateIntersection(TRSFracPlane &plane, const TPZV
     //  std::cout<<Pint[0]<<std::endl;
     //  std::cout<<Pint[1]<<std::endl;
     //  std::cout<<Pint[2]<<std::endl;
-    
-    
+        
     return Pint;
 }
 
@@ -360,7 +387,7 @@ TRSRibs *TRSRibFrac::Rib(int index){
     return &fRibs[index];
 }
 
-TPZVec<REAL> TRSRibFrac::FindEndFracturePoint(TRSFace face){
+// TPZVec<REAL> TRSRibFrac::FindEndFracturePoint(TRSFace face){
 
-}
+// }
 

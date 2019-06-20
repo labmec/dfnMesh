@@ -18,34 +18,14 @@ TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
 	}
 	//If data is consistent, fAxis was computed during consistency check
 	fCornerPoints = CornerPoints;
-    // Center point computation 
-	fCenterCo.Resize(3);
-	for(int i=0; i< 4; i++){          /// i< axis number (x y z)
-		fCenterCo[0] += (1./4)*fCornerPoints(0,i); ///Center point X axis
-		fCenterCo[1] += (1./4)*fCornerPoints(1,i); ///Center point Y axis
-		fCenterCo[2] += (1./4)*fCornerPoints(2,i); ///Center point Z axis
-	}
-
-    //L0 and L1 computation
-	fL0 = fabs(
-				(fCornerPoints(0,0)-fCornerPoints(0,1))*fAxis(0,0)
-				+(fCornerPoints(1,0)-fCornerPoints(1,1))*fAxis(1,0)
-				+(fCornerPoints(2,0)-fCornerPoints(2,1))*fAxis(2,0)
-			);
-	fL1 = fabs(
-				(fCornerPoints(0,0)-fCornerPoints(0,3))*fAxis(0,1)
-				+(fCornerPoints(1,0)-fCornerPoints(1,3))*fAxis(1,1)
-				+(fCornerPoints(2,0)-fCornerPoints(2,3))*fAxis(2,1)
-			);
+	ComputeArea();
 }
 
 // Copy constructor
 TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
 	fCornerPoints = copy.GetCorners();
 	fAxis = copy.fAxis;
-	fCenterCo = copy.fCenterCo;
-	fL0 = copy.fL0;
-	fL1 = copy.fL1;
+	fArea = copy.area();
 }
 
 
@@ -54,9 +34,7 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
  {
 	fCornerPoints = copy.GetCorners();
 	fAxis = copy.fAxis;
-	fCenterCo = copy.fCenterCo;
-	fL0 = copy.fL0;
-	fL1 = copy.fL1;
+	fArea = copy.area();
 	return *this;
  }
 
@@ -77,71 +55,49 @@ bool TRSFracPlane::Check_Data_Consistency(Matrix CornerPoints)
 		std::cout<<"Check the input data";
 		DebugStop();
 	}
-	if(cols < 3 or cols > 4){//To form a plane it is needed at least 3 points but no more than 4
+	if(cols < 3 || cols > 4){//To form a plane it is needed at least 3 points but no more than 4
 		std::cout<<"Check the input data (number of corner points, four is enough)";
 		DebugStop();
 	}
-		if (!(cols ==4 && rows ==3)){
-			std::cout<<"Check the input data (number of plane points, four is enough)";
-			DebugStop();
-		}
 
-    // Mid points computation for the first three points
-		Matrix MidPoints;
-		MidPoints.Resize(3,cols);              //3 rows (x y z), mid points
-		for(int i=0; i<(cols-1); i++){
-			MidPoints(0,i)=(CornerPoints(0,i)+CornerPoints(0,i+1))/2;
-			MidPoints(1,i)=(CornerPoints(1,i)+CornerPoints(1,i+1))/2;
-			MidPoints(2,i)=(CornerPoints(2,i)+CornerPoints(2,i+1))/2;
-		}
-    // Mid points computation for the last point
-		MidPoints(0,cols-1)=(CornerPoints(0,(cols)-1)+CornerPoints(0,0))/2;
-		MidPoints(1,cols-1)=(CornerPoints(1,(cols)-1)+CornerPoints(1,0))/2;
-		MidPoints(2,cols-1)=(CornerPoints(2,(cols)-1)+CornerPoints(2,0))/2;
+	//Ax0 without normalization
+	ax(0,0) = CornerPoints(0,0) - CornerPoints(0,1);
+	ax(1,0) = CornerPoints(1,0) - CornerPoints(1,1);
+	ax(2,0) = CornerPoints(2,0) - CornerPoints(2,1);
 
-    //Ax0 without normalization
-		ax(0,0)=MidPoints(0,cols-1)-MidPoints(0,1);
-		ax(1,0)=MidPoints(1,cols-1)-MidPoints(1,1);
-		ax(2,0)=MidPoints(2,cols-1)-MidPoints(2,1);
+	//Ax1 without normalization
+	ax(0,1) = CornerPoints(0,2) - CornerPoints(0,1);
+	ax(1,1) = CornerPoints(1,2) - CornerPoints(1,1);
+	ax(2,1) = CornerPoints(2,2) - CornerPoints(2,1);
 
-    //Ax1 without normalization
-		ax(0,1)=MidPoints(0,cols-2)-MidPoints(0,0);
-		ax(1,1)=MidPoints(1,cols-2)-MidPoints(1,0);
-		ax(2,1)=MidPoints(2,cols-2)-MidPoints(2,0);
-
-    //Ax0 and Ax1 normalization
-		double norm = sqrt(ax(0,0)*ax(0,0)+ax(1,0)*ax(1,0)+ax(2,0)*ax(2,0));
-		for (int i = 0; i < 3; i++) // i< axis number (x y z)
-		{ 
-			ax(i, 0) = ax(i, 0)/norm;
-		}
-		norm = sqrt(ax(0,1)*ax(0,1)+ax(1,1)*ax(1,1)+ax(2,1)*ax(2,1));
-		for (int i = 0; i < 3; i++) // i< axis number (x y z)
-		{ 
-			ax(i, 1) = ax(i, 1)/norm;
-		}
-
-    //Ax2 computation
-        ax(0,2)=ax(1,0)*ax(2,1) - ax(2,0)*ax(1,1);
-        ax(1,2)=ax(2,0)*ax(0,1) - ax(0,0)*ax(2,1);
-        ax(2,2)=ax(0,0)*ax(1,1) - ax(1,0)*ax(0,1);
-
-    //Coplanar verification
-		//scalar product between Ax2 and <P3-P1> should be zero
-		double ver = ax(0,2)*(CornerPoints(0,3)-CornerPoints(0,1))
-					+ax(1,2)*(CornerPoints(1,3)-CornerPoints(1,1))
-					+ax(2,2)*(CornerPoints(2,3)-CornerPoints(2,1));
-		//Checks if the points are coplanar
-		if(abs(ver) > fTolerance){
-			std::cout<<"The input points are not coplanar"<<"\n"<<std::endl;
-			DebugStop();
-		}
-		
-    // After checking the consistency the axis can be set
-        fAxis = ax; // Set those in here to avoid re-computation in the constructor
+	//Ax2 computation
+	ax(0,2) = ax(1,0)*ax(2,1) - ax(2,0)*ax(1,1);
+	ax(1,2) = ax(2,0)*ax(0,1) - ax(0,0)*ax(2,1);
+	ax(2,2) = ax(0,0)*ax(1,1) - ax(1,0)*ax(0,1);
 	
-	// fMidPoints.Resize(3,cols);
-	// fMidPoints = MidPoints;
+	//Ax2 normalization
+	REAL norm = sqrt(ax(0,2)*ax(0,2)+ax(1,2)*ax(1,2)+ax(2,2)*ax(2,2));
+	for (int i = 0; i < 3; i++) // i< axis number (x y z)
+	{ 
+		ax(i, 2) = ax(i, 2)/norm;
+	}
+
+	//Coplanarity verification for quadrilateral plane
+	if(cols == 4){
+		//scalar product between Ax2 and <P3-P1> should be zero
+		REAL ver = ax(0,2)*(CornerPoints(0,3)-CornerPoints(0,1))
+							+ax(1,2)*(CornerPoints(1,3)-CornerPoints(1,1))
+							+ax(2,2)*(CornerPoints(2,3)-CornerPoints(2,1));
+		//Checks if points are coplanar
+		if(abs(ver) > fTolerance){
+			std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
+			DebugStop();
+		}
+	}
+
+	// After checking the consistency the axis can be set
+	fAxis = ax; // Set those in here to avoid re-computation in the constructor
+
 	return true;
 }
 
@@ -153,3 +109,51 @@ Matrix TRSFracPlane::GetCorners() const{
     return fCornerPoints;
 }
 
+/**
+ * @brief Computes area of plane
+ * @details Enumeration of corner points should follow standard PZ topology, where 
+ * corner nodes are numbered counter-clockwise. (This condition will automatically be 
+ * met for triangles, but not always for quadrilaterals)
+ */
+void TRSFracPlane::ComputeArea(){
+	int npoints = fCornerPoints.Cols();
+	switch(npoints){
+		case 3:{ //triangle
+			//Area equals half the norm of the cross product between two edges
+			REAL temp = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
+					temp += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
+					temp += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
+						
+			fArea = sqrt(temp)/2;
+			break;
+		}
+		case 4:{ //quadrilateral
+			//Area equals the sum of two triangles that fill the quadrilateral
+			//Compute area of first triangle
+			REAL temp1 = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
+					temp1 += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
+					temp1 += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
+					
+					temp1 = sqrt(temp1)/2;
+			
+			//Define vectors that correspond to the other two edges (as opposed to Ax0 and Ax1)
+			TPZManVector<REAL, 3> ax3(3);
+					ax3[0] = fCornerPoints(0,1) - fCornerPoints(0,2);
+					ax3[1] = fCornerPoints(1,1) - fCornerPoints(1,2);
+					ax3[2] = fCornerPoints(2,1) - fCornerPoints(2,2);
+			TPZManVector<REAL, 3> ax4(3);
+					ax4[0] = fCornerPoints(0,3) - fCornerPoints(0,2);
+					ax4[1] = fCornerPoints(1,3) - fCornerPoints(1,2);
+					ax4[2] = fCornerPoints(2,3) - fCornerPoints(2,2);
+			//Compute area of second triangle
+			REAL temp2 = pow(ax3[1]*ax4[2] - ax3[2]*ax4[1],2);
+						temp2 += pow(ax3[2]*ax4[0] - ax3[0]*ax4[2],2);
+						temp2 += pow(ax3[0]*ax4[1] - ax3[1]*ax4[0],2);
+						temp2 = sqrt(temp2)/2;
+
+			fArea = temp1 + temp2;
+			break;
+		}
+		default:{std::cout<<"Plane is not triangle nor quadrilateral? \n";DebugStop();}
+	}
+}

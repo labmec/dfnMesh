@@ -23,8 +23,10 @@
 typedef TPZFMatrix<REAL> Matrix;
 
 /*! 
- *  @brief     Describes a rectangular plane from four corner points.
- *  @details   
+ *  @brief     Describes a triangular or quadrilateral plane from it's corner points.
+ *  @details   Order of corner points should follow standard PZ topology, where corner
+ * nodes are numbered counter-clockwise. (This condition will automatically be met for 
+ * triangles, but not always for quadrilaterals)
  *  @author    Pedro Lima
  *  @date      2019
  */
@@ -38,20 +40,21 @@ class TRSFracPlane
     /// Contains fracture axis Ax0,Ax1 and Ax2. Matrix 3x3
     Matrix fAxis ;
     
-    /// The coordinates of the center point (should be 3 coordinates x y z )
-    TPZManVector<REAL,3> fCenterCo;
+   //  /// The coordinates of the center point (should be 3 coordinates x y z )
+   //  TPZManVector<REAL,3> fCenterCo;
     
     // /// Pointer for a geometric mesh
     // TPZGeoMesh *fGMesh;
 
-    // /// Contains fracture edges midpoints. Matrix 3xn (n is the number of edges)
-    // Matrix fMidPoints;
 
-    /// Distance between edge midpoints parallel to Ax0
-    double fL0;
+    /// Area of plane
+    double fArea;
 
-    /// Distance between edge midpoints parallel to Ax1
-    double fL1;
+   //  /// Distance between edge midpoints parallel to Ax0
+   //  double fL0;
+
+   //  /// Distance between edge midpoints parallel to Ax1
+   //  double fL1;
 
     /// Define a default tolerance
     REAL fTolerance = 1.e-6;
@@ -59,7 +62,7 @@ class TRSFracPlane
     /// Empty constructor
     TRSFracPlane(){};
 
-    /// Define plane from 4 corner points. Matrix should be 3x4 (3 coordinates for each of the 4 corner points)
+    /// Define plane from 3 to 4 corner points. Matrix should be 3xN (3 coordinates for each of the N corner points)
     TRSFracPlane(const Matrix &CornerPoints);
 
     /// Copy constructor
@@ -68,26 +71,32 @@ class TRSFracPlane
     /// Assignment operator
     TRSFracPlane &operator=(const TRSFracPlane &copy);
 
-    // /// Define corner coordinates
-    // void SetPlane(Matrix &CornerPoints);
+    /// Define corner coordinates
+    void SetPlane(Matrix &CornerPoints);
 
-    /// Get axis
+    /// axis(i, j) returns component i of axis j
     REAL axis(int row, int col){return fAxis(row,col);}
 
     /// Get matrix with axis 0, 1 and 2 on each column
     Matrix axis() const {return fAxis;}
 
-    /// Get center coordinates
-    TPZManVector<REAL, 3> center() const {return fCenterCo;}
+   //  /// Get center coordinates
+   //  TPZManVector<REAL, 3> center() const {return fCenterCo;}
 
-    /// Get plane's dimension parallel to Ax0
-    double L0() {return fL0;}
+   //  /// Get plane's dimension parallel to Ax0
+   //  double L0() {return fL0;}
 
-    /// Get plane's dimension parallel to Ax1
-    double L1(){return fL1;}
+   //  /// Get plane's dimension parallel to Ax1
+   //  double L1() {return fL1;}
 
     /// Return corner coordinates
     Matrix GetCorners() const;
+
+    /// Return area of plane
+    double area() const {return fArea;}
+
+    /// Compute area of plane
+    void ComputeArea();
 
   private:
     /// Initializes the datastructure of the object

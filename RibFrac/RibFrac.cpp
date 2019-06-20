@@ -6,31 +6,22 @@
 #include "pzgeoel.h"
 #include "pzgnode.h"
 #include "pzgmesh.h"
-//#include "pzbiharmonic.h"
 #include "pzcmesh.h"
 #include "pzintel.h"
-//#include "pzcompel.h"
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
 #include "pzmanvector.h"
 #include "pzstack.h"
 
-// #include "pzanalysis.h"
-// #include "pzfstrmatrix.h"
-// #include "pzskylstrmatrix.h"
-// #include "pzstepsolver.h"
-//#include "pzgeopyramid.h"
 #include "TPZGeoLinear.h"
 
 
 #include "TPZMaterial.h"
-//#include "pzelasmat.h"
-#include "pzlog.h"
+// #include "pzlog.h"
 
 #include "pzgengrid.h"
 
-// #include <time.h>
 #include <stdio.h>
 
 #include <math.h>
@@ -51,13 +42,6 @@
 #include "TPZExtendGridDimension.h"
 
 #include <opencv2/opencv.hpp>
-//#include "TRSLinearInterpolator.h"
-// #include "TPZMatLaplacian.h"
-// #include "pzpoisson3d.h"
-// #include "pzbndcond.h"
-// #include "TPZSSpStructMatrix.h"
-// #include "pzskylstrmatrix.h"
-// #include "TPZSkylineNSymStructMatrix.h"
 #include "TRSRibFrac.h"
 #include "TRSRibs.h"
 #include "TRSFace.h"
@@ -233,6 +217,21 @@ int main(){
     
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   //  RibV.HasLowerDimensionNeighbour(geoside);
 //
