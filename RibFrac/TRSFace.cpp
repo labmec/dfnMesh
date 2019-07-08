@@ -24,7 +24,7 @@ TRSFace::TRSFace(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fCutisInplane = copy.fCutisInplane;
     fFaceIndex = copy.fFaceIndex;
-    fSubFaces = copy.fSubFaces;
+    // fSubFaces = copy.fSubFaces;
 }
 
 /// Assignment operator
@@ -32,7 +32,7 @@ TRSFace &TRSFace::operator=(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fCutisInplane = copy.fCutisInplane;
     fFaceIndex = copy.fFaceIndex;
-    fSubFaces = copy.fSubFaces;
+    // fSubFaces = copy.fSubFaces;
     return *this;
 }
 
@@ -52,15 +52,15 @@ bool TRSFace::CutsPlane() const{
     return fCutisInplane;
 }
 
-/// Return the subelement indices
-TPZVec<int64_t> TRSFace::SubElements() const{
-    return fSubFaces;
-}
+// /// Return the subelement indices
+// TPZVec<int64_t> TRSFace::SubElements() const{
+//     return fSubFaces;
+// }
 
-/// Set the subelement indices
-void TRSFace::DefineRibDivide(const TPZVec<int64_t> &subels){
-    fSubFaces = subels;
-}
+// /// Set the subelement indices
+// void TRSFace::DefineRibDivide(const TPZVec<int64_t> &subels){
+//     fSubFaces = subels;
+// }
 
 ///
 ///Divide the given rib and generate the subelements

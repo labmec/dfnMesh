@@ -31,16 +31,16 @@ TRSRibs::TRSRibs(int64_t index, bool inplane){
 TRSRibs::TRSRibs(const TRSRibs &copy){
     fRibIndex=copy.fRibIndex;
     fCutisInplane=copy.fCutisInplane;
-    fSubElements = copy.fSubElements;
+    // fSubElements = copy.fSubElements;
 }
 
 // Assignment operator
 TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
     fRibIndex=copy.fRibIndex;
     fCutisInplane=copy.fCutisInplane;
-    if(copy.fSubElements.size()==2){
-    fSubElements = copy.fSubElements;
-    }
+    // if(copy.fSubElements.size()==2){
+    // fSubElements = copy.fSubElements;
+    // }
     return *this;
 }
 
@@ -80,22 +80,22 @@ bool TRSRibs::CutsPlane() const{
     return fCutisInplane;
 }
 
-/**
- * @return An index (geomesh associated) subelements vector
- */
+// /**
+//  * @return An index (geomesh associated) subelements vector
+//  */
 
-TPZVec<int64_t> TRSRibs::SubElements() const{
-    return fSubElements;
-}
+// TPZVec<int64_t> TRSRibs::SubElements() const{
+//     return fSubElements;
+// }
 
-/**
- * @brief Define the divided rib
- * @param Subelements vector
- */
+// /**
+//  * @brief Define the divided rib
+//  * @param Subelements vector
+//  */
 
-void TRSRibs::DefineRibDivide(const TPZVec<int64_t> &subels){
-    fSubElements = subels;
-}
+// void TRSRibs::DefineRibDivide(const TPZVec<int64_t> &subels){
+//     fSubElements = subels;
+// }
 
 /**
  * @brief Divide a 1D element into 2 1D elements (for now)
@@ -124,14 +124,14 @@ void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matid){
     cornerindexes[0] = gel->NodeIndex(0);   //Setting the new rib node as node 0
     cornerindexes[1] = nNods;               //Setting the new rib node as node 1
     gmesh->CreateGeoElement(EOned, cornerindexes, matid, nelements);
-    fSubElements.Resize(2);
-    fSubElements[0]=nelements;              //Setting a new subelement
+    // fSubElements.Resize(2);
+    // fSubElements[0]=nelements;              //Setting a new subelement
     
     cornerindexes[0] = nNods;              //Setting a second new rib node as node 0
     cornerindexes[1] = gel->NodeIndex(1);  //Setting a second new rib node as node 1
     nelements++;
      gmesh->CreateGeoElement(EOned, cornerindexes, matid, nelements);
-    fSubElements[1]=nelements;              //Setting a second new subelement
+    // fSubElements[1]=nelements;              //Setting a second new subelement
 }
 
 

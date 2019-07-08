@@ -18,7 +18,7 @@
 
 
 #include "TPZMaterial.h"
-// #include "pzlog.h"
+#include "pzlog.h"
 
 #include "pzgengrid.h"
 
@@ -54,7 +54,7 @@
 // 20 mid-fracture cut faces
 // 35 end-fracture cut faces
 // 40 Fracture plane
-// 50 divided ribs
+// 50 children ribs
 
 using namespace std;
 
@@ -82,27 +82,44 @@ int main(){
 
 
 	//    Reading coordinates of a plane from txt file
-	Matrix plane(3, 4);
+	string value;
+  int npoints = 0;
+	string line;
+  // count number of corners
+  while (npoints == 0){
+    ifstream plane_file("fracture.txt");
+    if (!plane_file)
+    {
+      std::cout << "Error reading file" << endl;
+      DebugStop();
+    }
+    getline(plane_file, line);
+		std::stringstream ss(line);
+		while (getline(ss, value, ' '))
+		{
+			while (value.length() == 0){getline(ss, value, ' ');}
+      npoints++;
+		}
+  }
+  // then read points
+	Matrix plane(3, npoints);
+  MElementType elemtype;
+  switch (npoints)
+  {
+    case 3: elemtype = ETriangle; break;
+    case 4: elemtype = EQuadrilateral; break;
+    default: DebugStop();
+  }
 	int i = 0;
 	int j = 0;
-	string value;
-	ifstream plane_file("fracture.txt");
-	if (!plane_file)
-	{
-		std::cout << "Error reading file" << endl;
-		DebugStop();
-	}
 	cout << "Fracture plane defined as: \n";
-	string line;
+  ifstream plane_file("fracture.txt");
 	while (getline(plane_file, line))
 	{
 		std::stringstream ss(line);
 		while (getline(ss, value, ' '))
 		{
-			while (value.length() == 0)
-			{
-				getline(ss, value, ' ');
-			}
+			while (value.length() == 0){getline(ss, value, ' ');}
 			plane(i, j) = std::stod(value);
 			cout << plane(i, j) << " , ";
 			j++;
@@ -112,51 +129,27 @@ int main(){
 		cout << endl;
 	}
 	std::cout << endl;
-    
 
-    //    Setting a plane
-    
-    TPZVec<int64_t> nodeindices;
-    gmesh->Element(0)->GetNodeIndices(nodeindices);
-    
-
-    TPZVec<TPZGeoNode> Node(4);
-    TPZVec<REAL> nod(3,0);
-    nod[0]=plane(0,0);
-    nod[1]=plane(1,0);
-    nod[2]=plane(2,0);
-    Node[0].SetCoord(nod);
-    
-    nod[0]=plane(0,1);
-    nod[1]=plane(1,1);
-    nod[2]=plane(2,1);
-    Node[1].SetCoord(nod);
-    
-    nod[0]=plane(0,2);
-    nod[1]=plane(1,2);
-    nod[2]=plane(2,2);
-    Node[2].SetCoord(nod);
-    
-    nod[0]=plane(0,3);
-    nod[1]=plane(1,3);
-    nod[2]=plane(2,3);
-    Node[3].SetCoord(nod);
+    //    Setting a plane in geometric mesh
     
     int nNods= gmesh->NNodes();
-    
-    gmesh->NodeVec().Resize(nNods+4);
-    gmesh->NodeVec()[nNods]=Node[0];
-    gmesh->NodeVec()[nNods+1]=Node[1];
-    gmesh->NodeVec()[nNods+2]=Node[2];
-    gmesh->NodeVec()[nNods+3]=Node[3];
-    
-    TPZVec<int64_t> cords(4);
-    cords[0]=nNods;
-    cords[1]=nNods+1;
-    cords[2]=nNods+2;
-    cords[3]=nNods+3;
-    
+    gmesh->NodeVec().Resize(nNods+plane.Cols());
+    TPZVec<TPZGeoNode> corners(plane.Cols());
+    TPZVec<int64_t> CornerIndexes(plane.Cols());
+    for(i=0; i<plane.Cols(); i++){
+      TPZVec<REAL> nod(3,i);
+      nod[0]=plane(0,i);
+      nod[1]=plane(1,i);
+      nod[2]=plane(2,i);
+      
+      corners[i].SetCoord(nod);
+      
+      gmesh->NodeVec()[nNods+i]=corners[i];
 
+      CornerIndexes[i]=nNods+i;
+    }
+
+    //  Construction of fracplane and RibFrac
     TRSFracPlane fracplane(plane);
     TRSRibFrac RibV(fracplane,gmesh);
     
@@ -164,46 +157,46 @@ int main(){
     RibV.CreateSkeletonElements(2, 4);
     RibV.CreateSkeletonElements(1, 4);
 
-    gmesh->CreateGeoElement(EQuadrilateral, cords, 40, Nels);
-    gmesh->BuildConnectivity();
-    RibV.CreateSkeletonElements(1, 40);
+    gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, Nels);
     
     // std::ofstream out3("3DMESH.vtk");
     // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
 
+    //Create FracPlane's skeleton
+    gmesh->BuildConnectivity();
+    RibV.CreateSkeletonElements(1, 40);
 
 
 
     //search gmesh for cut ribs
-    for(int i = 0; i< Nels; i++){
-      TPZGeoEl *gel = gmesh->Element(i);
+    for(int iel = 0; iel< Nels; iel++){
+      TPZGeoEl *gel = gmesh->Element(iel);
       int nSides = gel->NSides();
       //skip all elements that aren't ribs
       if(gel->Dimension()!=1){continue;}
       for (int side=0; side< nSides; side++){
         if(gel->NSideNodes(side)==2){
+
+          // turn this into a fracplane method
           int64_t p1 =  gel->SideNodeIndex(side, 0);
           int64_t p2 =  gel->SideNodeIndex(side, 1);
           TPZVec<REAL> pp1(3);
           TPZVec<REAL> pp2(3);
           gmesh->NodeVec()[p1].GetCoordinates(pp1);
           gmesh->NodeVec()[p2].GetCoordinates(pp2);
-          bool resul = RibV.Check_rib(pp1, pp2);
+          bool resul = fracplane.Check_rib(pp1, pp2);
+          // turn this into a fracplane method
+
           if(resul==true){
-              TRSRibs rib(i, true);
-              RibV.AddRib(rib);
-              TPZVec<REAL> ipoint =RibV.CalculateIntersection(fracplane, pp1, pp2);
-              //5O is the material of children ribs
-              RibV.Rib(i)->DivideRib(gmesh, ipoint, 50);
-              gel->SetMaterialId(12); //when will we delete these ribs? //gmesh->DeleteElement(gel,i);
-              
-              // std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
+            TRSRibs rib(iel, true);
+            RibV.AddRib(rib);
+            TPZVec<REAL> ipoint = fracplane.CalculateIntersection(pp1, pp2);
+            //5O is the material of children ribs
+            RibV.Rib(iel)->DivideRib(gmesh, ipoint, 50);
+            gel->SetMaterialId(12); //when will we delete these ribs? //gmesh->DeleteElement(gel,iel);
+            
+            // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
           }
-        // bool resul2 = RibV2.Check_rib(pp1, pp2);
-        // if(resul2==true){
-        //  gel->SetMaterialId(3);
-        //  std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 2"<<"\n";
-        // }
         }
       }
     }
@@ -211,7 +204,11 @@ int main(){
     // std::ofstream out2("./TestRibs.vtk");
     // TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
     
+
+    //Create surfaces cut by fracture
     RibV.CreateSurfaces(20);  
+
+    //Print result
     std::ofstream out("./TestSurfaces.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out, true);
     
@@ -279,14 +276,14 @@ int main(){
 //    gmesh->NodeVec()[nNods2+2]=Node2[2];
 //    gmesh->NodeVec()[nNods2+3]=Node2[3];
 //
-//    TPZVec<int64_t> cords2(4);
-//    cords2[0]=nNods2;
-//    cords2[1]=nNods2+1;
-//    cords2[2]=nNods2+2;
-//    cords2[3]=nNods2+3;
+//    TPZVec<int64_t> CornerIndexes2(4);
+//    CornerIndexes2[0]=nNods2;
+//    CornerIndexes2[1]=nNods2+1;
+//    CornerIndexes2[2]=nNods2+2;
+//    CornerIndexes2[3]=nNods2+3;
 //
 //    int64_t Nels2 = gmesh->NElements();
-//    gmesh->CreateGeoElement(EQuadrilateral, cords2, 4, Nels2);
+//    gmesh->CreateGeoElement(EQuadrilateral, CornerIndexes2, 4, Nels2);
 //
 //
 //    TRSRibFrac RibV2(plane);

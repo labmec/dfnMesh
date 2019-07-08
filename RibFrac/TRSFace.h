@@ -25,14 +25,19 @@ private:
     /// Indicates whether it intersects a plane
     bool fCutisInplane;
 
-//  TPZManVector<int64_t,2> fRibIndexes;
+    /// Indicates which ribs are cut
+    TPZManVector<bool,4> fRibStatus;
     
-    /// Vector of it's ribs
+    /// Vector of cut ribs
     TPZManVector<int64_t,2> fRibs;
 
     /// Vector of sub faces
-    TPZManVector<int64_t,4> fSubFaces;
-   
+    // TPZManVector<int64_t,5> fSubFaces;
+    
+    /** Intersection points (for faces that are cut at boundaries of 
+    * fracture, the off-rib point will be the second point)
+    */
+    TPZManVector<TPZManVector<REAL,3>,2> fIntersection;
     
 public:
     

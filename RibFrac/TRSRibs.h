@@ -35,8 +35,11 @@ private:
     bool fCutisInplane;
     
     /// Indices of the subelements
-    TPZManVector<int64_t,2> fSubElements;
+    // TPZManVector<int64_t,2> fSubElements;
     
+    /// Intersection point
+    TPZManVector<REAL,3> fIntersection;
+
 public:
     /// Empty constructor
     TRSRibs();

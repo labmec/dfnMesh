@@ -39,19 +39,19 @@ private:
     /// Define a default tolerance
     REAL fTolerance = 1.e-4;
     
-    /// Map of relevant intersecting ribs
+    /// Map of intersected ribs
     std::map<int64_t,TRSRibs> fRibs;
     
-    /// Map of relevant intersecting faces
+    /// Map of intersected faces
     std::map<int64_t,TRSFace> fFaces;
     
     /// Map of end-fracture faces
-    std::map<int64_t,TRSFace> fEndFaces;
+    // std::map<int64_t,TRSFace> fEndFaces;
 
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 
-    /// Quadrilateral plane from a fracture
+    /// Bounded plane from a fracture
     TRSFracPlane fracplane;
 
 
@@ -90,11 +90,7 @@ public:
     REAL GetTolerance() const;
     
 public:
-    /// Return true if a point is above the fracture plane
-    bool Check_point_above(const TPZVec<REAL> &point) const;
     
-    /// Return true if the rib intersects the plane
-    bool Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
     
     /// Return true if the surface needs to be divided
     bool NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) ;
@@ -113,14 +109,8 @@ public:
     /// Insert intersection elements of lower dimension in the geometric mesh.
     void CreateSkeletonElements(int dimension, int matid);
     
-    /// Computes the intersection point with the plane
-    TPZVec<REAL> CalculateIntersection(TRSFracPlane &plane, const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
-    
     /// Divide the one dimensional element by the intersection with the plane
     TRSRibs DivideRib(int element_index);
-    
-    /// Check whether the point coordinates are within the plane
-    bool IsPointInPlane(TRSFracPlane &plane, TPZVec<REAL> &point);
     
     /// Access the ribs data structure
     void AddRib(TRSRibs rib);
