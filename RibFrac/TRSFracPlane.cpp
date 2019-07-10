@@ -246,16 +246,16 @@ bool TRSFracPlane::IsPointInPlane(TPZVec<REAL> &point)
 {
     int ncorners = fCornerPoints.Cols();
     REAL area = 0;
-    for(int i = 0; i<ncorners-1; i++){
+    for(int i = 0; i<ncorners; i++){
         //Define vectors from the point to a each one of a pair of corners
         TPZManVector<REAL, 3> ax1(3);
             ax1[0] = fCornerPoints(0,i) - point[0];
             ax1[1] = fCornerPoints(1,i) - point[1];
             ax1[2] = fCornerPoints(2,i) - point[2];
         TPZManVector<REAL, 3> ax2(3);
-            ax2[0] = fCornerPoints(0,i+1) - point[0];
-            ax2[1] = fCornerPoints(1,i+1) - point[1];
-            ax2[2] = fCornerPoints(2,i+1) - point[2];
+            ax2[0] = fCornerPoints(0,(i+1)%ncorners) - point[0];
+            ax2[1] = fCornerPoints(1,(i+1)%ncorners) - point[1];
+            ax2[2] = fCornerPoints(2,(i+1)%ncorners) - point[2];
         //Compute area of trangle outlined by these vectors
         REAL temp = pow(ax1[1]*ax2[2] - ax1[2]*ax2[1],2);
             temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
@@ -263,20 +263,7 @@ bool TRSFracPlane::IsPointInPlane(TPZVec<REAL> &point)
                   
         area += sqrt(temp)/2;
     }
-    //Then, once more to get initial and last corners
-    TPZManVector<REAL, 3> ax1(3);
-        ax1[0] = fCornerPoints(0,ncorners-1) - point[0];
-        ax1[1] = fCornerPoints(1,ncorners-1) - point[1];
-        ax1[2] = fCornerPoints(2,ncorners-1) - point[2];
-    TPZManVector<REAL, 3> ax2(3);
-        ax2[0] = fCornerPoints(0,0) - point[0];
-        ax2[1] = fCornerPoints(1,0) - point[1];
-        ax2[2] = fCornerPoints(2,0) - point[2];
-    REAL temp = pow(ax1[1]*ax2[2] - ax1[2]*ax2[1],2);
-        temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
-        temp += pow(ax1[0]*ax2[1] - ax1[1]*ax2[0],2);
-                
-    area += sqrt(temp)/2;
+	
     // std::cout<<" ___ ";
 
     //If total computed area is equal to the plane's area, then

@@ -103,11 +103,9 @@ void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){
 }
 
 void TRSFace::SetRibsInSurface(TPZManVector<int64_t,2> ribsinsurface){
-    //needs correction for end of fractures when there's only one rib cut
     fRibs=ribsinsurface;
 }
 TPZManVector<int64_t,2> TRSFace::RibsInSurface(){
-    //needs correction for end of fractures when there's only one rib cut
     return fRibs;
 }
 

@@ -45,6 +45,10 @@ class TRSFracPlane
 
 	/// Define a default tolerance
 	REAL fTolerance = 1.e-4;
+
+	// /// Element index 
+	// int64_t fFracIndex;
+
   public:
 	/// Empty constructor
 	TRSFracPlane(){};
@@ -99,7 +103,10 @@ class TRSFracPlane
 	
 	/// Computes the intersection point with the plane
 	TPZVec<REAL> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
-    
+   
+	// /// Element index
+	// int64_t ElementIndex() const {return fFracIndex;}
+
   private:
 	/// Initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);

@@ -60,9 +60,9 @@ public:
     /// Empty constructor
     TRSRibFrac();
     
-    /// Define the fracture plane by 4 points
-    /// Points should be coplanar and define a square
-    /// The matrix should be dimension 3x4, each column defining the coordinates
+    /// Define the fracture plane from 3 to 4 points
+    /// Points should be coplanar
+    /// The matrix should be dimension 3xN, each column defining the coordinates
     /// of a point
     TRSRibFrac(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh);
     

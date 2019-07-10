@@ -6,8 +6,9 @@
 #include "pzgeoel.h"
 #include "pzgnode.h"
 #include "pzgmesh.h"
-#include "pzcmesh.h"
-#include "pzintel.h"
+#include "pzgengrid.h"
+#include "TPZExtendGridDimension.h"
+#include "TPZVTKGeoMesh.h"
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -18,14 +19,10 @@
 
 
 #include "TPZMaterial.h"
-#include "pzlog.h"
-
-#include "pzgengrid.h"
+// #include "pzlog.h"
 
 #include <stdio.h>
-
 #include <math.h>
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -35,13 +32,9 @@
 #include <set>
 #include <map>
 #include <vector>
-#include <TPZRefPattern.h>
-#include "TPZRefPatternDataBase.h"
-#include "TPZRefPatternTools.h"
-#include "TPZVTKGeoMesh.h"
-#include "TPZExtendGridDimension.h"
 
-#include <opencv2/opencv.hpp>
+
+
 #include "TRSRibFrac.h"
 #include "TRSRibs.h"
 #include "TRSFace.h"
@@ -54,6 +47,7 @@
 // 20 mid-fracture cut faces
 // 35 end-fracture cut faces
 // 40 Fracture plane
+// 45 Intersection points in end-faces
 // 50 children ribs
 
 using namespace std;
@@ -137,7 +131,7 @@ int main(){
     TPZVec<TPZGeoNode> corners(plane.Cols());
     TPZVec<int64_t> CornerIndexes(plane.Cols());
     for(i=0; i<plane.Cols(); i++){
-      TPZVec<REAL> nod(3,i);
+      TPZVec<REAL> nod(3,0);
       nod[0]=plane(0,i);
       nod[1]=plane(1,i);
       nod[2]=plane(2,i);
@@ -156,14 +150,14 @@ int main(){
     int64_t Nels = gmesh->NElements();
     RibV.CreateSkeletonElements(2, 4);
     RibV.CreateSkeletonElements(1, 4);
-
-    gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, Nels);
-    
     // std::ofstream out3("3DMESH.vtk");
     // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
 
-    //Create FracPlane's skeleton
+
+    gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, Nels);
     gmesh->BuildConnectivity();
+    
+    //Create FracPlane's skeleton
     RibV.CreateSkeletonElements(1, 40);
 
 
@@ -204,14 +198,20 @@ int main(){
     // std::ofstream out2("./TestRibs.vtk");
     // TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
     
-
+    // std::cout<< endl << gmesh->NElements() << " // "<< gmesh->NNodes() << endl;
     //Create surfaces cut by fracture
     RibV.CreateSurfaces(20);  
 
+    // std::cout<< endl << gmesh->NElements() << " // "<< gmesh->NNodes();
+    // gmesh->BuildConnectivity();
+    // std::cout<< endl << gmesh->NElements() << " // "<< gmesh->NNodes() << endl;
     //Print result
     std::ofstream out("./TestSurfaces.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out, true);
     
+    // Debug test
+    std::ofstream meshprint("meshprint.txt");
+    gmesh->Print(meshprint);
     return 0;
 }
 
