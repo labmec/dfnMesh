@@ -4,8 +4,8 @@
  *  @date      2018-2019
  */
 
-#ifndef TRSRibFrac_h
-#define TRSRibFrac_h
+#ifndef TRSFractureMesh_h
+#define TRSFractureMesh_h
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -27,13 +27,13 @@ typedef TPZFMatrix<REAL> Matrix;
 /*! 
  *  @brief     Compares a geomesh with fracture plane to find intersections.
  *  @details   Intersection search is performed after creation of skeleton
- * elements with TRSRibFrac::CreateSkeletonElements. Fracture plane should
+ * elements with TRSFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a TRSFracPlane.
  *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
  *  @date      2018-2019
  */
-class TRSRibFrac
+class TRSFractureMesh
 {
 private:
     /// Define a default tolerance
@@ -58,19 +58,19 @@ private:
 public:
     
     /// Empty constructor
-    TRSRibFrac();
+    TRSFractureMesh();
     
     /// Define the fracture plane from 3 to 4 points
     /// Points should be coplanar
     /// The matrix should be dimension 3xN, each column defining the coordinates
     /// of a point
-    TRSRibFrac(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh);
+    TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh);
     
     /// Copy constructor
-    TRSRibFrac(const TRSRibFrac &copy);
+    TRSFractureMesh(const TRSFractureMesh &copy);
     
     /// Assignment operator
-    TRSRibFrac &operator=(const TRSRibFrac &copy);
+    TRSFractureMesh &operator=(const TRSFractureMesh &copy);
     
     /// Associate the geometric mesh
     void SetgeoMesh(TPZGeoMesh *gmesh){
@@ -134,4 +134,4 @@ public:
     TPZVec<REAL> FindEndFracturePoint(TRSFace face);
 };
 
-#endif /* TRSRibFrac_h */
+#endif /* TRSFractureMesh_h */

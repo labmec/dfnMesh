@@ -1,6 +1,6 @@
 //
-// RibFrac.cpp
-// RibFrac
+// FractureMesh.cpp
+// FractureMesh
 //
 //  Created by JORGE ORDOÑEZ on 22/5/18.
 //  Copyright © 2018 JORGE ORDOÑEZ. All rights reserved.

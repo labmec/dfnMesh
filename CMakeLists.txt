@@ -103,11 +103,11 @@ if(WIN32)
 endif()
 
 
-find_package(OpenCV REQUIRED)
+# find_package(OpenCV REQUIRED)
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+# include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_subdirectory(RibFrac)
+add_subdirectory(FractureMesh)
 
 #add_subdirectory(lib)
 #add_subdirectory(directional_ref)

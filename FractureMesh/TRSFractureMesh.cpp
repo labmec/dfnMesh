@@ -1,30 +1,30 @@
 /*! 
  *  @brief     Compares a geomesh with fracture plane to find intersections.
  *  @details   Intersection search is performed after creation of skeleton
- *  elements with TRSRibFrac::CreateSkeletonElements. Fracture plane should
+ *  elements with TRSFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a TRSFracPlane.
  *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
  *  @date      2018-2019
  */
 
-#include "TRSRibFrac.h"
+#include "TRSFractureMesh.h"
 #include <math.h>
 #include <cstdio>
 
 // Empty Constructor
-TRSRibFrac::TRSRibFrac(){
+TRSFractureMesh::TRSFractureMesh(){
 }
 
 // Constructor with corner points and a geomesh
-TRSRibFrac::TRSRibFrac(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
+TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
     fracplane = FracPlane;
     fGMesh=gmesh;
-    //printf("constr fracplane.L0 = %.3f \n", fracplane.L0);
+    
 }
 
 // Copy constructor
-TRSRibFrac::TRSRibFrac(const TRSRibFrac &copy){
+TRSFractureMesh::TRSFractureMesh(const TRSFractureMesh &copy){
     fGMesh = copy.fGMesh;
 
     fTolerance = copy.GetTolerance();
@@ -35,7 +35,7 @@ TRSRibFrac::TRSRibFrac(const TRSRibFrac &copy){
 }
 
 // Assignment operator
-TRSRibFrac &TRSRibFrac::operator=(const TRSRibFrac &copy){
+TRSFractureMesh &TRSFractureMesh::operator=(const TRSFractureMesh &copy){
     fGMesh = copy.fGMesh;
 
     fTolerance = copy.GetTolerance();
@@ -51,7 +51,7 @@ TRSRibFrac &TRSRibFrac::operator=(const TRSRibFrac &copy){
  * @return The plane corner coordinates
  */
 
-TRSFracPlane TRSRibFrac::GetPlane() const{
+TRSFracPlane TRSFractureMesh::GetPlane() const{
     return fracplane;
 }
 
@@ -61,7 +61,7 @@ TRSFracPlane TRSRibFrac::GetPlane() const{
  * @return The tolerance
  */
 
-void TRSRibFrac::SetTolerance(REAL tolerance){
+void TRSFractureMesh::SetTolerance(REAL tolerance){
     fTolerance = tolerance;
 }
 
@@ -70,7 +70,7 @@ void TRSRibFrac::SetTolerance(REAL tolerance){
  * @return The tolerance
  */
 
-REAL TRSRibFrac::GetTolerance() const{
+REAL TRSFractureMesh::GetTolerance() const{
     return fTolerance;
 }
 
@@ -84,7 +84,7 @@ REAL TRSRibFrac::GetTolerance() const{
  * @return False if the surface does not need to be divided
  */
 
-bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) {
+bool TRSFractureMesh::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) {
     bool state= false;   //By definition does not need to be divided
     int nribs = interribs.size();
     int nribscut =0;
@@ -108,7 +108,7 @@ bool TRSRibFrac::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> inter
  * @return False if has a upper dimension
  */
 
-bool TRSRibFrac::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
+bool TRSFractureMesh::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
     
     int dimension = gelside.Dimension();
 
@@ -133,7 +133,7 @@ bool TRSRibFrac::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
   * @param Material ID number
   */
 
-void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
+void TRSFractureMesh::CreateSkeletonElements(int dimension, int matid)
 {
     int nel = fGMesh->NElements();
     for (int iel = 0; iel < nel; iel++)
@@ -165,7 +165,7 @@ void TRSRibFrac::CreateSkeletonElements(int dimension, int matid)
  * @param Ribs to be set
  */
 
-void TRSRibFrac::AddRib(TRSRibs rib){
+void TRSFractureMesh::AddRib(TRSRibs rib){
     int index= rib.ElementIndex();
     fRibs[index]=rib;
 }
@@ -175,7 +175,7 @@ void TRSRibFrac::AddRib(TRSRibs rib){
  * @param Face to be set
  */
 
-void TRSRibFrac::AddFace(TRSFace face){
+void TRSFractureMesh::AddFace(TRSFace face){
     int index= face.ElementIndex();
     fFaces[index]=face;
 }
@@ -185,7 +185,7 @@ void TRSRibFrac::AddFace(TRSFace face){
 //  * @param Face to be set
 //  */
 
-// void TRSRibFrac::AddEndFace(TRSFace face){
+// void TRSFractureMesh::AddEndFace(TRSFace face){
 //     int index= face.ElementIndex();
 //     fEndFaces[index]=face;
 // }
@@ -195,7 +195,7 @@ void TRSRibFrac::AddFace(TRSFace face){
  * @return A map that contains the ribs information
  */
 
-std::map<int64_t ,TRSRibs> TRSRibFrac::GetRibs(){
+std::map<int64_t ,TRSRibs> TRSFractureMesh::GetRibs(){
     return fRibs;    
 }
 
@@ -204,7 +204,7 @@ std::map<int64_t ,TRSRibs> TRSRibFrac::GetRibs(){
  * @param Material id
  */
 
-void TRSRibFrac::CreateSurfaces(int matID){
+void TRSFractureMesh::CreateSurfaces(int matID){
     //CreateSkeletonElements(fGMesh->Dimension(), 4);
     int64_t nel = fGMesh->NElements();
     
@@ -272,11 +272,11 @@ void TRSRibFrac::CreateSurfaces(int matID){
     }
 }
 
-TRSRibs *TRSRibFrac::Rib(int index){
+TRSRibs *TRSFractureMesh::Rib(int index){
     return &fRibs[index];
 }
 
-TPZVec<REAL> TRSRibFrac::FindEndFracturePoint(TRSFace face){
+TPZVec<REAL> TRSFractureMesh::FindEndFracturePoint(TRSFace face){
     // Convert TPZGeoEl into TRSFracPlane
     TPZGeoEl *gelface = fGMesh->Element(face.ElementIndex());
     TPZFMatrix<REAL> corners;

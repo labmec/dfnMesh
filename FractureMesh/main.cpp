@@ -35,7 +35,7 @@
 
 
 
-#include "TRSRibFrac.h"
+#include "TRSFractureMesh.h"
 #include "TRSRibs.h"
 #include "TRSFace.h"
 
@@ -55,6 +55,7 @@ using namespace std;
 int main(){
   
   // Creating the Geo mesh
+
 	int dimel = 5;
 	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 6.0);
 	x1[2] = 0.;
@@ -65,7 +66,7 @@ int main(){
 	gmesh->SetDimension(2);
 	gengrid.Read(gmesh);
 
-	/// Mesh 3D
+	// Mesh 3D
 
   TPZExtendGridDimension extend(gmesh, 1);
   extend.SetElType(1);
@@ -84,7 +85,7 @@ int main(){
     ifstream plane_file("fracture.txt");
     if (!plane_file)
     {
-      std::cout << "Error reading file" << endl;
+      std::cout << "Error reading file" << std::endl;
       DebugStop();
     }
     getline(plane_file, line);
@@ -106,7 +107,7 @@ int main(){
   }
 	int i = 0;
 	int j = 0;
-	cout << "Fracture plane defined as: \n";
+	std::cout << "Fracture plane defined as: \n";
   ifstream plane_file("fracture.txt");
 	while (getline(plane_file, line))
 	{
@@ -115,16 +116,16 @@ int main(){
 		{
 			while (value.length() == 0){getline(ss, value, ' ');}
 			plane(i, j) = std::stod(value);
-			cout << plane(i, j) << " , ";
+			std::cout << plane(i, j) << " , ";
 			j++;
 		}
 		j = 0;
 		i++;
-		cout << endl;
+		std::cout << std::endl;
 	}
-	std::cout << endl;
+	std::cout << std::endl;
 
-    //    Setting a plane in geometric mesh
+    // Setting the plane in geometric mesh
     
     int nNods= gmesh->NNodes();
     gmesh->NodeVec().Resize(nNods+plane.Cols());
@@ -143,13 +144,14 @@ int main(){
       CornerIndexes[i]=nNods+i;
     }
 
-    //  Construction of fracplane and RibFrac
+    //  Construction of fracplane and FractureMesh
     TRSFracPlane fracplane(plane);
-    TRSRibFrac RibV(fracplane,gmesh);
+    TRSFractureMesh fracmesh(fracplane,gmesh);
     
+    // Create skeleton elements
     int64_t Nels = gmesh->NElements();
-    RibV.CreateSkeletonElements(2, 4);
-    RibV.CreateSkeletonElements(1, 4);
+    fracmesh.CreateSkeletonElements(2, 4);
+    fracmesh.CreateSkeletonElements(1, 4);
     // std::ofstream out3("3DMESH.vtk");
     // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
 
@@ -158,7 +160,7 @@ int main(){
     gmesh->BuildConnectivity();
     
     //Create FracPlane's skeleton
-    RibV.CreateSkeletonElements(1, 40);
+    fracmesh.CreateSkeletonElements(1, 40);
 
 
 
@@ -171,22 +173,23 @@ int main(){
       for (int side=0; side< nSides; side++){
         if(gel->NSideNodes(side)==2){
 
-          // turn this into a fracplane method
+          // Get rib's vertexes
           int64_t p1 =  gel->SideNodeIndex(side, 0);
           int64_t p2 =  gel->SideNodeIndex(side, 1);
           TPZVec<REAL> pp1(3);
           TPZVec<REAL> pp2(3);
           gmesh->NodeVec()[p1].GetCoordinates(pp1);
           gmesh->NodeVec()[p2].GetCoordinates(pp2);
+          // Check rib
           bool resul = fracplane.Check_rib(pp1, pp2);
-          // turn this into a fracplane method
 
+          // Split rib
           if(resul==true){
             TRSRibs rib(iel, true);
-            RibV.AddRib(rib);
+            fracmesh.AddRib(rib);
             TPZVec<REAL> ipoint = fracplane.CalculateIntersection(pp1, pp2);
             //5O is the material of children ribs
-            RibV.Rib(iel)->DivideRib(gmesh, ipoint, 50);
+            fracmesh.Rib(iel)->DivideRib(gmesh, ipoint, 50);
             gel->SetMaterialId(12); //when will we delete these ribs? //gmesh->DeleteElement(gel,iel);
             
             // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
@@ -195,23 +198,17 @@ int main(){
       }
     }
     
-    // std::ofstream out2("./TestRibs.vtk");
-    // TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out2, true);
     
-    // std::cout<< endl << gmesh->NElements() << " // "<< gmesh->NNodes() << endl;
     //Create surfaces cut by fracture
-    RibV.CreateSurfaces(20);  
+    fracmesh.CreateSurfaces(20);  
 
-    // std::cout<< endl << gmesh->NElements() << " // "<< gmesh->NNodes();
-    // gmesh->BuildConnectivity();
-    // std::cout<< endl << gmesh->NElements() << " // "<< gmesh->NNodes() << endl;
     //Print result
     std::ofstream out("./TestSurfaces.vtk");
-    TPZVTKGeoMesh::PrintGMeshVTK(RibV.GetgeoMesh(), out, true);
+    TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetgeoMesh(), out, true);
     
     // Debug test
-    std::ofstream meshprint("meshprint.txt");
-    gmesh->Print(meshprint);
+    // std::ofstream meshprint("meshprint.txt");
+    // gmesh->Print(meshprint);
     return 0;
 }
 
@@ -230,7 +227,7 @@ int main(){
 
 
 
-  //  RibV.HasLowerDimensionNeighbour(geoside);
+  //  fracmesh.HasLowerDimensionNeighbour(geoside);
 //
 //
 ////    Setting a second plane
@@ -286,11 +283,11 @@ int main(){
 //    gmesh->CreateGeoElement(EQuadrilateral, CornerIndexes2, 4, Nels2);
 //
 //
-//    TRSRibFrac RibV2(plane);
+//    TRSFractureMesh fracmesh2(plane);
    
  //    Setting coplanar Tolerance
-//    RibV.SetTolerance(0.0001);
-////    RibV2.SetTolerance(0.0001);
+//    fracmesh.SetTolerance(0.0001);
+////    fracmesh2.SetTolerance(0.0001);
 //
 //    for(int i=0; i< Nels; i++){
 //         TPZGeoEl *gel = gmesh->Element(i);
@@ -307,14 +304,14 @@ int main(){
 //
 //
 //
-//                bool resul = RibV.Check_rib(pp1, pp2);
+//                bool resul = fracmesh.Check_rib(pp1, pp2);
 //                if(resul==true){
 //
 //
 //                    gel->SetMaterialId(2);
 //                std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
 //                }
-////                bool resul2 = RibV2.Check_rib(pp1, pp2);
+////                bool resul2 = fracmesh2.Check_rib(pp1, pp2);
 ////                if(resul2==true){
 ////                      gel->SetMaterialId(3);
 ////                    std::cout<<"Element: "<<i<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 2"<<"\n";
@@ -332,11 +329,11 @@ int main(){
 //    TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
  
     
-//    RibV.GetPlane().Print(std::cout);
+//    fracmesh.GetPlane().Print(std::cout);
     
-//    bool verific = RibV.Check_rib(pcom, pcom2);
+//    bool verific = fracmesh.Check_rib(pcom, pcom2);
 //    std::cout<<verific<<"\n";
-//    RibV.fdata.Print(std::cout);
+//    fracmesh.fdata.Print(std::cout);
     
 //    int nel = gmesh->NElements();
 //    for(int i=0; i<nel; i++){
