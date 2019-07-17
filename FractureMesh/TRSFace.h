@@ -23,21 +23,21 @@ private:
     int64_t fFaceIndex;
 
     /// Indicates whether it intersects a plane
-    bool fCutisInplane;
+    bool fIsCut;
 
     /// Indicates which ribs are cut
     TPZManVector<bool,4> fRibStatus;
     
-    /// Vector of cut ribs
-    TPZManVector<int64_t,2> fRibs;
+    /// Vector of its ribs
+    TPZManVector<int64_t,4> fRibs;
 
     /// Vector of sub faces
-    // TPZManVector<int64_t,5> fSubFaces;
+    TPZManVector<int64_t,5> fSubFaces;
     
-    /** Intersection points (for faces that are cut at boundaries of 
-    * fracture, the off-rib point will be the second point)
-    */
-    TPZManVector<TPZManVector<REAL,3>,2> fIntersection;
+    // /** Intersection points (for faces that are cut at boundaries of 
+    // * fracture, the off-rib point will be the second point)
+    // */
+    // TPZManVector<TPZManVector<REAL,3>,2> fIntersection;
     
 public:
     
@@ -45,7 +45,7 @@ public:
     TRSFace();
     
     /// Constructor
-    TRSFace(int64_t index, bool inplane);
+    TRSFace(int64_t index, bool iscut);
     
     /// Copy constructor
     TRSFace(const TRSFace &copy);
@@ -54,13 +54,13 @@ public:
     TRSFace &operator=(const TRSFace &copy);
     
     /// Define the element index and whether it cuts the plane
-    void SetElementIndex(int64_t elindex, bool cutsplane);
+    void SetElementIndex(int64_t elindex, bool iscut);
     
     /// Element index
     int64_t ElementIndex() const;
     
     /// Intersects the plane or not
-    bool CutsPlane() const;
+    bool IsCut() const;
     
     /// Return the subelement indices
     TPZVec<int64_t> SubElements() const;
@@ -71,8 +71,8 @@ public:
     /// Divide the given surface and generate subelements
     void DivideSurface(TPZGeoMesh *gmesh, int matid);
     
-    /// Set ribs in the surface
-    void SetRibsInSurface(TPZManVector<int64_t,2> ribsinsurface);
+    /// Set ribs cut
+    void SetRibsCut(TPZManVector<int64_t,2> ribsinsurface);
     TPZManVector<int64_t,2> RibsInSurface();
     
 };

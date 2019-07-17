@@ -46,7 +46,7 @@ private:
     std::map<int64_t,TRSFace> fFaces;
     
     /// Map of end-fracture faces
-    // std::map<int64_t,TRSFace> fEndFaces;
+    std::map<int64_t,TRSFace> fEndFaces;
 
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
@@ -89,28 +89,21 @@ public:
     void SetTolerance(REAL tolerance);
     REAL GetTolerance() const;
     
-public:
+private:
+        
+    /// Checks neighbour's dimension and returns true if it is equal
+    bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
+    /// Finds intersection point of fracture boundaries and geometric mesh faces
+    TPZVec<REAL> FindEndFracturePoint(TRSFace face);
+    
+public:
     
     /// Return true if the surface needs to be divided
     bool NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) ;
     
-    
-private:
-    
-    /// ----Deprecated for IsPointInPlane()----
-    bool RibInPlane(TPZVec<REAL> &point) const;
-    
-    /// Checks neighbour's dimension and returns true if it is equal
-    bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
-   
-public:
-    
     /// Insert intersection elements of lower dimension in the geometric mesh.
     void CreateSkeletonElements(int dimension, int matid);
-    
-    /// Divide the one dimensional element by the intersection with the plane
-    TRSRibs DivideRib(int element_index);
     
     /// Access the ribs data structure
     void AddRib(TRSRibs rib);
@@ -124,14 +117,18 @@ public:
     /// Map of ribs
     std::map<int64_t ,TRSRibs> GetRibs();
     
-    /// Create the children surfaces
-    void CreateSurfaces(int matID);
+    /// Find and split intersected faces
+    void SplitFaces(int matID);
     
+    /// Find and split intersected ribs
+    void SplitRibs(int matID);
+
     /// Pointer to rib of index 'index'
     TRSRibs *Rib(int index);
-    
-    /// Finds intersection point of fracture boundaries and geometric mesh faces
-    TPZVec<REAL> FindEndFracturePoint(TRSFace face);
+
+    /// Pointer to face of index 'index'
+    TRSFace *Face(int index);
+
 };
 
 #endif /* TRSFractureMesh_h */

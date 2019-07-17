@@ -32,13 +32,16 @@ private:
     int64_t fRibIndex;
 
     /// Indicates whether it intersects the plane
-    bool fCutisInplane;
+    bool fIsCut;
     
     /// Indices of the subelements
-    // TPZManVector<int64_t,2> fSubElements;
+    TPZManVector<int64_t,2> fSubElements;
     
-    /// Intersection point
-    TPZManVector<REAL,3> fIntersection;
+    /// Intersection point index
+    int64_t fIntersectionIndex;
+
+    /// Father Element
+    int64_t fFather = -1;
 
 public:
     /// Empty constructor
@@ -54,26 +57,37 @@ public:
     /// Assignment operator
     TRSRibs &operator=(const TRSRibs &copy);
     
-    /// Define the element index and whether it cuts the plane
-    void SetElementIndex(int64_t elindex, bool cutsplane);
+    /**
+     * @brief Set the index for an element if the fracture plane is cut by this element
+     * @param Element index
+     * @param Yes or no if the element is cutting the fracture plane
+     */
+    void SetElementIndex(int64_t elindex, bool IsCut);
     
     /// Element index
     int64_t ElementIndex() const;
     
     /// Intersects the plane or not
-    void SetCutsPlane(bool is) ;
+    void SetIsCut(bool is) ;
     
     /// Intersects the plane or not
-    bool CutsPlane() const;
+    bool IsCut() const;
     
     /// Return the subelement indices
     TPZVec<int64_t> SubElements() const;
     
+    /// Intersection point
+    int64_t IntersectionIndex() const {return fIntersectionIndex;}
+
     /// Set the subelement indices
-    void DefineRibDivide(const TPZVec<int64_t> &subels);
+    void SetChildren(const TPZVec<int64_t> &subels);
     
     ///Divide the given rib and generate the subelements
-    void DivideRib(TPZGeoMesh *gmesh, TPZVec<REAL> interpoint,int matid);
+    void DivideRib(TPZGeoMesh *gmesh, TPZVec<REAL> interpoint,int matID);
+
+    /// Get father rib
+    int64_t FatherRib(){ return fFather;}
+
 };
 
 #endif /* TRSRibs_h */

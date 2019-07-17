@@ -42,7 +42,6 @@
 //MATERIAL ID MAP
 // 1 gmesh
 // 4 skeleton
-// 5 uncut ribs
 // 12 ribs that will be divided
 // 20 mid-fracture cut faces
 // 35 end-fracture cut faces
@@ -98,13 +97,6 @@ int main(){
   }
   // then read points
 	Matrix plane(3, npoints);
-  MElementType elemtype;
-  switch (npoints)
-  {
-    case 3: elemtype = ETriangle; break;
-    case 4: elemtype = EQuadrilateral; break;
-    default: DebugStop();
-  }
 	int i = 0;
 	int j = 0;
 	std::cout << "Fracture plane defined as: \n";
@@ -125,82 +117,35 @@ int main(){
 	}
 	std::cout << std::endl;
 
-    // Setting the plane in geometric mesh
-    
-    int nNods= gmesh->NNodes();
-    gmesh->NodeVec().Resize(nNods+plane.Cols());
-    TPZVec<TPZGeoNode> corners(plane.Cols());
-    TPZVec<int64_t> CornerIndexes(plane.Cols());
-    for(i=0; i<plane.Cols(); i++){
-      TPZVec<REAL> nod(3,0);
-      nod[0]=plane(0,i);
-      nod[1]=plane(1,i);
-      nod[2]=plane(2,i);
-      
-      corners[i].SetCoord(nod);
-      
-      gmesh->NodeVec()[nNods+i]=corners[i];
 
-      CornerIndexes[i]=nNods+i;
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //  Construction of fracplane and FractureMesh
     TRSFracPlane fracplane(plane);
-    TRSFractureMesh fracmesh(fracplane,gmesh);
+    TRSFractureMesh fracmesh(fracplane, gmesh);
     
-    // Create skeleton elements
-    int64_t Nels = gmesh->NElements();
-    fracmesh.CreateSkeletonElements(2, 4);
-    fracmesh.CreateSkeletonElements(1, 4);
-    // std::ofstream out3("3DMESH.vtk");
-    // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
+    // Find and split intersected ribs
+    fracmesh.SplitRibs(50);
 
-
-    gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, Nels);
-    gmesh->BuildConnectivity();
-    
-    //Create FracPlane's skeleton
+    //Create FracPlane's skeleton (maybe give this to FractureMesh's constructor)
+    gmesh->BuildConnectivity(); //important to find end-fracture intersection points
     fracmesh.CreateSkeletonElements(1, 40);
 
-
-
-    //search gmesh for cut ribs
-    for(int iel = 0; iel< Nels; iel++){
-      TPZGeoEl *gel = gmesh->Element(iel);
-      int nSides = gel->NSides();
-      //skip all elements that aren't ribs
-      if(gel->Dimension()!=1){continue;}
-      for (int side=0; side< nSides; side++){
-        if(gel->NSideNodes(side)==2){
-
-          // Get rib's vertexes
-          int64_t p1 =  gel->SideNodeIndex(side, 0);
-          int64_t p2 =  gel->SideNodeIndex(side, 1);
-          TPZVec<REAL> pp1(3);
-          TPZVec<REAL> pp2(3);
-          gmesh->NodeVec()[p1].GetCoordinates(pp1);
-          gmesh->NodeVec()[p2].GetCoordinates(pp2);
-          // Check rib
-          bool resul = fracplane.Check_rib(pp1, pp2);
-
-          // Split rib
-          if(resul==true){
-            TRSRibs rib(iel, true);
-            fracmesh.AddRib(rib);
-            TPZVec<REAL> ipoint = fracplane.CalculateIntersection(pp1, pp2);
-            //5O is the material of children ribs
-            fracmesh.Rib(iel)->DivideRib(gmesh, ipoint, 50);
-            gel->SetMaterialId(12); //when will we delete these ribs? //gmesh->DeleteElement(gel,iel);
-            
-            // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
-          }
-        }
-      }
-    }
-    
-    
-    //Create surfaces cut by fracture
-    fracmesh.CreateSurfaces(20);  
+    // Find and split intersected faces
+    fracmesh.SplitFaces(20);  
 
     //Print result
     std::ofstream out("./TestSurfaces.vtk");

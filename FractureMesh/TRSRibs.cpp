@@ -18,29 +18,29 @@
 
 // Constructor
 TRSRibs::TRSRibs(){
-    fCutisInplane=false;
+    fIsCut=false;
 }
 
 // Constructor using an index and a asking if the plane is cut or not
-TRSRibs::TRSRibs(int64_t index, bool inplane){
+TRSRibs::TRSRibs(int64_t index, bool IsCut){
     fRibIndex=index;
-    fCutisInplane=inplane;
+    fIsCut=IsCut;
 }
 
 // Copy constructor
 TRSRibs::TRSRibs(const TRSRibs &copy){
     fRibIndex=copy.fRibIndex;
-    fCutisInplane=copy.fCutisInplane;
-    // fSubElements = copy.fSubElements;
+    fIsCut=copy.fIsCut;
+    fSubElements = copy.fSubElements;
+    fFather = copy.fFather;
 }
 
 // Assignment operator
 TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
     fRibIndex=copy.fRibIndex;
-    fCutisInplane=copy.fCutisInplane;
-    // if(copy.fSubElements.size()==2){
-    // fSubElements = copy.fSubElements;
-    // }
+    fIsCut=copy.fIsCut;
+    fSubElements = copy.fSubElements;
+    fFather = copy.fFather;
     return *this;
 }
 
@@ -50,9 +50,9 @@ TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
  * @param Yes or no if the element is cutting the fracture plane
  */
 
-void TRSRibs::SetElementIndex(int64_t elindex, bool cutsplane){
+void TRSRibs::SetElementIndex(int64_t elindex, bool IsCut){
     fRibIndex=elindex;
-    fCutisInplane=cutsplane;
+    fIsCut=IsCut;
 }
 
 /**
@@ -69,33 +69,33 @@ int64_t TRSRibs::ElementIndex() const{
  * @param True or False if the plane is cut
  */
 
-void TRSRibs::SetCutsPlane(bool is) {
-    fCutisInplane=is;
+void TRSRibs::SetIsCut(bool IsCut) {
+    fIsCut = IsCut;
 }
 /**
  * @return If the intersection point is within the fracture plane
  */
 
-bool TRSRibs::CutsPlane() const{
-    return fCutisInplane;
+bool TRSRibs::IsCut() const{
+    return fIsCut;
 }
 
-// /**
-//  * @return An index (geomesh associated) subelements vector
-//  */
+/**
+ * @return An index (geomesh associated) subelements vector
+ */
 
-// TPZVec<int64_t> TRSRibs::SubElements() const{
-//     return fSubElements;
-// }
+TPZVec<int64_t> TRSRibs::SubElements() const{
+    return fSubElements;
+}
 
-// /**
-//  * @brief Define the divided rib
-//  * @param Subelements vector
-//  */
+/**
+ * @brief Define the divided rib
+ * @param Subelements vector
+ */
 
-// void TRSRibs::DefineRibDivide(const TPZVec<int64_t> &subels){
-//     fSubElements = subels;
-// }
+void TRSRibs::SetChildren(const TPZVec<int64_t> &subels){
+    fSubElements = subels;
+}
 
 /**
  * @brief Divide a 1D element into 2 1D elements (for now)
@@ -104,34 +104,35 @@ bool TRSRibs::CutsPlane() const{
  * @param Material id to assign for the new ribs
  */
 
-void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matid){
+void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matID){
     int iel_index = fRibIndex;          //Element index
     if(!gmesh->Element(iel_index)){     // If the element does not exist the code is going to break
-        std::cout<<"No gel associated to the Rib"<<std::endl;
+        std::cout<<"No gel associated to the Rib\n";
         DebugStop();
     }
     TPZGeoEl *gel = gmesh->Element(iel_index);
     int64_t nelements = gmesh->NElements();
     
-    int nNods= gmesh->NNodes();
+    fIntersectionIndex = gmesh->NNodes();
     
     TPZVec<TPZGeoNode> Node(1);
     Node[0].SetCoord(interpoint);
-    gmesh->NodeVec().Resize(nNods+1);       //Adding an extra node
-    gmesh->NodeVec()[nNods]=Node[0];
-   
+    gmesh->NodeVec().Resize(fIntersectionIndex+1);       //Adding an extra node
+    gmesh->NodeVec()[fIntersectionIndex]=Node[0];
+
+    // Create children ribs
     TPZVec<int64_t> cornerindexes(2);
-    cornerindexes[0] = gel->NodeIndex(0);   //Setting the new rib node as node 0
-    cornerindexes[1] = nNods;               //Setting the new rib node as node 1
-    gmesh->CreateGeoElement(EOned, cornerindexes, matid, nelements);
-    // fSubElements.Resize(2);
-    // fSubElements[0]=nelements;              //Setting a new subelement
+    cornerindexes[0] = gel->NodeIndex(0);    //Setting the new rib node as node 0
+    cornerindexes[1] = fIntersectionIndex;   //Setting the new rib node as node 1
+    gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
+    fSubElements.Resize(2);
+    fSubElements[0]=nelements;              //Setting a new subelement
     
-    cornerindexes[0] = nNods;              //Setting a second new rib node as node 0
-    cornerindexes[1] = gel->NodeIndex(1);  //Setting a second new rib node as node 1
+    cornerindexes[0] = gel->NodeIndex(1);    //Setting the new rib node as node 0
+    cornerindexes[1] = fIntersectionIndex;   //Setting the new rib node as node 1
     nelements++;
-     gmesh->CreateGeoElement(EOned, cornerindexes, matid, nelements);
-    // fSubElements[1]=nelements;              //Setting a second new subelement
+    gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
+    fSubElements[1]=nelements;              //Setting a second new subelement
 }
 
 

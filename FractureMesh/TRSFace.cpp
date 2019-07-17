@@ -10,36 +10,36 @@
 // Empty constructor
 TRSFace::TRSFace(){
     fFaceIndex = -1;
-    fCutisInplane = false;
+    fIsCut = false;
 }
 
 //Constructor
-TRSFace::TRSFace(int64_t index, bool inplane){
+TRSFace::TRSFace(int64_t index, bool iscut){
     fFaceIndex = index;
-    fCutisInplane = inplane;
+    fIsCut = iscut;
 }
 
 /// Copy constructor
 TRSFace::TRSFace(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
-    fCutisInplane = copy.fCutisInplane;
+    fIsCut = copy.fIsCut;
     fFaceIndex = copy.fFaceIndex;
-    // fSubFaces = copy.fSubFaces;
+    fSubFaces = copy.fSubFaces;
 }
 
 /// Assignment operator
 TRSFace &TRSFace::operator=(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
-    fCutisInplane = copy.fCutisInplane;
+    fIsCut = copy.fIsCut;
     fFaceIndex = copy.fFaceIndex;
-    // fSubFaces = copy.fSubFaces;
+    fSubFaces = copy.fSubFaces;
     return *this;
 }
 
 /// Define the element index and whether it cuts the plane
-void TRSFace::SetElementIndex(int64_t elindex, bool cutsplane){
+void TRSFace::SetElementIndex(int64_t elindex, bool iscut){
     fFaceIndex = elindex;
-    fCutisInplane = cutsplane;
+    fIsCut = iscut;
 }
 
 /// Element index
@@ -48,8 +48,8 @@ int64_t TRSFace::ElementIndex() const{
 }
 
 /// Intersects the plane or not
-bool TRSFace::CutsPlane() const{
-    return fCutisInplane;
+bool TRSFace::IsCut() const{
+    return fIsCut;
 }
 
 // /// Return the subelement indices
@@ -102,8 +102,8 @@ void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){
     
 }
 
-void TRSFace::SetRibsInSurface(TPZManVector<int64_t,2> ribsinsurface){
-    fRibs=ribsinsurface;
+void TRSFace::SetRibsCut(TPZManVector<int64_t,2> ribsinsurface){
+    fRibs = ribsinsurface;
 }
 TPZManVector<int64_t,2> TRSFace::RibsInSurface(){
     return fRibs;
