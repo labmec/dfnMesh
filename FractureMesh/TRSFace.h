@@ -34,10 +34,8 @@ private:
     /// Vector of sub faces
     TPZManVector<int64_t,5> fSubFaces;
     
-    // /** Intersection points (for faces that are cut at boundaries of 
-    // * fracture, the off-rib point will be the second point)
-    // */
-    // TPZManVector<TPZManVector<REAL,3>,2> fIntersection;
+    /// Index of intersection point (only for FractureMesh::EndFaces)
+    int64_t fIntersection = -1;
     
 public:
     
@@ -75,5 +73,12 @@ public:
     void SetRibsCut(TPZManVector<int64_t,2> ribsinsurface);
     TPZManVector<int64_t,2> RibsInSurface();
     
+    /// Access intersection index data (only for FractureMesh::EndFaces)
+    void SetIntersectionIndex(int64_t index) {fIntersection = index;}
+
+    /// Returns index for intersection point in face (only for FractureMesh::EndFaces)
+    int64_t IntersectionIndex() {return fIntersection;}
+
+
 };
 #endif /* TRSFace_h */

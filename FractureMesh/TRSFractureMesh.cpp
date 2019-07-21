@@ -18,7 +18,7 @@ TRSFractureMesh::TRSFractureMesh(){
 
 // Constructor with corner points and a geomesh
 TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
-    fracplane = FracPlane;
+    fFracplane = FracPlane;
     fGMesh = gmesh;
 
     // Implement check for previously created skeleton
@@ -28,19 +28,20 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
 
     // Create FracPlane's geometric element into mesh
     int nnodes =  fGMesh->NNodes();
-    int ncorners = fracplane.GetCorners().Cols();
+    int ncorners = fFracplane.GetCorners().Cols();
     fGMesh->NodeVec().Resize(nnodes + ncorners);
-    TPZVec<TPZGeoNode> corners(ncorners);
+    // TPZVec<TPZGeoNode> corners(ncorners);
     TPZVec<int64_t> CornerIndexes(ncorners);
     for (int i = 0; i < ncorners; i++)
     {
         TPZVec<REAL> nodeX(3, 0);
-        nodeX[0] = fracplane.GetCorners()(0,i);
-        nodeX[1] = fracplane.GetCorners()(1,i);
-        nodeX[2] = fracplane.GetCorners()(2,i);
+        nodeX[0] = fFracplane.GetCorners()(0,i);
+        nodeX[1] = fFracplane.GetCorners()(1,i);
+        nodeX[2] = fFracplane.GetCorners()(2,i);
 
-        corners[i].SetCoord(nodeX);
-        fGMesh->NodeVec()[nnodes + i] = corners[i];
+        // corners[i].SetCoord(nodeX);
+        // fGMesh->NodeVec()[nnodes + i] = corners[i];
+        fGMesh->NodeVec()[nnodes + i].Initialize(nodeX, *fGMesh);
         CornerIndexes[i] = nnodes + i;
     }
     MElementType elemtype;
@@ -50,8 +51,8 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
         case 4: elemtype = EQuadrilateral; break;
         default: DebugStop();
     }
-    int64_t nels = fGMesh->NElements();
-    fGMesh->CreateGeoElement(elemtype, CornerIndexes, 40, nels);
+    fFracplaneindex = fGMesh->NElements();
+    fGMesh->CreateGeoElement(elemtype, CornerIndexes, 40, fFracplaneindex);
     
 
 }
@@ -59,23 +60,23 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
 // Copy constructor
 TRSFractureMesh::TRSFractureMesh(const TRSFractureMesh &copy){
     fGMesh = copy.fGMesh;
-
     fTolerance = copy.GetTolerance();
     fRibs = copy.fRibs;
     fFaces = copy.fFaces;
-
-    fracplane = copy.fracplane;
+	fEndFaces = copy.fEndFaces;
+    fFracplane = copy.fFracplane;
+	fFracplaneindex = copy.fFracplaneindex;
 }
 
 // Assignment operator
 TRSFractureMesh &TRSFractureMesh::operator=(const TRSFractureMesh &copy){
     fGMesh = copy.fGMesh;
-
     fTolerance = copy.GetTolerance();
     fRibs = copy.fRibs;
     fFaces = copy.fFaces;
-
-    fracplane = copy.fracplane;
+	fEndFaces = copy.fEndFaces;
+    fFracplane = copy.fFracplane;
+	fFracplaneindex = copy.fFracplaneindex;
     return *this;
 }
 
@@ -85,7 +86,7 @@ TRSFractureMesh &TRSFractureMesh::operator=(const TRSFractureMesh &copy){
  */
 
 TRSFracPlane TRSFractureMesh::GetPlane() const{
-    return fracplane;
+    return fFracplane;
 }
 
 /**
@@ -245,7 +246,7 @@ void TRSFractureMesh::SplitFaces(int matID){
     for(int iel = 0; iel<nel; iel++){
         int nribscut =0;
         TPZManVector<bool,4> ribstatus(4,false);
-        TPZManVector<int64_t,2> cad(2);
+        TPZManVector<int64_t,2> CutRibsIndex(2);
         TPZGeoEl *gel = fGMesh->Element(iel);
         int dim = gel->Dimension();
         if (dim != 2){continue;}
@@ -263,7 +264,7 @@ void TRSFractureMesh::SplitFaces(int matID){
             if(ribtest.IsCut()==true){
                 ribstatus[iside-nsides] = true;
                 // store the rest of the ribs
-                cad[nribscut]=rib_index;
+                CutRibsIndex[nribscut]=rib_index;
                 nribscut++;
             }
         }
@@ -275,24 +276,24 @@ void TRSFractureMesh::SplitFaces(int matID){
             // Create TRSFace
                 TRSFace face(iel, true);
                 AddFace(face);
-                std::cout<<"first rib: "<<cad[0]<<std::endl;
-                std::cout<<"second rib: "<<cad[1]<<std::endl;
-                face.SetRibsCut(cad);
-                gel->SetMaterialId(matID);
-                
-            // Connect intersection points
-                TPZVec<int64_t> ipoints(2);
-                ipoints[0] = Rib(cad[0])->IntersectionIndex();
-                ipoints[1] = Rib(cad[1])->IntersectionIndex();
-                int64_t nels = fGMesh->NElements();
-                fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+				std::cout<<"first rib: "<<CutRibsIndex[0]<<std::endl;
+				std::cout<<"second rib: "<<CutRibsIndex[1]<<std::endl;
+				face.SetRibsCut(CutRibsIndex); // may be deleted later
+				gel->SetMaterialId(matID);
+				
+			// Connect intersection points
+				TPZVec<int64_t> ipoints(2);
+				ipoints[0] = Rib(CutRibsIndex[0])->IntersectionIndex();
+				ipoints[1] = Rib(CutRibsIndex[1])->IntersectionIndex();
+				int64_t nels = fGMesh->NElements();
+				fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
 
                 break;
             }
             case 1:{ //end-fracture element
                 TRSFace face(iel, true);
-                AddFace(face);
-                std::cout<<"single rib cut: "<<cad[0]<<std::endl;
+                std::cout<<"single rib cut: "<<CutRibsIndex[0]<<std::endl;
+                face.SetRibsCut(CutRibsIndex); // may be deleted later
                 gel->SetMaterialId(matID+15);
                 //Is the fracture skeleton built? Code won't work otherwise.
                 TPZVec<REAL> coords = FindEndFracturePoint(face);
@@ -303,11 +304,13 @@ void TRSFractureMesh::SplitFaces(int matID){
                 fGMesh->NodeVec()[nodeindex[0]].Initialize(coords, *fGMesh);
                 int64_t nels = fGMesh->NElements();
                 fGMesh->CreateGeoElement(EPoint, nodeindex, 45, nels);
+				face.SetIntersectionIndex(nodeindex[0]);
+                AddEndFace(face);
 
                 // Connect intersection points
                 nels++;
                 TPZVec<int64_t> ipoints(2);
-                ipoints[0] = Rib(cad[0])->IntersectionIndex();
+                ipoints[0] = Rib(CutRibsIndex[0])->IntersectionIndex();
                 ipoints[1] = nodeindex[0];
                 fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
                 break;
@@ -317,25 +320,36 @@ void TRSFractureMesh::SplitFaces(int matID){
     }
 }
 
+
+
+
+
+
 TRSRibs *TRSFractureMesh::Rib(int index){
     return &fRibs[index];
 }
 
-TPZVec<REAL> TRSFractureMesh::FindEndFracturePoint(TRSFace face){
+
+
+
+
+
+
+TPZVec<REAL> TRSFractureMesh::FindEndFracturePoint(TRSFace &face){
     // Convert TPZGeoEl into TRSFracPlane
     TPZGeoEl *gelface = fGMesh->Element(face.ElementIndex());
     TPZFMatrix<REAL> corners;
     gelface->NodesCoordinates(corners);
     TRSFracPlane faceplane(corners);
 
-    // Check fracplane's ribs for intersection with faceplane
-    int nribs = fracplane.GetCorners().Cols();
+    // Check fFracplane's ribs for intersection with faceplane
+    int nribs = fFracplane.GetCorners().Cols();
     for(int irib = 0; irib < nribs; irib++){
         TPZVec<REAL> p1(3);
         TPZVec<REAL> p2(3);
         for(int i = 0; i<3; i++){
-            p1[i] = fracplane.GetCorners()(i, irib);
-            p2[i] = fracplane.GetCorners()(i, (irib+1)%nribs);
+            p1[i] = fFracplane.GetCorners()(i, irib);
+            p2[i] = fFracplane.GetCorners()(i, (irib+1)%nribs);
         }
         if(faceplane.Check_rib(p1, p2)){
             return faceplane.CalculateIntersection(p1,p2);
@@ -347,6 +361,12 @@ TPZVec<REAL> TRSFractureMesh::FindEndFracturePoint(TRSFace face){
     return -1;
 }
 
+
+
+
+
+
+
 void TRSFractureMesh::SplitRibs(int matID){
     //search gmesh for cut ribs
     int64_t Nels = fGMesh->NElements();
@@ -355,7 +375,9 @@ void TRSFractureMesh::SplitRibs(int matID){
         int nSides = gel->NSides();
         //skip all elements that aren't ribs
         if (gel->Dimension() != 1){continue;}
+		//unnecessary for loop... delete it later
         for (int side = 0; side < nSides; side++){
+			// this isn't doing anything... delete it later
             if (gel->NSideNodes(side) == 2){
 
                 // Get rib's vertexes
@@ -367,13 +389,13 @@ void TRSFractureMesh::SplitRibs(int matID){
                 fGMesh->NodeVec()[p2].GetCoordinates(pp2);
 
                 // Check rib
-                bool resul = fracplane.Check_rib(pp1, pp2);
+                bool resul = fFracplane.Check_rib(pp1, pp2);
 
                 // Split rib
                 if (resul == true){
                     TRSRibs rib(iel, true);
                     AddRib(rib);
-                    TPZVec<REAL> ipoint = fracplane.CalculateIntersection(pp1, pp2);
+                    TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
                     //5O is the material of children ribs
                     Rib(iel)->DivideRib(fGMesh, ipoint, matID);
                     gel->SetMaterialId(12);
@@ -385,3 +407,101 @@ void TRSFractureMesh::SplitRibs(int matID){
     }
 }
 
+
+
+
+
+
+
+
+void TRSFractureMesh::SplitFractureEdge(){  
+
+    // Compute fracture edges' lenghts
+    int nedges = fFracplane.GetCorners().Cols();
+    TPZVec<REAL> edgelength(nedges,0);
+    Matrix fraccorners(3,nedges);
+    fraccorners = fFracplane.GetCorners();
+    for(int i = 0; i < nedges; i++){
+        edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
+                              +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
+                              +pow(fraccorners(2,i)-fraccorners(2,(i+1)%nedges),2));
+    }
+    
+	// vector of pointers to maps
+	TPZVec<std::map<REAL, int64_t>* > edgemap(nedges);
+    for(int i = 0; i < nedges; i++){
+        edgemap[i] = new std::map<REAL, int64_t>;
+    }
+    
+    // iterate over all endfaces and map it to the fracture-edge that cuts it
+    for (auto it = fEndFaces.begin(); it != fEndFaces.end(); it++){
+        // get intersection node index and coordinates
+        TRSFace *iface = &it->second;
+        int64_t ipointindex = iface->IntersectionIndex();
+        TPZVec<REAL> ipointcoord(3);
+        fGMesh->NodeVec()[ipointindex].GetCoordinates(ipointcoord);
+
+        // iterate over edges to check if ipoint belongs to it
+        for(int iedge = 0; iedge < nedges; iedge++){
+			//vectors from ipoint to iedge's nodes
+			TPZManVector<REAL, 3> v1(3);
+				v1[0] = fraccorners(0,iedge) - ipointcoord[0];
+				v1[1] = fraccorners(1,iedge) - ipointcoord[1];
+				v1[2] = fraccorners(2,iedge) - ipointcoord[2];
+			TPZManVector<REAL, 3> v2(3);
+				v2[0] = fraccorners(0,(iedge+1)%nedges) - ipointcoord[0];
+				v2[1] = fraccorners(1,(iedge+1)%nedges) - ipointcoord[1];
+				v2[2] = fraccorners(2,(iedge+1)%nedges) - ipointcoord[2];
+			// square of cross product
+			REAL temp = pow(v1[1]*v2[2] - v1[2]*v2[1],2);
+				temp += pow(v1[2]*v2[0] - v1[0]*v2[2],2);
+				temp += pow(v1[0]*v2[1] - v1[1]*v2[0],2);
+				temp = sqrtl(temp);
+            // check if point is in edge by calculating if it's normal distance to the is zero
+            REAL dist = temp/edgelength[iedge];
+			if(dist<fTolerance){
+				// compute local 1D coordinate (alpha)
+				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
+				REAL alpha = norm/edgelength[iedge];
+				if(alpha > 1+fTolerance){std::cout<<"\nProblem with alpha\n";DebugStop();}
+				// map intersection indexes from smallest alpha to biggest
+                // map <alpha, index>
+				edgemap[iedge]->insert(std::make_pair(alpha, ipointindex));
+			}
+        }
+    }
+    
+    //Once intersections on fracture-edges have been properly ordered and mapped by edge
+	//iterate over edges to split them
+	for (int iedge = 0; iedge < nedges; iedge++)
+	{
+        if(edgemap[iedge]->size() == 0){continue;}
+
+		int64_t nels = fGMesh->NElements();
+		TPZVec<int64_t> ipoints(2);     //index of nodes to be connected
+		TPZGeoEl *geofrac = fGMesh->Element(fFracplaneindex); //pointer to fracture GeoEl
+
+		// connect first end-face intersection to iedge's first node
+		auto it = edgemap[iedge]->begin();
+		ipoints[0] = geofrac->SideNodeIndex(iedge+nedges,0);;
+		ipoints[1] = it->second;
+		fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+
+        
+        // iterate over iedge's map
+        while(++it != edgemap[iedge]->end()){
+            nels++;
+            ipoints[0] = ipoints[1];
+            ipoints[1] = it->second;
+            fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+        }
+
+		// connect last end-intersection to edge last node
+		nels++;
+		ipoints[0] = ipoints[1];
+		ipoints[1] = geofrac->SideNodeIndex(iedge+nedges,1);
+		fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+	}
+	
+// fGMesh->BuildConnectivity();  ?
+}

@@ -55,8 +55,8 @@ int main(){
   
   // Creating the Geo mesh
 
-	int dimel = 5;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 6.0);
+	int dimel = 3;
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 7.0);
 	x1[2] = 0.;
 	TPZManVector<int, 2> nelx(2, dimel);
 	TPZGenGrid gengrid(nelx, x0, x1);
@@ -147,13 +147,17 @@ int main(){
     // Find and split intersected faces
     fracmesh.SplitFaces(20);  
 
+    // Split edge of fracture
+    fracmesh.SplitFractureEdge();
+
+    // Debug test
+    std::ofstream meshprint("meshprint.txt");
+    gmesh->Print(meshprint);
+    // gmesh->BuildConnectivity();
     //Print result
     std::ofstream out("./TestSurfaces.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetgeoMesh(), out, true);
-    
-    // Debug test
-    // std::ofstream meshprint("meshprint.txt");
-    // gmesh->Print(meshprint);
+    // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
     return 0;
 }
 

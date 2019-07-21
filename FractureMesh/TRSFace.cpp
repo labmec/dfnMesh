@@ -23,16 +23,20 @@ TRSFace::TRSFace(int64_t index, bool iscut){
 TRSFace::TRSFace(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fIsCut = copy.fIsCut;
-    fFaceIndex = copy.fFaceIndex;
+    fRibStatus = copy.fRibStatus;
+    fRibs = copy.fRibs;
     fSubFaces = copy.fSubFaces;
+    fIntersection = copy.fIntersection;
 }
 
 /// Assignment operator
 TRSFace &TRSFace::operator=(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fIsCut = copy.fIsCut;
-    fFaceIndex = copy.fFaceIndex;
+    fRibStatus = copy.fRibStatus;
+    fRibs = copy.fRibs;
     fSubFaces = copy.fSubFaces;
+    fIntersection = copy.fIntersection;
     return *this;
 }
 
@@ -52,15 +56,15 @@ bool TRSFace::IsCut() const{
     return fIsCut;
 }
 
-// /// Return the subelement indices
-// TPZVec<int64_t> TRSFace::SubElements() const{
-//     return fSubFaces;
-// }
+/// Return the subelement indices
+TPZVec<int64_t> TRSFace::SubElements() const{
+    return fSubFaces;
+}
 
-// /// Set the subelement indices
-// void TRSFace::DefineRibDivide(const TPZVec<int64_t> &subels){
-//     fSubFaces = subels;
-// }
+/// Set the subelement indices
+void TRSFace::DefineRibDivide(const TPZVec<int64_t> &subels){
+    fSubFaces = subels;
+}
 
 ///
 ///Divide the given rib and generate the subelements

@@ -52,8 +52,10 @@ private:
     TPZGeoMesh *fGMesh;
 
     /// Bounded plane from a fracture
-    TRSFracPlane fracplane;
+    TRSFracPlane fFracplane;
 
+    /// Fracplane's geometric element index
+    int64_t fFracplaneindex;
 
 public:
     
@@ -95,7 +97,7 @@ private:
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    TPZVec<REAL> FindEndFracturePoint(TRSFace face);
+    TPZVec<REAL> FindEndFracturePoint(TRSFace &face);
     
 public:
     
@@ -129,6 +131,8 @@ public:
     /// Pointer to face of index 'index'
     TRSFace *Face(int index);
 
+    /// Connects fracture-edge intersections (temporary name for lack of better one)
+    void SplitFractureEdge();
 };
 
 #endif /* TRSFractureMesh_h */

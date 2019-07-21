@@ -151,7 +151,7 @@ void TRSFracPlane::ComputeArea(){
 				temp2 += pow(ax3[2]*ax4[0] - ax3[0]*ax4[2],2);
 				temp2 += pow(ax3[0]*ax4[1] - ax3[1]*ax4[0],2);
 				
-				temp2 = sqrt(temp2)/2;
+				temp2 = sqrtl(temp2)/2;
 
 			fArea = temp1 + temp2;
 			break;
@@ -233,7 +233,7 @@ TPZVec<double> TRSFracPlane::CalculateIntersection(const TPZVec<REAL> &p1, const
 }
 
 /**
- * @brief Checks if a point is within fracture plane
+ * @brief Checks if a coplanar point is within fracture plane
  * @details Enumeration of corner points should follow standard PZ topology, where 
  * corner nodes are numbered counter-clockwise. (This condition will automatically be 
  * met for triangles, but not always for quadrilaterals)

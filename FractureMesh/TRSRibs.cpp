@@ -115,10 +115,11 @@ void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matID){
     
     fIntersectionIndex = gmesh->NNodes();
     
-    TPZVec<TPZGeoNode> Node(1);
-    Node[0].SetCoord(interpoint);
+    // TPZVec<TPZGeoNode> Node(1);
+    // Node[0].SetCoord(interpoint);
+    // gmesh->NodeVec()[fIntersectionIndex]=Node[0];
     gmesh->NodeVec().Resize(fIntersectionIndex+1);       //Adding an extra node
-    gmesh->NodeVec()[fIntersectionIndex]=Node[0];
+    gmesh->NodeVec()[fIntersectionIndex].Initialize(interpoint, *gmesh);
 
     // Create children ribs
     TPZVec<int64_t> cornerindexes(2);
