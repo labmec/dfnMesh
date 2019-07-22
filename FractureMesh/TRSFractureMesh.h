@@ -43,7 +43,7 @@ private:
     std::map<int64_t,TRSRibs> fRibs;
     
     /// Map of intersected faces
-    std::map<int64_t,TRSFace> fFaces;
+    std::map<int64_t,TRSFace> fMidFaces;
     
     /// Map of end-fracture faces
     std::map<int64_t,TRSFace> fEndFaces;
@@ -110,8 +110,8 @@ public:
     /// Access the ribs data structure
     void AddRib(TRSRibs rib);
     
-    /// Access faces' data structure
-    void AddFace(TRSFace face);
+    /// Access mid-fracture faces' data structure
+    void AddMidFace(TRSFace face);
     
     /// Access end-fracture faces' data structure
     void AddEndFace(TRSFace face);

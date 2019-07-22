@@ -1,9 +1,9 @@
-//
-//  FaceFrac.cpp
-//  reservoirlib
-//
-//  Created by Jorge Paúl Ordóñez Andrade on 29/10/2018.
-//
+/*! 
+ *	TRSFace.cpp
+ *  @authors   Jorge Ordoñez
+ *  @authors   Pedro Lima
+ *  @date      2018-2019
+ */
 
 #include "TRSFace.h"
 
@@ -106,12 +106,12 @@ void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){
     
 }
 
-void TRSFace::SetRibsCut(TPZManVector<int64_t,2> ribsinsurface){
-    fRibs = ribsinsurface;
-}
-TPZManVector<int64_t,2> TRSFace::RibsInSurface(){
-    return fRibs;
-}
+// void TRSFace::SetRibsCut(TPZManVector<int64_t,2> ribsinsurface){
+//     fRibs = ribsinsurface;
+// }
+// TPZManVector<int64_t,2> TRSFace::RibsInSurface(){
+//     return fRibs;
+// }
 
 
 

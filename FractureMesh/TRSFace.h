@@ -1,9 +1,9 @@
-//
-//  FaceFrac.hpp
-//  reservoirlib
-//
-//  Created by Jorge Paúl Ordóñez Andrade on 29/10/2018.
-//
+/*! 
+ *	TRSFace.hpp
+ *  @authors   Jorge Ordoñez
+ *  @authors   Pedro Lima
+ *  @date      2018-2019
+ */
 
 #ifndef TRSFace_hpp
 #define TRSFace_hpp
@@ -26,15 +26,15 @@ private:
     bool fIsCut;
 
     /// Indicates which ribs are cut
-    TPZManVector<bool,4> fRibStatus;
+    TPZVec<bool> fRibStatus;
     
-    /// Vector of its ribs
-    TPZManVector<int64_t,4> fRibs;
+    /// Vector with global indexes of its ribs
+    TPZVec<int64_t> fRibs;
 
     /// Vector of sub faces
-    TPZManVector<int64_t,5> fSubFaces;
+    TPZVec<int64_t> fSubFaces;
     
-    /// Index of intersection point (only for FractureMesh::EndFaces)
+    /// Index of in-plane intersection point (only for FractureMesh::EndFaces)
     int64_t fIntersection = -1;
     
 public:
@@ -69,10 +69,16 @@ public:
     /// Divide the given surface and generate subelements
     void DivideSurface(TPZGeoMesh *gmesh, int matid);
     
-    /// Set ribs cut
-    void SetRibsCut(TPZManVector<int64_t,2> ribsinsurface);
-    TPZManVector<int64_t,2> RibsInSurface();
+    // /// Set ribs cut
+    // void SetRibsCut(TPZManVector<int64_t,2> ribsinsurface);
+    // TPZManVector<int64_t,2> GetRibsCut();
     
+    /// Set ribs of face
+    void SetRibs(TPZVec<int64_t> &RibsIndexes) {fRibs = RibsIndexes;}
+
+    /// Get ribs of face
+    TPZVec<int64_t> GetRibs() {return fRibs;}
+
     /// Access intersection index data (only for FractureMesh::EndFaces)
     void SetIntersectionIndex(int64_t index) {fIntersection = index;}
 

@@ -1,10 +1,9 @@
-//
-// FractureMesh.cpp
-// FractureMesh
-//
-//  Created by JORGE ORDOÑEZ on 22/5/18.
-//  Copyright © 2018 JORGE ORDOÑEZ. All rights reserved.
-//
+/*! 
+ *	TRSRibs.cpp
+ *  @authors   Jorge Ordoñez
+ *  @authors   Pedro Lima
+ *  @date      2018-2019
+ */
 
 #include "TRSRibs.h"
 #include "pzgeoel.h"
@@ -29,17 +28,19 @@ TRSRibs::TRSRibs(int64_t index, bool IsCut){
 
 // Copy constructor
 TRSRibs::TRSRibs(const TRSRibs &copy){
-    fRibIndex=copy.fRibIndex;
-    fIsCut=copy.fIsCut;
+    fRibIndex = copy.fRibIndex;
+    fIsCut = copy.fIsCut;
     fSubElements = copy.fSubElements;
+    fIntersectionIndex = copy.fIntersectionIndex;
     fFather = copy.fFather;
 }
 
 // Assignment operator
 TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
-    fRibIndex=copy.fRibIndex;
-    fIsCut=copy.fIsCut;
+    fRibIndex = copy.fRibIndex;
+    fIsCut = copy.fIsCut;
     fSubElements = copy.fSubElements;
+    fIntersectionIndex = copy.fIntersectionIndex;
     fFather = copy.fFather;
     return *this;
 }
@@ -114,26 +115,28 @@ void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matID){
     int64_t nelements = gmesh->NElements();
     
     fIntersectionIndex = gmesh->NNodes();
-    
-    // TPZVec<TPZGeoNode> Node(1);
-    // Node[0].SetCoord(interpoint);
-    // gmesh->NodeVec()[fIntersectionIndex]=Node[0];
     gmesh->NodeVec().Resize(fIntersectionIndex+1);       //Adding an extra node
     gmesh->NodeVec()[fIntersectionIndex].Initialize(interpoint, *gmesh);
 
     // Create children ribs
+	fSubElements.Resize(2);
     TPZVec<int64_t> cornerindexes(2);
     cornerindexes[0] = gel->NodeIndex(0);    //Setting the new rib node as node 0
     cornerindexes[1] = fIntersectionIndex;   //Setting the new rib node as node 1
     gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
-    fSubElements.Resize(2);
-    fSubElements[0]=nelements;              //Setting a new subelement
-    
+
     cornerindexes[0] = gel->NodeIndex(1);    //Setting the new rib node as node 0
     cornerindexes[1] = fIntersectionIndex;   //Setting the new rib node as node 1
     nelements++;
     gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
-    fSubElements[1]=nelements;              //Setting a second new subelement
+    
+	TPZVec<int64_t> SubElements = {nelements-1,nelements};
+	SetChildren(SubElements);
+
+    fSubElements[0] = nelements-1;              //Setting a new subelement
+    fSubElements[1] = nelements;              //Setting a second new subelement
+	
+	// Create a TRSRib objects for children?
 }
 
 

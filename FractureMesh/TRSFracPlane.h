@@ -71,15 +71,6 @@ class TRSFracPlane
 	/// Get matrix with axis 0, 1 and 2 on each column
 	Matrix axis() const {return fAxis;}
 
-   //  /// Get center coordinates
-   //  TPZManVector<REAL, 3> center() const {return fCenterCo;}
-
-   //  /// Get plane's dimension parallel to Ax0
-   //  double L0() {return fL0;}
-
-   //  /// Get plane's dimension parallel to Ax1
-   //  double L1() {return fL1;}
-
 	/// Return corner coordinates
 	Matrix GetCorners() const;
 

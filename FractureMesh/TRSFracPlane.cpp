@@ -125,7 +125,7 @@ void TRSFracPlane::ComputeArea(){
 				temp += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
 				temp += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
 						
-			fArea = sqrt(temp)/2;
+			fArea = sqrtl(temp)/2;
 			break;
 		}
 		case 4:{ //quadrilateral
@@ -135,7 +135,7 @@ void TRSFracPlane::ComputeArea(){
 				temp1 += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
 				temp1 += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
 				
-				temp1 = sqrt(temp1)/2;
+				temp1 = sqrtl(temp1)/2;
 			
 			//Define vectors that correspond to the other two edges (as opposed to Ax0 and Ax1)
 			TPZManVector<REAL, 3> ax3(3);
@@ -261,7 +261,7 @@ bool TRSFracPlane::IsPointInPlane(TPZVec<REAL> &point)
             temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
             temp += pow(ax1[0]*ax2[1] - ax1[1]*ax2[0],2);
                   
-        area += sqrt(temp)/2;
+        area += sqrtl(temp)/2;
     }
 	
     // std::cout<<" ___ ";

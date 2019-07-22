@@ -30,7 +30,6 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
     int nnodes =  fGMesh->NNodes();
     int ncorners = fFracplane.GetCorners().Cols();
     fGMesh->NodeVec().Resize(nnodes + ncorners);
-    // TPZVec<TPZGeoNode> corners(ncorners);
     TPZVec<int64_t> CornerIndexes(ncorners);
     for (int i = 0; i < ncorners; i++)
     {
@@ -39,8 +38,6 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
         nodeX[1] = fFracplane.GetCorners()(1,i);
         nodeX[2] = fFracplane.GetCorners()(2,i);
 
-        // corners[i].SetCoord(nodeX);
-        // fGMesh->NodeVec()[nnodes + i] = corners[i];
         fGMesh->NodeVec()[nnodes + i].Initialize(nodeX, *fGMesh);
         CornerIndexes[i] = nnodes + i;
     }
@@ -62,7 +59,7 @@ TRSFractureMesh::TRSFractureMesh(const TRSFractureMesh &copy){
     fGMesh = copy.fGMesh;
     fTolerance = copy.GetTolerance();
     fRibs = copy.fRibs;
-    fFaces = copy.fFaces;
+    fMidFaces = copy.fMidFaces;
 	fEndFaces = copy.fEndFaces;
     fFracplane = copy.fFracplane;
 	fFracplaneindex = copy.fFracplaneindex;
@@ -73,7 +70,7 @@ TRSFractureMesh &TRSFractureMesh::operator=(const TRSFractureMesh &copy){
     fGMesh = copy.fGMesh;
     fTolerance = copy.GetTolerance();
     fRibs = copy.fRibs;
-    fFaces = copy.fFaces;
+    fMidFaces = copy.fMidFaces;
 	fEndFaces = copy.fEndFaces;
     fFracplane = copy.fFracplane;
 	fFracplaneindex = copy.fFracplaneindex;
@@ -209,9 +206,9 @@ void TRSFractureMesh::AddRib(TRSRibs rib){
  * @param Face to be set
  */
 
-void TRSFractureMesh::AddFace(TRSFace face){
+void TRSFractureMesh::AddMidFace(TRSFace face){
     int index= face.ElementIndex();
-    fFaces[index]=face;
+    fMidFaces[index]=face;
 }
 
 /**
@@ -236,6 +233,7 @@ std::map<int64_t ,TRSRibs> TRSFractureMesh::GetRibs(){
 /**
  * @brief Create cut surfaces
  * @param Material id
+ * @comment This method is getting too long. Might move some of it into AddEndFace and AddMidFace.
  */
 
 void TRSFractureMesh::SplitFaces(int matID){
@@ -244,27 +242,29 @@ void TRSFractureMesh::SplitFaces(int matID){
     int64_t nel = fGMesh->NElements();
     
     for(int iel = 0; iel<nel; iel++){
-        int nribscut =0;
-        TPZManVector<bool,4> ribstatus(4,false);
-        TPZManVector<int64_t,2> CutRibsIndex(2);
         TPZGeoEl *gel = fGMesh->Element(iel);
-        int dim = gel->Dimension();
-        if (dim != 2){continue;}
+        if (gel->Dimension() != 2){continue;}
         //40 is MaterialID for fracture plane
         if(gel->MaterialId()==40){continue;}
+        
+        int nribscut =0;
         int nsides = gel->NNodes();
-        for(int iside = nsides; iside < 2*nsides; iside++){
-            TPZGeoElSide gelside(gel,iside);
+        TPZVec<bool> ribstatus(nsides,false);
+        TPZManVector<int64_t,2> CutRibsIndex(2);
+        TPZVec<int64_t> rib_index(nsides,-1);
+
+        for(int iside = 0; iside < nsides; iside++){
+            TPZGeoElSide gelside(gel,iside+nsides);
             TPZGeoElSide neig = gelside.Neighbour();
             while(neig.Element()->Dimension()!=1){
                 neig=neig.Neighbour();
             }
-            int rib_index = neig.Element()->Index();
-            TRSRibs ribtest = fRibs[rib_index];
-            if(ribtest.IsCut()==true){
-                ribstatus[iside-nsides] = true;
+            rib_index[iside] = neig.Element()->Index();
+            TRSRibs *ribtest = &fRibs[rib_index[iside]];
+            if(ribtest->IsCut()==true){
+                ribstatus[iside] = true;
                 // store the rest of the ribs
-                CutRibsIndex[nribscut]=rib_index;
+                CutRibsIndex[nribscut]=rib_index[iside];
                 nribscut++;
             }
         }
@@ -275,10 +275,10 @@ void TRSFractureMesh::SplitFaces(int matID){
             case 2:{ //mid-fracture element
             // Create TRSFace
                 TRSFace face(iel, true);
-                AddFace(face);
+                AddMidFace(face);
 				std::cout<<"first rib: "<<CutRibsIndex[0]<<std::endl;
 				std::cout<<"second rib: "<<CutRibsIndex[1]<<std::endl;
-				face.SetRibsCut(CutRibsIndex); // may be deleted later
+				face.SetRibs(rib_index); 
 				gel->SetMaterialId(matID);
 				
 			// Connect intersection points
@@ -293,7 +293,7 @@ void TRSFractureMesh::SplitFaces(int matID){
             case 1:{ //end-fracture element
                 TRSFace face(iel, true);
                 std::cout<<"single rib cut: "<<CutRibsIndex[0]<<std::endl;
-                face.SetRibsCut(CutRibsIndex); // may be deleted later
+                face.SetRibs(rib_index); 
                 gel->SetMaterialId(matID+15);
                 //Is the fracture skeleton built? Code won't work otherwise.
                 TPZVec<REAL> coords = FindEndFracturePoint(face);

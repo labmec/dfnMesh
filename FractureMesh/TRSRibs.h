@@ -1,10 +1,9 @@
-//
-//  FractureMesh.hpp
-//  FractureMesh
-//
-//  Created by JORGE ORDOÑEZ on 22/5/18.
-//  Copyright © 2018 JORGE ORDOÑEZ. All rights reserved.
-//
+/*! 
+ *	TRSRibs.hpp
+ *  @authors   Jorge Ordoñez
+ *  @authors   Pedro Lima
+ *  @date      2018-2019
+ */
 
 #ifndef TRSRibs_h
 #define TRSRibs_h
@@ -38,7 +37,7 @@ private:
     TPZManVector<int64_t,2> fSubElements;
     
     /// Intersection point index
-    int64_t fIntersectionIndex;
+    int64_t fIntersectionIndex = -1;
 
     /// Father Element
     int64_t fFather = -1;
