@@ -133,6 +133,10 @@ public:
 
     /// Connects fracture-edge intersections (temporary name for lack of better one)
     void SplitFractureEdge();
+
+    /// Create 2D elements on fracture plane
+    void SplitFracturePlane();
+
 };
 
 #endif /* TRSFractureMesh_h */

@@ -505,3 +505,68 @@ void TRSFractureMesh::SplitFractureEdge(){
 	
 // fGMesh->BuildConnectivity();  ?
 }
+
+
+
+
+
+
+
+
+
+
+
+
+void TRSFractureMesh::SplitFracturePlane(){
+    //need to map ipoints first
+
+    //iterate over ipoints
+        // build connectivity
+        // std::map<REAL, int64_t> Sorted1DNeighbours
+        // store neig_0
+        // get opposite node to neig_0
+        // map opposite node of neig_0 with angle = 0 (use it as reference)
+        // iterate over next 1D neighbours
+            // neighbour neig_i
+            // get opposite node 
+
+            // using angle
+            // REAL angle
+                // angle = arccos(dotProduct(neig_0.normalize(), neig_i.normalize()));
+                // cross = crossProduct(neig_0, neig_i);
+                // if (dotProduct(fAxis2, cross) < 0) {
+                //   angle = 2π - angle;
+                // }
+            // arccos of dot product to get angle from neig_0 to neig_i
+                // (is arccos too expensive? is there another solution?)
+
+
+            //using cossine
+            //REAL cos = dotProduct(neig_0.normalize(), neig_i.normalize());
+                // cross = crossProduct(neig_0, neig_i);
+                // if (dotProduct(fAxis2, cross) < 0) {
+                //   cos = -2 - cos;
+                // }
+
+
+            // insert angle and opposite node in map
+        // iterate over Sorted1DNeighbours 
+            // check if 2D element already exists {continue;}
+            // create GeoEl triangles
+            // map it as part of the fracture surface
+                // { ipoint, opposite-node[i], opposite-node[(i+1)%map.size] }
+            // check if 1D element exists
+            // create 1D GeoEl from opposite-node[i] to opposite-node[(i+1)%map.size]
+
+}
+
+
+
+
+
+
+
+
+//void TRSFractureMesh::CreateTransitionVolumes(){
+    // iterate over
+// }
