@@ -466,7 +466,7 @@ void TRSFractureMesh::SplitFractureEdge(){
 				if(alpha > 1+fTolerance){std::cout<<"\nProblem with alpha\n";DebugStop();}
 				// map intersection indexes from smallest alpha to biggest
                 // map <alpha, index>
-				edgemap[iedge]->insert(std::make_pair(alpha, ipointindex));
+				edgemap[iedge]->insert({alpha, ipointindex});
 			}
         }
     }
@@ -568,5 +568,65 @@ void TRSFractureMesh::SplitFracturePlane(){
 
 
 //void TRSFractureMesh::CreateTransitionVolumes(){
-    // iterate over
+    // iterate over 2D elements created at TRSFractureMesh::SplitFracturePlane()
+        // call it iplane
+        // iterate over iplane's 2D neighbours
+            // if map.size == 3 {breake}
+            // store i-neighbour
+            // if i-neighbour is in fracplane {continue;}
+            // clear map
+            // iterate over iplane's 2D neighbours from (i+1)-neighbour
+                // if j-neighbour is neighbour of i-neighbour 
+                    // if the neighbourhood i-to-j happens on a different edge than that of i-to-iplane
+                        //  map j-neighbour
+                        // if map.size == 2 
+                            // map i-neighbour
+                            // breake
+        // if nedges == 4
+            // iterate over iplane's 2D neighbours from i+1
+                // get any mapped element that is not the i-neighbour from the previous loop
+                // call it k-neighbour
+                // if j-neighbour is neighbour of k-neighbour 
+                    // if the neighbourhood k-to-j happens on a different edge than that of k-to-iplane
+                        // map j-neighbour
+                        // breake
+            // then get the top of the hexahedron (however that's done hahahah)
+        
+        // get info needed by gmsh from map
+        // create volume with gmsh
+    // DEGENERATE CASES
+    // those volumes that only share an edge with fracplane
+    // those volumes that share only a node with fracplane
+    // at the edge of the fracture plane, there are volumes that need uncreated faces to be complete. I might overcome this using only the vertexes and ElType to define the volume
+
+
+
+    // ANOTHER WAY TO DO IT
+/**
+ *  iterate over fMidFaces
+ *      map 3D neighbours
+ *  iterate over fEndFaces
+ *      map 3D neighbours
+ * 
+ * this map is called fTranVolumes (Transition volumes)
+ * maybe create a class for TranVolumes
+ * implement its splitting method in there
+ * 
+ * build connectivity
+ * iterate over fTranVolumes
+ *      iterate over 2D neighbours
+ *      if has subfaces {continue;}
+ *      store iplane
+ *      iterate over iplane's 2D neighbours
+ *          +if i-neighbour has subface {continue}
+ * 
+ *          +do the whole thing described before
+ * 
+ *          +except, now there are 2 fewer degenerate cases "volumes that only share edge or node with fracplane"
+ *          
+ *          +if, at any point, there's a plane with 4 edges, throw a flag to look for another plane that closes the hexahedron/pyramid
+ * 
+ *          +prisms will be accounted for in nedges==4 condition
+ */
+
 // }
