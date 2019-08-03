@@ -134,7 +134,7 @@ public:
     /// Connects fracture-edge intersections (temporary name for lack of better one)
     void SplitFractureEdge();
 
-    /// Create 2D elements on fracture plane
+    /// Triangulates fracture plane
     void SplitFracturePlane();
 
 };

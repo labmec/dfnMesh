@@ -43,11 +43,11 @@
 // 1 gmesh
 // 4 skeleton
 // 12 ribs that will be divided
+// 19 children ribs
 // 20 mid-fracture cut faces
 // 35 end-fracture cut faces
 // 40 Fracture plane
 // 45 Intersection points in end-faces
-// 50 children ribs
 
 using namespace std;
 
@@ -55,8 +55,8 @@ int main(){
   
   // Creating the Geo mesh
 
-	int dimel = 3;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 7.0);
+	int dimel = 4;
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 4);
 	x1[2] = 0.;
 	TPZManVector<int, 2> nelx(2, dimel);
 	TPZGenGrid gengrid(nelx, x0, x1);
@@ -118,8 +118,10 @@ int main(){
 	std::cout << std::endl;
 
 
-
-
+// well behaved fracture
+// 2.9084405 1.6236484 0.091559516 1.3763516
+// 2.5516489 2.2694336 2.4483511 2.7305664
+// 1.3832619 2.8898022 1.6167381 0.11019779
 
 
 
@@ -138,7 +140,7 @@ int main(){
     TRSFractureMesh fracmesh(fracplane, gmesh);
     
     // Find and split intersected ribs
-    fracmesh.SplitRibs(50);
+    fracmesh.SplitRibs(19);
 
     //Create FracPlane's skeleton (maybe give this to FractureMesh's constructor)
     gmesh->BuildConnectivity(); //important to find end-fracture intersection points
@@ -150,9 +152,12 @@ int main(){
     // Split edge of fracture
     fracmesh.SplitFractureEdge();
 
-    // Debug test
 
-    gmesh->BuildConnectivity();
+    // gmesh->BuildConnectivity();
+
+    fracmesh.SplitFracturePlane();
+
+
     std::ofstream meshprint("meshprint.txt");
     gmesh->Print(meshprint);
     //Print result

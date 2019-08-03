@@ -105,7 +105,7 @@ void TRSRibs::SetChildren(const TPZVec<int64_t> &subels){
  * @param Material id to assign for the new ribs
  */
 
-void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matID){
+void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int matID){
     int iel_index = fRibIndex;          //Element index
     if(!gmesh->Element(iel_index)){     // If the element does not exist the code is going to break
         std::cout<<"No gel associated to the Rib\n";
@@ -113,25 +113,31 @@ void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> interpoint, int matID){
     }
     TPZGeoEl *gel = gmesh->Element(iel_index);
     int64_t nelements = gmesh->NElements();
+    int64_t nnodes = gmesh->NNodes();
+    gmesh->NodeVec().Resize(nnodes+1);       //Adding an extra node
+    gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord, *gmesh);
     
-    fIntersectionIndex = gmesh->NNodes();
-    gmesh->NodeVec().Resize(fIntersectionIndex+1);       //Adding an extra node
-    gmesh->NodeVec()[fIntersectionIndex].Initialize(interpoint, *gmesh);
+    // create GeoEl for intersection point
+    TPZVec<int64_t> vnnodes(1,nnodes);
+    gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);
+    fIntersectionIndex = nelements;
 
     // Create children ribs
 	fSubElements.Resize(2);
     TPZVec<int64_t> cornerindexes(2);
+    //child 1
     cornerindexes[0] = gel->NodeIndex(0);    //Setting the new rib node as node 0
-    cornerindexes[1] = fIntersectionIndex;   //Setting the new rib node as node 1
+    cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
+    nelements++;
     gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
-
+    // child 2
     cornerindexes[0] = gel->NodeIndex(1);    //Setting the new rib node as node 0
-    cornerindexes[1] = fIntersectionIndex;   //Setting the new rib node as node 1
+    cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
     nelements++;
     gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
     
-	TPZVec<int64_t> SubElements = {nelements-1,nelements};
-	SetChildren(SubElements);
+	// TPZVec<int64_t> SubElements = {nelements-1,nelements};
+	// SetChildren(SubElements);
 
     fSubElements[0] = nelements-1;              //Setting a new subelement
     fSubElements[1] = nelements;              //Setting a second new subelement

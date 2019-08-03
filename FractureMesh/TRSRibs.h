@@ -36,7 +36,9 @@ private:
     /// Indices of the subelements
     TPZManVector<int64_t,2> fSubElements;
     
-    /// Intersection point index
+    // /// Intersection point index
+    // int64_t fIntersectionIndex = -1;
+    /// Index of geometric element EPoint at intersection
     int64_t fIntersectionIndex = -1;
 
     /// Father Element

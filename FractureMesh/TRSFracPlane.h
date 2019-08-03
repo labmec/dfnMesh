@@ -46,7 +46,7 @@ class TRSFracPlane
 	/// Define a default tolerance
 	REAL fTolerance = 1.e-4;
 
-	// /// Element index 
+	// /// Element index within gmesh
 	// int64_t fFracIndex;
 
   public:
