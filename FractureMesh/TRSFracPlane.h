@@ -98,6 +98,13 @@ class TRSFracPlane
 	// /// Element index
 	// int64_t ElementIndex() const {return fFracIndex;}
 
+	/**
+	 * @brief Creates a geometric element for this plane in pointed mesh
+	 * @param Pointer to geometric mesh
+	 * @return Index for newly created element in gmesh
+	 */
+	int64_t CreateElement(TPZGeoMesh *gmesh);
+
   private:
 	/// Initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);

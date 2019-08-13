@@ -22,37 +22,15 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
     fFracplane = FracPlane;
     fGMesh = gmesh;
 
-    // Implement check for previously created skeleton
+    // Maybe implement check for previously created skeleton
     // Create skeleton elements
     CreateSkeletonElements(2, 4);
     CreateSkeletonElements(1, 4);
 
     // Create FracPlane's geometric element into mesh
-    int nnodes =  fGMesh->NNodes();
-    int ncorners = fFracplane.GetCorners().Cols();
-    fGMesh->NodeVec().Resize(nnodes + ncorners);
-    TPZVec<int64_t> CornerIndexes(ncorners);
-    for (int i = 0; i < ncorners; i++)
-    {
-        TPZVec<REAL> nodeX(3, 0);
-        nodeX[0] = fFracplane.GetCorners()(0,i);
-        nodeX[1] = fFracplane.GetCorners()(1,i);
-        nodeX[2] = fFracplane.GetCorners()(2,i);
-
-        fGMesh->NodeVec()[nnodes + i].Initialize(nodeX, *fGMesh);
-        CornerIndexes[i] = nnodes + i;
-    }
-    MElementType elemtype;
-    switch (ncorners)
-    {
-        case 3: elemtype = ETriangle; break;
-        case 4: elemtype = EQuadrilateral; break;
-        default: DebugStop();
-    }
-    fFracplaneindex = fGMesh->NElements();
-    fGMesh->CreateGeoElement(elemtype, CornerIndexes, 40, fFracplaneindex);
+    fFracplaneindex = fFracplane.CreateElement(fGMesh);
     
-
+    
 }
 
 // Copy constructor
@@ -255,10 +233,20 @@ std::map<int64_t ,TRSRibs> TRSFractureMesh::GetRibs(){
  */
 
 void TRSFractureMesh::SplitFaces(int matID){
-    //CreateSkeletonElements(1, 4);
-    //CreateSkeletonElements(2, 4);
+    //CreateSkeletonElements(1, 40);
+    // First, build a skeleton for fracplane
+    fGMesh->BuildConnectivity();
+    TPZGeoEl *gel = fGMesh->Element(fFracplaneindex);
+    int nsides = gel->NSides();
+    for (int iside = 0; iside < nsides; iside++){
+        TPZGeoElSide gelside = gel->Neighbour(iside);
+        if (gelside.Dimension() != 1){continue;}
+        bool haskel = HasEqualDimensionNeighbour(gelside);
+        if (haskel == false){TPZGeoElBC(gelside, 40);}
+    }
+
+    // iterate over all 2D elements and check their 1D neighbours for intersections
     int64_t nel = fGMesh->NElements();
-    
     for(int iel = 0; iel<nel; iel++){
         TPZGeoEl *gel = fGMesh->Element(iel);
         if (gel->Dimension() != 2){continue;}
@@ -266,13 +254,20 @@ void TRSFractureMesh::SplitFaces(int matID){
         if(gel->MaterialId()==40){continue;}
         
         int nribscut =0;
-        int nsides = gel->NNodes();
-        TPZVec<bool> ribstatus(nsides,false);
+        int nedges = gel->NNodes();
+        /*
+        vector with status for each rib of face
+        0 = uncut
+        1 = cut into two ribs
+        2 = cut into point and rib
+        3 = cut into rib and point (maybe not)
+            (order matters)*/
+        TPZVec<int> ribstatus(nedges,0);
         TPZManVector<int64_t,2> CutRibsIndex(2);
-        TPZVec<int64_t> rib_index(nsides,-1);
+        TPZVec<int64_t> rib_index(nedges,-1);
 
-        for(int iside = 0; iside < nsides; iside++){
-            TPZGeoElSide gelside(gel,iside+nsides);
+        for(int iside = 0; iside < nedges; iside++){
+            TPZGeoElSide gelside(gel,iside+nedges);
             TPZGeoElSide neig = gelside.Neighbour();
             while(neig.Element()->Dimension()!=1){
                 neig=neig.Neighbour();
@@ -396,7 +391,7 @@ void TRSFractureMesh::SplitRibs(int matID){
         int nSides = gel->NSides();
         //skip all elements that aren't ribs
         if (gel->Dimension() != 1){continue;}
-		//unnecessary for loop... delete it later
+		//unnecessary "for" loop... delete it later
         for (int side = 0; side < nSides; side++){
 			// this isn't doing anything... delete it later
             if (gel->NSideNodes(side) == 2){
@@ -559,6 +554,7 @@ void TRSFractureMesh::SplitFracturePlane(){
 	
 	
 	// GeoPoints for fracture vertices aren't needed if fracture plane is all contained by gmesh
+    // (since all polygons generated are convex)
 		// int ncorners = fGMesh->Element(fFracplaneindex)->NCornerNodes();
 		// for(int i = 0; i<ncorners; i++){
 		// 	TPZVec<int64_t> cornerindex(1);
@@ -571,7 +567,7 @@ void TRSFractureMesh::SplitFracturePlane(){
     //iterate over ipoints
 	fGMesh->BuildConnectivity();
     for(auto itr = ipoints.begin(); itr != ipoints.end(); itr++){
-		// map of opposite nodes sorted by (cossine of) angle measured from a reference segment
+		// map of opposite nodes sorted by (cosine of) angle measured from a reference segment
         std::map<REAL, int64_t> oppositenodes;
 		TPZGeoEl *ipoint = fGMesh->Element(*itr);
 		int64_t centerindex = ipoint->NodeIndex(0);
@@ -581,7 +577,7 @@ void TRSFractureMesh::SplitFracturePlane(){
             neig0 = neig0.Neighbour();
         }
 
-        // Cossine of angle of segment from inode to opposite node (oppnode) relative to reference segment
+        // Cosine of angle of segment from inode to opposite node (oppnode) relative to reference segment
         REAL gamma = 1.0; 
         // Opposite node index
         int64_t oppnode;
@@ -626,7 +622,7 @@ void TRSFractureMesh::SplitFracturePlane(){
 				vi[0] = vi[0]/norm;
 				vi[1] = vi[1]/norm;
 				vi[2] = vi[2]/norm;
-				// compute cossine of angle
+				// compute cosine of angle
 				gamma = vref[0]*vi[0]
 						+vref[1]*vi[1]
 						+vref[2]*vi[2];
@@ -699,7 +695,7 @@ void TRSFractureMesh::SplitFracturePlane(){
 				v2[0] = v2[0]/norm;
 				v2[1] = v2[1]/norm;
 				v2[2] = v2[2]/norm;
-				// compute cossine of angle
+				// compute cosine of angle
 				gamma =  v1[0]*v2[0]
 						+v1[1]*v2[1]
 						+v1[2]*v2[2];
@@ -734,71 +730,9 @@ void TRSFractureMesh::SplitFracturePlane(){
 				}
 			}
             
-
-			// nodeindices.resize(2);
-			// nodeindices[0] = iedge->second;
-			// nodeindices[1] = nextedge->second;
-			// fGMesh->CreateGeoElement(EOned, nodeindices, 48, ++nelements);
 		}
 	oppositenodes.clear();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // build connectivity
-        // std::map<REAL, int64_t> oppositenodes
-        // store neig_0
-        // get opposite node to neig_0
-        // map opposite node of neig_0 with angle = 0 (use it as reference)
-        // iterate over next 1D neighbours
-            // neighbour neig_i
-            // get opposite node 
-
-            // using angle
-            // REAL angle
-                // angle = arccos(dotProduct(neig_0.normalize(), neig_i.normalize()));
-                // cross = crossProduct(neig_0, neig_i);
-                // if (dotProduct(fAxis2, cross) < 0) {
-                //   angle = 2π - angle;
-                // }
-            // arccos of dot product to get angle from neig_0 to neig_i
-                // (is arccos too expensive? is there another solution?)
-
-
-            //using cossine
-            //REAL cos = dotProduct(neig_0.normalize(), neig_i.normalize());
-                // cross = crossProduct(neig_0, neig_i);
-                // if (dotProduct(fAxis2, cross) < 0) {
-                //   cos = -2 - cos;
-                // }
-
-
-            // insert angle and opposite node in map
-        // iterate over oppositenodes 
-            // check if 2D element already exists {continue;}
-            // create GeoEl triangles
-            // map it as part of the fracture surface
-                // int nedges = map.size
-                // { ipoint, opposite-node[i], opposite-node[(i+1)%nedges] }
-            // check if 1D element exists
-            // create 1D GeoEl from opposite-node[i] to opposite-node[(i+1)%map.size]
-
 }
 
 
@@ -822,65 +756,88 @@ void TRSFractureMesh::SplitFracturePlane(){
 
 
 //void TRSFractureMesh::CreateTransitionVolumes(){
-    // iterate over 2D elements created at TRSFractureMesh::SplitFracturePlane()
-        // call it iplane
-        // iterate over iplane's 2D neighbours
-            // if map.size == 3 {breake}
-            // store i-neighbour
-            // if i-neighbour is in fracplane {continue;}
-            // clear map
-            // iterate over iplane's 2D neighbours from (i+1)-neighbour
-                // if j-neighbour is neighbour of i-neighbour 
-                    // if the neighbourhood i-to-j happens on a different edge than that of i-to-iplane
-                        //  map j-neighbour
-                        // if map.size == 2 
-                            // map i-neighbour
-                            // breake
-        // if nedges == 4
-            // iterate over iplane's 2D neighbours from i+1
-                // get any mapped element that is not the i-neighbour from the previous loop
-                // call it k-neighbour
-                // if j-neighbour is neighbour of k-neighbour 
-                    // if the neighbourhood k-to-j happens on a different edge than that of k-to-iplane
-                        // map j-neighbour
-                        // breake
-            // then get the top of the hexahedron (however that's done hahahah)
+
+/*
+    iterate over fMidFaces
+        map 3D neighbours
+    iterate over fEndFaces
+        map 3D neighbours
+ 
+    this map is called fTranVolumes (Transition volumes)
+    maybe create a class for TranVolumes
+    implement its splitting method in there
+ 
+    build connectivity
+    iterate over fTranVolumes (ivolume)
+        iterate over ivolume 2D neighbours (iplane)
+            if iplane has subfaces {continue;}
+            create set
+            iterate over iplane's 2D neighbours (first_neighbour)
+                if set.size == 3 {breake;}
+                if neighbourhood happens at a node {continue;}
+                if first_neighbour has subface {continue}
+                if first_neighbour is in fracplane {continue;}
+                iterate over iplane's 2D neighbours from (first+1)_neighbour (second_neighbour)
+                    if neighbourhood happens at a node {continue;}
+                    if second_neighbour is also neighbour of first_neighbour 
+                        if the neighbourhood first-to-second happens on a different edge than that of first-to-iplane
+                            insert iplane in set
+                            insert first_neighbour in set
+                            insert second_neighbour in set
+                                // only 3 faces are needed to get a tetrahedron's corner nodes to create GeoElement
+                            breake
+            if (iplane.nnodes == 4 || first_neighbour.nnodes == 4 || second_neighbour.nnodes == 4)
+                if set.size == 4 {breake;}
+                iterate over iplane's 2D neighbours (third_neighbour)
+                    if neighbourhood happens at a node {continue;}
+                    if third_neighbour is already in set {continue;}
+                    if third_neighbour is neighbour of either first or second neighbours
+                        if the neighbourhood third_to_(first or second) happens on a different edge than that of (first or second)_to_iplane
+                            insert third_neighbour in set
+                            breake;
         
-        // get info needed by gmsh from map
-        // create volume with gmsh
-    // DEGENERACIES
-    // those volumes that only share an edge with fracplane
-    // those volumes that share only a node with fracplane
-    // at the edge of the fracture plane, there are volumes that need uncreated faces to be complete. I might overcome this using only the vertexes and ElType to define the volume
+            // get corner nodes
+            TPZVec<int64_t> nodeindices(0)
+            iterate over set
+                index = get corner nodes for each face in set
+                nodeindices.push_back(index)
+            remove duplicates in nodeindices
+
+            // determine element type
+            switch nodeindices.size
+                case 4: tetraedro
+                case 6: pyramid
+                case 8: hexaedro
+            
+            // check if volume to be created already exists
+            bool test = false;
+            iterate over iplane's 3D neighbours (volume_neig)
+                if volume_neig.elementType != newvolume.elementType {continue;}
+                get volume_neig nodes indices
+                compare all volume_neig nodes with each nodeindices[i]
+                    test = true;
+                    breake loop if they match
+            if(test == true){continue;}
 
 
+            // create volume element
+            int64_t nelements = fGMesh->NElements();
+            fGMesh->CreateGeoElement(ElementType, nodeindices, 49, nelements);
+            
 
-    // ANOTHER WAY TO DO IT
-/**
- *  iterate over fMidFaces
- *      map 3D neighbours
- *  iterate over fEndFaces
- *      map 3D neighbours
- * 
- * this map is called fTranVolumes (Transition volumes)
- * maybe create a class for TranVolumes
- * implement its splitting method in there
- * 
- * build connectivity
- * iterate over fTranVolumes
- *      iterate over 2D neighbours
- *      if has subfaces {continue;}
- *      store iplane
- *      iterate over iplane's 2D neighbours
- *          +if i-neighbour has subface {continue}
- * 
- *          +do the whole thing described before
- * 
- *          +except, now there are 2 fewer degeneracies "volumes that only share edge or node with fracplane"
- *          
- *          +if, at any point, there's a plane with 4 edges, throw a flag to look for another plane that closes the hexahedron/pyramid
- * 
- *          +prisms will be accounted for in nedges==4 condition
+            // then check if new volume has skeleton
+            fGMesh->BuildConnectivity();
+            TPZGeoEl *newvolume = fGMesh->Element(nelements);
+            int nsides = newvolume->NSides();
+            for (int iside = 0; iside < nsides; iside++){
+                TPZGeoElSide gelside = newvolume->Neighbour(iside);
+                if (gelside.Dimension() != 2){continue;}
+                bool haskel = HasEqualDimensionNeighbour(gelside);
+                if (haskel == false)
+                {
+                    TPZGeoElBC(gelside, 49);
+                }
+            }
  */
 
 // }

@@ -270,3 +270,50 @@ bool TRSFracPlane::IsPointInPlane(TPZVec<REAL> &point)
     //point is in plane
     return( fabs(area-fArea) < fTolerance );
 }
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @brief Creates a geometric element for this plane in pointed mesh
+ * @param Pointer to geometric mesh
+ * @return Index for newly created element in gmesh
+ */
+int64_t TRSFracPlane::CreateElement(TPZGeoMesh *gmesh){
+	// number of nodes for gmesh
+	int nnodes =  gmesh->NNodes();
+	// nomber of corners for fracplane
+	int ncorners = fCornerPoints.Cols();
+	// add corner as nodes in gmesh
+	gmesh->NodeVec().Resize(nnodes + ncorners);
+	TPZVec<int64_t> CornerIndexes(ncorners);
+	for (int i = 0; i < ncorners; i++)
+	{
+		TPZVec<REAL> nodeX(3, 0);
+		nodeX[0] = fCornerPoints(0,i);
+		nodeX[1] = fCornerPoints(1,i);
+		nodeX[2] = fCornerPoints(2,i);
+
+		gmesh->NodeVec()[nnodes + i].Initialize(nodeX, *gmesh);
+		CornerIndexes[i] = nnodes + i;
+	}
+	// set element type
+	MElementType elemtype;
+	switch (ncorners){
+		case 3: elemtype = ETriangle; break;
+		case 4: elemtype = EQuadrilateral; break;
+		default: DebugStop();
+	}
+	// create geometric element
+	int64_t fracplaneindex = gmesh->NElements();
+	gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, fracplaneindex);
+
+	return fracplaneindex;
+}

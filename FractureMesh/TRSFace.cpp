@@ -23,7 +23,7 @@ TRSFace::TRSFace(int64_t index, bool iscut){
 TRSFace::TRSFace(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fIsCut = copy.fIsCut;
-    fRibStatus = copy.fRibStatus;
+    fStatus = copy.fStatus;
     fRibs = copy.fRibs;
     fSubFaces = copy.fSubFaces;
     fIntersection = copy.fIntersection;
@@ -33,7 +33,7 @@ TRSFace::TRSFace(const TRSFace &copy){
 TRSFace &TRSFace::operator=(const TRSFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fIsCut = copy.fIsCut;
-    fRibStatus = copy.fRibStatus;
+    fStatus = copy.fStatus;
     fRibs = copy.fRibs;
     fSubFaces = copy.fSubFaces;
     fIntersection = copy.fIntersection;
@@ -62,14 +62,86 @@ TPZVec<int64_t> TRSFace::SubElements() const{
 }
 
 /// Set the subelement indices
-void TRSFace::DefineRibDivide(const TPZVec<int64_t> &subels){
+void TRSFace::SetChildren(const TPZVec<int64_t> &subels){
     fSubFaces = subels;
 }
 
 ///
-///Divide the given rib and generate the subelements
-void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){
-    //@TODO Check consistence
+///Divide the given this surface and generate the subelements
+void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){}
+    //@TODO Check consistency
+// 
+
+/**
+ * @brief Returns the split pattern that should be used to split this face
+ * @param Status vector (boolean) that indicates which ribs and/or nodes are cut
+ * @return Integer that indicates which split pattern to use. (check documentation)
+ */
+int TRSFace::GetSplitPattern(TPZVec<bool> &status){
+    int ribscut = 0;
+	int nodescut = 0;
+	int n = (int) status.size()/2;
+	for (int i = 0; i < n; i++){
+		ribscut += status[i+n];
+		nodescut += status[i];
+	}
+
+	// Get split case
+	int splitcase;
+	if (n == 4){ //quadrilateral
+		switch(ribscut){
+			case 0:
+				switch(nodescut){
+					case 0: splitcase = 8;break; //or 9
+					case 1: splitcase = 6;break;
+					case 2: splitcase = 3;break; 
+				}
+				break;
+			case 1:
+				switch(nodescut){
+					case 0: if(fIntersection == -1){splitcase = 4;break;}
+							else{splitcase = 5;break;}
+					case 1: splitcase = 7;break;
+				}
+				break;
+			case 2:{
+				int i=0;
+				while(status[i+4]==false){i++;}
+				if(status[i+5]==true||status[(i+3)%4+4]==true){splitcase = 2;}
+				else splitcase = 1;
+
+				// std::vector<bool> test1 = {0,0,0,0,1,0,1,0};
+				// if(status == test1){splitcase = 1;break;}
+				// std::vector<bool> test2 = {0,0,0,0,0,1,0,1};
+				// if(status == test2){splitcase = 1;break;}
+				// splitcase = 2;
+				break;
+			}
+		}
+	}
+	else{ //triangle
+		switch(ribscut){
+			case 0:
+				switch(nodescut){
+					case 0: splitcase = 15;break; //or 16
+					case 1: splitcase = 13;break;
+				}
+				break;
+			case 1:
+				switch(nodescut){
+					case 0: if(fIntersection == -1){splitcase = 14;break;}
+							else{splitcase = 12;break;}
+					case 1: splitcase = 11;break;
+				}
+				break;
+			case 2:
+				splitcase = 10;
+				break;
+		}
+	}
+	return splitcase;
+}
+
 //    if(!(gmesh->Element(fFaceIndex))){DebugStop();}
 //    TPZGeoEl *gel = gmesh->Element(fFaceIndex);
 //    int no_intr_P1 = fRibInter[0].second;
@@ -104,7 +176,7 @@ void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){
   
     
     
-}
+
 
 // void TRSFace::SetRibsCut(TPZManVector<int64_t,2> ribsinsurface){
 //     fRibs = ribsinsurface;

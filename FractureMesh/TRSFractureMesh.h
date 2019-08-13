@@ -62,10 +62,12 @@ public:
     /// Empty constructor
     TRSFractureMesh();
     
-    /// Define the fracture plane from 3 to 4 points
-    /// Points should be coplanar
-    /// The matrix should be dimension 3xN, each column defining the coordinates
-    /// of a point
+    /**Define the fracture plane from 3 to 4 points
+     * Points should be coplanar
+     * The matrix should be dimension 3xN, each column defining the coordinates
+     * of a point
+     *  
+     */
     TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh);
     
     /// Copy constructor

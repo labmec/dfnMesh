@@ -3,22 +3,11 @@
 #include <pz_config.h>
 #endif
 
-#include "pzgeoel.h"
-#include "pzgnode.h"
 #include "pzgmesh.h"
 #include "pzgengrid.h"
 #include "TPZExtendGridDimension.h"
 #include "TPZVTKGeoMesh.h"
 
-#include "pzfmatrix.h"
-#include "pzvec.h"
-#include "pzmanvector.h"
-#include "pzstack.h"
-
-#include "TPZGeoLinear.h"
-
-
-#include "TPZMaterial.h"
 // #include "pzlog.h"
 
 #include <stdio.h>
@@ -32,8 +21,6 @@
 #include <set>
 #include <map>
 #include <vector>
-
-
 
 #include "TRSFractureMesh.h"
 #include "TRSRibs.h"
@@ -52,7 +39,8 @@
 using namespace std;
 
 int main(){
-  
+
+	/*
   // Creating the Geo mesh
 
 	int dimel = 4;
@@ -142,19 +130,13 @@ int main(){
     // Find and split intersected ribs
     fracmesh.SplitRibs(19);
 
-    //Create FracPlane's skeleton (maybe give this to FractureMesh's constructor)
-    gmesh->BuildConnectivity(); //important to find end-fracture intersection points
-    fracmesh.CreateSkeletonElements(1, 40);
-
     // Find and split intersected faces
     fracmesh.SplitFaces(20);  
 
     // Split edge of fracture
     fracmesh.SplitFractureEdge();
 
-
-    // gmesh->BuildConnectivity();
-
+    // triangulation of fracture plane
     fracmesh.SplitFracturePlane();
 
 
@@ -163,6 +145,7 @@ int main(){
     //Print result
     std::ofstream out("./TestSurfaces.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetgeoMesh(), out, true);
-    // TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out, true);
     return 0;
+
+    */
 }
