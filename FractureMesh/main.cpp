@@ -40,7 +40,7 @@ using namespace std;
 
 int main(){
 
-	/*
+
   // Creating the Geo mesh
 
 	int dimel = 4;
@@ -147,5 +147,4 @@ int main(){
     TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetgeoMesh(), out, true);
     return 0;
 
-    */
 }

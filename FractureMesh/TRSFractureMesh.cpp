@@ -68,7 +68,6 @@ TRSFracPlane TRSFractureMesh::GetPlane() const{
 /**
  * @brief Set the tolerance for the distance between a point-plane
  * @param Tolerance
- * @return The tolerance
  */
 
 void TRSFractureMesh::SetTolerance(REAL tolerance){
@@ -86,30 +85,11 @@ REAL TRSFractureMesh::GetTolerance() const{
 
 
 
-// /**
-//  * @brief Checks if a surface needs to be divided
-//  * @param Surface index (integer)
-//  * @param Cut ribs vector
-//  * @return True if the surface needs to be divided
-//  * @return False if the surface does not need to be divided
-//  */
 
-// bool TRSFractureMesh::NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) {
-//     bool state= false;   //By definition does not need to be divided
-//     int nribs = interribs.size();
-//     int nribscut =0;
-//     for(int i=0; i< nribs; i++){
-//         int index_anal = interribs[i];
-//         TRSRibs rib_an = fRibs[index_anal];
-//         if(rib_an.CutsPlane()==true){
-//             nribscut++;
-//         }
-//     }
-//     if(nribscut > 0){     //Checks if a surface has ribs cut
-//         return true;   //The surface needs to be divided
-//     }
-//     return false;
-// }
+
+
+
+
 
 /**
  * @brief Check if the neighbour has equal dimension
@@ -203,6 +183,32 @@ void TRSFractureMesh::AddRib(TRSRibs rib){
  */
 
 void TRSFractureMesh::AddMidFace(TRSFace face){
+    //@ToDo iterate over ribs to connect intersection points
+    int nribscut = 0;
+    TPZManVector<int64_t,2> CutRibsIndex(2);
+    TPZVec<int64_t> rib_index = face.GetRibs();
+    int nribs = rib_index.size();
+    for (int irib = 0; irib < nribs; irib++)
+    {
+        TRSRibs *ribtest = &fRibs[rib_index[irib]];
+        if(ribtest->IsCut() == true){
+            CutRibsIndex[nribscut]=rib_index[irib];
+            nribscut++;
+        }
+    }
+    // std::cout<<"first rib: "<<CutRibsIndex[0]<<std::endl;
+    // std::cout<<"second rib: "<<CutRibsIndex[1]<<std::endl;
+
+    // Connect intersection points
+    TPZVec<int64_t> ipoints(2);
+    int64_t gelpointIndex = Rib(CutRibsIndex[0])->IntersectionIndex();
+    ipoints[0] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
+    gelpointIndex = Rib(CutRibsIndex[1])->IntersectionIndex();
+    ipoints[1] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
+    int64_t nels = fGMesh->NElements();
+    fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+    
+    
     int index= face.ElementIndex();
     fMidFaces[index]=face;
 }
@@ -213,6 +219,31 @@ void TRSFractureMesh::AddMidFace(TRSFace face){
  */
 
 void TRSFractureMesh::AddEndFace(TRSFace face){
+    // Create geometric element for intersection node
+        TPZVec<REAL> coords = FindEndFracturePoint(face);
+        TPZVec<int64_t> nodeindex(1,0);
+        nodeindex[0] = fGMesh->NodeVec().AllocateNewElement();
+        fGMesh->NodeVec()[nodeindex[0]].Initialize(coords, *fGMesh);
+        int64_t nels = fGMesh->NElements();
+        fGMesh->CreateGeoElement(EPoint, nodeindex, 45, nels);
+        face.SetIntersectionIndex(nels);
+    //iterate over ribs to connect intersection points
+    TPZVec<int64_t> rib_index = face.GetRibs();
+    int nribs = rib_index.size();
+    for (int irib = 0; irib < nribs; irib++)
+    {
+        TRSRibs *ribtest = &fRibs[rib_index[irib]];
+        if(ribtest->IsCut() == true){
+            // std::cout<<"single rib cut: "<<rib_index[irib]<<std::endl;
+            // Connect intersection points
+                nels++;
+                TPZVec<int64_t> ipoints(2);
+                int64_t gelpointIndex = Rib(rib_index[irib])->IntersectionIndex();
+                ipoints[0] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
+                ipoints[1] = nodeindex[0];
+                fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+        }
+    }
     int index= face.ElementIndex();
     fEndFaces[index]=face;
 }
@@ -255,17 +286,14 @@ void TRSFractureMesh::SplitFaces(int matID){
         
         int nribscut =0;
         int nedges = gel->NNodes();
-        /*
-        vector with status for each rib of face
-        0 = uncut
-        1 = cut into two ribs
-        2 = cut into point and rib
-        3 = cut into rib and point (maybe not)
-            (order matters)*/
-        TPZVec<int> ribstatus(nedges,0);
+
+        // vector with status for each rib and node of face
+        TPZVec<bool> sidestatus(nedges*2,false);
         TPZManVector<int64_t,2> CutRibsIndex(2);
+        // vector with indices of father ribs that outline the face
         TPZVec<int64_t> rib_index(nedges,-1);
 
+        // iterate over ribs to check for intersection
         for(int iside = 0; iside < nedges; iside++){
             TPZGeoElSide gelside(gel,iside+nedges);
             TPZGeoElSide neig = gelside.Neighbour();
@@ -275,63 +303,48 @@ void TRSFractureMesh::SplitFaces(int matID){
             rib_index[iside] = neig.Element()->Index();
             TRSRibs *ribtest = &fRibs[rib_index[iside]];
             if(ribtest->IsCut()==true){
-                ribstatus[iside] = true;
-                // store the rest of the ribs
+            //check if ribtest was divided into two ribs, or a rib and a point
+                // get node where ribtest is cut
+                int64_t cutnode = fGMesh->Element(ribtest->IntersectionIndex())->NodeIndex(0);
+                TPZVec<int64_t> ribtestNodes(2);
+                fGMesh->Element(ribtest->ElementIndex())->GetNodeIndices(ribtestNodes);
+                // check if intersection is a corner node and assign status accordingly
+                if(cutnode == ribtestNodes[0]){
+                    sidestatus[iside] = true;
+                }
+                else if(cutnode == ribtestNodes[1]){
+                    sidestatus[(iside+1)%nedges] = true;
+                }
+                else{
+                    sidestatus[iside+nedges] = true;
+                }
+                
+                // store cut rib (this might be discarded once I fracplane outline out of this method)
                 CutRibsIndex[nribscut]=rib_index[iside];
                 nribscut++;
             }
         }
-        
-        switch (nribscut)
-        {
-            case 0: {break;}
-            case 2:{ //mid-fracture element
-            // Create TRSFace
-                TRSFace face(iel, true);
-                AddMidFace(face);
-				std::cout<<"first rib: "<<CutRibsIndex[0]<<std::endl;
-				std::cout<<"second rib: "<<CutRibsIndex[1]<<std::endl;
-				face.SetRibs(rib_index); 
-				gel->SetMaterialId(matID);
-				
-			// Connect intersection points
-				TPZVec<int64_t> ipoints(2);
-                int64_t gelpointIndex = Rib(CutRibsIndex[0])->IntersectionIndex();
-				ipoints[0] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
-                gelpointIndex = Rib(CutRibsIndex[1])->IntersectionIndex();
-				ipoints[1] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
-				int64_t nels = fGMesh->NElements();
-				fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+// debugging_______________________________________________________
+        // if(nribscut == 1){std::cout<<"\nEndFace";}
+        // if(nribscut == 2){std::cout<<"\nMidFace";}
+        // std::cout<<"\n sidestatus = {";
+        // for(int i=0; i<8; i++){std::cout<<sidestatus[i]<<" ";}
+        // std::cout<<"}";
+// debugging_______________________________________________________
 
-                break;
-            }
-            case 1:{ //end-fracture element
-                TRSFace face(iel, true);
-                std::cout<<"single rib cut: "<<CutRibsIndex[0]<<std::endl;
-                face.SetRibs(rib_index); 
-                gel->SetMaterialId(matID+15);
-                //Is the fracture skeleton built? Code won't work otherwise.
-                TPZVec<REAL> coords = FindEndFracturePoint(face);
-                
-                // Create geometric element for intersection node
-                TPZVec<int64_t> nodeindex(1,0);
-                nodeindex[0] = fGMesh->NodeVec().AllocateNewElement();
-                fGMesh->NodeVec()[nodeindex[0]].Initialize(coords, *fGMesh);
-                int64_t nels = fGMesh->NElements();
-                fGMesh->CreateGeoElement(EPoint, nodeindex, 45, nels);
-				face.SetIntersectionIndex(nels);
-                AddEndFace(face);
+        if(nribscut == 0){continue;}
+        // Create TRSFace
+        TRSFace face(iel, true);
+        face.SetRibs(rib_index); 
+        gel->SetMaterialId(matID);
+        face.SetStatus(sidestatus);
+        if(nribscut == 1) {gel->SetMaterialId(matID+15);} // this is here for graphical debugging only... comment it on release
 
-                // Connect intersection points
-                nels++;
-                TPZVec<int64_t> ipoints(2);
-                int64_t gelpointIndex = Rib(CutRibsIndex[0])->IntersectionIndex();
-                ipoints[0] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
-                ipoints[1] = nodeindex[0];
-                fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
-                break;
-            }
-            default: {std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();}
+        // Add face to map
+        switch (nribscut){
+            case 2:AddMidFace(face);break;
+            case 1:AddEndFace(face);break;
+            default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
     }
 }

@@ -78,6 +78,7 @@ void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){}
  * @return Integer that indicates which split pattern to use. (check documentation)
  */
 int TRSFace::GetSplitPattern(TPZVec<bool> &status){
+    // Count number of ribs and nodes cut
     int ribscut = 0;
 	int nodescut = 0;
 	int n = (int) status.size()/2;
@@ -87,6 +88,7 @@ int TRSFace::GetSplitPattern(TPZVec<bool> &status){
 	}
 
 	// Get split case
+    // Check documentation for consult on what each splitcase means
 	int splitcase;
 	if (n == 4){ //quadrilateral
 		switch(ribscut){
@@ -176,20 +178,3 @@ int TRSFace::GetSplitPattern(TPZVec<bool> &status){
   
     
     
-
-
-// void TRSFace::SetRibsCut(TPZManVector<int64_t,2> ribsinsurface){
-//     fRibs = ribsinsurface;
-// }
-// TPZManVector<int64_t,2> TRSFace::RibsInSurface(){
-//     return fRibs;
-// }
-
-
-
-
-
-//bool TRSFace::DivideSurface(TPZGeoMesh *gmesh){
-//   // si una cara tiene dos ribs cortados en la misma cara entonces debe ser dividido
-//
-//}

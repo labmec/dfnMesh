@@ -19,7 +19,7 @@ class TRSFace
 {
     
 private:
-    /// Face element index whithin it's gmesh file
+    /// Face element index whithin it's gmesh
     int64_t fFaceIndex;
 
     /// Indicates whether it intersects a plane
@@ -69,16 +69,15 @@ public:
     /// Divide the given surface and generate subelements
     void DivideSurface(TPZGeoMesh *gmesh, int matid);
     
+    /// Set status vector (boolean) that indicates which ribs and/or nodes are cut
+    void SetStatus(TPZVec<bool> StatusVector){fStatus = StatusVector;}
+    
     /**
      * @brief Returns the split pattern that should be used to split this face
      * @param Status vector (boolean) that indicates which ribs and/or nodes are cut
      * @return Integer that indicates which split pattern to use. (check documentation)
      */
     int GetSplitPattern(TPZVec<bool> &status);
-
-    // /// Set ribs cut
-    // void SetRibsCut(TPZManVector<int64_t,2> ribsinsurface);
-    // TPZManVector<int64_t,2> GetRibsCut();
     
     /// Set ribs of face
     void SetRibs(TPZVec<int64_t> &RibsIndexes) {fRibs = RibsIndexes;}
