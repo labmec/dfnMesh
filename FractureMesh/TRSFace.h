@@ -1,7 +1,7 @@
 /*! 
  *	TRSFace.hpp
- *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
+ *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
@@ -13,6 +13,9 @@
 #include "pzmatrix.h"
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
+// #include "TRSFractureMesh.h"
+
+class TRSFractureMesh;
 
 /// TRSFace class describes a plane and whether it's cut by a plane. It also carries a method to split itself into smaller sub faces.
 class TRSFace
@@ -34,7 +37,7 @@ private:
     /// Vector of sub faces
     TPZVec<int64_t> fSubFaces;
     
-    /// Index of in-plane intersection point (only for FractureMesh::EndFaces)
+    /// Index of in-plane intersection EPoint (only for FractureMesh::EndFaces)
     int64_t fIntersection = -1;
     
 public:
@@ -67,7 +70,7 @@ public:
     void SetChildren(const TPZVec<int64_t> &subels);
     
     /// Divide the given surface and generate subelements
-    void DivideSurface(TPZGeoMesh *gmesh, int matid);
+    void DivideSurface(TRSFractureMesh *fracmesh, int matid);
     
     /// Set status vector (boolean) that indicates which ribs and/or nodes are cut
     void SetStatus(TPZVec<bool> StatusVector){fStatus = StatusVector;}

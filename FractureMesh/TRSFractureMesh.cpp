@@ -3,8 +3,8 @@
  *  @details   Intersection search is performed after creation of skeleton
  *  elements with TRSFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a TRSFracPlane.
- *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
+ *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
@@ -183,7 +183,7 @@ void TRSFractureMesh::AddRib(TRSRibs rib){
  */
 
 void TRSFractureMesh::AddMidFace(TRSFace face){
-    //@ToDo iterate over ribs to connect intersection points
+    // iterate over ribs to find intersected ones
     int nribscut = 0;
     TPZManVector<int64_t,2> CutRibsIndex(2);
     TPZVec<int64_t> rib_index = face.GetRibs();
@@ -346,6 +346,7 @@ void TRSFractureMesh::SplitFaces(int matID){
             case 1:AddEndFace(face);break;
             default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
+        face.DivideSurface(this, 2);
     }
 }
 

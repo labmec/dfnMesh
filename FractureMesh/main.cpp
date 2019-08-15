@@ -132,13 +132,13 @@ int main(){
 
     // Find and split intersected faces
     fracmesh.SplitFaces(20);  
-
+/*
     // Split edge of fracture
     fracmesh.SplitFractureEdge();
 
     // triangulation of fracture plane
     fracmesh.SplitFracturePlane();
-
+*/
 
     std::ofstream meshprint("meshprint.txt");
     gmesh->Print(meshprint);

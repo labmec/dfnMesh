@@ -1,7 +1,7 @@
 /*! 
  *	TRSFace.cpp
- *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
+ *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
@@ -66,11 +66,169 @@ void TRSFace::SetChildren(const TPZVec<int64_t> &subels){
     fSubFaces = subels;
 }
 
-///
-///Divide the given this surface and generate the subelements
-void TRSFace::DivideSurface(TPZGeoMesh *gmesh, int matid){}
-    //@TODO Check consistency
-// 
+
+
+
+
+
+
+
+
+
+
+/// Divide the given this surface and generate the subelements
+void TRSFace::DivideSurface(TRSFractureMesh *fracmesh, int matid){
+	TPZGeoMesh *gmesh = fracmesh->GetgeoMesh();
+   	TPZGeoEl *face = gmesh->Element(fFaceIndex);
+
+	// check if face exist in mesh
+   	if(!face){DebugStop();}
+	
+	TPZVec<int64_t> node;
+	face->GetNodeIndices(node);
+	
+	// Determine pattern of refinement
+	int splitcase = GetSplitPattern(fStatus);
+
+	// Vector of children elements
+	TPZVec<TPZVec<int64_t>> child;
+
+	// Divide surface according to split pattern (these algorithms make no sense without documentation)
+	switch(splitcase){
+		case 1:{
+			child.resize(2);
+			int i = 0;
+			while(fStatus[i+4]==false){i++;}
+			// Intersection node at rib i
+			int64_t nodeA = gmesh->Element(fracmesh->Rib(fRibs[i])->IntersectionIndex())->NodeIndex(0);
+			// Intersection node at rib opposite to rib i
+			int64_t nodeB = gmesh->Element(fracmesh->Rib(fRibs[i+2])->IntersectionIndex())->NodeIndex(0);
+			
+			TPZVec<int64_t> child1(4);
+				child1[0] = nodeB;
+				child1[1] = nodeA;
+				child1[2] = node[i+1];
+				child1[3] = node[i+2];
+			TPZVec<int64_t> child2(4);
+				child2[0] = nodeA;
+				child2[1] = nodeB;
+				child2[2] = node[(i+3)%4];
+				child2[3] = node[i];
+			
+			child[0] = child1;
+			child[1] = child2;
+			break;}
+		case 2:{
+			child.resize(4);
+			int i = 0;
+			while(fStatus[i+4]==false || fStatus[(i+3)%4+4]==false){i++;}
+			// Intersection node at rib i
+			int64_t nodeA = gmesh->Element(fracmesh->Rib(fRibs[(i+3)%4])->IntersectionIndex())->NodeIndex(0);
+			// Intersection node at rib opposite to rib i
+			int64_t nodeB = gmesh->Element(fracmesh->Rib(fRibs[i])->IntersectionIndex())->NodeIndex(0);
+
+			TPZVec<int64_t> child1(3);
+				child1[0] = nodeA;
+				child1[1] = nodeB;
+				child1[2] = node[i];
+			TPZVec<int64_t> child2(3);
+				child2[0] = nodeB;
+				child2[1] = node[(i+1)%4];
+				child2[2] = node[(i+2)%4];
+			TPZVec<int64_t> child3(3);
+				child3[0] = nodeA;
+				child3[1] = nodeB;
+				child3[2] = node[(i+2)%4];
+			TPZVec<int64_t> child4(3);
+				child4[0] = nodeA;
+				child4[1] = node[(i+2)%4];
+				child4[2] = node[(i+3)%4];
+
+			child[0] = child1;
+			child[1] = child2;
+			child[2] = child3;
+			child[3] = child4;
+			break;}
+		case 3:{
+			break;}
+		case 4:{
+			break;}
+		case 5:{
+			child.resize(5);
+			int i = 0;
+			while(fStatus[i+4]==false){i++;}
+			// Intersection node at rib i
+			int64_t nodeA = gmesh->Element(fracmesh->Rib(fRibs[i])->IntersectionIndex())->NodeIndex(0);
+			// In-plane itersection node
+			int64_t nodeB = gmesh->Element(fIntersection)->NodeIndex(0);
+
+			TPZVec<int64_t> child1(3);
+				child1[0] = nodeB;
+				child1[1] = nodeA;
+				child1[2] = node[(i+1)%4];
+			TPZVec<int64_t> child2(3);
+				child2[0] = nodeB;
+				child2[1] = node[(i+1)%4];
+				child2[2] = node[(i+2)%4];
+			TPZVec<int64_t> child3(3);
+				child3[0] = nodeB;
+				child3[1] = node[(i+2)%4];
+				child3[2] = node[(i+3)%4];
+			TPZVec<int64_t> child4(3);
+				child4[0] = nodeB;
+				child4[1] = node[(i+3)%4];
+				child4[2] = node[i];
+			TPZVec<int64_t> child5(3);
+				child5[0] = nodeB;
+				child5[1] = node[i];
+				child5[2] = nodeA;
+
+			child[0] = child1;
+			child[1] = child2;
+			child[2] = child3;
+			child[3] = child4;
+			child[4] = child5;
+			break;}
+		case 6:{
+			break;}
+		case 7:{
+			break;}
+		case 8:{
+			break;}
+		case 9:{
+			break;}
+		case 10:{
+			break;}
+		case 11:{
+			break;}
+		case 12:{
+			break;}
+		case 13:{
+			break;}
+		case 14:{
+			break;}
+		case 15:{
+			break;}
+		case 16:{
+			break;}
+		default: DebugStop();
+	}
+}
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * @brief Returns the split pattern that should be used to split this face
@@ -117,8 +275,8 @@ int TRSFace::GetSplitPattern(TPZVec<bool> &status){
 				// std::vector<bool> test2 = {0,0,0,0,0,1,0,1};
 				// if(status == test2){splitcase = 1;break;}
 				// splitcase = 2;
-				break;
-			}
+				break;}
+			default: DebugStop();break;
 		}
 	}
 	else{ //triangle
@@ -143,38 +301,4 @@ int TRSFace::GetSplitPattern(TPZVec<bool> &status){
 	}
 	return splitcase;
 }
-
-//    if(!(gmesh->Element(fFaceIndex))){DebugStop();}
-//    TPZGeoEl *gel = gmesh->Element(fFaceIndex);
-//    int no_intr_P1 = fRibInter[0].second;
-//    int no_intr_P2 = fRibInter[1].second;
-//    int P1 = fRibInter[0].first;
-//    int P2 = fRibInter[1].first;
-//    TPZGeoEl *gel1 = gmesh->Element(P1);
-//    TPZGeoEl *gel2 = gmesh->Element(P2);
-//    TPZVec<int> status(4,0);
-//    for(int iside=4; iside<8; iside++){
-//        TPZGeoElSide gelside(gel,iside);
-//        TPZGeoElSide neig = gelside.Neighbour();
-//        int index_neig = neig.Element()->Index();
-//        if(index_neig==P1){
-//            status[iside]=1;
-//        }
-//        if(index_neig==P2){
-//            status[iside]=2;
-//        }
-//    }
-//    int cases=-1;
-//    if(status[0]!=0 && status[2]!=0){
-//        cases=0;
-//    }
-//    if(status[1]!=0 && status[3]!=0){
-//         cases=1;
-//    }
-//    if (cases < 0){
-//        
-//    }
-    
   
-    
-    

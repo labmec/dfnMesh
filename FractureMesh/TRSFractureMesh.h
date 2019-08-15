@@ -1,6 +1,6 @@
 /*! 
- *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
+ *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
@@ -20,7 +20,7 @@
 #include "TRSRibs.h"
 #include "TRSFace.h"
 #include "TRSFracPlane.h"
-//#include "tpanic.h"
+
 
 typedef TPZFMatrix<REAL> Matrix;
 
@@ -29,8 +29,8 @@ typedef TPZFMatrix<REAL> Matrix;
  *  @details   Intersection search is performed after creation of skeleton
  * elements with TRSFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a TRSFracPlane.
- *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
+ *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 class TRSFractureMesh
