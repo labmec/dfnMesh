@@ -77,7 +77,7 @@ public:
     /// Return the subelement indices
     TPZVec<int64_t> SubElements() const;
     
-    /// Intersection point
+    /// Returns intersection EPoint element index
     int64_t IntersectionIndex() const {return fIntersectionIndex;}
 
     /// Set the subelement indices

@@ -128,23 +128,22 @@ int main(){
     TRSFractureMesh fracmesh(fracplane, gmesh);
     
     // Find and split intersected ribs
-    fracmesh.SplitRibs(19);
+    fracmesh.SplitRibs(18);
 
     // Find and split intersected faces
-    fracmesh.SplitFaces(20);  
-/*
+    fracmesh.SplitFaces(19);  
     // Split edge of fracture
     fracmesh.SplitFractureEdge();
 
     // triangulation of fracture plane
     fracmesh.SplitFracturePlane();
-*/
+
 
     std::ofstream meshprint("meshprint.txt");
     gmesh->Print(meshprint);
     //Print result
     std::ofstream out("./TestSurfaces.vtk");
-    TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetgeoMesh(), out, true);
+    TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetGeoMesh(), out, true);
     return 0;
 
 }

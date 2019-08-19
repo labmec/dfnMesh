@@ -182,7 +182,7 @@ void TRSFractureMesh::AddRib(TRSRibs rib){
  * @param Face to be set
  */
 
-void TRSFractureMesh::AddMidFace(TRSFace face){
+void TRSFractureMesh::AddMidFace(TRSFace &face){
     // iterate over ribs to find intersected ones
     int nribscut = 0;
     TPZManVector<int64_t,2> CutRibsIndex(2);
@@ -218,8 +218,8 @@ void TRSFractureMesh::AddMidFace(TRSFace face){
  * @param Face to be set
  */
 
-void TRSFractureMesh::AddEndFace(TRSFace face){
-    // Create geometric element for intersection node
+void TRSFractureMesh::AddEndFace(TRSFace &face){
+    // Create geometric element for intersection node beetween EndFace and fracture edge
         TPZVec<REAL> coords = FindEndFracturePoint(face);
         TPZVec<int64_t> nodeindex(1,0);
         nodeindex[0] = fGMesh->NodeVec().AllocateNewElement();
@@ -227,6 +227,7 @@ void TRSFractureMesh::AddEndFace(TRSFace face){
         int64_t nels = fGMesh->NElements();
         fGMesh->CreateGeoElement(EPoint, nodeindex, 45, nels);
         face.SetIntersectionIndex(nels);
+        // std::cout<<"\n"<<face.ElementIndex
     //iterate over ribs to connect intersection points
     TPZVec<int64_t> rib_index = face.GetRibs();
     int nribs = rib_index.size();
@@ -260,7 +261,7 @@ std::map<int64_t ,TRSRibs> TRSFractureMesh::GetRibs(){
 /**
  * @brief Create cut surfaces
  * @param Material id
- * @comment This method is getting too long. Might move some of it into AddEndFace and AddMidFace.
+ * @comment This method was getting too long. Moved some of it into AddEndFace and AddMidFace.
  */
 
 void TRSFractureMesh::SplitFaces(int matID){
@@ -319,26 +320,21 @@ void TRSFractureMesh::SplitFaces(int matID){
                     sidestatus[iside+nedges] = true;
                 }
                 
-                // store cut rib (this might be discarded once I fracplane outline out of this method)
+                // store cut rib (this might be discarded once I move "fracplane outline" out of this method)
                 CutRibsIndex[nribscut]=rib_index[iside];
                 nribscut++;
             }
         }
-// debugging_______________________________________________________
-        // if(nribscut == 1){std::cout<<"\nEndFace";}
-        // if(nribscut == 2){std::cout<<"\nMidFace";}
-        // std::cout<<"\n sidestatus = {";
-        // for(int i=0; i<8; i++){std::cout<<sidestatus[i]<<" ";}
-        // std::cout<<"}";
-// debugging_______________________________________________________
 
+        // if there are ribs cut, create a face object
         if(nribscut == 0){continue;}
         // Create TRSFace
         TRSFace face(iel, true);
         face.SetRibs(rib_index); 
         gel->SetMaterialId(matID);
         face.SetStatus(sidestatus);
-        if(nribscut == 1) {gel->SetMaterialId(matID+15);} // this is here for graphical debugging only... comment it on release
+        face.SetFractureMesh(this);
+        if(nribscut == 1) {gel->SetMaterialId(matID+17);} // this is here for graphical debugging only... comment it on release
 
         // Add face to map
         switch (nribscut){
@@ -346,7 +342,7 @@ void TRSFractureMesh::SplitFaces(int matID){
             case 1:AddEndFace(face);break;
             default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
-        face.DivideSurface(this, 2);
+        face.DivideSurface(20);
     }
 }
 
@@ -752,6 +748,30 @@ void TRSFractureMesh::SplitFracturePlane(){
 
 
 
+void TRSFractureMesh::WriteGMSH(TPZGeoMesh *pzgmesh){
+    
+    std::ofstream out("fracture1.geo");
+    // float dx = 0.2;
+    out << "dx = 0.2;\n\n";
+
+
+    // write nodes
+    out << "// POINTS DEFINITION \n\n";
+    int64_t nnodes = pzgmesh->NNodes();
+    for (int64_t inode = 0; inode < nnodes; inode++){
+        TPZManVector<REAL, 3> co(3,0.);
+        pzgmesh->NodeVec[inode].GetCoordinates(co);
+        out << "Point(" << inode << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
+    }
+    
+    // write edges
+    out << "\n\n// LINES DEFINITION \n\n";
+    int64_t nels = pzgmesh->NElements();
+    for (int64_t iel = 0; iel < nels; iel++){
+        
+        out << "Line(" << iel << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
+    }
+}
 
 
 
@@ -769,9 +789,10 @@ void TRSFractureMesh::SplitFracturePlane(){
 
 
 
-//void TRSFractureMesh::CreateTransitionVolumes(){
 
 /*
+void TRSFractureMesh::CreateTransitionVolumes(){
+
     iterate over fMidFaces
         map 3D neighbours
     iterate over fEndFaces
@@ -852,6 +873,6 @@ void TRSFractureMesh::SplitFracturePlane(){
                     TPZGeoElBC(gelside, 49);
                 }
             }
- */
 
-// }
+}
+ */

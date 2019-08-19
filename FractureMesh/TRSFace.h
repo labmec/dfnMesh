@@ -13,7 +13,7 @@
 #include "pzmatrix.h"
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
-// #include "TRSFractureMesh.h"
+#include "TRSRibs.h"
 
 class TRSFractureMesh;
 
@@ -40,6 +40,9 @@ private:
     /// Index of in-plane intersection EPoint (only for FractureMesh::EndFaces)
     int64_t fIntersection = -1;
     
+    /// Pointer to a fracture mesh
+    TRSFractureMesh *fFracMesh = nullptr;
+ 
 public:
     
     /// Empty constructor
@@ -70,7 +73,7 @@ public:
     void SetChildren(const TPZVec<int64_t> &subels);
     
     /// Divide the given surface and generate subelements
-    void DivideSurface(TRSFractureMesh *fracmesh, int matid);
+    void DivideSurface(int matid);
     
     /// Set status vector (boolean) that indicates which ribs and/or nodes are cut
     void SetStatus(TPZVec<bool> StatusVector){fStatus = StatusVector;}
@@ -94,6 +97,8 @@ public:
     /// Returns index for intersection point in face (only for FractureMesh::EndFaces)
     int64_t IntersectionIndex() {return fIntersection;}
 
+    /// Give face a pointer to which fracture is cutting it
+    void SetFractureMesh(TRSFractureMesh *FractureMesh){fFracMesh = FractureMesh;}
 
 };
 #endif /* TRSFace_h */

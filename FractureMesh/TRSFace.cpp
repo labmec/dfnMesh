@@ -6,6 +6,7 @@
  */
 
 #include "TRSFace.h"
+#include "TRSFractureMesh.h"
 
 // Empty constructor
 TRSFace::TRSFace(){
@@ -77,13 +78,13 @@ void TRSFace::SetChildren(const TPZVec<int64_t> &subels){
 
 
 /// Divide the given this surface and generate the subelements
-void TRSFace::DivideSurface(TRSFractureMesh *fracmesh, int matid){
-	TPZGeoMesh *gmesh = fracmesh->GetgeoMesh();
-   	TPZGeoEl *face = gmesh->Element(fFaceIndex);
-
-	// check if face exist in mesh
+void TRSFace::DivideSurface(int matid){
+	TPZGeoMesh *gmesh = fFracMesh->GetGeoMesh();
+	TPZGeoEl *face = gmesh->Element(fFaceIndex);
+	// check if face exists in mesh
    	if(!face){DebugStop();}
 	
+	// Vector of face's node indices
 	TPZVec<int64_t> node;
 	face->GetNodeIndices(node);
 	
@@ -100,9 +101,11 @@ void TRSFace::DivideSurface(TRSFractureMesh *fracmesh, int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			int64_t nodeA = gmesh->Element(fracmesh->Rib(fRibs[i])->IntersectionIndex())->NodeIndex(0);
+			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			int64_t nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// Intersection node at rib opposite to rib i
-			int64_t nodeB = gmesh->Element(fracmesh->Rib(fRibs[i+2])->IntersectionIndex())->NodeIndex(0);
+			TRSRibs *ribB = fFracMesh->Rib(fRibs[i+2]);
+			int64_t nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
 			
 			TPZVec<int64_t> child1(4);
 				child1[0] = nodeB;
@@ -122,10 +125,12 @@ void TRSFace::DivideSurface(TRSFractureMesh *fracmesh, int matid){
 			child.resize(4);
 			int i = 0;
 			while(fStatus[i+4]==false || fStatus[(i+3)%4+4]==false){i++;}
+			// Intersection node at rib clockwise adjacent to rib i
+			TRSRibs *ribA = fFracMesh->Rib(fRibs[(i+3)%4]);
+			int64_t nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// Intersection node at rib i
-			int64_t nodeA = gmesh->Element(fracmesh->Rib(fRibs[(i+3)%4])->IntersectionIndex())->NodeIndex(0);
-			// Intersection node at rib opposite to rib i
-			int64_t nodeB = gmesh->Element(fracmesh->Rib(fRibs[i])->IntersectionIndex())->NodeIndex(0);
+			TRSRibs *ribB = fFracMesh->Rib(fRibs[i]);
+			int64_t nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
 
 			TPZVec<int64_t> child1(3);
 				child1[0] = nodeA;
@@ -158,7 +163,8 @@ void TRSFace::DivideSurface(TRSFractureMesh *fracmesh, int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			int64_t nodeA = gmesh->Element(fracmesh->Rib(fRibs[i])->IntersectionIndex())->NodeIndex(0);
+			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			int64_t nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// In-plane itersection node
 			int64_t nodeB = gmesh->Element(fIntersection)->NodeIndex(0);
 
@@ -213,6 +219,20 @@ void TRSFace::DivideSurface(TRSFractureMesh *fracmesh, int matid){
 			break;}
 		default: DebugStop();
 	}
+
+	int nchildren = child.size();
+	for (int i = 0; i < nchildren; i++)
+	{
+		int nedges = child[i].size();
+		MElementType elemtype;
+		switch (nedges){
+			case 3: elemtype = ETriangle; break;
+			case 4: elemtype = EQuadrilateral; break;
+		}
+		int64_t index = gmesh->NElements();
+		gmesh->CreateGeoElement(elemtype, child[i], matid+3*i, index);
+	}
+	// create skeleton?
 }
  
 

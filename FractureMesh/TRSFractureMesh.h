@@ -17,6 +17,7 @@
 #include "pzmatrix.h"
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
+
 #include "TRSRibs.h"
 #include "TRSFace.h"
 #include "TRSFracPlane.h"
@@ -82,7 +83,7 @@ public:
     }
     
     /// Access the geomesh
-    TPZGeoMesh* GetgeoMesh(){
+    TPZGeoMesh* GetGeoMesh(){
         return fGMesh;
     }
     
@@ -113,10 +114,10 @@ public:
     void AddRib(TRSRibs rib);
     
     /// Access mid-fracture faces' data structure
-    void AddMidFace(TRSFace face);
+    void AddMidFace(TRSFace &face);
     
     /// Access end-fracture faces' data structure
-    void AddEndFace(TRSFace face);
+    void AddEndFace(TRSFace &face);
 
     /// Map of ribs
     std::map<int64_t ,TRSRibs> GetRibs();
@@ -138,6 +139,13 @@ public:
 
     /// Triangulates fracture plane
     void SplitFracturePlane();
+
+    /// Write mesh elements to .geo file
+    void WriteGMSH(TPZGeoMesh *pzgmesh);
+
+    /// Uses Gmsh to mesh volumes cut by fracture plane
+    void CreateVolumes();
+
 
 };
 
