@@ -125,7 +125,7 @@ int main(){
 
     //  Construction of fracplane and FractureMesh
     TRSFracPlane fracplane(plane);
-    TRSFractureMesh fracmesh(fracplane, gmesh);
+    TRSFractureMesh fracmesh(fracplane, gmesh, 40);
     
     // Find and split intersected ribs
     fracmesh.SplitRibs(18);

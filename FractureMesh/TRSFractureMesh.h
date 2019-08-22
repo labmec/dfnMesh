@@ -20,6 +20,7 @@
 
 #include "TRSRibs.h"
 #include "TRSFace.h"
+#include "TRSVolume.h"
 #include "TRSFracPlane.h"
 
 
@@ -41,13 +42,16 @@ private:
     REAL fTolerance = 1.e-4;
     
     /// Map of intersected ribs
-    std::map<int64_t,TRSRibs> fRibs;
+    std::map<int64_t, TRSRibs> fRibs;
     
     /// Map of intersected faces
-    std::map<int64_t,TRSFace> fMidFaces;
+    std::map<int64_t, TRSFace> fMidFaces;
     
     /// Map of end-fracture faces
-    std::map<int64_t,TRSFace> fEndFaces;
+    std::map<int64_t, TRSFace> fEndFaces;
+
+    /// Map of intersected volumes
+    std::map<int64_t, TRSVolume> fVolumes;
 
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
@@ -57,6 +61,9 @@ private:
 
     /// Fracplane's geometric element index
     int64_t fFracplaneindex;
+
+    /// Material of elements at fracture surface
+    int fSurfaceMaterial;
 
 public:
     
@@ -69,7 +76,7 @@ public:
      * of a point
      *  
      */
-    TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh);
+    TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID);
     
     /// Copy constructor
     TRSFractureMesh(const TRSFractureMesh &copy);
@@ -104,9 +111,6 @@ private:
     
 public:
     
-    /// Return true if the surface needs to be divided
-    bool NeedsSurface_Divide(int64_t suface_index, TPZVec<int64_t> interribs) ;
-    
     /// Insert intersection elements of lower dimension in the geometric mesh.
     void CreateSkeletonElements(int dimension, int matid);
     
@@ -119,20 +123,21 @@ public:
     /// Access end-fracture faces' data structure
     void AddEndFace(TRSFace &face);
 
-    /// Map of ribs
-    std::map<int64_t ,TRSRibs> GetRibs();
+    /// Insert new volume in data structure
+    void AddVolume(TRSVolume volume);
+
+    /// Pointer to rib of index 'index'
+    TRSRibs *Rib(int64_t index){return &fRibs[index];}
+
+    /// Pointer to face of index 'index'
+    TRSFace *Face(int64_t index);
     
+    TRSVolume *Volume(int64_t index){return &fVolumes[index];}
     /// Find and split intersected faces
     void SplitFaces(int matID);
     
     /// Find and split intersected ribs
     void SplitRibs(int matID);
-
-    /// Pointer to rib of index 'index'
-    TRSRibs *Rib(int index);
-
-    /// Pointer to face of index 'index'
-    TRSFace *Face(int index);
 
     /// Connects fracture-edge intersections (temporary name for lack of better one)
     void SplitFractureEdge();
@@ -146,7 +151,91 @@ public:
     /// Uses Gmsh to mesh volumes cut by fracture plane
     void CreateVolumes();
 
+    /// Sets material for elements at surface of fracture
+    void SetSurfaceMaterial(int matID);
 
+    /// Get material ID for elements at surface of fracture
+    int MaterialID(){return fSurfaceMaterial;}
+
+    /// Find the volumetrical element that encloses a 2D element
+    bool FindEnclosingVolume(TPZGeoEl *ifracface);
 };
 
 #endif /* TRSFractureMesh_h */
+
+
+
+/*
+bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl ifracface)
+{
+    TPZVec<REAL> faceCenter = ifracface.center;
+    std::map<REAL, int64_t> candidates;
+    iterate over ifracface 1D sides (iside)
+    {
+        iterate over neighbours through iside (ineig)
+        {
+            if(ineig.Dimension != 2){continue;}
+            if(ineig.material == FracSurfaceMaterial){continue;}
+            if(ineig.HasFather == false){continue;}
+
+            TPZGeoEl *father = ineig.GetFather()
+            TPZVec<REAL> fatherCenter = father->center;
+            TPZGeoElSide *fatherSide = father->side(father->NSides - 1);
+
+            iterate over neighbours through fatherside (ivolume)
+            {
+                if(ivolume.Dimension != 3){continue;}
+                TPZVec<REAL> volumecenter = ivolume->center;
+                TPZVec<REAL> v1 = volumecenter - fatherCenter;
+                TPZVec<REAL> v2 = faceCenter - fatherCenter;
+
+                REAL test = DotProduct(v1,v2);
+                if(test >=0)
+                {
+                    test.Normalize();
+                    candidates[test] = ivolume->Index
+                }
+            }
+        }
+    }
+
+    if(candidates.size() > 0){
+        // 'reverse iterator begin' gives biggest key in map
+        int64_t volumeindex = candidates.rbegin()->second;
+        volumes[volumeindex]->SetFaceInVolume(ifracface.index);
+        return true;
+    }
+
+    // degeneracy: ifracface's edges are completely enclosed by volume
+    
+    std::set<TPZGeoElSide *> verified;
+    iterate over nodes (iside)
+    {
+        iterate over neighbours through inode (ineig)
+        {
+            if(ineig.Dimension != 2){continue;}
+            if(ineig.material == FracSurfaceMaterial){continue;}
+            if(ineig.HasFather == false){continue;}
+
+            TPZGeoEl *father = ineig.GetFather()
+            TPZVec<REAL> fatherCenter = father->center;
+            TPZGeoElSide *fatherSide = father->side(father->NSides - 1);
+
+            iterate over neighbours through fatherside (ivolume)
+            {
+                if(ivolume.Dimension != 3){continue;}
+                if(verified.find(ivolume)){continue;}
+                TPZVec<REAL> ksi(3,2);
+                bool test = ivolume->ComputeXinverse(faceCenter,ksi,fTolerance)
+                if(test == true){
+                    volumes[ivolume->Index]->SetFaceInVolume(ifracface.index);
+                    return true;
+                }
+            }
+        }
+    }
+
+    std::cout<<"\n TRSFractureMesh::FindEnclosingVolume found no enclosing volume for element #"<<ifracface.index<<"\n";
+    return false;
+}
+*/

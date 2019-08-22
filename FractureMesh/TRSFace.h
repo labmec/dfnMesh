@@ -22,7 +22,7 @@ class TRSFace
 {
     
 private:
-    /// Face element index whithin it's gmesh
+    /// Face element index within it's gmesh
     int64_t fFaceIndex;
 
     /// Indicates whether it intersects a plane
@@ -42,6 +42,9 @@ private:
     
     /// Pointer to a fracture mesh
     TRSFractureMesh *fFracMesh = nullptr;
+
+    /// Pointer to father element
+    TPZGeoEl *fFather = nullptr;
  
 public:
     
@@ -72,7 +75,11 @@ public:
     /// Set the subelement indices
     void SetChildren(const TPZVec<int64_t> &subels);
     
-    /// Divide the given surface and generate subelements
+    /** 
+     * @brief Divide the given this surface, generate subelements and return vector with indices
+     * @param Material id for subelements
+     * @return A vector with indices for all new subelements
+     */
     void DivideSurface(int matid);
     
     /// Set status vector (boolean) that indicates which ribs and/or nodes are cut
@@ -99,6 +106,11 @@ public:
 
     /// Give face a pointer to which fracture is cutting it
     void SetFractureMesh(TRSFractureMesh *FractureMesh){fFracMesh = FractureMesh;}
+
+    // /// Sets Father element
+    // void SetFather(TPZGeoEl *father){ fFather = father;}
+    // /// Get pointer to father element
+    // TPZGeoEl *Father(){return fFather;}
 
 };
 #endif /* TRSFace_h */

@@ -77,7 +77,7 @@ void TRSFace::SetChildren(const TPZVec<int64_t> &subels){
 
 
 
-/// Divide the given this surface and generate the subelements
+/// Divide the given this surface, generate subelements and return vector with indices
 void TRSFace::DivideSurface(int matid){
 	TPZGeoMesh *gmesh = fFracMesh->GetGeoMesh();
 	TPZGeoEl *face = gmesh->Element(fFaceIndex);
@@ -221,6 +221,7 @@ void TRSFace::DivideSurface(int matid){
 	}
 
 	int nchildren = child.size();
+	TPZVec<int64_t> childrenIndices(nchildren,0);
 	for (int i = 0; i < nchildren; i++)
 	{
 		int nedges = child[i].size();
@@ -231,10 +232,16 @@ void TRSFace::DivideSurface(int matid){
 		}
 		int64_t index = gmesh->NElements();
 		gmesh->CreateGeoElement(elemtype, child[i], matid+3*i, index);
+
+		// Tell the child who its father is
+		TPZGeoEl *newface = gmesh->Element(index);
+		newface->SetFather(fFaceIndex);
+		childrenIndices[i] = index;
 	}
+	SetChildren(childrenIndices);
 	// create skeleton?
 }
- 
+
 
 
 

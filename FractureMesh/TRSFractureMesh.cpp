@@ -17,10 +17,11 @@
 TRSFractureMesh::TRSFractureMesh(){
 }
 
-// Constructor with corner points and a geomesh
-TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh){
+// Constructor with corner points, a geomesh and material ID
+TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID){
     fFracplane = FracPlane;
     fGMesh = gmesh;
+    fSurfaceMaterial = matID;
 
     // Maybe implement check for previously created skeleton
     // Create skeleton elements
@@ -42,6 +43,7 @@ TRSFractureMesh::TRSFractureMesh(const TRSFractureMesh &copy){
 	fEndFaces = copy.fEndFaces;
     fFracplane = copy.fFracplane;
 	fFracplaneindex = copy.fFracplaneindex;
+    fSurfaceMaterial = copy.fSurfaceMaterial;
 }
 
 // Assignment operator
@@ -53,6 +55,7 @@ TRSFractureMesh &TRSFractureMesh::operator=(const TRSFractureMesh &copy){
 	fEndFaces = copy.fEndFaces;
     fFracplane = copy.fFracplane;
 	fFracplaneindex = copy.fFracplaneindex;
+    fSurfaceMaterial = copy.fSurfaceMaterial;
     return *this;
 }
 
@@ -140,7 +143,7 @@ void TRSFractureMesh::CreateSkeletonElements(int dimension, int matid)
         TPZGeoEl *gel = fGMesh->Element(iel);
 
         //40 is material id for fracture plane, and it should only have an 1D skeleton.
-        if(gel->MaterialId() == 40 && dimension == 2){continue;}
+        if(gel->MaterialId() == fSurfaceMaterial && dimension == 2){continue;}
 
         int nsides = gel->NSides();
         for (int iside = 0; iside < nsides; iside++)
@@ -249,14 +252,23 @@ void TRSFractureMesh::AddEndFace(TRSFace &face){
     fEndFaces[index]=face;
 }
 
-/**
- * @brief Gives the ribs map
- * @return A map that contains the ribs information
- */
 
-std::map<int64_t ,TRSRibs> TRSFractureMesh::GetRibs(){
-    return fRibs;    
+
+
+
+
+
+
+
+TRSFace * TRSFractureMesh::Face(int64_t index){
+    if(fMidFaces.count(index)){
+        return &fMidFaces.at(index);
+    }
+    return &fEndFaces.find(index)->second;
 }
+
+
+
 
 /**
  * @brief Create cut surfaces
@@ -265,7 +277,7 @@ std::map<int64_t ,TRSRibs> TRSFractureMesh::GetRibs(){
  */
 
 void TRSFractureMesh::SplitFaces(int matID){
-    //CreateSkeletonElements(1, 40);
+    //CreateSkeletonElements(1, fSurfaceMaterial);
     // First, build a skeleton for fracplane
     fGMesh->BuildConnectivity();
     TPZGeoEl *gel = fGMesh->Element(fFracplaneindex);
@@ -274,7 +286,7 @@ void TRSFractureMesh::SplitFaces(int matID){
         TPZGeoElSide gelside = gel->Neighbour(iside);
         if (gelside.Dimension() != 1){continue;}
         bool haskel = HasEqualDimensionNeighbour(gelside);
-        if (haskel == false){TPZGeoElBC(gelside, 40);}
+        if (haskel == false){TPZGeoElBC(gelside, fSurfaceMaterial);}
     }
 
     // iterate over all 2D elements and check their 1D neighbours for intersections
@@ -282,13 +294,13 @@ void TRSFractureMesh::SplitFaces(int matID){
     for(int iel = 0; iel<nel; iel++){
         TPZGeoEl *gel = fGMesh->Element(iel);
         if (gel->Dimension() != 2){continue;}
-        //40 is MaterialID for fracture plane
-        if(gel->MaterialId()==40){continue;}
+        //fSurfaceMaterial is MaterialID for fracture plane
+        if(gel->MaterialId()==fSurfaceMaterial){continue;}
         
         int nribscut =0;
         int nedges = gel->NNodes();
 
-        // vector with status for each rib and node of face
+        // vector with status for each node and rib of face
         TPZVec<bool> sidestatus(nedges*2,false);
         TPZManVector<int64_t,2> CutRibsIndex(2);
         // vector with indices of father ribs that outline the face
@@ -343,6 +355,12 @@ void TRSFractureMesh::SplitFaces(int matID){
             default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
         face.DivideSurface(20);
+        // // Give children a father and add them to map
+        // for(int64_t j; j<children.size(); j++){
+        //     TRSFace jchild(children[j], false);
+        //     jchild.SetFather(gel);
+        //     gel->SetFather ?
+        // }
     }
 }
 
@@ -351,9 +369,7 @@ void TRSFractureMesh::SplitFaces(int matID){
 
 
 
-TRSRibs *TRSFractureMesh::Rib(int index){
-    return &fRibs[index];
-}
+
 
 
 
@@ -399,36 +415,31 @@ void TRSFractureMesh::SplitRibs(int matID){
     for (int iel = 0; iel < Nels; iel++){
         TPZGeoEl *gel = fGMesh->Element(iel);
         int nSides = gel->NSides();
+
         //skip all elements that aren't ribs
         if (gel->Dimension() != 1){continue;}
-		//unnecessary "for" loop... delete it later
-        for (int side = 0; side < nSides; side++){
-			// this isn't doing anything... delete it later
-            if (gel->NSideNodes(side) == 2){
 
-                // Get rib's vertexes
-                int64_t p1 = gel->SideNodeIndex(side, 0);
-                int64_t p2 = gel->SideNodeIndex(side, 1);
-                TPZVec<REAL> pp1(3);
-                TPZVec<REAL> pp2(3);
-                fGMesh->NodeVec()[p1].GetCoordinates(pp1);
-                fGMesh->NodeVec()[p2].GetCoordinates(pp2);
+        // Get rib's vertices
+        int64_t p1 = gel->SideNodeIndex(2, 0);
+        int64_t p2 = gel->SideNodeIndex(2, 1);
+        TPZVec<REAL> pp1(3);
+        TPZVec<REAL> pp2(3);
+        fGMesh->NodeVec()[p1].GetCoordinates(pp1);
+        fGMesh->NodeVec()[p2].GetCoordinates(pp2);
 
-                // Check rib
-                bool resul = fFracplane.Check_rib(pp1, pp2);
+        // Check rib
+        bool resul = fFracplane.Check_rib(pp1, pp2);
 
-                // Split rib
-                if (resul == true){
-                    TRSRibs rib(iel, true);
-                    AddRib(rib);
-                    TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
-                    //5O is the material of children ribs
-                    Rib(iel)->DivideRib(fGMesh, ipoint, matID);
-                    gel->SetMaterialId(12);
+        // Split rib
+        if (resul == true){
+            TRSRibs rib(iel, true);
+            AddRib(rib);
+            TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
+            //5O is the material of children ribs
+            Rib(iel)->DivideRib(fGMesh, ipoint, matID);
+            gel->SetMaterialId(12);
 
-                    // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
-                }
-            }
+            // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
         }
     }
 }
@@ -564,7 +575,7 @@ void TRSFractureMesh::SplitFracturePlane(){
 	
 	
 	// GeoPoints for fracture vertices aren't needed if fracture plane is all contained by gmesh
-    // (since all polygons generated are convex)
+    // (since slicing convex polyhedra can only generate convex polygonal cross sections)
 		// int ncorners = fGMesh->Element(fFracplaneindex)->NCornerNodes();
 		// for(int i = 0; i<ncorners; i++){
 		// 	TPZVec<int64_t> cornerindex(1);
@@ -582,8 +593,9 @@ void TRSFractureMesh::SplitFracturePlane(){
 		TPZGeoEl *ipoint = fGMesh->Element(*itr);
 		int64_t centerindex = ipoint->NodeIndex(0);
         TPZGeoElSide neig0 = ipoint->Neighbour(0);
-		// Materials from 40 to 50 are being used for fracture mesh during debbuging
-        while (neig0.Element()->Dimension() != 1 || neig0.Element()->MaterialId() < 40){
+		// Materials from 40 through 50 are being used for fracture mesh during debbuging
+        // while (neig0.Element()->Dimension() != 1 || neig0.Element()->MaterialId() != fSurfaceMaterial){
+        while (neig0.Element()->Dimension() != 1 || neig0.Element()->MaterialId() < fSurfaceMaterial){
             neig0 = neig0.Neighbour();
         }
 
@@ -615,7 +627,9 @@ void TRSFractureMesh::SplitFracturePlane(){
         // Iterate over next 1D neighbours to sort segments from it according to angle to reference
         TPZGeoElSide neig_i = neig0.Neighbour();
         while(neig_i != neig0){
-			if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() >= 40){
+            // if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() == fSurfaceMaterial){
+			// materials over 40 are being used during development to ifentify elements at fracture surface
+            if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() >= fSurfaceMaterial){
 				// get opposite node 
 				if(neig_i.Element()->NodeIndex(0) == centerindex){
 					oppnode = neig_i.Element()->NodeIndex(1);
@@ -665,7 +679,7 @@ void TRSFractureMesh::SplitFracturePlane(){
 			bool test = false;
 			TPZGeoElSide neighbour = neig0.Neighbour();
 			while(neighbour != neig0){
-				if(neighbour.Element()->Dimension() == 2 && neighbour.Element()->MaterialId() >=40){
+				if(neighbour.Element()->Dimension() == 2 && neighbour.Element()->MaterialId() >=fSurfaceMaterial){
 					TPZVec<int64_t> testnodes(3);
 					neighbour.Element()->GetNodeIndices(testnodes);
 					for(int jnode = 0; jnode < 3; jnode++){
@@ -727,7 +741,7 @@ void TRSFractureMesh::SplitFracturePlane(){
 			
 			
 			// create 1D GeoEl for opposite nodes
-			// check if segment to be created already exists
+			// check if segment to be created already exists first
 			fGMesh->BuildConnectivity();
 			TPZGeoEl *newface = fGMesh->Element(nelements);
 			for (int iside = 3; iside < 6; iside++){
@@ -746,31 +760,114 @@ void TRSFractureMesh::SplitFracturePlane(){
 }
 
 
+void TRSFractureMesh::AddVolume(TRSVolume volume){
+    int index = volume.ElementIndex();
+    fVolumes[index] = volume;
+}
+
+
+
+/// Sets material for elements at surface of fracture
+void TRSFractureMesh::SetSurfaceMaterial(int matID){
+    int64_t nels = fGMesh->NElements();
+    for (int64_t iel = 0; iel < nels; iel++)
+    {
+        if(fGMesh->Element(iel)->MaterialId() == fSurfaceMaterial){
+            fGMesh->Element(iel)->SetMaterialId(matID);
+        }
+    }
+    fSurfaceMaterial = matID;
+}
+
+
+
+
+void TRSFractureMesh::CreateVolumes(){
+    // map all volumes that have neighbour faces cut
+    int64_t nels = fGMesh->NElements();
+    for (int64_t iel = 0; iel < nels; iel++){
+        TPZGeoEl *gel = fGMesh->Element(iel);
+        if(gel->Dimension() != 3){continue;}
+        int nsides = gel->NSides();
+        // 2D sides wont start before index 9 for any 3D element
+        for (int iside = 9; iside < nsides; iside++){
+            TPZGeoElSide gelside = gel->Neighbour(iside);
+            if (gelside.Dimension() != 2){continue;}
+            if(Face(gelside.Element()->Index())->IsCut()){
+                TRSVolume volume(iel,true);
+                AddVolume(volume);
+                break;
+            }            
+        }
+    }
+
+    // search through each element of the triangulated fracture surface to find their enclosing volume
+    // iterate over fracplane's elements created at SplitFracturePlane
+    for(int64_t iel = 0; iel < nels; iel++){
+        TPZGeoEl *gel = fGMesh->Element(iel);
+        // if(gel->MaterialID() != fSurfaceMaterial){continue;}
+        // During development, elements at fracture surface have material id over 40
+        if(gel->MaterialId() <= fSurfaceMaterial){continue;}
+        if(gel->Dimension() != 2){continue;}
+
+        // Find volume that encloses that element
+        FindEnclosingVolume(gel);
+    }
+}
+
+
+
+
+
+
+
+
+
+bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
+    // get coordinates of geometric center of face
+    TPZVec<REAL> faceCenter(3);
+    int s = ifracface->NSides() -1;
+    ifracface->CenterPoint(s,faceCenter);
+
+    // map of indices for volumes that could contain the face
+    std::map<REAL, int64_t> candidates;
+    
+    // iterate over ifracface 1D sides (iside)
+    // {
+}
+
+
+
+
+
+
+
+
 
 
 void TRSFractureMesh::WriteGMSH(TPZGeoMesh *pzgmesh){
     
-    std::ofstream out("fracture1.geo");
-    // float dx = 0.2;
-    out << "dx = 0.2;\n\n";
+    // std::ofstream out("fracture1.geo");
+    // // float dx = 0.2;
+    // out << "dx = 0.2;\n\n";
 
 
-    // write nodes
-    out << "// POINTS DEFINITION \n\n";
-    int64_t nnodes = pzgmesh->NNodes();
-    for (int64_t inode = 0; inode < nnodes; inode++){
-        TPZManVector<REAL, 3> co(3,0.);
-        pzgmesh->NodeVec[inode].GetCoordinates(co);
-        out << "Point(" << inode << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
-    }
+    // // write nodes
+    // out << "// POINTS DEFINITION \n\n";
+    // int64_t nnodes = pzgmesh->NNodes();
+    // for (int64_t inode = 0; inode < nnodes; inode++){
+    //     TPZManVector<REAL, 3> co(3,0.);
+    //     pzgmesh->NodeVec[inode].GetCoordinates(co);
+    //     out << "Point(" << inode << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
+    // }
     
-    // write edges
-    out << "\n\n// LINES DEFINITION \n\n";
-    int64_t nels = pzgmesh->NElements();
-    for (int64_t iel = 0; iel < nels; iel++){
+    // // write edges
+    // out << "\n\n// LINES DEFINITION \n\n";
+    // int64_t nels = pzgmesh->NElements();
+    // for (int64_t iel = 0; iel < nels; iel++){
         
-        out << "Line(" << iel << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
-    }
+    //     out << "Line(" << iel << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
+    // }
 }
 
 
