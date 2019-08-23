@@ -11623,7 +11623,7 @@ Corner nodes       3
 Nodes indexes          108 104 36 
 Number of sides    7
 Material id        20
-no father
+Father index          147
 no subelements
 Neighbours for side   0 : 485/1 484/0 589/0 580/1 581/0 579/2 560/0 559/1 490/0 489/0 488/0 487/0 
 Neighbours for side   1 : 485/0 470/1 469/1 468/0 582/0 580/0 579/0 577/0 524/1 523/0 522/1 500/0 499/1 498/0 497/2 493/1 492/0 490/2 
@@ -11646,7 +11646,7 @@ Corner nodes       3
 Nodes indexes          108 36 11 
 Number of sides    7
 Material id        23
-no father
+Father index          147
 no subelements
 Neighbours for side   0 : 486/0 485/1 484/0 589/0 580/1 581/0 579/2 560/0 559/1 490/0 489/0 488/0 
 Neighbours for side   1 : 486/2 470/0 28/0 370/1 336/0 322/0 162/0 151/0 121/0 27/4 317/1 147/3 118/3 25/1 320/1 150/1 109/1 24/5 105/2 16/3 319/0 119/3 108/1 15/7 104/2 13/2 107/2 12/6 524/2 500/3 497/1 496/2 
@@ -11669,7 +11669,7 @@ Corner nodes       3
 Nodes indexes          108 11 16 
 Number of sides    7
 Material id        26
-no father
+Father index          147
 no subelements
 Neighbours for side   0 : 487/0 486/0 485/1 484/0 589/0 580/1 581/0 579/2 560/0 559/1 490/0 489/0 
 Neighbours for side   1 : 487/2 103/2 315/0 314/1 27/0 317/0 159/0 147/0 118/0 24/1 146/1 365/0 105/1 15/3 116/3 333/1 104/1 12/2 
@@ -11692,7 +11692,7 @@ Corner nodes       3
 Nodes indexes          108 16 41 
 Number of sides    7
 Material id        29
-no father
+Father index          147
 no subelements
 Neighbours for side   0 : 488/0 487/0 486/0 485/1 484/0 589/0 580/1 581/0 579/2 560/0 559/1 490/0 
 Neighbours for side   1 : 488/2 146/2 366/0 365/1 39/0 368/0 202/0 190/0 161/0 36/1 189/1 416/0 148/1 27/3 159/3 384/1 147/1 24/2 
@@ -11715,7 +11715,7 @@ Corner nodes       3
 Nodes indexes          108 41 104 
 Number of sides    7
 Material id        32
-no father
+Father index          147
 no subelements
 Neighbours for side   0 : 489/0 488/0 487/0 486/0 485/1 484/0 589/0 580/1 581/0 579/2 560/0 559/1 
 Neighbours for side   1 : 489/2 469/0 40/0 421/1 387/0 373/0 205/0 194/0 164/0 39/4 368/1 190/3 161/3 37/1 371/1 193/1 152/1 36/5 148/2 28/3 370/0 162/3 151/1 27/7 147/2 25/2 150/2 24/6 523/3 499/2 494/1 493/2 
@@ -11774,7 +11774,7 @@ Corner nodes       3
 Nodes indexes          109 104 41 
 Number of sides    7
 Material id        20
-no father
+Father index          150
 no subelements
 Neighbours for side   0 : 492/1 491/0 584/0 579/1 577/2 578/1 559/0 558/1 497/0 496/0 495/0 494/0 
 Neighbours for side   1 : 492/0 490/2 486/1 485/0 470/1 469/1 468/0 582/0 580/0 579/0 577/0 524/1 523/0 522/1 500/0 499/1 498/0 497/2 
@@ -11797,7 +11797,7 @@ Corner nodes       3
 Nodes indexes          109 41 40 
 Number of sides    7
 Material id        23
-no father
+Father index          150
 no subelements
 Neighbours for side   0 : 493/0 492/1 491/0 584/0 579/1 577/2 578/1 559/0 558/1 497/0 496/0 495/0 
 Neighbours for side   1 : 493/2 490/1 489/2 469/0 40/0 421/1 387/0 373/0 205/0 194/0 164/0 39/4 368/1 190/3 161/3 37/1 371/1 193/1 152/1 36/5 148/2 28/3 370/0 162/3 151/1 27/7 147/2 25/2 150/2 24/6 523/3 499/2 
@@ -11820,7 +11820,7 @@ Corner nodes       3
 Nodes indexes          109 40 35 
 Number of sides    7
 Material id        26
-no father
+Father index          150
 no subelements
 Neighbours for side   0 : 494/0 493/0 492/1 491/0 584/0 579/1 577/2 578/1 559/0 558/1 497/0 496/0 
 Neighbours for side   1 : 494/2 149/2 372/0 369/1 37/0 371/0 196/0 193/0 152/0 36/4 192/3 423/1 148/3 25/3 153/1 374/0 150/3 24/7 
@@ -11843,7 +11843,7 @@ Corner nodes       3
 Nodes indexes          109 35 36 
 Number of sides    7
 Material id        29
-no father
+Father index          150
 no subelements
 Neighbours for side   0 : 495/0 494/0 493/0 492/1 491/0 584/0 579/1 577/2 578/1 559/0 558/1 497/0 
 Neighbours for side   1 : 495/2 106/2 321/0 318/1 25/0 320/0 153/0 150/0 109/0 24/4 149/3 372/1 105/3 13/3 110/1 323/0 107/3 12/7 
@@ -11866,7 +11866,7 @@ Corner nodes       3
 Nodes indexes          109 36 104 
 Number of sides    7
 Material id        32
-no father
+Father index          150
 no subelements
 Neighbours for side   0 : 496/0 495/0 494/0 493/0 492/1 491/0 584/0 579/1 577/2 578/1 559/0 558/1 
 Neighbours for side   1 : 496/2 487/1 486/2 470/0 28/0 370/1 336/0 322/0 162/0 151/0 121/0 27/4 317/1 147/3 118/3 25/1 320/1 150/1 109/1 24/5 105/2 16/3 319/0 119/3 108/1 15/7 104/2 13/2 107/2 12/6 524/2 500/3 
@@ -11908,7 +11908,7 @@ Corner nodes       4
 Nodes indexes          105 104 41 66 
 Number of sides    9
 Material id        20
-no father
+Father index          151
 no subelements
 Neighbours for side   0 : 498/1 473/1 472/1 471/0 590/0 588/2 586/1 584/1 585/0 582/2 583/1 577/1 578/0 576/2 574/1 575/0 530/1 529/0 528/1 514/2 510/1 509/0 507/2 503/1 502/0 500/1 
 Neighbours for side   1 : 498/0 497/2 493/1 492/0 490/2 486/1 485/0 470/1 469/1 468/0 582/0 580/0 579/0 577/0 524/1 523/0 522/1 500/0 
@@ -11933,7 +11933,7 @@ Corner nodes       4
 Nodes indexes          104 105 61 36 
 Number of sides    9
 Material id        23
-no father
+Father index          151
 no subelements
 Neighbours for side   0 : 499/1 498/0 497/2 493/1 492/0 490/2 486/1 485/0 470/1 469/1 468/0 582/0 580/0 579/0 577/0 524/1 523/0 522/1 
 Neighbours for side   1 : 499/0 498/1 473/1 472/1 471/0 590/0 588/2 586/1 584/1 585/0 582/2 583/1 577/1 578/0 576/2 574/1 575/0 530/1 529/0 528/1 514/2 510/1 509/0 507/2 503/1 502/0 
@@ -11994,7 +11994,7 @@ Corner nodes       3
 Nodes indexes          110 105 66 
 Number of sides    7
 Material id        20
-no father
+Father index          154
 no subelements
 Neighbours for side   0 : 502/1 501/0 590/1 576/1 557/0 556/1 507/0 506/0 505/0 504/0 
 Neighbours for side   1 : 502/0 500/1 499/0 498/1 473/1 472/1 471/0 590/0 588/2 586/1 584/1 585/0 582/2 583/1 577/1 578/0 576/2 574/1 575/0 530/1 529/0 528/1 514/2 510/1 509/0 507/2 
@@ -12017,7 +12017,7 @@ Corner nodes       3
 Nodes indexes          110 66 65 
 Number of sides    7
 Material id        23
-no father
+Father index          154
 no subelements
 Neighbours for side   0 : 503/0 502/1 501/0 590/1 576/1 557/0 556/1 507/0 506/0 505/0 
 Neighbours for side   1 : 503/2 499/3 472/0 41/0 426/1 390/0 378/0 208/0 198/0 167/0 40/4 373/1 194/3 164/3 38/1 376/1 197/1 156/1 37/5 152/2 29/3 375/0 165/3 155/1 28/7 151/2 26/2 154/2 25/6 529/3 511/1 510/2 
@@ -12040,7 +12040,7 @@ Corner nodes       3
 Nodes indexes          110 65 60 
 Number of sides    7
 Material id        26
-no father
+Father index          154
 no subelements
 Neighbours for side   0 : 504/0 503/0 502/1 501/0 590/1 576/1 557/0 556/1 507/0 506/0 
 Neighbours for side   1 : 504/2 153/2 377/0 374/1 38/0 376/0 200/0 197/0 156/0 37/4 196/3 428/1 152/3 26/3 157/1 379/0 154/3 25/7 
@@ -12063,7 +12063,7 @@ Corner nodes       3
 Nodes indexes          110 60 61 
 Number of sides    7
 Material id        29
-no father
+Father index          154
 no subelements
 Neighbours for side   0 : 505/0 504/0 503/0 502/1 501/0 590/1 576/1 557/0 556/1 507/0 
 Neighbours for side   1 : 505/2 110/2 326/0 323/1 26/0 325/0 157/0 154/0 113/0 25/4 153/3 377/1 109/3 14/3 114/1 328/0 111/3 13/7 
@@ -12086,7 +12086,7 @@ Corner nodes       3
 Nodes indexes          110 61 105 
 Number of sides    7
 Material id        32
-no father
+Father index          154
 no subelements
 Neighbours for side   0 : 506/0 505/0 504/0 503/0 502/1 501/0 590/1 576/1 557/0 556/1 
 Neighbours for side   1 : 506/2 500/2 473/0 29/0 375/1 339/0 327/0 165/0 155/0 124/0 28/4 322/1 151/3 121/3 26/1 325/1 154/1 113/1 25/5 109/2 17/3 324/0 122/3 112/1 16/7 108/2 14/2 111/2 13/6 530/2 514/1 513/2 
@@ -12145,7 +12145,7 @@ Corner nodes       3
 Nodes indexes          111 105 66 
 Number of sides    7
 Material id        20
-no father
+Father index          155
 no subelements
 Neighbours for side   0 : 509/1 508/0 576/0 574/0 556/0 555/1 514/0 513/0 512/0 511/0 
 Neighbours for side   1 : 509/0 507/2 503/1 502/0 500/1 499/0 498/1 473/1 472/1 471/0 590/0 588/2 586/1 584/1 585/0 582/2 583/1 577/1 578/0 576/2 574/1 575/0 530/1 529/0 528/1 514/2 
@@ -12168,7 +12168,7 @@ Corner nodes       3
 Nodes indexes          111 66 91 
 Number of sides    7
 Material id        23
-no father
+Father index          155
 no subelements
 Neighbours for side   0 : 510/0 509/1 508/0 576/0 574/0 556/0 555/1 514/0 513/0 512/0 
 Neighbours for side   1 : 510/2 504/1 503/2 499/3 472/0 41/0 426/1 390/0 378/0 208/0 198/0 167/0 40/4 373/1 194/3 164/3 38/1 376/1 197/1 156/1 37/5 152/2 29/3 375/0 165/3 155/1 28/7 151/2 26/2 154/2 25/6 529/3 
@@ -12191,7 +12191,7 @@ Corner nodes       3
 Nodes indexes          111 91 86 
 Number of sides    7
 Material id        26
-no father
+Father index          155
 no subelements
 Neighbours for side   0 : 511/0 510/0 509/1 508/0 576/0 574/0 556/0 555/1 514/0 513/0 
 Neighbours for side   1 : 511/2 158/2 381/0 380/1 41/4 378/1 211/0 198/3 167/3 38/5 201/1 431/0 156/2 29/7 168/3 393/1 155/2 26/6 
@@ -12214,7 +12214,7 @@ Corner nodes       3
 Nodes indexes          111 86 61 
 Number of sides    7
 Material id        29
-no father
+Father index          155
 no subelements
 Neighbours for side   0 : 512/0 511/0 510/0 509/1 508/0 576/0 574/0 556/0 555/1 514/0 
 Neighbours for side   1 : 512/2 115/2 330/0 329/1 29/4 327/1 168/0 155/3 124/3 26/5 158/1 380/0 113/2 17/7 125/3 342/1 112/2 14/6 
@@ -12237,7 +12237,7 @@ Corner nodes       3
 Nodes indexes          111 61 105 
 Number of sides    7
 Material id        32
-no father
+Father index          155
 no subelements
 Neighbours for side   0 : 513/0 512/0 511/0 510/0 509/1 508/0 576/0 574/0 556/0 555/1 
 Neighbours for side   1 : 513/2 507/1 506/2 500/2 473/0 29/0 375/1 339/0 327/0 165/0 155/0 124/0 28/4 322/1 151/3 121/3 26/1 325/1 154/1 113/1 25/5 109/2 17/3 324/0 122/3 112/1 16/7 108/2 14/2 111/2 13/6 530/2 
@@ -12296,7 +12296,7 @@ Corner nodes       3
 Nodes indexes          112 106 37 
 Number of sides    7
 Material id        20
-no father
+Father index          160
 no subelements
 Neighbours for side   0 : 516/1 515/0 569/0 567/0 562/0 561/1 521/0 520/0 519/0 518/0 
 Neighbours for side   1 : 516/0 476/1 475/1 474/0 589/2 587/1 586/2 582/1 583/0 580/2 581/1 570/2 571/1 569/2 567/1 568/0 544/2 540/1 539/0 527/0 526/1 525/0 524/0 523/1 522/0 521/2 
@@ -12319,7 +12319,7 @@ Corner nodes       3
 Nodes indexes          112 37 12 
 Number of sides    7
 Material id        23
-no father
+Father index          160
 no subelements
 Neighbours for side   0 : 517/0 516/1 515/0 569/0 567/0 562/0 561/1 521/0 520/0 519/0 
 Neighbours for side   1 : 517/2 476/0 31/0 386/1 347/0 337/0 172/0 163/0 131/0 30/4 334/1 160/3 128/3 28/1 336/1 162/1 121/1 27/5 118/2 19/3 335/0 129/3 120/1 18/7 117/2 16/2 119/2 15/6 541/1 540/2 527/3 524/3 
@@ -12342,7 +12342,7 @@ Corner nodes       3
 Nodes indexes          112 12 17 
 Number of sides    7
 Material id        26
-no father
+Father index          160
 no subelements
 Neighbours for side   0 : 518/0 517/0 516/1 515/0 569/0 567/0 562/0 561/1 521/0 520/0 
 Neighbours for side   1 : 518/2 116/2 333/0 332/1 30/0 334/0 169/0 160/0 128/0 27/1 159/1 383/0 118/1 18/3 126/3 344/1 117/1 15/2 
@@ -12365,7 +12365,7 @@ Corner nodes       3
 Nodes indexes          112 17 42 
 Number of sides    7
 Material id        29
-no father
+Father index          160
 no subelements
 Neighbours for side   0 : 519/0 518/0 517/0 516/1 515/0 569/0 567/0 562/0 561/1 521/0 
 Neighbours for side   1 : 519/2 159/2 384/0 383/1 42/0 385/0 212/0 203/0 171/0 39/1 202/1 434/0 161/1 30/3 169/3 395/1 160/1 27/2 
@@ -12388,7 +12388,7 @@ Corner nodes       3
 Nodes indexes          112 42 106 
 Number of sides    7
 Material id        32
-no father
+Father index          160
 no subelements
 Neighbours for side   0 : 520/0 519/0 518/0 517/0 516/1 515/0 569/0 567/0 562/0 561/1 
 Neighbours for side   1 : 520/2 475/0 43/0 437/1 398/0 388/0 215/0 206/0 174/0 42/4 385/1 203/3 171/3 40/1 387/1 205/1 164/1 39/5 161/2 31/3 386/0 172/3 163/1 30/7 160/2 28/2 162/2 27/6 544/1 543/2 526/2 523/2 
@@ -12430,7 +12430,7 @@ Corner nodes       4
 Nodes indexes          104 106 42 41 
 Number of sides    9
 Material id        20
-no father
+Father index          162
 no subelements
 Neighbours for side   0 : 522/1 500/0 499/1 498/0 497/2 493/1 492/0 490/2 486/1 485/0 470/1 469/1 468/0 582/0 580/0 579/0 577/0 524/1 
 Neighbours for side   1 : 522/0 521/2 517/1 516/0 476/1 475/1 474/0 589/2 587/1 586/2 582/1 583/0 580/2 581/1 570/2 571/1 569/2 567/1 568/0 544/2 540/1 539/0 527/0 526/1 525/0 524/0 
@@ -12455,7 +12455,7 @@ Corner nodes       4
 Nodes indexes          106 104 36 37 
 Number of sides    9
 Material id        23
-no father
+Father index          162
 no subelements
 Neighbours for side   0 : 523/1 522/0 521/2 517/1 516/0 476/1 475/1 474/0 589/2 587/1 586/2 582/1 583/0 580/2 581/1 570/2 571/1 569/2 567/1 568/0 544/2 540/1 539/0 527/0 526/1 525/0 
 Neighbours for side   1 : 523/0 522/1 500/0 499/1 498/0 497/2 493/1 492/0 490/2 486/1 485/0 470/1 469/1 468/0 582/0 580/0 579/0 577/0 
@@ -12499,7 +12499,7 @@ Corner nodes       4
 Nodes indexes          107 106 42 67 
 Number of sides    9
 Material id        20
-no father
+Father index          163
 no subelements
 Neighbours for side   0 : 525/1 479/1 478/1 477/0 588/0 587/0 586/0 572/2 573/1 566/2 564/1 565/0 551/2 547/1 546/0 537/2 533/1 532/0 530/0 529/1 528/0 527/1 
 Neighbours for side   1 : 525/0 524/0 523/1 522/0 521/2 517/1 516/0 476/1 475/1 474/0 589/2 587/1 586/2 582/1 583/0 580/2 581/1 570/2 571/1 569/2 567/1 568/0 544/2 540/1 539/0 527/0 
@@ -12524,7 +12524,7 @@ Corner nodes       4
 Nodes indexes          106 107 62 37 
 Number of sides    9
 Material id        23
-no father
+Father index          163
 no subelements
 Neighbours for side   0 : 526/1 525/0 524/0 523/1 522/0 521/2 517/1 516/0 476/1 475/1 474/0 589/2 587/1 586/2 582/1 583/0 580/2 581/1 570/2 571/1 569/2 567/1 568/0 544/2 540/1 539/0 
 Neighbours for side   1 : 526/0 525/1 479/1 478/1 477/0 588/0 587/0 586/0 572/2 573/1 566/2 564/1 565/0 551/2 547/1 546/0 537/2 533/1 532/0 530/0 529/1 528/0 
@@ -12568,7 +12568,7 @@ Corner nodes       4
 Nodes indexes          105 107 67 66 
 Number of sides    9
 Material id        20
-no father
+Father index          165
 no subelements
 Neighbours for side   0 : 528/1 514/2 510/1 509/0 507/2 503/1 502/0 500/1 499/0 498/1 473/1 472/1 471/0 590/0 588/2 586/1 584/1 585/0 582/2 583/1 577/1 578/0 576/2 574/1 575/0 530/1 
 Neighbours for side   1 : 528/0 527/1 526/0 525/1 479/1 478/1 477/0 588/0 587/0 586/0 572/2 573/1 566/2 564/1 565/0 551/2 547/1 546/0 537/2 533/1 532/0 530/0 
@@ -12593,7 +12593,7 @@ Corner nodes       4
 Nodes indexes          107 105 61 62 
 Number of sides    9
 Material id        23
-no father
+Father index          165
 no subelements
 Neighbours for side   0 : 529/1 528/0 527/1 526/0 525/1 479/1 478/1 477/0 588/0 587/0 586/0 572/2 573/1 566/2 564/1 565/0 551/2 547/1 546/0 537/2 533/1 532/0 
 Neighbours for side   1 : 529/0 528/1 514/2 510/1 509/0 507/2 503/1 502/0 500/1 499/0 498/1 473/1 472/1 471/0 590/0 588/2 586/1 584/1 585/0 582/2 583/1 577/1 578/0 576/2 574/1 575/0 
@@ -12654,7 +12654,7 @@ Corner nodes       3
 Nodes indexes          113 107 67 
 Number of sides    7
 Material id        20
-no father
+Father index          166
 no subelements
 Neighbours for side   0 : 532/1 531/0 572/0 566/1 554/0 553/1 537/0 536/0 535/0 534/0 
 Neighbours for side   1 : 532/0 530/0 529/1 528/0 527/1 526/0 525/1 479/1 478/1 477/0 588/0 587/0 586/0 572/2 573/1 566/2 564/1 565/0 551/2 547/1 546/0 537/2 
@@ -12677,7 +12677,7 @@ Corner nodes       3
 Nodes indexes          113 67 92 
 Number of sides    7
 Material id        23
-no father
+Father index          166
 no subelements
 Neighbours for side   0 : 533/0 532/1 531/0 572/0 566/1 554/0 553/1 537/0 536/0 535/0 
 Neighbours for side   1 : 533/2 529/2 526/3 478/0 44/0 440/1 401/0 391/0 218/0 209/0 177/0 43/4 388/1 206/3 174/3 41/1 390/1 208/1 167/1 40/5 164/2 32/3 389/0 175/3 166/1 31/7 163/2 29/2 165/2 28/6 551/1 550/2 
@@ -12700,7 +12700,7 @@ Corner nodes       3
 Nodes indexes          113 92 87 
 Number of sides    7
 Material id        26
-no father
+Father index          166
 no subelements
 Neighbours for side   0 : 534/0 533/0 532/1 531/0 572/0 566/1 554/0 553/1 537/0 536/0 
 Neighbours for side   1 : 534/2 168/2 393/0 392/1 44/4 391/1 221/0 209/3 177/3 41/5 211/1 443/0 167/2 32/7 178/3 404/1 166/2 29/6 
@@ -12723,7 +12723,7 @@ Corner nodes       3
 Nodes indexes          113 87 62 
 Number of sides    7
 Material id        29
-no father
+Father index          166
 no subelements
 Neighbours for side   0 : 535/0 534/0 533/0 532/1 531/0 572/0 566/1 554/0 553/1 537/0 
 Neighbours for side   1 : 535/2 125/2 342/0 341/1 32/4 340/1 178/0 166/3 134/3 29/5 168/1 392/0 124/2 20/7 135/3 353/1 123/2 17/6 
@@ -12746,7 +12746,7 @@ Corner nodes       3
 Nodes indexes          113 62 107 
 Number of sides    7
 Material id        32
-no father
+Father index          166
 no subelements
 Neighbours for side   0 : 536/0 535/0 534/0 533/0 532/1 531/0 572/0 566/1 554/0 553/1 
 Neighbours for side   1 : 536/2 530/3 527/2 479/0 32/0 389/1 350/0 340/0 175/0 166/0 134/0 31/4 337/1 163/3 131/3 29/1 339/1 165/1 124/1 28/5 121/2 20/3 338/0 132/3 123/1 19/7 120/2 17/2 122/2 16/6 548/1 547/2 
@@ -12805,7 +12805,7 @@ Corner nodes       3
 Nodes indexes          114 106 37 
 Number of sides    7
 Material id        20
-no father
+Father index          172
 no subelements
 Neighbours for side   0 : 539/1 538/0 570/0 569/1 563/0 562/1 544/0 543/0 542/0 541/0 
 Neighbours for side   1 : 539/0 527/0 526/1 525/0 524/0 523/1 522/0 521/2 517/1 516/0 476/1 475/1 474/0 589/2 587/1 586/2 582/1 583/0 580/2 581/1 570/2 571/1 569/2 567/1 568/0 544/2 
@@ -12828,7 +12828,7 @@ Corner nodes       3
 Nodes indexes          114 37 38 
 Number of sides    7
 Material id        23
-no father
+Father index          172
 no subelements
 Neighbours for side   0 : 540/0 539/1 538/0 570/0 569/1 563/0 562/1 544/0 543/0 542/0 
 Neighbours for side   1 : 540/2 527/3 524/3 518/1 517/2 476/0 31/0 386/1 347/0 337/0 172/0 163/0 131/0 30/4 334/1 160/3 128/3 28/1 336/1 162/1 121/1 27/5 118/2 19/3 335/0 129/3 120/1 18/7 117/2 16/2 119/2 15/6 
@@ -12851,7 +12851,7 @@ Corner nodes       3
 Nodes indexes          114 38 43 
 Number of sides    7
 Material id        26
-no father
+Father index          172
 no subelements
 Neighbours for side   0 : 541/0 540/0 539/1 538/0 570/0 569/1 563/0 562/1 544/0 543/0 
 Neighbours for side   1 : 541/2 34/0 397/1 358/0 348/0 182/0 173/0 141/0 33/4 345/1 170/3 138/3 31/1 347/1 172/1 131/1 30/5 128/2 22/3 346/0 139/3 130/1 21/7 127/2 19/2 129/2 18/6 
@@ -12874,7 +12874,7 @@ Corner nodes       3
 Nodes indexes          114 43 42 
 Number of sides    7
 Material id        29
-no father
+Father index          172
 no subelements
 Neighbours for side   0 : 542/0 541/0 540/0 539/1 538/0 570/0 569/1 563/0 562/1 544/0 
 Neighbours for side   1 : 542/2 46/0 448/1 409/0 399/0 225/0 216/0 184/0 45/4 396/1 213/3 181/3 43/1 398/1 215/1 174/1 42/5 171/2 34/3 397/0 182/3 173/1 33/7 170/2 31/2 172/2 30/6 
@@ -12897,7 +12897,7 @@ Corner nodes       3
 Nodes indexes          114 42 106 
 Number of sides    7
 Material id        32
-no father
+Father index          172
 no subelements
 Neighbours for side   0 : 543/0 542/0 541/0 540/0 539/1 538/0 570/0 569/1 563/0 562/1 
 Neighbours for side   1 : 543/2 526/2 523/2 521/1 520/2 475/0 43/0 437/1 398/0 388/0 215/0 206/0 174/0 42/4 385/1 203/3 171/3 40/1 387/1 205/1 164/1 39/5 161/2 31/3 386/0 172/3 163/1 30/7 160/2 28/2 162/2 27/6 
@@ -12956,7 +12956,7 @@ Corner nodes       3
 Nodes indexes          115 107 62 
 Number of sides    7
 Material id        20
-no father
+Father index          175
 no subelements
 Neighbours for side   0 : 546/1 545/0 566/0 564/0 553/0 552/1 551/0 550/0 549/0 548/0 
 Neighbours for side   1 : 546/0 537/2 533/1 532/0 530/0 529/1 528/0 527/1 526/0 525/1 479/1 478/1 477/0 588/0 587/0 586/0 572/2 573/1 566/2 564/1 565/0 551/2 
@@ -12979,7 +12979,7 @@ Corner nodes       3
 Nodes indexes          115 62 63 
 Number of sides    7
 Material id        23
-no father
+Father index          175
 no subelements
 Neighbours for side   0 : 547/0 546/1 545/0 566/0 564/0 553/0 552/1 551/0 550/0 549/0 
 Neighbours for side   1 : 547/2 537/1 536/2 530/3 527/2 479/0 32/0 389/1 350/0 340/0 175/0 166/0 134/0 31/4 337/1 163/3 131/3 29/1 339/1 165/1 124/1 28/5 121/2 20/3 338/0 132/3 123/1 19/7 120/2 17/2 122/2 16/6 
@@ -13002,7 +13002,7 @@ Corner nodes       3
 Nodes indexes          115 63 68 
 Number of sides    7
 Material id        26
-no father
+Father index          175
 no subelements
 Neighbours for side   0 : 548/0 547/0 546/1 545/0 566/0 564/0 553/0 552/1 551/0 550/0 
 Neighbours for side   1 : 548/2 35/0 400/1 361/0 351/0 185/0 176/0 144/0 34/4 348/1 173/3 141/3 32/1 350/1 175/1 134/1 31/5 131/2 23/3 349/0 142/3 133/1 22/7 130/2 20/2 132/2 19/6 
@@ -13025,7 +13025,7 @@ Corner nodes       3
 Nodes indexes          115 68 67 
 Number of sides    7
 Material id        29
-no father
+Father index          175
 no subelements
 Neighbours for side   0 : 549/0 548/0 547/0 546/1 545/0 566/0 564/0 553/0 552/1 551/0 
 Neighbours for side   1 : 549/2 47/0 451/1 412/0 402/0 228/0 219/0 187/0 46/4 399/1 216/3 184/3 44/1 401/1 218/1 177/1 43/5 174/2 35/3 400/0 185/3 176/1 34/7 173/2 32/2 175/2 31/6 
@@ -13048,7 +13048,7 @@ Corner nodes       3
 Nodes indexes          115 67 107 
 Number of sides    7
 Material id        32
-no father
+Father index          175
 no subelements
 Neighbours for side   0 : 550/0 549/0 548/0 547/0 546/1 545/0 566/0 564/0 553/0 552/1 
 Neighbours for side   1 : 550/2 534/1 533/2 529/2 526/3 478/0 44/0 440/1 401/0 391/0 218/0 209/0 177/0 43/4 388/1 206/3 174/3 41/1 390/1 208/1 167/1 40/5 164/2 32/3 389/0 175/3 166/1 31/7 163/2 29/2 165/2 28/6 
@@ -13874,9 +13874,3 @@ Reference element pointer address: 0x0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 105 110 102 
-
-
-Interface materials : 
-
-number = 0
-left material / right material -> interface material

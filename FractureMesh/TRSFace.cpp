@@ -232,11 +232,11 @@ void TRSFace::DivideSurface(int matid){
 		}
 		int64_t index = gmesh->NElements();
 		gmesh->CreateGeoElement(elemtype, child[i], matid+3*i, index);
+		childrenIndices[i] = index;
 
 		// Tell the child who its father is
 		TPZGeoEl *newface = gmesh->Element(index);
 		newface->SetFather(fFaceIndex);
-		childrenIndices[i] = index;
 	}
 	SetChildren(childrenIndices);
 	// create skeleton?

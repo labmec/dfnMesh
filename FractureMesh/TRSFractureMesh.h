@@ -186,14 +186,14 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl ifracface)
             {
                 if(ivolume.Dimension != 3){continue;}
                 TPZVec<REAL> volumecenter = ivolume->center;
-                TPZVec<REAL> v1 = volumecenter - fatherCenter;
-                TPZVec<REAL> v2 = faceCenter - fatherCenter;
+                TPZVec<REAL> v1 = faceCenter - fatherCenter;
+                TPZVec<REAL> v2 = volumecenter - fatherCenter;
 
-                REAL test = DotProduct(v1,v2);
-                if(test >=0)
+                REAL dot = DotProduct(v1,v2);
+                if(dot >=0)
                 {
-                    test.Normalize();
-                    candidates[test] = ivolume->Index
+                    dot.Normalize();
+                    candidates[dot] = ivolume->Index
                 }
             }
         }
@@ -226,7 +226,7 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl ifracface)
                 if(ivolume.Dimension != 3){continue;}
                 if(verified.find(ivolume)){continue;}
                 TPZVec<REAL> ksi(3,2);
-                bool test = ivolume->ComputeXinverse(faceCenter,ksi,fTolerance)
+                bool test = ivolume->ComputeXinverse(faceCenter,qsi,fTolerance)
                 if(test == true){
                     volumes[ivolume->Index]->SetFaceInVolume(ifracface.index);
                     return true;
