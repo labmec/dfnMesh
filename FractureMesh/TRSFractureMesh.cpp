@@ -811,6 +811,18 @@ void TRSFractureMesh::CreateVolumes(){
         // Find volume that encloses that element
         FindEnclosingVolume(gel);
     }
+//debug___________________________________
+    for(auto iv = fVolumes.begin(); iv != fVolumes.end(); iv++){
+
+        TPZVec<int64_t> faces = iv->second.GetFacesInVolume();
+        int nfaces = faces.size();
+        for(int i = 0; i < nfaces; i++){
+            std::cout<<"\nvolume #"<<iv->first
+                     <<" \tface #"<<faces[i];
+        }
+    }
+    std::cout<<std::endl;
+//debug___________________________________
 }
 
 
@@ -824,10 +836,14 @@ void TRSFractureMesh::CreateVolumes(){
 bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 // debug_______________________________________________
     int volumesfound = fVolumes.size();
+    int fracfaceindex = ifracface->Index();
 // debug_______________________________________________
     // get coordinates of geometric center of face
     TPZVec<REAL> faceCenter(3);
-    ifracface->Neighbour(ifracface->NSides()-1).CenterX(faceCenter);
+    {
+        TPZGeoElSide geliside(ifracface, ifracface->NSides()-1);
+        geliside.CenterX(faceCenter);
+    }
 
     // map of indices for volumes that could contain the face
     std::map<REAL, int64_t> candidates;
@@ -847,16 +863,16 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
             if(ineig.Element()->MaterialId() >= fSurfaceMaterial){continue;}
             
             // find 2-dimensional neighbour that has a father
-            if(ineig.Dimension() != 2){continue;}
+            if(ineig.Element()->Dimension() != 2){continue;}
             TPZGeoEl *father = ineig.Element()->Father();
             if(!father){continue;}
 
             // get father's center coordinates
-            TPZVec<REAL> fatherCenter(3);
-            TPZGeoElSide fatherfaceside = father->Neighbour(father->NSides()-1);
+            TPZManVector<REAL,3> fatherCenter(3);
+            TPZGeoElSide fatherfaceside(father, father->NSides()-1);
             fatherfaceside.CenterX(fatherCenter);
             // construct vector from center of father to center of ifracface
-            TPZVec<REAL> v1(3,0);
+            TPZManVector<REAL,3> v1(3,0);
                 v1[0] = faceCenter[0] - fatherCenter[0];
                 v1[1] = faceCenter[1] - fatherCenter[1];
                 v1[2] = faceCenter[2] - fatherCenter[2];
@@ -869,13 +885,16 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
             // iterate over volumetric neighbours through father's plane
             TPZGeoElSide ivolume = fatherfaceside.Neighbour();
             for( ; ivolume != fatherfaceside; ivolume = ivolume.Neighbour()){
-                if(ivolume.Dimension() != 3){continue;}
+                if(ivolume.Element()->Dimension() != 3){continue;}
                 // get coordinates for center of volume
-                TPZVec<REAL> volumeCenter(3);
-                ivolume.CenterX(volumeCenter);
+                TPZManVector<REAL,3> volumeCenter(3);
+                {
+                    TPZGeoElSide ivolume_temp (ivolume.Element(),ivolume.Element()->NSides()-1);
+                    ivolume_temp.CenterX(volumeCenter);
+                }
 
                 // construct vector from center of ifracface to center of volume
-                TPZVec<REAL> v2(3,0);
+                TPZManVector<REAL,3> v2(3,0);
                     v2[0] = volumeCenter[0] - fatherCenter[0];
                     v2[1] = volumeCenter[1] - fatherCenter[1];
                     v2[2] = volumeCenter[2] - fatherCenter[2];
@@ -920,7 +939,7 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
             if(ineig.Element()->MaterialId() >= fSurfaceMaterial){continue;}
 
             // find 2-dimensional neighbour that has a father
-            if(ineig.Dimension() != 2){continue;}
+            if(ineig.Element()->Dimension() != 2){continue;}
             TPZGeoEl *father = ineig.Element()->Father();
             if(!father){continue;}
             TPZGeoElSide fatherfaceside = father->Neighbour(father->NSides()-1);
@@ -928,7 +947,7 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
            // iterate over volumetric neighbours through father's plane
             TPZGeoElSide ivolume = fatherfaceside.Neighbour();
             for( ; ivolume != fatherfaceside; ivolume = ivolume.Neighbour()){
-                if(ivolume.Dimension() != 3){continue;}
+                if(ivolume.Element()->Dimension() != 3){continue;}
                 if(verified.find(&ivolume) != verified.end()){continue;}
                 TPZVec<REAL> qsi(3);
                 bool test = ivolume.Element()->ComputeXInverse(faceCenter, qsi, fTolerance);

@@ -13874,3 +13874,9 @@ Reference element pointer address: 0x0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 105 110 102 
+
+
+Interface materials : 
+
+number = 0
+left material / right material -> interface material

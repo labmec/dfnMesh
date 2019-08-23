@@ -69,5 +69,8 @@ class TRSVolume
 
     /// Set a 2D element enclosed by the volume
     void SetFaceInVolume(int64_t Elindex);
+
+    /// Get 2D elements enclosed by volume
+    TPZVec<int64_t> GetFacesInVolume(){return fEnclosedFaces;}
 };
 #endif /* TRSVolume_h */
