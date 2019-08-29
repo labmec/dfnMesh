@@ -25,12 +25,13 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh, int
 
     // Maybe implement check for previously created skeleton
     // Create skeleton elements
-    CreateSkeletonElements(2, 4);
-    CreateSkeletonElements(1, 4);
+    int materialSkeleton = 4;
+    CreateSkeletonElements(2, materialSkeleton);
+    CreateSkeletonElements(1, materialSkeleton);
 
     // Create FracPlane's geometric element into mesh
-    fFracplaneindex = fFracplane.CreateElement(fGMesh);
-    
+    // fFracplaneindex = fFracplane.CreateElement(fGMesh);
+    fFracplane.SetPointsInGeomesh(fGMesh, fSurfaceMaterial);
     
 }
 
@@ -44,6 +45,7 @@ TRSFractureMesh::TRSFractureMesh(const TRSFractureMesh &copy){
     fFracplane = copy.fFracplane;
 	fFracplaneindex = copy.fFracplaneindex;
     fSurfaceMaterial = copy.fSurfaceMaterial;
+    fTransitionMaterial = copy.fTransitionMaterial;
 }
 
 // Assignment operator
@@ -56,6 +58,7 @@ TRSFractureMesh &TRSFractureMesh::operator=(const TRSFractureMesh &copy){
     fFracplane = copy.fFracplane;
 	fFracplaneindex = copy.fFracplaneindex;
     fSurfaceMaterial = copy.fSurfaceMaterial;
+    fTransitionMaterial = copy.fTransitionMaterial;
     return *this;
 }
 
@@ -278,14 +281,14 @@ void TRSFractureMesh::SplitFaces(int matID){
     //CreateSkeletonElements(1, fSurfaceMaterial);
     // First, build a skeleton for fracplane
     fGMesh->BuildConnectivity();
-    TPZGeoEl *gel = fGMesh->Element(fFracplaneindex);
-    int nsides = gel->NSides();
-    for (int iside = 0; iside < nsides; iside++){
-        TPZGeoElSide gelside = gel->Neighbour(iside);
-        if (gelside.Dimension() != 1){continue;}
-        bool haskel = HasEqualDimensionNeighbour(gelside);
-        if (haskel == false){TPZGeoElBC(gelside, fSurfaceMaterial);}
-    }
+    // TPZGeoEl *gel = fGMesh->Element(fFracplaneindex);
+    // int nsides = gel->NSides();
+    // for (int iside = 0; iside < nsides; iside++){
+    //     TPZGeoElSide gelside = gel->Neighbour(iside);
+    //     if (gelside.Dimension() != 1){continue;}
+    //     bool haskel = HasEqualDimensionNeighbour(gelside);
+    //     if (haskel == false){TPZGeoElBC(gelside, fSurfaceMaterial);}
+    // }
 
     // iterate over all 2D elements and check their 1D neighbours for intersections
     int64_t nel = fGMesh->NElements();
@@ -332,6 +335,7 @@ void TRSFractureMesh::SplitFaces(int matID){
                 
                 // store cut rib (this might be discarded once I move "fracplane outline" out of this method)
                 CutRibsIndex[nribscut]=rib_index[iside];
+                
                 nribscut++;
             }
         }
@@ -344,7 +348,7 @@ void TRSFractureMesh::SplitFaces(int matID){
         gel->SetMaterialId(matID);
         face.SetStatus(sidestatus);
         face.SetFractureMesh(this);
-        if(nribscut == 1) {gel->SetMaterialId(matID+17);} // this is here for graphical debugging only... comment it on release
+        // if(nribscut == 1) {gel->SetMaterialId(matID+17);} // this is here for graphical debugging only... comment it on release
 
         // Add face to map
         switch (nribscut){
@@ -435,7 +439,7 @@ void TRSFractureMesh::SplitRibs(int matID){
             TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
             //5O is the material of children ribs
             Rib(iel)->DivideRib(fGMesh, ipoint, matID);
-            gel->SetMaterialId(12);
+            gel->SetMaterialId(fTransitionMaterial);
 
             // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
         }
@@ -514,6 +518,7 @@ void TRSFractureMesh::SplitFractureEdge(){
 
 		int64_t nels = fGMesh->NElements();
 		TPZVec<int64_t> inodes(2);     //index of nodes to be connected
+        //@FixIt
 		TPZGeoEl *geofrac = fGMesh->Element(fFracplaneindex); //pointer to fracture GeoEl
 
 		// connect first end-face intersection to iedge's first node
@@ -765,8 +770,8 @@ void TRSFractureMesh::AddVolume(TRSVolume volume){
 
 
 
-/// Sets material for elements at surface of fracture
-void TRSFractureMesh::SetSurfaceMaterial(int matID){
+/// Sets material for elements at surface of fracture (40 is default)
+void TRSFractureMesh::SetSurfaceMaterial(int matID = 40){
     int64_t nels = fGMesh->NElements();
     for (int64_t iel = 0; iel < nels; iel++)
     {
@@ -811,18 +816,11 @@ void TRSFractureMesh::CreateVolumes(){
         // Find volume that encloses that element
         FindEnclosingVolume(gel);
     }
-//debug___________________________________
-    for(auto iv = fVolumes.begin(); iv != fVolumes.end(); iv++){
 
-        TPZVec<int64_t> faces = iv->second.GetFacesInVolume();
-        int nfaces = faces.size();
-        for(int i = 0; i < nfaces; i++){
-            std::cout<<"\nvolume #"<<iv->first
-                     <<" \tface #"<<faces[i];
-        }
-    }
-    std::cout<<std::endl;
-//debug___________________________________
+    // Use GMSH to tetrahedralize volumes
+    std::ofstream outfile("fracture1.geo");
+    WriteGMSH(outfile);
+
 }
 
 
@@ -834,10 +832,6 @@ void TRSFractureMesh::CreateVolumes(){
 
 
 bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
-// debug_______________________________________________
-    int volumesfound = fVolumes.size();
-    int fracfaceindex = ifracface->Index();
-// debug_______________________________________________
     // get coordinates of geometric center of face
     TPZVec<REAL> faceCenter(3);
     {
@@ -882,15 +876,15 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
                 v1[1] = v1[1]/norm;
                 v1[2] = v1[2]/norm;
 
-            // iterate over volumetric neighbours through father's plane
+            // iterate over volumetric neighbours through father's face
             TPZGeoElSide ivolume = fatherfaceside.Neighbour();
             for( ; ivolume != fatherfaceside; ivolume = ivolume.Neighbour()){
                 if(ivolume.Element()->Dimension() != 3){continue;}
                 // get coordinates for center of volume
                 TPZManVector<REAL,3> volumeCenter(3);
                 {
-                    TPZGeoElSide ivolume_temp (ivolume.Element(),ivolume.Element()->NSides()-1);
-                    ivolume_temp.CenterX(volumeCenter);
+                    TPZGeoElSide gelsidevolume (ivolume.Element(),ivolume.Element()->NSides()-1);
+                    gelsidevolume.CenterX(volumeCenter);
                 }
 
                 // construct vector from center of ifracface to center of volume
@@ -904,8 +898,8 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
                     v2[1] = v2[1]/norm;
                     v2[2] = v2[2]/norm;
                 
-                // if dot product between the vectors constructed for centers 
-                // is positive, that volume is a candidate
+                // if dot product between the vectors constructed for centers is
+                // positive, that volume is a candidate
                 REAL dot = 0;
                 for(int ico = 0; ico < 3; ico++){dot += v1[ico]*v2[ico];}
                 if(dot>0){
@@ -917,7 +911,7 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
     
     // return best candidate 
     if(candidates.size() > 0){
-        // 'reverse iterator begin' gives biggest key in map
+        // reverse iterator (rbegin) gives biggest key in map
         int64_t volumeindex = candidates.rbegin()->second;
         fVolumes[volumeindex].SetFaceInVolume(ifracface->Index());
         return true;
@@ -949,8 +943,8 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
             for( ; ivolume != fatherfaceside; ivolume = ivolume.Neighbour()){
                 if(ivolume.Element()->Dimension() != 3){continue;}
                 if(verified.find(&ivolume) != verified.end()){continue;}
-                TPZVec<REAL> qsi(3);
-                bool test = ivolume.Element()->ComputeXInverse(faceCenter, qsi, fTolerance);
+                TPZVec<REAL> ksi(3,2.0);
+                bool test = ivolume.Element()->ComputeXInverse(faceCenter, ksi, fTolerance);
                 if(test == true){
                     int64_t volumeindex = ivolume.Element()->Index();
                     fVolumes[volumeindex].SetFaceInVolume(ifracface->Index());
@@ -974,131 +968,139 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 
 
 
-void TRSFractureMesh::WriteGMSH(TPZGeoMesh *pzgmesh){
+void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
     
-    // std::ofstream out("fracture1.geo");
-    // // float dx = 0.2;
-    // out << "dx = 0.2;\n\n";
+    // float dx = 0.2;
+    // outfile << "dx = 0.2;\n\n";
 
-
-    // // write nodes
-    // out << "// POINTS DEFINITION \n\n";
-    // int64_t nnodes = pzgmesh->NNodes();
-    // for (int64_t inode = 0; inode < nnodes; inode++){
-    //     TPZManVector<REAL, 3> co(3,0.);
-    //     pzgmesh->NodeVec[inode].GetCoordinates(co);
-    //     out << "Point(" << inode << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
-    // }
+    // Giving fGMesh another name for readability's sake
+    TPZGeoMesh *pzgmesh = fGMesh;
+    pzgmesh->BuildConnectivity();
+    CreateSkeletonElements(1,19);
+    // Title
+    outfile<<"//  Geo file generated by Discrete Fracture Network methods \n"
+            <<"// Fracture #1 \n\n";
     
-    // // write edges
-    // out << "\n\n// LINES DEFINITION \n\n";
-    // int64_t nels = pzgmesh->NElements();
-    // for (int64_t iel = 0; iel < nels; iel++){
-        
-    //     out << "Line(" << iel << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << ",dx};\n";
-    // }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-void TRSFractureMesh::CreateTransitionVolumes(){
-
-    iterate over fMidFaces
-        map 3D neighbours
-    iterate over fEndFaces
-        map 3D neighbours
- 
-    this map is called fTranVolumes (Transition volumes)
-    maybe create a class for TranVolumes
-    implement its splitting method in there
- 
-    build connectivity
-    iterate over fTranVolumes (ivolume)
-        iterate over ivolume 2D neighbours (iplane)
-            if iplane has subfaces {continue;}
-            create set
-            iterate over iplane's 2D neighbours (first_neighbour)
-                if set.size == 3 {breake;}
-                if neighbourhood happens at a node {continue;}
-                if first_neighbour has subface {continue}
-                if first_neighbour is in fracplane {continue;}
-                iterate over iplane's 2D neighbours from (first+1)_neighbour (second_neighbour)
-                    if neighbourhood happens at a node {continue;}
-                    if second_neighbour is also neighbour of first_neighbour 
-                        if the neighbourhood first-to-second happens on a different edge than that of first-to-iplane
-                            insert iplane in set
-                            insert first_neighbour in set
-                            insert second_neighbour in set
-                                // only 3 faces are needed to get a tetrahedron's corner nodes to create GeoElement
-                            breake
-            if (iplane.nnodes == 4 || first_neighbour.nnodes == 4 || second_neighbour.nnodes == 4)
-                if set.size == 4 {breake;}
-                iterate over iplane's 2D neighbours (third_neighbour)
-                    if neighbourhood happens at a node {continue;}
-                    if third_neighbour is already in set {continue;}
-                    if third_neighbour is neighbour of either first or second neighbours
-                        if the neighbourhood third_to_(first or second) happens on a different edge than that of (first or second)_to_iplane
-                            insert third_neighbour in set
-                            breake;
-        
-            // get corner nodes
-            TPZVec<int64_t> nodeindices(0)
-            iterate over set
-                index = get corner nodes for each face in set
-                nodeindices.push_back(index)
-            remove duplicates in nodeindices
-
-            // determine element type
-            switch nodeindices.size
-                case 4: tetraedro
-                case 6: pyramid
-                case 8: hexaedro
+    // write nodes
+    outfile<< "// POINTS DEFINITION \n\n";
+    int64_t nnodes = pzgmesh->NNodes();
+    for (int64_t inode = 0; inode < nnodes; inode++){
+        TPZManVector<REAL, 3> co(3,0.);
+        pzgmesh->NodeVec()[inode].GetCoordinates(co);
+        outfile << "Point(" << inode << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << "};\n";
+    }
+    
+    // write edges
+    int64_t nels = pzgmesh->NElements();
+    outfile << "\n\n// LINES DEFINITION \n\n";
+    {
+        std::list<int64_t> groupSurface;
+        std::list<int64_t> groupTransition;
+        std::list<int64_t> groupIntact;
+        for (int64_t iel = 0; iel < nels; iel++){
+            TPZGeoEl *gel = pzgmesh->Element(iel);
+            if(gel->Dimension() != 1
+                || gel->MaterialId() == fTransitionMaterial
+                // Shouldn't be doing this, but I'm trying to ignore fracplane element
+                || gel->MaterialId() == fSurfaceMaterial) continue;
+            outfile << "Line(" << iel << ") = {" << gel->NodeIndex(0) << ',' << gel->NodeIndex(1) << "};\n";
+            // this is a mess, but only for debugging
+            if(gel->MaterialId() >= 19 && gel->MaterialId() < 40){groupTransition.push_back(iel);}
+            else if(gel->MaterialId() >= 40){groupSurface.push_back(iel);}
+            else groupIntact.push_back(iel);
+        }
+        // write physical groups
+        outfile<<"\nPhysical Curve("<<19<<") = {";
+        for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
+            outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
+        }
+        outfile<<"\nPhysical Curve("<<40<<") = {";
+        for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
+            outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
+        }
+        outfile<<"\nPhysical Curve("<<1<<") = {";
+        for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
+            outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
+        }
+    }
+    // write faces
+    outfile << "\n\n// FACES DEFINITION \n\n";
+    {
+        std::list<int64_t> groupSurface;
+        std::list<int64_t> groupTransition;
+        std::list<int64_t> groupIntact;
+        for (int64_t iel = 0; iel < nels; iel++){
+            TPZGeoEl *gel = pzgmesh->Element(iel);
+            if(gel->Dimension() != 2
+                || gel->MaterialId() == fTransitionMaterial
+                || iel == fFracplaneindex) continue;
             
-            // check if volume to be created already exists
-            bool test = false;
-            iterate over iplane's 3D neighbours (volume_neig)
-                if volume_neig.elementType != newvolume.elementType {continue;}
-                get volume_neig nodes indices
-                compare all volume_neig nodes with each nodeindices[i]
-                    test = true;
-                    breake loop if they match
-            if(test == true){continue;}
-
-
-            // create volume element
-            int64_t nelements = fGMesh->NElements();
-            fGMesh->CreateGeoElement(ElementType, nodeindices, 49, nelements);
-            
-
-            // then check if new volume has skeleton
-            fGMesh->BuildConnectivity();
-            TPZGeoEl *newvolume = fGMesh->Element(nelements);
-            int nsides = newvolume->NSides();
-            for (int iside = 0; iside < nsides; iside++){
-                TPZGeoElSide gelside = newvolume->Neighbour(iside);
-                if (gelside.Dimension() != 2){continue;}
-                bool haskel = HasEqualDimensionNeighbour(gelside);
-                if (haskel == false)
-                {
-                    TPZGeoElBC(gelside, 49);
-                }
+            int nnodes = gel->NCornerNodes();
+            int nedges = nnodes; //for readability 
+            TPZManVector<int64_t,4> facenodevec(nnodes);
+            gel->GetNodeIndices(facenodevec);
+            // line loop
+            outfile << "Line Loop(" << iel << ") = {";
+            // line loops require a proper orientation of lines
+            for(int iside = nedges; iside<2*nedges; iside++){
+                TPZGeoElSide gelside(gel,iside);
+                TPZGeoElSide side = gelside.Neighbour();
+                // find line element
+                while(side.Element()->Dimension() != 1) {side = side.Neighbour();}
+                // find first node of line
+                int inode = 0;
+                while(facenodevec[inode] != side.SideNodeIndex(0)) ++inode;
+                // check orientation by comparing second node of line with next node of face
+                int64_t index=0;
+                    if(side.SideNodeIndex(1)==facenodevec[(inode+1)%nedges]){
+                        index = side.Element()->Index();
+                    }
+                    else{
+                        index = -side.Element()->Index();
+                    }
+                outfile << index <<(iside < 2*nedges-1? "," : "};\n");
             }
+            // surface
+            outfile << "Surface("<<iel<<") = {"<<iel<<"};\n";
+            // this is a mess, but only for debugging
+            if(gel->MaterialId() >= 19 && gel->MaterialId() < 40){groupTransition.push_back(iel);}
+            else if(gel->MaterialId() >= 40){groupSurface.push_back(iel);}
+            else groupIntact.push_back(iel);
+        }
+        // write physical groups
+        outfile<<"\nPhysical Surface("<<19<<") = {";
+        for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
+            outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
+        }
+        outfile<<"\nPhysical Surface("<<40<<") = {";
+        for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
+            outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
+        }
+        outfile<<"\nPhysical Surface("<<1<<") = {";
+        for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
+            outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
+        }
+    }
 
+
+    outfile<<"\nTransfinite Surface \"*\";\n";
+    outfile<<"Recombine Surface \"*\";\n";
 }
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

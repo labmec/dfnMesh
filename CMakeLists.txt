@@ -109,9 +109,4 @@ endif()
 
 add_subdirectory(FractureMesh)
 
-#add_subdirectory(lib)
-#add_subdirectory(directional_ref)
-#add_subdirectory(Laberinto)
-#add_subdirectory(LaplacianJorge)
-#add_subdirectory(MonophasicDarcyTest)
 

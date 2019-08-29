@@ -46,8 +46,8 @@ class TRSFracPlane
 	/// Define a default tolerance
 	REAL fTolerance = 1.e-4;
 
-	// /// Element index within gmesh
-	// int64_t fFracIndex;
+	/// If nodes of this plane have been added to a geometric mesh, this vector holds EPoints element indices 
+	TPZManVector<int64_t, 4> fPointsIndex;
 
   public:
 	/// Empty constructor
@@ -87,24 +87,28 @@ class TRSFracPlane
 	bool Check_rib(const TPZGeoEl *rib);
 
 	/// Return true if a point is above the fracture plane
-   bool Check_point_above(const TPZVec<REAL> &point) const;
+   	bool Check_point_above(const TPZVec<REAL> &point) const;
 
-   /// Check whether the point coordinates are within the plane
-   bool IsPointInPlane(TPZVec<REAL> &point);
+   	/// Check whether the point coordinates are within the plane
+   	bool IsPointInPlane(TPZVec<REAL> &point);
 	
 	/// Computes the intersection point with the plane
 	TPZVec<REAL> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
    
-	// /// Element index
-	// int64_t ElementIndex() const {return fFracIndex;}
 
 	/**
-	 * @brief Creates a geometric element for this plane in pointed mesh
+	 * @brief Inserts corner nodes as EPoints in geometric mesh
 	 * @param Pointer to geometric mesh
 	 * @return Index for newly created element in gmesh
 	 */
-	int64_t CreateElement(TPZGeoMesh *gmesh);
+	TPZManVector<int64_t,4> SetPointsInGeomesh(TPZGeoMesh *gmesh, int matID);
 
+//deprecated:
+	///@brief Creates a geometric element for this plane in pointed mesh
+	// int64_t TRSFracPlane::CreateElement(TPZGeoMesh *gmesh)
+
+	// /// Element index
+	// int64_t ElementIndex() const {return fFracIndex;}
   private:
 	/// Initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);

@@ -62,8 +62,11 @@ private:
     /// Fracplane's geometric element index
     int64_t fFracplaneindex;
 
-    /// Material of elements at fracture surface
-    int fSurfaceMaterial;
+    /// Material id of elements at fracture surface
+    int fSurfaceMaterial = 40;
+
+    /// Material id of mesh elements cut by fracture
+    int fTransitionMaterial = 18;
 
 public:
     
@@ -132,7 +135,9 @@ public:
     /// Pointer to face of index 'index'
     TRSFace *Face(int64_t index);
     
+    /// Pointer to volume of index 'index'
     TRSVolume *Volume(int64_t index){return &fVolumes[index];}
+    
     /// Find and split intersected faces
     void SplitFaces(int matID);
     
@@ -146,7 +151,7 @@ public:
     void SplitFracturePlane();
 
     /// Write mesh elements to .geo file
-    void WriteGMSH(TPZGeoMesh *pzgmesh);
+    void WriteGMSH(std::ofstream &outfile);
 
     /// Uses Gmsh to mesh volumes cut by fracture plane
     void CreateVolumes();
@@ -163,79 +168,3 @@ public:
 
 #endif /* TRSFractureMesh_h */
 
-
-
-/*
-bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl ifracface)
-{
-    TPZVec<REAL> faceCenter = ifracface.center;
-    std::map<REAL, int64_t> candidates;
-    iterate over ifracface 1D sides (iside)
-    {
-        iterate over neighbours through iside (ineig)
-        {
-            if(ineig.Dimension != 2){continue;}
-            if(ineig.material == FracSurfaceMaterial){continue;}
-            if(ineig.HasFather == false){continue;}
-
-            TPZGeoEl *father = ineig.GetFather()
-            TPZVec<REAL> fatherCenter = father->center;
-            TPZGeoElSide *fatherSide = father->side(father->NSides - 1);
-
-            iterate over neighbours through fatherside (ivolume)
-            {
-                if(ivolume.Dimension != 3){continue;}
-                TPZVec<REAL> volumecenter = ivolume->center;
-                TPZVec<REAL> v1 = faceCenter - fatherCenter;
-                TPZVec<REAL> v2 = volumecenter - fatherCenter;
-
-                REAL dot = DotProduct(v1,v2);
-                if(dot >=0)
-                {
-                    dot.Normalize();
-                    candidates[dot] = ivolume->Index
-                }
-            }
-        }
-    }
-
-    if(candidates.size() > 0){
-        // 'reverse iterator begin' gives biggest key in map
-        int64_t volumeindex = candidates.rbegin()->second;
-        volumes[volumeindex]->SetFaceInVolume(ifracface.index);
-        return true;
-    }
-
-    // degeneracy: ifracface's edges are completely enclosed by volume
-    
-    std::set<TPZGeoElSide *> verified;
-    iterate over nodes (iside)
-    {
-        iterate over neighbours through inode (ineig)
-        {
-            if(ineig.Dimension != 2){continue;}
-            if(ineig.material == FracSurfaceMaterial){continue;}
-            if(ineig.HasFather == false){continue;}
-
-            TPZGeoEl *father = ineig.GetFather()
-            TPZVec<REAL> fatherCenter = father->center;
-            TPZGeoElSide *fatherSide = father->side(father->NSides - 1);
-
-            iterate over neighbours through fatherside (ivolume)
-            {
-                if(ivolume.Dimension != 3){continue;}
-                if(verified.find(ivolume)){continue;}
-                TPZVec<REAL> ksi(3,2);
-                bool test = ivolume->ComputeXinverse(faceCenter,qsi,fTolerance)
-                if(test == true){
-                    volumes[ivolume->Index]->SetFaceInVolume(ifracface.index);
-                    return true;
-                }
-            }
-        }
-    }
-
-    std::cout<<"\n TRSFractureMesh::FindEnclosingVolume found no enclosing volume for element #"<<ifracface.index<<"\n";
-    return false;
-}
-*/

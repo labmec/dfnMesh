@@ -26,6 +26,8 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
 	fCornerPoints = copy.GetCorners();
 	fAxis = copy.fAxis;
 	fArea = copy.area();
+	fTolerance = copy.fTolerance;
+	fPointsIndex = copy.fPointsIndex;
 }
 
 
@@ -35,6 +37,8 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
 	fCornerPoints = copy.GetCorners();
 	fAxis = copy.fAxis;
 	fArea = copy.area();
+	fTolerance = copy.fTolerance;
+	fPointsIndex = copy.fPointsIndex;
 	return *this;
  }
 
@@ -272,48 +276,66 @@ bool TRSFracPlane::IsPointInPlane(TPZVec<REAL> &point)
 }
 
 
-
-
-
-
-
-
-
-
-
-/**
- * @brief Creates a geometric element for this plane in pointed mesh
- * @param Pointer to geometric mesh
- * @return Index for newly created element in gmesh
- */
-int64_t TRSFracPlane::CreateElement(TPZGeoMesh *gmesh){
-	// number of nodes for gmesh
-	int nnodes =  gmesh->NNodes();
-	// nomber of corners for fracplane
+TPZManVector<int64_t,4> TRSFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh,int matID){
+	int64_t nels = gmesh->NElements();
 	int ncorners = fCornerPoints.Cols();
-	// add corner as nodes in gmesh
+	fPointsIndex.resize(ncorners);
+	int64_t nnodes = gmesh->NNodes();
 	gmesh->NodeVec().Resize(nnodes + ncorners);
-	TPZVec<int64_t> CornerIndexes(ncorners);
-	for (int i = 0; i < ncorners; i++)
-	{
-		TPZVec<REAL> nodeX(3, 0);
-		nodeX[0] = fCornerPoints(0,i);
-		nodeX[1] = fCornerPoints(1,i);
-		nodeX[2] = fCornerPoints(2,i);
-
-		gmesh->NodeVec()[nnodes + i].Initialize(nodeX, *gmesh);
-		CornerIndexes[i] = nnodes + i;
+	for(int ipoint = 0; ipoint < ncorners; ipoint++){
+		TPZManVector<REAL,3> coords(3);
+		for(int ico = 0; ico<3; ico++){
+			coords[ico] = fCornerPoints(ico,ipoint);
+		}
+		gmesh->NodeVec()[nnodes+ipoint].Initialize(coords,*gmesh);
+		TPZManVector<int64_t,1> nodeindex(1);
+		nodeindex[0] = nnodes+ipoint;
+		int64_t elindex = nels+ipoint;
+		fPointsIndex[ipoint] = elindex;
+		gmesh->CreateGeoElement(EPoint,nodeindex,matID,elindex);
 	}
-	// set element type
-	MElementType elemtype;
-	switch (ncorners){
-		case 3: elemtype = ETriangle; break;
-		case 4: elemtype = EQuadrilateral; break;
-		default: DebugStop();
-	}
-	// create geometric element
-	int64_t fracplaneindex = gmesh->NElements();
-	gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, fracplaneindex);
-
-	return fracplaneindex;
 }
+
+
+
+
+
+
+
+
+// /**
+//  * @brief Creates a geometric element for this plane in pointed mesh
+//  * @param Pointer to geometric mesh
+//  * @return Index for newly created element in gmesh
+//  */
+// int64_t TRSFracPlane::CreateElement(TPZGeoMesh *gmesh){
+// 	// number of nodes for gmesh
+// 	int nnodes =  gmesh->NNodes();
+// 	// nomber of corners for fracplane
+// 	int ncorners = fCornerPoints.Cols();
+// 	// add corner as nodes in gmesh
+// 	gmesh->NodeVec().Resize(nnodes + ncorners);
+// 	TPZVec<int64_t> CornerIndexes(ncorners);
+// 	for (int i = 0; i < ncorners; i++)
+// 	{
+// 		TPZVec<REAL> nodeX(3, 0);
+// 		nodeX[0] = fCornerPoints(0,i);
+// 		nodeX[1] = fCornerPoints(1,i);
+// 		nodeX[2] = fCornerPoints(2,i);
+
+// 		gmesh->NodeVec()[nnodes + i].Initialize(nodeX, *gmesh);
+// 		CornerIndexes[i] = nnodes + i;
+// 	}
+// 	// set element type
+// 	MElementType elemtype;
+// 	switch (ncorners){
+// 		case 3: elemtype = ETriangle; break;
+// 		case 4: elemtype = EQuadrilateral; break;
+// 		default: DebugStop();
+// 	}
+// 	// create geometric element
+// 	int64_t fracplaneindex = gmesh->NElements();
+// 	gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, fracplaneindex);
+
+// 	return fracplaneindex;
+// }

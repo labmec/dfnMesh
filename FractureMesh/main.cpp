@@ -27,7 +27,7 @@
 #include "TRSFace.h"
 
 //MATERIAL ID MAP
-// 1 gmesh
+// 1 gmesh (default)
 // 4 skeleton
 // 12 ribs that will be divided
 // 19 children ribs
@@ -84,6 +84,7 @@ int main()
 	}
 	// then read points
 	Matrix plane(3, npoints);
+{ //just a scope
 	int i = 0;
 	int j = 0;
 	std::cout << "Fracture plane defined as: \n";
@@ -95,15 +96,14 @@ int main()
 				getline(ss, value, ' ');
 			}
 			plane(i, j) = std::stod(value);
-			std::cout << plane(i, j) << " , ";
+			std::cout << plane(i, j) << (j<npoints-1?" , ":"\n");
 			j++;
 		}
 		j = 0;
 		i++;
-		std::cout << std::endl;
 	}
 	std::cout << std::endl;
-
+}
 
 
 
@@ -126,25 +126,25 @@ int main()
 	TRSFractureMesh fracmesh(fracplane, gmesh, 40);
 
 	// Find and split intersected ribs
-	fracmesh.SplitRibs(18);
+	fracmesh.SplitRibs(19);
 
 	// Find and split intersected faces
-	fracmesh.SplitFaces(19);
+	fracmesh.SplitFaces(18);
 	// Split edge of fracture
 	fracmesh.SplitFractureEdge();
 
 	// triangulation of fracture plane
 	fracmesh.SplitFracturePlane();
 
+
+	// Mesh transition volumes
+	fracmesh.CreateVolumes();
+
 	std::ofstream meshprint("meshprint.txt");
 	gmesh->Print(meshprint);
 	//Print result
 	std::ofstream out("./TestSurfaces.vtk");
 	TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetGeoMesh(), out, true);
-
-
-	// Mesh transition volumes
-	fracmesh.CreateVolumes();
 
 	return 0;
 }
