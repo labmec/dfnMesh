@@ -72,7 +72,7 @@ class TRSFracPlane
 	Matrix axis() const {return fAxis;}
 
 	/// Return corner coordinates
-	Matrix GetCorners() const;
+	Matrix GetCornersX() const;
 
 	/// Return area of plane
 	double area() const { return fArea; }
@@ -102,6 +102,14 @@ class TRSFracPlane
 	 * @return Index for newly created element in gmesh
 	 */
 	TPZManVector<int64_t,4> SetPointsInGeomesh(TPZGeoMesh *gmesh, int matID);
+
+	/**
+	 * @brief Returns index of GeoEl EPoint that was created for corner i using TRSFracPlane::SetPointsInGeomesh(gmesh, matID)
+	 * @param Local index of corner
+	 */
+	int64_t PointElIndex(int i) const{
+		return fPointsIndex[i];
+	}
 
 //deprecated:
 	///@brief Creates a geometric element for this plane in pointed mesh

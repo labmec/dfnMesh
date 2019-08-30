@@ -59,8 +59,8 @@ private:
     /// Bounded plane from a fracture
     TRSFracPlane fFracplane;
 
-    /// Fracplane's geometric element index
-    int64_t fFracplaneindex;
+    // /// Fracplane's geometric element index
+    // int64_t fFracplaneindex;
 
     /// Material id of elements at fracture surface
     int fSurfaceMaterial = 40;

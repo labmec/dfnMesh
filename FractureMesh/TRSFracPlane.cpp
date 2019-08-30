@@ -23,7 +23,7 @@ TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
 
 // Copy constructor
 TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
-	fCornerPoints = copy.GetCorners();
+	fCornerPoints = copy.GetCornersX();
 	fAxis = copy.fAxis;
 	fArea = copy.area();
 	fTolerance = copy.fTolerance;
@@ -34,7 +34,7 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
 
  TRSFracPlane &TRSFracPlane::operator=(const TRSFracPlane &copy)
  {
-	fCornerPoints = copy.GetCorners();
+	fCornerPoints = copy.GetCornersX();
 	fAxis = copy.fAxis;
 	fArea = copy.area();
 	fTolerance = copy.fTolerance;
@@ -109,7 +109,7 @@ bool TRSFracPlane::Check_Data_Consistency(Matrix CornerPoints)
  * @brief Get plane's corner points
  * @return Plane corner coordinates
  */
-Matrix TRSFracPlane::GetCorners() const{
+Matrix TRSFracPlane::GetCornersX() const{
     return fCornerPoints;
 }
 
@@ -174,9 +174,9 @@ void TRSFracPlane::ComputeArea(){
 bool TRSFracPlane::Check_point_above(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture plane computation
-        double point_distance = (point[0] - GetCorners()(0,1))*(axis().GetVal(0,2)) 
-                                +(point[1] - GetCorners()(1,1))*(axis().GetVal(1,2)) 
-                                +(point[2] - GetCorners()(2,1))*(axis().GetVal(2,2));
+        double point_distance = (point[0] - GetCornersX()(0,1))*(axis().GetVal(0,2)) 
+                                +(point[1] - GetCornersX()(1,1))*(axis().GetVal(1,2)) 
+                                +(point[2] - GetCornersX()(2,1))*(axis().GetVal(2,2));
         if (point_distance>0){
             return true;    //If the point is above de plane
         }
@@ -294,6 +294,7 @@ TPZManVector<int64_t,4> TRSFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh,int m
 		fPointsIndex[ipoint] = elindex;
 		gmesh->CreateGeoElement(EPoint,nodeindex,matID,elindex);
 	}
+	return fPointsIndex;
 }
 
 

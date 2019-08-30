@@ -229,7 +229,7 @@ void TRSFractureMesh::AddEndFace(TRSFace &face){
         nodeindex[0] = fGMesh->NodeVec().AllocateNewElement();
         fGMesh->NodeVec()[nodeindex[0]].Initialize(coords, *fGMesh);
         int64_t nels = fGMesh->NElements();
-        fGMesh->CreateGeoElement(EPoint, nodeindex, 45, nels);
+        fGMesh->CreateGeoElement(EPoint, nodeindex, 45, nels); // can't get 1D neighbours from nodes... so had to create GeoEl EPoint for all intersection points and track GeoEl index instead of nodeindex
         face.SetIntersectionIndex(nels);
         // std::cout<<"\n"<<face.ElementIndex
     //iterate over ribs to connect intersection points
@@ -387,13 +387,13 @@ TPZVec<REAL> TRSFractureMesh::FindEndFracturePoint(TRSFace &face){
     TRSFracPlane faceplane(corners);
 
     // Check fFracplane's ribs for intersection with faceplane
-    int nribs = fFracplane.GetCorners().Cols();
+    int nribs = fFracplane.GetCornersX().Cols();
     for(int irib = 0; irib < nribs; irib++){
         TPZVec<REAL> p1(3);
         TPZVec<REAL> p2(3);
         for(int i = 0; i<3; i++){
-            p1[i] = fFracplane.GetCorners()(i, irib);
-            p2[i] = fFracplane.GetCorners()(i, (irib+1)%nribs);
+            p1[i] = fFracplane.GetCornersX()(i, irib);
+            p2[i] = fFracplane.GetCornersX()(i, (irib+1)%nribs);
         }
         if(faceplane.Check_rib(p1, p2)){
             return faceplane.CalculateIntersection(p1,p2);
@@ -456,10 +456,10 @@ void TRSFractureMesh::SplitRibs(int matID){
 void TRSFractureMesh::SplitFractureEdge(){  
 
     // Compute fracture edges' lenghts
-    int nedges = fFracplane.GetCorners().Cols();
+    int nedges = fFracplane.GetCornersX().Cols();
     TPZVec<REAL> edgelength(nedges,0);
     Matrix fraccorners(3,nedges);
-    fraccorners = fFracplane.GetCorners();
+    fraccorners = fFracplane.GetCornersX();
     for(int i = 0; i < nedges; i++){
         edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
                               +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
@@ -519,11 +519,11 @@ void TRSFractureMesh::SplitFractureEdge(){
 		int64_t nels = fGMesh->NElements();
 		TPZVec<int64_t> inodes(2);     //index of nodes to be connected
         //@FixIt
-		TPZGeoEl *geofrac = fGMesh->Element(fFracplaneindex); //pointer to fracture GeoEl
+		// TPZGeoEl *geofrac = fGMesh->Element(fFracplaneindex); //pointer to fracture GeoEl
 
 		// connect first end-face intersection to iedge's first node
 		auto it = edgemap[iedge]->begin();
-		inodes[0] = geofrac->SideNodeIndex(iedge+nedges,0);;
+        inodes[0] = fGMesh->Element(fFracplane.PointElIndex(iedge))->NodeIndex(0);
 		inodes[1] = it->second;
 		fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
 
@@ -539,7 +539,7 @@ void TRSFractureMesh::SplitFractureEdge(){
 		// connect last end-intersection to edge last node
 		nels++;
 		inodes[0] = inodes[1];
-		inodes[1] = geofrac->SideNodeIndex(iedge+nedges,1);
+        inodes[1] = fGMesh->Element(fFracplane.PointElIndex((iedge+1)%nedges))->NodeIndex(0);
 		fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
 	}
 	
@@ -560,6 +560,7 @@ void TRSFractureMesh::SplitFractureEdge(){
 void TRSFractureMesh::SplitFracturePlane(){
     //first, list all ipoints (points of intersection of mesh and fracplane)
     std::unordered_set<int64_t> ipoints;
+	
     // iterate over ribs and get their ipoints
     for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
         TRSRibs *irib = &itr->second;
@@ -574,19 +575,13 @@ void TRSFractureMesh::SplitFracturePlane(){
         int64_t index = iface->IntersectionIndex();
         ipoints.insert(index);
     }
-    // can't get 1D neighbours from nodes... so had to create GeoEl EPoint for all ipoints and track GeoEl index instead of nodeindex
+    // points of fracture plane (corners) require repetition of somewhat expensive computations and triangulation will always terminate without using them as center point anyway because mesh is composed of convex polyhedra 
+	// // List points from fracture plane
+    // int ncorners = fFracplane.GetCornersX().Cols();
+    // for(int i = 0; i<ncorners; i++){
+    //     ipoints.insert(fFracplane.PointElIndex(i));
+    // }
 	
-	
-	// GeoPoints for fracture vertices aren't needed if fracture plane is all contained by gmesh
-    // (since slicing convex polyhedra can only generate convex polygonal cross sections)
-		// int ncorners = fGMesh->Element(fFracplaneindex)->NCornerNodes();
-		// for(int i = 0; i<ncorners; i++){
-		// 	TPZVec<int64_t> cornerindex(1);
-		// 	cornerindex[0] = fGMesh->Element(fFracplaneindex)->NodeIndex(i);
-		// 	int64_t nels = fGMesh->NElements();
-		// 	fGMesh->CreateGeoElement(EPoint, cornerindex, 45, nels);
-		// 	ipoints.insert(nels);
-		// }
 
     //iterate over ipoints
 	fGMesh->BuildConnectivity();
@@ -596,94 +591,99 @@ void TRSFractureMesh::SplitFracturePlane(){
 		TPZGeoEl *ipoint = fGMesh->Element(*itr);
 		int64_t centerindex = ipoint->NodeIndex(0);
         TPZGeoElSide neig0 = ipoint->Neighbour(0);
-		// Materials from 40 through 50 are being used for fracture mesh during debbuging
+        // Materials from 40 through 50 are being used for fracture mesh during debbuging
         // while (neig0.Element()->Dimension() != 1 || neig0.Element()->MaterialId() != fSurfaceMaterial){
         while (neig0.Element()->Dimension() != 1 || neig0.Element()->MaterialId() < fSurfaceMaterial){
             neig0 = neig0.Neighbour();
         }
 
-        // Cosine of angle of segment from inode to opposite node (oppnode) relative to reference segment
-        REAL gamma = 1.0; 
-        // Opposite node index
-        int64_t oppnode;
-        if(neig0.Element()->NodeIndex(0) == centerindex){
-            oppnode = neig0.Element()->NodeIndex(1);
-        }
-        else{ oppnode = neig0.Element()->NodeIndex(0);}
-        // Insert reference opposite node in map
-        int64_t reference = oppnode;
-        oppositenodes.insert({gamma,reference});
         // Reference segment vector
-        TPZVec<REAL> ipointcoord(3);
-        fGMesh->NodeVec()[centerindex].GetCoordinates(ipointcoord);
-        TPZVec<REAL> vref(3);
-        fGMesh->NodeVec()[oppnode].GetCoordinates(vref);
-        vref[0] -= ipointcoord[0];
-        vref[1] -= ipointcoord[1];
-        vref[2] -= ipointcoord[2];
-        // normalize reference segment
-        REAL norm = sqrtl(vref[0]*vref[0]+vref[1]*vref[1]+vref[2]*vref[2]);
-        vref[0] = vref[0]/norm;
-        vref[1] = vref[1]/norm;
-        vref[2] = vref[2]/norm;
+        TPZManVector<REAL,3> ipointcoord(3);
+        // Sort edges using angle to the reference vector (scope to keep some variables local)
+        {
+            // Cosine of angle of segment from inode to opposite node (oppnode) relative to reference segment
+            REAL gamma = 1.0; 
+            // Opposite node index
+            int64_t oppnode;
+            if(neig0.Element()->NodeIndex(0) == centerindex){
+                oppnode = neig0.Element()->NodeIndex(1);
+            }
+            else{ oppnode = neig0.Element()->NodeIndex(0);}
+            // Insert reference opposite node in map
+            int64_t reference = oppnode;
+            oppositenodes.insert({gamma,reference});
+            // Reference segment vector
+            // TPZManVector<REAL,3> ipointcoord(3);
+            fGMesh->NodeVec()[centerindex].GetCoordinates(ipointcoord);
+            TPZManVector<REAL,3> vref(3);
+            fGMesh->NodeVec()[oppnode].GetCoordinates(vref);
+            vref[0] -= ipointcoord[0];
+            vref[1] -= ipointcoord[1];
+            vref[2] -= ipointcoord[2];
+            // normalize reference segment
+            REAL norm = sqrtl(vref[0]*vref[0]+vref[1]*vref[1]+vref[2]*vref[2]);
+            vref[0] = vref[0]/norm;
+            vref[1] = vref[1]/norm;
+            vref[2] = vref[2]/norm;
 
-        // Iterate over next 1D neighbours to sort segments from it according to angle to reference
-        TPZGeoElSide neig_i = neig0.Neighbour();
-        while(neig_i != neig0){
-            // if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() == fSurfaceMaterial){
-			// materials over 40 are being used during development to ifentify elements at fracture surface
-            if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() >= fSurfaceMaterial){
-				// get opposite node 
-				if(neig_i.Element()->NodeIndex(0) == centerindex){
-					oppnode = neig_i.Element()->NodeIndex(1);
-				}
-				else{ oppnode = neig_i.Element()->NodeIndex(0);}
-				// Compute segment vector
-				TPZVec<REAL> vi(3);
-				fGMesh->NodeVec()[oppnode].GetCoordinates(vi);
-				vi[0] -= ipointcoord[0];
-				vi[1] -= ipointcoord[1];
-				vi[2] -= ipointcoord[2];
-				// normalize segment vector
-				norm = sqrtl(vi[0]*vi[0]+vi[1]*vi[1]+vi[2]*vi[2]);
-				vi[0] = vi[0]/norm;
-				vi[1] = vi[1]/norm;
-				vi[2] = vi[2]/norm;
-				// compute cosine of angle
-				gamma = vref[0]*vi[0]
-						+vref[1]*vi[1]
-						+vref[2]*vi[2];
-				// cross product to determine quadrant of angle
-				TPZVec<REAL> cross(3);
-				cross[0] = vref[1]*vi[2] - vref[2]*vi[1];
-				cross[1] = vref[2]*vi[0] - vref[0]*vi[2];
-				cross[2] = vref[0]*vi[1] - vref[1]*vi[0];
-				// Dot product between cross and fracplane's normal vector
-				REAL dot=cross[0]*fFracplane.axis(0,2)
-						+cross[1]*fFracplane.axis(1,2)
-						+cross[2]*fFracplane.axis(2,2);
-				if(dot < 0){
-					gamma = -(2+gamma);
-				}
-				// Insert opposite node in the map
-				oppositenodes.insert({gamma, oppnode});
-			}
-			neig_i = neig_i.Neighbour();
+            // Iterate over next 1D neighbours to sort segments from it according to angle to reference
+            TPZGeoElSide neig_i = neig0.Neighbour();
+            while(neig_i != neig0){
+                // if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() == fSurfaceMaterial){
+                // materials over 40 are being used during development to ifentify elements at fracture surface
+                if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() >= fSurfaceMaterial){
+                    // get opposite node 
+                    if(neig_i.Element()->NodeIndex(0) == centerindex){
+                        oppnode = neig_i.Element()->NodeIndex(1);
+                    }
+                    else{ oppnode = neig_i.Element()->NodeIndex(0);}
+                    // Compute segment vector
+                    TPZManVector<REAL,3> vi(3);
+                    fGMesh->NodeVec()[oppnode].GetCoordinates(vi);
+                    vi[0] -= ipointcoord[0];
+                    vi[1] -= ipointcoord[1];
+                    vi[2] -= ipointcoord[2];
+                    // normalize segment vector
+                    norm = sqrtl(vi[0]*vi[0]+vi[1]*vi[1]+vi[2]*vi[2]);
+                    vi[0] = vi[0]/norm;
+                    vi[1] = vi[1]/norm;
+                    vi[2] = vi[2]/norm;
+                    // compute cosine of angle
+                    gamma = vref[0]*vi[0]
+                            +vref[1]*vi[1]
+                            +vref[2]*vi[2];
+                    // cross product to determine quadrant of angle
+                    TPZManVector<REAL,3> cross(3);
+                    cross[0] = vref[1]*vi[2] - vref[2]*vi[1];
+                    cross[1] = vref[2]*vi[0] - vref[0]*vi[2];
+                    cross[2] = vref[0]*vi[1] - vref[1]*vi[0];
+                    // Dot product between cross and fracplane's normal vector
+                    REAL dot=cross[0]*fFracplane.axis(0,2)
+                            +cross[1]*fFracplane.axis(1,2)
+                            +cross[2]*fFracplane.axis(2,2);
+                    if(dot < 0){
+                        gamma = -(2+gamma);
+                    }
+                    // Insert opposite node in the map
+                    oppositenodes.insert({gamma, oppnode});
+                }
+                neig_i = neig_i.Neighbour();
+            }
         }
 
         // iterate over sorted opposite nodes 
-        for(auto iedge = oppositenodes.begin(); iedge != oppositenodes.end(); iedge++){
+        for(auto iedge = oppositenodes.rbegin(); iedge != oppositenodes.rend(); iedge++){
 			auto nextedge = iedge;
 			nextedge++;
 			// nextedge = (iedge+1)%nedges
-			if(nextedge == oppositenodes.end()){nextedge = oppositenodes.begin();}
+			if(nextedge == oppositenodes.rend()){nextedge = oppositenodes.rbegin();}
             
 			// check if element to be created already exists
 			bool test = false;
 			TPZGeoElSide neighbour = neig0.Neighbour();
 			while(neighbour != neig0){
 				if(neighbour.Element()->Dimension() == 2 && neighbour.Element()->MaterialId() >=fSurfaceMaterial){
-					TPZVec<int64_t> testnodes(3);
+					TPZManVector<int64_t,3> testnodes(3);
 					neighbour.Element()->GetNodeIndices(testnodes);
 					for(int jnode = 0; jnode < 3; jnode++){
 						if(testnodes[jnode] == centerindex ||
@@ -705,12 +705,12 @@ void TRSFractureMesh::SplitFracturePlane(){
 			if(test){continue;}
 			
 			// if angle between consectutive segments is 180, then it's the edge of the mesh and no face should be created
-			TPZVec<REAL> v1(3), v2(3);
+			TPZManVector<REAL,3> v1(3), v2(3);
 			fGMesh->NodeVec()[iedge->second].GetCoordinates(v1);
 				v1[0] -= ipointcoord[0];
 				v1[1] -= ipointcoord[1];
 				v1[2] -= ipointcoord[2];
-				norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
+				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
 				v1[0] = v1[0]/norm;
 				v1[1] = v1[1]/norm;
 				v1[2] = v1[2]/norm;
@@ -723,15 +723,14 @@ void TRSFractureMesh::SplitFracturePlane(){
 				v2[1] = v2[1]/norm;
 				v2[2] = v2[2]/norm;
 				// compute cosine of angle
-				gamma =  v1[0]*v2[0]
-						+v1[1]*v2[1]
-						+v1[2]*v2[2];
+				REAL gamma = v1[0]*v2[0]
+					    	+v1[1]*v2[1]
+					    	+v1[2]*v2[2];
 			// cos(180) = -1
 			if(fabs(gamma+1.)<fTolerance){continue;}
-
 			// passed verifications, then
             // create GeoEl triangle
-			TPZVec<int64_t> nodeindices(3);
+			TPZManVector<int64_t,3> nodeindices(3);
 			nodeindices[0] = centerindex;
 			nodeindices[1] = iedge->second;
 			nodeindices[2] = nextedge->second;
@@ -970,9 +969,6 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 
 void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
     
-    // float dx = 0.2;
-    // outfile << "dx = 0.2;\n\n";
-
     // Giving fGMesh another name for readability's sake
     TPZGeoMesh *pzgmesh = fGMesh;
     pzgmesh->BuildConnectivity();
@@ -1000,9 +996,7 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
         for (int64_t iel = 0; iel < nels; iel++){
             TPZGeoEl *gel = pzgmesh->Element(iel);
             if(gel->Dimension() != 1
-                || gel->MaterialId() == fTransitionMaterial
-                // Shouldn't be doing this, but I'm trying to ignore fracplane element
-                || gel->MaterialId() == fSurfaceMaterial) continue;
+                || gel->MaterialId() == fTransitionMaterial) continue;
             outfile << "Line(" << iel << ") = {" << gel->NodeIndex(0) << ',' << gel->NodeIndex(1) << "};\n";
             // this is a mess, but only for debugging
             if(gel->MaterialId() >= 19 && gel->MaterialId() < 40){groupTransition.push_back(iel);}
@@ -1032,8 +1026,7 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
         for (int64_t iel = 0; iel < nels; iel++){
             TPZGeoEl *gel = pzgmesh->Element(iel);
             if(gel->Dimension() != 2
-                || gel->MaterialId() == fTransitionMaterial
-                || iel == fFracplaneindex) continue;
+                || gel->MaterialId() == fTransitionMaterial) continue;
             
             int nnodes = gel->NCornerNodes();
             int nedges = nnodes; //for readability 
@@ -1082,9 +1075,15 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
         }
     }
 
+    // write volumes
+    outfile << "\n\n// VOLUMES DEFINITION \n\n";
+    {
 
+    }
+    
     outfile<<"\nTransfinite Surface \"*\";\n";
     outfile<<"Recombine Surface \"*\";\n";
+    outfile<<"\nTransfinite Volume \"*\";\n";
 }
 
 

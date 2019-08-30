@@ -1,4 +1,5 @@
 # ToDo
+
 - [ ] Mesh fracplane 
   - [x] Ear-clipping-like algorithm 
     - [ ] Legalize triangles 
@@ -26,7 +27,7 @@
     - [ ] Case 15 (No ribs 1) 
     - [ ] Case 16 (No ribs 2) 
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
-  - [ ] Search which volume encloses each face
+  - [x] Search which volume encloses each face
   - [x] Inform to volumes what faces lie inside it 
   - [ ] Write geometry to GMSH 
     - [x] Write points 
@@ -46,8 +47,9 @@
   - [ ] Fracture that overlaps mesh plane should not divide anything 
 - [ ] Id volumes that contain fracture corners 
 - [ ] Check if point is too close to vertex -> rib -> face 
-- [ ] Change comparisons from a == b to fabs(a-b) < tol 
-- [ ] Most of the code assumes 2D elements of the mesh are quadrilaterals. Should we fix this to contemplate triangles? 
+- [ ] Change comparisons from a == b to $|a-b|<\varepsilon$
+
+
 ### Done and Documented
 - [x] Rib class
 - [x] Face class

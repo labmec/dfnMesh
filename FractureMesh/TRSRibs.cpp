@@ -119,7 +119,7 @@ void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
     
     // create GeoEl for intersection point
     TPZVec<int64_t> vnnodes(1,nnodes);
-    gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);
+    gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);     // can't get 1D neighbours from nodes... so had to create GeoEl EPoint for all intersection points and track GeoEl index instead of nodeindex
     fIntersectionIndex = nelements;
 
     // Create children ribs
