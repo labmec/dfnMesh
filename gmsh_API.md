@@ -1,0 +1,5 @@
+- https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api
+- https://gitlab.onelab.info/gmsh/gmsh/blob/master/demos/api/edges.cpp
+- https://gitlab.onelab.info/gmsh/gmsh/blob/master/demos/api/open.cpp
+- https://gitlab.onelab.info/gmsh/gmsh/blob/master/demos/api/simple.cpp
+- https://gitlab.onelab.info/gmsh/gmsh/blob/master/demos/api/t1.cpp

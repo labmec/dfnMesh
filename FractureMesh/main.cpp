@@ -43,8 +43,8 @@ int main()
 
 	// Creating the Geo mesh
 
-	int dimel = 4;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 4);
+	int dimel = 7;
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 3.5);
 	x1[2] = 0.;
 	TPZManVector<int, 2> nelx(2, dimel);
 	TPZGenGrid gengrid(nelx, x0, x1);
@@ -55,9 +55,9 @@ int main()
 
 	// Mesh 3D
 
-	TPZExtendGridDimension extend(gmesh, 1);
+	TPZExtendGridDimension extend(gmesh,0.5);
 	extend.SetElType(1);
-	TPZGeoMesh *gmesh3d = extend.ExtendedMesh(3);
+	TPZGeoMesh *gmesh3d = extend.ExtendedMesh(dimel);
 	gmesh = gmesh3d;
 	//std::ofstream out3("3DMESH.vtk");
 	//TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out3, true);
@@ -111,11 +111,15 @@ int main()
 
 
 
-	// well behaved fracture
+	// example fractures
 	// 2.9084405 1.6236484 0.091559516 1.3763516
 	// 2.5516489 2.2694336 2.4483511 2.7305664
 	// 1.3832619 2.8898022 1.6167381 0.11019779
 
+	// 7x7x7 (0.5)
+	// 2.8 1.2 1.2 2.8
+	// 2.8 2.8 1.2 1.2
+	// 1.3 1.3 1.3 1.3
 
 
 
@@ -136,14 +140,19 @@ int main()
 	// triangulation of fracture plane
 	fracmesh.SplitFracturePlane();
 
-
-	// Mesh transition volumes
-	fracmesh.CreateVolumes();
-
 	std::ofstream meshprint("meshprint.txt");
 	gmesh->Print(meshprint);
 	//Print result
 	std::ofstream out("./TestSurfaces.vtk");
+	TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetGeoMesh(), out, true);
+
+	// Mesh transition volumes
+	fracmesh.CreateVolumes();
+
+	// std::ofstream meshprint("meshprint.txt");
+	gmesh->Print(meshprint);
+	//Print result
+	// std::ofstream out("./TestSurfaces.vtk");
 	TPZVTKGeoMesh::PrintGMeshVTK(fracmesh.GetGeoMesh(), out, true);
 
 	return 0;

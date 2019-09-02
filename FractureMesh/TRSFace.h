@@ -29,10 +29,10 @@ private:
     bool fIsCut;
 
     /// Indicates which ribs and nodes are cut
-    TPZVec<bool> fStatus;
+    TPZManVector<bool,8> fStatus;
     
     /// Vector with global indexes of its ribs
-    TPZVec<int64_t> fRibs;
+    TPZManVector<int64_t,4> fRibs;
 
     /// Vector of sub faces
     TPZVec<int64_t> fSubFaces;
@@ -73,7 +73,7 @@ public:
     TPZVec<int64_t> SubElements() const;
     
     /// Set the subelement indices
-    void SetChildren(const TPZVec<int64_t> &subels);
+    void SetChildren(TPZVec<int64_t> subels);
     
     /** 
      * @brief Divide the given this surface, generate subelements and return vector with indices

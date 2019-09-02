@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+        <title>Ongoing</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+        <link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        
+        <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+    </head>
+    <body>
+        <h1 id="ongoing">Ongoing</h1>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Tetrahedralization on volumetric mesh (gmesh should do it)
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Search which volume encloses each face</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Inform to volumes what faces lie inside it</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> <strong>Write geometry to GMSH</strong>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write points</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write Lines</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Define physical groups of lines</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write faces</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Define physical groups of faces</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Test rules for proper definition of surface loops</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write surface loops</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write volumes</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Define physical groups of volumes</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Rewrite using gmsh API</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="todo">ToDo</h1>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Mesh fracplane
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Ear-clipping-like algorithm
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Legalize triangles</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Face splitting
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Store status of each rib and node</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Identify case</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Store all intersections for each face</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Father elements</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Quadrilateral splitting
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Case 1</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Case 2</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 3</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 4</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Case 5</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 6</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 7</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 8 (No ribs 1)</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 9 (No ribs 2)</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Triangle splitting
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 10</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 11</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 12</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 13</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 14</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 15 (No ribs 1)</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Case 16 (No ribs 2)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Tetrahedralization on volumetric mesh (gmesh should do it)
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Search which volume encloses each face</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Inform to volumes what faces lie inside it</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Write geometry to GMSH
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write points</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write Lines</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Define physical groups of lines</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write faces</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Define physical groups of faces</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Test rules for proper definition of surface loops</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write surface loops</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Write volumes</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Define physical groups of volumes</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Rewrite using gmsh API</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Check if rib cut happens too close to vertex</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Check if face intersection happens too close to rib</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Search for critical cases
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Fractures that are almost parallel to mesh plane</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Fracture that overlaps mesh plane should not divide anything</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Id volumes that contain fracture corners</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Check if point is too close to vertex -&gt; rib -&gt; face</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"> Change comparisons from a == b to <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi mathvariant="normal">∣</mi><mi>a</mi><mo>−</mo><mi>b</mi><mi mathvariant="normal">∣</mi><mo>&lt;</mo><mi>ε</mi></mrow><annotation encoding="application/x-tex">|a-b|&lt;\varepsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord mathdefault">a</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">b</span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">ε</span></span></span></span></li>
+</ul>
+<h1 id="done-and-documented">Done and Documented</h1>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Rib class</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Face class</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Fracture Plane class
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Check data consistency</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Compute axis</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Compute area</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Fracture Mesh class
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Map of ribs</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Map of Mid-Faces</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Map of End-Faces</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Create skeleton mesh
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Check if element already has skeleton</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Check if point is above or bellow plane</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Check if rib is cut by infinite plane</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Calculate intersection with inifinite plane</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Check if intersection is within plane boundaries
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Compute area of triangles from every corner of plane to point</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Compare area of triangles to area of plane (to a tolerance)</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Find faces that are cut
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Iterate over faces</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Iterate over its 1D neighbours through 1D sides</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Store in mid-faces if has 2 ribs cut</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Store in end-faces if has 1 rib cut</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Find intersection points in end-faces
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> figure out 'prettiest' conversion from TPZGeoEl to TRSFracPlane</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> create EPoint for intersection points</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Connect intersection points to define fracture surface outline
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Connect them at the time an intersected face is found and pair of points are created</li>
+</ul>
+</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> Split fracture front (fracture surface edges)
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> iterate over end-faces</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> find which edge cuts them</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> sort them</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox"> connect points accordingly</li>
+</ul>
+</li>
+</ul>
+
+    </body>
+    </html>

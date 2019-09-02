@@ -28,6 +28,8 @@ TRSFace::TRSFace(const TRSFace &copy){
     fRibs = copy.fRibs;
     fSubFaces = copy.fSubFaces;
     fIntersection = copy.fIntersection;
+	fFracMesh = copy.fFracMesh;
+	fFather = copy.fFather;
 }
 
 /// Assignment operator
@@ -38,6 +40,8 @@ TRSFace &TRSFace::operator=(const TRSFace &copy){
     fRibs = copy.fRibs;
     fSubFaces = copy.fSubFaces;
     fIntersection = copy.fIntersection;
+	fFracMesh = copy.fFracMesh;
+	fFather = copy.fFather;
     return *this;
 }
 
@@ -63,7 +67,7 @@ TPZVec<int64_t> TRSFace::SubElements() const{
 }
 
 /// Set the subelement indices
-void TRSFace::SetChildren(const TPZVec<int64_t> &subels){
+void TRSFace::SetChildren(TPZVec<int64_t> subels){
     fSubFaces = subels;
 }
 
@@ -221,7 +225,8 @@ void TRSFace::DivideSurface(int matid){
 	}
 
 	int nchildren = child.size();
-	TPZVec<int64_t> childrenIndices(nchildren,0);
+	TPZManVector<int64_t,6> childrenIndices(nchildren,0);
+	childrenIndices.Shrink();
 	for (int i = 0; i < nchildren; i++)
 	{
 		int nedges = child[i].size();

@@ -1,3 +1,18 @@
+# Ongoing
+- [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
+  - [x] Search which volume encloses each face
+  - [x] Inform to volumes what faces lie inside it 
+  - [ ] **Write geometry to GMSH** 
+    - [x] Write points 
+    - [x] Write Lines 
+    - [x] Define physical groups of lines 
+    - [x] Write faces 
+    - [x] Define physical groups of faces 
+    - [x] Test rules for proper definition of surface loops 
+    - [x] Write surface loops 
+    - [x] Write volumes 
+    - [x] Define physical groups of volumes 
+    - [ ] Rewrite using gmsh API
 # ToDo
 
 - [ ] Mesh fracplane 
@@ -35,10 +50,10 @@
     - [x] Define physical groups of lines 
     - [x] Write faces 
     - [x] Define physical groups of faces 
-    - [ ] Test rules for proper definition of surface loops 
-    - [ ] Write surface loops 
-    - [ ] Write volumes 
-    - [ ] Define physical groups of volumes 
+    - [x] Test rules for proper definition of surface loops 
+    - [x] Write surface loops 
+    - [x] Write volumes 
+    - [x] Define physical groups of volumes 
     - [ ] Rewrite using gmsh API
 - [ ] Check if rib cut happens too close to vertex 
 - [ ] Check if face intersection happens too close to rib 
@@ -50,7 +65,7 @@
 - [ ] Change comparisons from a == b to $|a-b|<\varepsilon$
 
 
-### Done and Documented
+# Done and Documented
 - [x] Rib class
 - [x] Face class
 - [x] Fracture Plane class
