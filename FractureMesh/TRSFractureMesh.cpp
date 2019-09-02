@@ -1083,7 +1083,8 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
             if(gel->Dimension() != 3) continue;
 
             // Surface loop
-            outfile << "Surface Loop(" << iel << ") = {";
+            // gmsh doesn't accept zero index elements
+            outfile << "Surface Loop(" << iel+1 << ") = {";
 
             // iterate over 2D sides to look for faces that close the surface loop
             int nnodes = gel->NCornerNodes();
@@ -1116,8 +1117,7 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
             }
 
             // volume
-            outfile << "Volume("<< iel << ") = {"<< iel <<"};\n";
-            // @ToDo this is kind of a mess, but only for debugging
+            outfile << "Volume("<< iel+1 << ") = {"<< iel+1 <<"};\n"; /* gmsh doesn't accept zero index elements */
             if(volumeIsCut){groupTransition.push_back(iel);}
             else groupIntact.push_back(iel);
 
@@ -1129,17 +1129,17 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
                 for(int i = 0; i<nsurfaces; i++){
                     outfile << enclosedSurfaces[i] << (i<nsurfaces-1?",":"} ");
                 }
-                outfile << "In Volume{"<< iel <<"};\n";
+                outfile << "In Volume{"<< iel+1 <<"};\n"; /* gmsh doesn't accept zero index elements */
             }
         }
         // write physical groups
         outfile<<"\nPhysical Volume("<<19<<") = {";
         for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-            outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
+            outfile<<*itr+1<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
         }
         outfile<<"\nPhysical Volume("<<1<<") = {";
         for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
-            outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
+            outfile<<*itr+1<<(++itr!=groupIntact.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
         }
     }
     
