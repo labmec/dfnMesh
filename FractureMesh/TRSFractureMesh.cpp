@@ -26,8 +26,8 @@ TRSFractureMesh::TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh, int
     // Maybe implement check for previously created skeleton
     // Create skeleton elements
     int materialSkeleton = 4;
-    CreateSkeletonElements(2, materialSkeleton);
     CreateSkeletonElements(1, materialSkeleton);
+    CreateSkeletonElements(2, materialSkeleton);
 
     // Create FracPlane's geometric element into mesh
     // fFracplaneindex = fFracplane.CreateElement(fGMesh);
@@ -153,7 +153,7 @@ void TRSFractureMesh::CreateSkeletonElements(int dimension, int matid)
             bool haskel = HasEqualDimensionNeighbour(gelside);
             if (haskel == false)
             {
-                TPZGeoElBC(gelside, matid);
+                gel->CreateBCGeoEl(iside, matid);
             }
         }
     }
@@ -345,7 +345,6 @@ void TRSFractureMesh::SplitFaces(int matID){
             case 1:AddEndFace(face);break;
             default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
-        // face.DivideSurface(20);
         Face(iel)->DivideSurface(20);
         // // Give children a father and add them to map
         // for(int64_t j; j<children.size(); j++){
@@ -354,6 +353,7 @@ void TRSFractureMesh::SplitFaces(int matID){
         //     gel->SetFather ?
         // }
     }
+    // fGMesh->BuildConnectivity();
 }
 
 

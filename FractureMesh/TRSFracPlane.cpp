@@ -93,7 +93,7 @@ bool TRSFracPlane::Check_Data_Consistency(Matrix CornerPoints)
 				  +ax(1,2)*(CornerPoints(1,3)-CornerPoints(1,1))
 				  +ax(2,2)*(CornerPoints(2,3)-CornerPoints(2,1));
 		//Checks if points are coplanar
-		if(abs(ver) > fTolerance){
+		if(std::abs(ver) > fTolerance){
 			std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
 			DebugStop();
 		}

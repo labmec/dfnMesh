@@ -236,7 +236,8 @@ void TRSFace::DivideSurface(int matid){
 			case 4: elemtype = EQuadrilateral; break;
 		}
 		int64_t index = gmesh->NElements();
-		gmesh->CreateGeoElement(elemtype, child[i], matid+3*i, index);
+		// for colorful printing use matid+3*i or something like that
+		gmesh->CreateGeoElement(elemtype, child[i], matid, index);
 		childrenIndices[i] = index;
 
 		// Tell the child who its father is
