@@ -13,7 +13,7 @@
 #include "pzcmesh.h"
 #include "pzintel.h"
 #include "pzcompel.h"
-
+#include "TPZRefPatternDataBase.h"
 
 // Constructor
 TRSRibs::TRSRibs(){
@@ -114,194 +114,59 @@ void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
     TPZGeoEl *gel = gmesh->Element(iel_index);
     int64_t nelements = gmesh->NElements();
     int64_t nnodes = gmesh->NNodes();
-    gmesh->NodeVec().Resize(nnodes+1);       //Adding an extra node
-    gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord, *gmesh);
+    // gmesh->NodeVec().Resize(nnodes+1);       //Adding an extra node
+    // gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord, *gmesh);
     
+    // // create GeoEl for intersection point
+    // TPZVec<int64_t> vnnodes(1,nnodes);
+    // gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);     // can't get 1D neighbours from nodes... so had to create GeoEl EPoint for all intersection points and track GeoEl index instead of nodeindex
+    // fIntersectionIndex = nelements;
+
+    // // Create children ribs
+    // // TPZManVector<TPZGeoEl *, 2> subelements(2);
+	// fSubElements.Resize(2);
+    // TPZVec<int64_t> cornerindexes(2);
+    // TPZManVector<TPZGeoEl *, 2> children(2); 
+    // //child 1
+    //     cornerindexes[0] = gel->NodeIndex(0);    //Setting the new rib node as node 0
+    //     cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
+    //     nelements++;
+    //     children[0] = gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
+    // // child 2
+    //     cornerindexes[0] = gel->NodeIndex(1);    //Setting the new rib node as node 0
+    //     cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
+    //     nelements++;
+    //     children[1] = gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
+	// // SetChildren(SubElements);
+    //     nnodes = gmesh->NNodes();
+    //     gel->Divide(children);
+    //     nnodes = gmesh->NNodes();
+    // fSubElements[0] = nelements-1;              //Setting a new subelement
+    // fSubElements[1] = nelements;              //Setting a second new subelement
+
+    // TPZAutoPointer<TPZRefPattern> ptr = gel->GetRefPattern();
+    // gel->SetRefPattern(ptr);
+
+    TPZManVector<TPZGeoEl *,2> children(2);
+    if(!gRefDBase.GetUniformRefPattern(EOned))
+    {
+        gRefDBase.InitializeUniformRefPattern(EOned);
+    }
+    gel->Divide(children);
+    // gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord, *gmesh);
+    gmesh->NodeVec()[nnodes].SetCoord(IntersectionCoord);
+
+
     // create GeoEl for intersection point
     TPZVec<int64_t> vnnodes(1,nnodes);
-    gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);     // can't get 1D neighbours from nodes... so had to create GeoEl EPoint for all intersection points and track GeoEl index instead of nodeindex
+    gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);     
     fIntersectionIndex = nelements;
 
-    // Create children ribs
-	fSubElements.Resize(2);
-    TPZVec<int64_t> cornerindexes(2);
-    //child 1
-    cornerindexes[0] = gel->NodeIndex(0);    //Setting the new rib node as node 0
-    cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
-    nelements++;
-    gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
-    // child 2
-    cornerindexes[0] = gel->NodeIndex(1);    //Setting the new rib node as node 0
-    cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
-    nelements++;
-    gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
-    
-	// TPZVec<int64_t> SubElements = {nelements-1,nelements};
-	// SetChildren(SubElements);
+    fSubElements.resize(2);
+    fSubElements[0] = children[0]->Index();
+    fSubElements[1] = children[1]->Index();
 
-    fSubElements[0] = nelements-1;              //Setting a new subelement
-    fSubElements[1] = nelements;              //Setting a second new subelement
-	
-	// Create a TRSRib objects for children?
 }
 
 
 
-
-
-
-
-
-
-/// Information of methods used before for further coding
-
-
-
-//
-//TRSRibs::TRSRibs(TPZVec<TPZVec<double>> fathercoords,TPZVec<double> IntersectionPoint){
-//    if(fathercoords.size()!=2){
-//        std::cout<<"Se necesitan dos puntos para definir un rib";
-//        DebugStop();
-//    }
-//   //Creates Father
-//    SetRibsCoords(fathercoords);
-//    calc_flength();
-////
-////    std::cout<<fathercoords[0][0]<<std::endl;
-////    std::cout<<fathercoords[0][1]<<std::endl;
-////    std::cout<<fathercoords[0][2]<<std::endl;
-//    calc_child(fathercoords, IntersectionPoint);
-
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//void TRSRibs::SetRibsCoords(TPZVec<TPZVec<double>> coords){
-//    if(coords.size()!=2){
-//        std::cout<<"Se necesitan dos puntos para definir un rib";
-//        DebugStop();
-//    }
-//    fcoords=coords;
-//}
-//TPZVec<TPZVec<double>> TRSRibs::GetRibsCoords(){
-//
-//    return fcoords;
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//void TRSRibs::SetIntersectionPoint( TPZVec<double> ipoint){
-//    if (ipoint.size()!=3){
-//        std::cout<<"Se necesitan 3 coordenadas para definir un punto";
-//        DebugStop();
-//    }
-//    fIntersectionPoint = ipoint;
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//TPZVec<double> TRSRibs::GetIntersectionPoint(){
-//
-//    return fIntersectionPoint;
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//void TRSRibs::calc_child(TPZVec<TPZVec<double>> coords, TPZVec<double> ipoint){
-//    //@TODO VERIFICAR CONSISTENCIA DE LA INTERSECCION
-//    if(fQIsCut == true){
-//        DebugStop();
-//    }
-//    this->fQIsCut = true;
-//    fchild.resize(2);
-//    TPZVec<TPZVec<double>> neo_child;
-//    neo_child.resize(2);
-//    neo_child[0] =coords[0];
-//    neo_child[1] = ipoint;
-//    TRSRibs child1(neo_child);
-//    child1.calc_flength();
-//    fchild[0] = child1;
-//    neo_child[0] = ipoint;
-//    neo_child[1] = coords[1];
-//    TRSRibs child2(neo_child);
-//    fchild[1] = child2;
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//void TRSRibs::SetNodeIndexes(TPZVec<int> indexes){
-//    if (indexes.size()!=3){
-//        std::cout<<"Se necesitan 3 coordenadas para definir un punto";
-//        DebugStop();
-//    }
-//    fNode_Index = indexes;
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//TPZVec<int> TRSRibs::GetNodeIndexes(){
-//
-//   return  fNode_Index;
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//void TRSRibs::calc_flength(){
-//    double norm=0.0;
-//
-//    norm += (fcoords[0][0]-fcoords[1][0])*(fcoords[0][0]-fcoords[1][0]);
-//    norm += (fcoords[0][1]-fcoords[1][1])*(fcoords[0][1]-fcoords[1][1]);
-//    norm += (fcoords[0][2]-fcoords[1][2])*(fcoords[0][2]-fcoords[1][2]);
-//    norm = sqrt(norm);
-//    fLength=norm;
-//}
-//
-///**
-// * @brief
-// * @param
-// * @return
-// * @return
-// */
-//
-//void TRSRibs::get_child(TPZVec<TRSRibs> &child){
-//    if (fchild.size() !=2){
-//        std::cout<<"No child"<<std::endl;
-//    }
-//    else{
-//    child = fchild;
-//    }
-//}

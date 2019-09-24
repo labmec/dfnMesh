@@ -26,6 +26,13 @@
 #include "TRSRibs.h"
 #include "TRSFace.h"
 
+
+
+#include "TPZQuadTorus.h"
+#include "TPZCompMeshTools.h"
+#include "pzcmesh.h"
+#include "pzanalysis.h"
+
 //MATERIAL ID MAP
 // 1 gmesh (default)
 // 4 skeleton
@@ -41,9 +48,10 @@ using namespace std;
 int main()
 {
 
+	
 	// Creating the Geo mesh
 
-	int dimel = 7;
+	int dimel = 4;
 	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 3.5);
 	x1[2] = 0.;
 	TPZManVector<int, 2> nelx(2, dimel);
@@ -142,7 +150,7 @@ int main()
 
 	//Print result
 	std::ofstream meshprint1("meshprint1.txt");
-	std::ofstream out1("./TestSurfaces1.vtk");
+	std::ofstream out1("./TestSurfaces.vtk");
 	gmesh->Print(meshprint1);
 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 
@@ -153,11 +161,98 @@ int main()
 	gmesh->Print(meshprint1);
 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 
-	//Print result
-	std::ofstream meshprint2("meshprint2.txt");
-	std::ofstream out2("./TestSurfaces2.vtk");
-	gmesh->Print(meshprint2);
-	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out2, true);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // SECOND PLANE
+
+
+// 	//    Reading coordinates of a plane from txt file
+// 	// count number of points
+// 	npoints = 0;
+// 	// count number of corners
+// 	while (npoints == 0){
+// 		ifstream plane_file("fracture2.txt");
+// 		if (!plane_file){
+// 			std::cout << "Error reading file" << std::endl;
+// 			DebugStop();
+// 		}
+// 		getline(plane_file, line);
+// 		std::stringstream ss(line);
+// 		while (getline(ss, value, ' ')){
+// 			while (value.length() == 0){
+// 				getline(ss, value, ' ');
+// 			}
+// 			npoints++;
+// 		}
+// 	}
+// 	// then read points
+// 	plane.Resize(3, npoints);
+// { //just a scope
+// 	int i = 0;
+// 	int j = 0;
+// 	std::cout << "\n Second Fracture plane defined as: \n";
+// 	ifstream plane_file("fracture2.txt");
+// 	while (getline(plane_file, line)){
+// 		std::stringstream ss(line);
+// 		while (getline(ss, value, ' ')){
+// 			while (value.length() == 0){
+// 				getline(ss, value, ' ');
+// 			}
+// 			plane(i, j) = std::stod(value);
+// 			std::cout << plane(i, j) << (j<npoints-1 ?" , ":"\n");
+// 			j++;
+// 		}
+// 		j = 0;
+// 		i++;
+// 	}
+// 	std::cout << std::endl;
+// }
+
+
+
+
+// 	//  Construction of fracplane and FractureMesh
+// 	TRSFracPlane fracplane2(plane);
+// 	TRSFractureMesh fracmesh2(fracplane2, gmesh, 40);
+
+// 	// Find and split intersected ribs
+// 	fracmesh2.SplitRibs(19);
+
+// 	// Find and split intersected faces
+// 	fracmesh2.SplitFaces(18);
+// 	// Split edge of fracture
+// 	fracmesh2.SplitFractureEdge();
+
+// 	// triangulation of fracture plane
+// 	fracmesh2.SplitFracturePlane();
+
+
+
+// 	//Print result
+// 	std::ofstream meshprint2("meshprint2.txt");
+// 	std::ofstream out2("./TestSurfaces2.vtk");
+// 	gmesh->Print(meshprint2);
+// 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out2, true);
 
 	return 0;
 }

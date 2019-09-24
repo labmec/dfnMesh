@@ -7,6 +7,10 @@
 
 #include "TRSFace.h"
 #include "TRSFractureMesh.h"
+#include "pzgeoquad.h"
+#include "pzgeotriangle.h"
+#include "TPZRefPattern.h"
+#include "tpzgeoelrefpattern.h"
 
 // Empty constructor
 TRSFace::TRSFace(){
@@ -97,8 +101,12 @@ void TRSFace::DivideSurface(int matid){
 
 	// Vector of children elements
 	TPZVec<TPZVec<int64_t>> child;
+	// Vector of refinement elements (nodes numbered as in master element)
+	std::map<int64_t, int64_t> refnode;
+	for(int i = 0; i<node.size(); i++) refnode.insert({node[i], i});
 
 	// Divide surface according to split pattern (these algorithms make no sense without documentation)
+	int64_t nodeA, nodeB;
 	switch(splitcase){
 		case 1:{
 			child.resize(2);
@@ -106,10 +114,10 @@ void TRSFace::DivideSurface(int matid){
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
 			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
-			int64_t nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
+			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// Intersection node at rib opposite to rib i
 			TRSRibs *ribB = fFracMesh->Rib(fRibs[i+2]);
-			int64_t nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
+			nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
 			
 			TPZVec<int64_t> child1(4);
 				child1[0] = nodeB;
@@ -131,10 +139,10 @@ void TRSFace::DivideSurface(int matid){
 			while(fStatus[i+4]==false || fStatus[(i+3)%4+4]==false){i++;}
 			// Intersection node at rib clockwise adjacent to rib i
 			TRSRibs *ribA = fFracMesh->Rib(fRibs[(i+3)%4]);
-			int64_t nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
+			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// Intersection node at rib i
 			TRSRibs *ribB = fFracMesh->Rib(fRibs[i]);
-			int64_t nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
+			nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
 
 			TPZVec<int64_t> child1(3);
 				child1[0] = nodeA;
@@ -168,9 +176,9 @@ void TRSFace::DivideSurface(int matid){
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
 			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
-			int64_t nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
+			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// In-plane itersection node
-			int64_t nodeB = gmesh->Element(fIntersection)->NodeIndex(0);
+			nodeB = gmesh->Element(fIntersection)->NodeIndex(0);
 
 			TPZVec<int64_t> child1(3);
 				child1[0] = nodeB;
@@ -208,10 +216,62 @@ void TRSFace::DivideSurface(int matid){
 		case 9:{
 			break;}
 		case 10:{
+			child.resize(2);
+			int i = 0;
+			while(fStatus[i+3]==false || fStatus[(i+2)%3+3]==false){i++;}
+			// Intersection node at rib right before (counter-clockwise) to rib i
+			TRSRibs *ribA = fFracMesh->Rib(fRibs[(i+2)%3]);
+			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
+			// Intersection node at rib opposite to rib i
+			TRSRibs *ribB = fFracMesh->Rib(fRibs[i]);
+			nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
+			
+			TPZVec<int64_t> child1(3);
+				child1[0] = nodeB;
+				child1[1] = nodeA;
+				child1[2] = node[i];
+			TPZVec<int64_t> child2(4);
+				child2[0] = nodeA;
+				child2[1] = nodeB;
+				child2[2] = node[(i+1)%3];
+				child2[3] = node[(i+2)%3];
+
+			child[0] = child1;
+			child[1] = child2;
 			break;}
 		case 11:{
 			break;}
 		case 12:{
+			child.resize(4);
+			int i = 0;
+			while(fStatus[i+3]==false){i++;}
+			// Intersection node at rib i
+			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
+			// In-plane itersection node
+			nodeB = gmesh->Element(fIntersection)->NodeIndex(0);
+
+			TPZVec<int64_t> child1(3);
+				child1[0] = nodeB;
+				child1[1] = nodeA;
+				child1[2] = node[(i+1)%3];
+			TPZVec<int64_t> child2(3);
+				child2[0] = nodeB;
+				child2[1] = node[(i+1)%3];
+				child2[2] = node[(i+2)%3];
+			TPZVec<int64_t> child3(3);
+				child3[0] = nodeB;
+				child3[1] = node[(i+3)%3];
+				child3[2] = node[i];
+			TPZVec<int64_t> child4(3);
+				child4[0] = nodeB;
+				child4[1] = node[i];
+				child4[2] = nodeA;
+
+			child[0] = child1;
+			child[1] = child2;
+			child[2] = child3;
+			child[3] = child4;
 			break;}
 		case 13:{
 			break;}
@@ -227,21 +287,85 @@ void TRSFace::DivideSurface(int matid){
 	int nchildren = child.size();
 	TPZManVector<int64_t,6> childrenIndices(nchildren,0);
 	childrenIndices.Shrink();
+
+// defining Refinement Pattern
+//----------------------------------------------------------------------------
+	refnode.insert({nodeA,node.size()+1});
+	refnode.insert({nodeB,node.size()+2});
+	// set mesh to define refinement pattern
+	TPZGeoMesh refPatternMesh;
+	// insert the corner nodes
+	int refNNodes = face->NCornerNodes();
+	refPatternMesh.NodeVec().Resize(refNNodes);
+	for(int inode=0; inode<refNNodes; inode++){
+		TPZManVector<REAL,3> coord(3);
+		face->Node(inode).GetCoordinates(coord);
+		refPatternMesh.NodeVec()[inode].Initialize(coord,refPatternMesh);
+	}
+	// insert mid-area intersection if it exists
+	if(this->fIntersection >= 0) {
+		int inode = refPatternMesh.NodeVec().AllocateNewElement();
+		TPZManVector<REAL,3> coord(3);
+		gmesh->Element(this->fIntersection)->Node(0).GetCoordinates(coord);
+		refPatternMesh.NodeVec()[inode].Initialize(coord,refPatternMesh);
+	}
+	// insert mid-rib intersection nodes if they exist
+	int ncornersfather = face->NCornerNodes();
+	for(int irib=ncornersfather;irib<fStatus.size();irib++) {
+		if(!this->fStatus[irib]) continue;
+		int inode = refPatternMesh.NodeVec().AllocateNewElement();
+		TPZManVector<REAL,3> coord(3);
+		TRSRibs *ribA = fFracMesh->Rib(fRibs[irib - ncornersfather]);
+		// int64_t debug1 = ribA->IntersectionIndex(); 
+		gmesh->Element(ribA->IntersectionIndex())->Node(0).GetCoordinates(coord);
+		refPatternMesh.NodeVec()[inode].Initialize(coord,refPatternMesh);
+	}
+	
+	// insert father
+	{
+		MElementType elemtype = face->Type();
+		TPZManVector<int64_t,4> cornerindices(ncornersfather);
+		for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
+		int64_t index = 0;
+		refPatternMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
+	}
+	// insert children
 	for (int i = 0; i < nchildren; i++)
 	{
-		int nedges = child[i].size();
+		int ncorners = child[i].size();
 		MElementType elemtype;
-		switch (nedges){
+		switch (ncorners){
+			case 3: elemtype = ETriangle; break;
+			case 4: elemtype = EQuadrilateral; break;
+		}
+		int64_t index = i+1;
+		// for colorful printing use matid+3*i or something like that
+		refPatternMesh.CreateGeoElement(elemtype, child[i], matid, index);
+		childrenIndices[i] = index;
+
+	}
+	// int64_t debug1 = refPatternMesh.Element(0)->NodeIndex(0);
+	TPZRefPattern refpat(refPatternMesh);
+	TPZAutoPointer<TPZRefPattern> patternPointer(&refpat);
+	face->SetRefPattern(patternPointer);
+//----------------------------------------------------------------------------
+
+	for (int i = 0; i < nchildren; i++)
+	{
+		int ncorners = child[i].size();
+		MElementType elemtype;
+		switch (ncorners){
 			case 3: elemtype = ETriangle; break;
 			case 4: elemtype = EQuadrilateral; break;
 		}
 		int64_t index = gmesh->NElements();
 		// for colorful printing use matid+3*i or something like that
-		gmesh->CreateGeoElement(elemtype, child[i], matid, index);
+		TPZGeoEl *newface = gmesh->CreateGeoElement(elemtype, child[i], matid, index);
 		childrenIndices[i] = index;
 
+		
+		face->SetSubElement(i,newface);
 		// Tell the child who its father is
-		TPZGeoEl *newface = gmesh->Element(index);
 		newface->SetFather(fFaceIndex);
 	}
 	SetChildren(childrenIndices);

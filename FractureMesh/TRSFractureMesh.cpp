@@ -288,7 +288,7 @@ void TRSFractureMesh::SplitFaces(int matID){
         if(gel->MaterialId()==fSurfaceMaterial){continue;}
         
         int nribscut =0;
-        int nedges = gel->NNodes();
+        int nedges = gel->NCornerNodes();
 
         // vector with status for each node and rib of face
         TPZVec<bool> sidestatus(nedges*2,false);
@@ -346,12 +346,7 @@ void TRSFractureMesh::SplitFaces(int matID){
             default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
         Face(iel)->DivideSurface(20);
-        // // Give children a father and add them to map
-        // for(int64_t j; j<children.size(); j++){
-        //     TRSFace jchild(children[j], false);
-        //     jchild.SetFather(gel);
-        //     gel->SetFather ?
-        // }
+        
     }
     // fGMesh->BuildConnectivity();
 }
@@ -905,7 +900,7 @@ bool TRSFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 
     // degeneracy: ifracface's edges are completely enclosed by volume
     std::set<int64_t> verified;
-    int nnodes = ifracface->NNodes();
+    int nnodes = ifracface->NCornerNodes();
     for(int iside = 0; iside<nnodes; iside++){
         if(ifracface->SideDimension(iside) != 0){continue;}
         TPZGeoElSide gelsidenode(ifracface, iside);

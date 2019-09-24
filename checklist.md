@@ -1,4 +1,9 @@
 # Ongoing
+- [ ] Insert second plane
+  - [x] Implement triangle splitting cases
+  - [x] Set a second plane in main
+  - [x] Call splitribs and splitfaces
+  - [ ] Set RefPatterns
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
   - [x] Search which volume encloses each face
   - [x] Inform to volumes what faces lie inside it 
@@ -14,7 +19,7 @@
     - [x] Define physical groups of volumes 
     - [ ] Rewrite using gmsh API
 # ToDo
-
+- [ ] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
 - [ ] Mesh fracplane 
   - [x] Ear-clipping-like algorithm 
     - [ ] Legalize triangles 
@@ -34,9 +39,9 @@
     - [ ] Case 8 (No ribs 1) 
     - [ ] Case 9 (No ribs 2) 
   - [ ] Triangle splitting 
-    - [ ] Case 10 
+    - [x] Case 10 
     - [ ] Case 11 
-    - [ ] Case 12 
+    - [x] Case 12 
     - [ ] Case 13 
     - [ ] Case 14 
     - [ ] Case 15 (No ribs 1) 
