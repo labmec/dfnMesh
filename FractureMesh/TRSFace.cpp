@@ -98,7 +98,7 @@ void TRSFace::DivideSurface(int matid){
 	
 	// Determine pattern of refinement
 	int splitcase = GetSplitPattern(fStatus);
-
+	
 	// Vector of children elements
 	TPZVec<TPZVec<int64_t>> child;
 	// Vector of refinement elements (nodes numbered as in master element)
@@ -290,45 +290,43 @@ void TRSFace::DivideSurface(int matid){
 
 // defining Refinement Pattern
 //----------------------------------------------------------------------------
-	refnode.insert({nodeA,node.size()+1});
-	refnode.insert({nodeB,node.size()+2});
+	if(this->fFaceIndex == 460){
+		int debug = 0;
+		debug = 2+2;
+	}
+	refnode.insert({nodeA,node.size()});
+	refnode.insert({nodeB,node.size()+1});
 	// set mesh to define refinement pattern
 	TPZGeoMesh refPatternMesh;
-	// insert the corner nodes
+	// count number of nodes for refinement pattern
 	int refNNodes = face->NCornerNodes();
-	refPatternMesh.NodeVec().Resize(refNNodes);
-	for(int inode=0; inode<refNNodes; inode++){
-		TPZManVector<REAL,3> coord(3);
-		face->Node(inode).GetCoordinates(coord);
-		refPatternMesh.NodeVec()[inode].Initialize(coord,refPatternMesh);
-	}
-	// insert mid-area intersection if it exists
-	if(this->fIntersection >= 0) {
-		int inode = refPatternMesh.NodeVec().AllocateNewElement();
-		TPZManVector<REAL,3> coord(3);
-		gmesh->Element(this->fIntersection)->Node(0).GetCoordinates(coord);
-		refPatternMesh.NodeVec()[inode].Initialize(coord,refPatternMesh);
-	}
-	// insert mid-rib intersection nodes if they exist
+	if(this->fIntersection >= 0) refNNodes++;
 	int ncornersfather = face->NCornerNodes();
-	for(int irib=ncornersfather;irib<fStatus.size();irib++) {
-		if(!this->fStatus[irib]) continue;
-		int inode = refPatternMesh.NodeVec().AllocateNewElement();
-		TPZManVector<REAL,3> coord(3);
-		TRSRibs *ribA = fFracMesh->Rib(fRibs[irib - ncornersfather]);
-		// int64_t debug1 = ribA->IntersectionIndex(); 
-		gmesh->Element(ribA->IntersectionIndex())->Node(0).GetCoordinates(coord);
-		refPatternMesh.NodeVec()[inode].Initialize(coord,refPatternMesh);
+	for(int irib=ncornersfather;irib<fStatus.size();irib++){
+		if(this->fStatus[irib]) refNNodes++;
 	}
+
+	// insert nodes
+	refPatternMesh.NodeVec().Resize(refNNodes);
+	for(auto itr = refnode.begin(); itr != refnode.end(); itr++){
+		if(itr->second == refNNodes) break;
+		TPZManVector<REAL,3> coord(3);
+		int64_t meshnode = itr->first;
+		int64_t refnode = itr->second;
+		gmesh->NodeVec()[meshnode].GetCoordinates(coord);
+		// refPatternMesh.NodeVec().AllocateNewElement();
+		refPatternMesh.NodeVec()[refnode].Initialize(coord,refPatternMesh);
+	}
+
 	
 	// insert father
-	{
+	// {
 		MElementType elemtype = face->Type();
 		TPZManVector<int64_t,4> cornerindices(ncornersfather);
 		for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
 		int64_t index = 0;
 		refPatternMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
-	}
+	// }
 	// insert children
 	for (int i = 0; i < nchildren; i++)
 	{
@@ -339,15 +337,20 @@ void TRSFace::DivideSurface(int matid){
 			case 4: elemtype = EQuadrilateral; break;
 		}
 		int64_t index = i+1;
+		// int64_t index = i;
+		TPZManVector<int64_t,4> refchild(ncorners);
+		for(int k = 0; k<ncorners; k++) refchild[k] = refnode[child[i][k]];
 		// for colorful printing use matid+3*i or something like that
-		refPatternMesh.CreateGeoElement(elemtype, child[i], matid, index);
+		refPatternMesh.CreateGeoElement(elemtype, refchild, matid, index);
 		childrenIndices[i] = index;
-
 	}
-	// int64_t debug1 = refPatternMesh.Element(0)->NodeIndex(0);
-	TPZRefPattern refpat(refPatternMesh);
-	TPZAutoPointer<TPZRefPattern> patternPointer(&refpat);
+	refPatternMesh.BuildConnectivity();
+	// define refPattern
+	TPZRefPattern *refpat = new TPZRefPattern(refPatternMesh);
+	TPZAutoPointer<TPZRefPattern> patternPointer(refpat);
 	face->SetRefPattern(patternPointer);
+	int debug2 = refpat->NSubElements();
+	
 //----------------------------------------------------------------------------
 
 	for (int i = 0; i < nchildren; i++)

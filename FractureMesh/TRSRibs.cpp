@@ -148,10 +148,10 @@ void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
     // gel->SetRefPattern(ptr);
 
     TPZManVector<TPZGeoEl *,2> children(2);
-    if(!gRefDBase.GetUniformRefPattern(EOned))
-    {
-        gRefDBase.InitializeUniformRefPattern(EOned);
-    }
+    // if(!gRefDBase.GetUniformRefPattern(EOned))
+    // {
+    //     gRefDBase.InitializeUniformRefPattern(EOned);
+    // }
     gel->Divide(children);
     // gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord, *gmesh);
     gmesh->NodeVec()[nnodes].SetCoord(IntersectionCoord);

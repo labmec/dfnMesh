@@ -138,6 +138,7 @@ int main()
 	TRSFractureMesh fracmesh(fracplane, gmesh, 40);
 
 	// Find and split intersected ribs
+	// gRefDBase.InitializeUniformRefPattern(EOned);
 	fracmesh.SplitRibs(19);
 
 	// Find and split intersected faces

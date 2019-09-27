@@ -12,6 +12,8 @@
 #include <math.h>
 #include <cstdio>
 #include <unordered_set>
+#include "TPZRefPatternDataBase.h"
+
 
 // Empty Constructor
 TRSFractureMesh::TRSFractureMesh(){
@@ -341,8 +343,8 @@ void TRSFractureMesh::SplitFaces(int matID){
 
         // Add face to map
         switch (nribscut){
-            case 2:AddMidFace(face);break;
-            case 1:AddEndFace(face);break;
+            case  2: AddMidFace(face);break;
+            case  1: AddEndFace(face);break;
             default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
         Face(iel)->DivideSurface(20);
@@ -397,6 +399,7 @@ TPZVec<REAL> TRSFractureMesh::FindEndFracturePoint(TRSFace &face){
 
 
 void TRSFractureMesh::SplitRibs(int matID){
+    gRefDBase.InitializeUniformRefPattern(EOned);
     //search gmesh for cut ribs
     int64_t Nels = fGMesh->NElements();
     for (int iel = 0; iel < Nels; iel++){
