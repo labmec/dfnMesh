@@ -1126,7 +1126,7 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
                 TPZGeoElSide side = gelside.Neighbour();
                 while(side.Element()->Dimension() != 2) {side = side.Neighbour();}
                 TRSFace *iface = Face(side.Element()->Index());
-                // @ToDo change this for a recursive algorithm
+                // @ToDo change this to a recursive algorithm
                 // ------------------------------------------------------------------------------------- 
                 // if face is not cut, add it to the loop, else, add its children
                 if(side.Element()->HasSubElement() == false){
@@ -1134,13 +1134,8 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
                 }
                 else{
                     volumeIsCut = true;
-                    TRSFace debugface(*iface);
-                    int nchildren = iface->SubElements().size();
-                    TPZManVector<int64_t,6> child(nchildren);
-                    child = iface->SubElements();
-                    for(int i = 0; i<nchildren; i++){
-                        outfile << child[i] << (i < nchildren-1? "," : "");
-                    }
+                    TPZGeoEl *sidegel = side.Element();
+                    PrintYoungestChildren(sidegel,outfile);
                     outfile << (iside < nsides-2? "," : "};\n");
                 }
                 // -------------------------------------------------------------------------------------
@@ -1156,6 +1151,7 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
                 TPZManVector<int64_t,6> enclosedSurfaces(nsurfaces);
                 enclosedSurfaces = Volume(iel)->GetFacesInVolume();
 
+                // @ToDo will need PrintYoungestChildren here as well
                 outfile << "Surface{";
                 for(int i = 0; i<nsurfaces; i++){
                     outfile << enclosedSurfaces[i] << (i<nsurfaces-1?",":"} ");
@@ -1238,35 +1234,20 @@ Volume{4,5,6,7};
  *  @param &outfile ofstream in which to write accessed data
  */
 void TRSFractureMesh::PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile){
-    // int nnodes = gel->NCornerNodes();
-    // int nsides = gel->NSides();
-    // for(int iside = nnodes; iside < nsides-1; iside++){
-    //     if(gel->SideDimension(iside) != 2) continue;
-    //     TPZGeoElSide gelside(gel,iside);
-    //     // find face element
-    //     TPZGeoElSide side = gelside.Neighbour();
-    //     while(side.Element()->Dimension() != 2) {side = side.Neighbour();}
-    //     TRSFace *iface = Face(side.Element()->Index());
-    //     // @ToDo change this for a recursive algorithm
-    //     // ------------------------------------------------------------------------------------- 
-    //     // if face is not cut, add it to the loop, else, add its children
-    //     if(side.Element()->HasSubElement() == false){
-    //         outfile << side.Element()->Index() << (iside < nsides-2? "," : "};\n");
-    //     }
-    //     else{
-    //         TRSFace debugface(*iface);
-    //         int nchildren = iface->SubElements().size();
-    //         TPZManVector<int64_t,6> child(nchildren);
-    //         child = iface->SubElements();
-    //         for(int i = 0; i<nchildren; i++){
-    //             outfile << child[i] << (i < nchildren-1? "," : "");
-    //         }
-    //         outfile << (iside < nsides-2? "," : "};\n");
-    //     }
-    //     // -------------------------------------------------------------------------------------
-    // }
-
-
+    
+    int nchildren = gel->NSubElements();
+    for(int i = 0; i<nchildren; i++){
+        TPZGeoEl *ichild = gel->SubElement(i);
+        if(ichild->HasSubElement()){
+            PrintYoungestChildren(ichild,outfile);
+            outfile<<",";
+        }
+        else{
+            outfile << ichild->Index() << (i < nchildren-1? "," : "");
+        }
+    }
+    // outfile << (iside < nsides-2? "," : "};\n");
+    
 }
 
 
