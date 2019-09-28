@@ -290,10 +290,7 @@ void TRSFace::DivideSurface(int matid){
 
 // defining Refinement Pattern
 //----------------------------------------------------------------------------
-	if(this->fFaceIndex == 460){
-		int debug = 0;
-		debug = 2+2;
-	}
+	
 	refnode.insert({nodeA,node.size()});
 	refnode.insert({nodeB,node.size()+1});
 	// set mesh to define refinement pattern
@@ -320,13 +317,13 @@ void TRSFace::DivideSurface(int matid){
 
 	
 	// insert father
-	// {
+	{
 		MElementType elemtype = face->Type();
 		TPZManVector<int64_t,4> cornerindices(ncornersfather);
 		for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
 		int64_t index = 0;
 		refPatternMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
-	// }
+	}
 	// insert children
 	for (int i = 0; i < nchildren; i++)
 	{
@@ -349,7 +346,6 @@ void TRSFace::DivideSurface(int matid){
 	TPZRefPattern *refpat = new TPZRefPattern(refPatternMesh);
 	TPZAutoPointer<TPZRefPattern> patternPointer(refpat);
 	face->SetRefPattern(patternPointer);
-	int debug2 = refpat->NSubElements();
 	
 //----------------------------------------------------------------------------
 
@@ -371,7 +367,7 @@ void TRSFace::DivideSurface(int matid){
 		// Tell the child who its father is
 		newface->SetFather(fFaceIndex);
 	}
-	SetChildren(childrenIndices);
+	// SetChildren(childrenIndices);
 	// create skeleton?
 }
 
@@ -429,12 +425,6 @@ int TRSFace::GetSplitPattern(TPZVec<bool> &status){
 				while(status[i+4]==false){i++;}
 				if(status[i+5]==true||status[(i+3)%4+4]==true){splitcase = 2;}
 				else splitcase = 1;
-
-				// std::vector<bool> test1 = {0,0,0,0,1,0,1,0};
-				// if(status == test1){splitcase = 1;break;}
-				// std::vector<bool> test2 = {0,0,0,0,0,1,0,1};
-				// if(status == test2){splitcase = 1;break;}
-				// splitcase = 2;
 				break;}
 			default: DebugStop();break;
 		}

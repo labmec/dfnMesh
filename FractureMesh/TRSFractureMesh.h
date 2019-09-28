@@ -112,6 +112,7 @@ private:
     /// Finds intersection point of fracture boundaries and geometric mesh faces
     TPZVec<REAL> FindEndFracturePoint(TRSFace &face);
     
+    void PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile);
 public:
     
     /// Insert intersection elements of lower dimension in the geometric mesh.

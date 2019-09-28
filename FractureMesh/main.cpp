@@ -149,18 +149,17 @@ int main()
 	// triangulation of fracture plane
 	fracmesh.SplitFracturePlane();
 
+
+	// // Mesh transition volumes
+	fracmesh.CreateVolumes();
+
+
 	//Print result
 	std::ofstream meshprint1("meshprint1.txt");
 	std::ofstream out1("./TestSurfaces.vtk");
 	gmesh->Print(meshprint1);
 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 
-	// Mesh transition volumes
-	fracmesh.CreateVolumes();
-
-	//Print result
-	gmesh->Print(meshprint1);
-	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 
 
 
