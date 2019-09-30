@@ -1,25 +1,25 @@
 /*! 
- *	TRSVolume.cpp
+ *	DFNVolume.cpp
  *  @author     Pedro Lima
  *  @date       2019
  */
 
-#include "TRSVolume.h"
+#include "DFNVolume.h"
 
 // Empty constructor
-TRSVolume::TRSVolume(){
+DFNVolume::DFNVolume(){
     fVolumeIndex = -1;
     fIsCut = false;
 }
 
 //Constructor
-TRSVolume::TRSVolume(int64_t index, bool iscut){
+DFNVolume::DFNVolume(int64_t index, bool iscut){
     fVolumeIndex = index;
     fIsCut = iscut;
 }
 
 /// Copy constructor
-TRSVolume::TRSVolume(const TRSVolume &copy){
+DFNVolume::DFNVolume(const DFNVolume &copy){
     fVolumeIndex = copy.fVolumeIndex;
     fIsCut = copy.fIsCut;
     fSubEls = copy.fSubEls;
@@ -27,7 +27,7 @@ TRSVolume::TRSVolume(const TRSVolume &copy){
 }
 
 /// Assignment operator
-TRSVolume &TRSVolume::operator=(const TRSVolume &copy){
+DFNVolume &DFNVolume::operator=(const DFNVolume &copy){
     fVolumeIndex = copy.fVolumeIndex;
     fIsCut = copy.fIsCut;
     fSubEls = copy.fSubEls;
@@ -36,33 +36,33 @@ TRSVolume &TRSVolume::operator=(const TRSVolume &copy){
 }
 
 /// Define the element index and whether it cuts the plane
-void TRSVolume::SetElementIndex(int64_t elindex, bool iscut){
+void DFNVolume::SetElementIndex(int64_t elindex, bool iscut){
     fVolumeIndex = elindex;
     fIsCut = iscut;
 }
 
 /// Element index
-int64_t TRSVolume::ElementIndex() const{
+int64_t DFNVolume::ElementIndex() const{
     return fVolumeIndex;
 }
 
 /// Intersects the plane or not
-bool TRSVolume::IsCut() const{
+bool DFNVolume::IsCut() const{
     return fIsCut;
 }
 
 /// Return the subelement indices
-TPZVec<int64_t> TRSVolume::SubElements() const{
+TPZVec<int64_t> DFNVolume::SubElements() const{
     return fSubEls;
 }
 
 /// Set the subelement indices
-void TRSVolume::SetChildren(const TPZVec<int64_t> &subels){
+void DFNVolume::SetChildren(const TPZVec<int64_t> &subels){
     fSubEls = subels;
 }
 
 /// Set a 2D element enclosed by the volume
-void TRSVolume::SetFaceInVolume(int64_t Elindex){
+void DFNVolume::SetFaceInVolume(int64_t Elindex){
     int N = fEnclosedFaces.size();
     fEnclosedFaces.resize(N+1);
     fEnclosedFaces[N] = Elindex;

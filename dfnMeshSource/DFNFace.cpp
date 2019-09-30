@@ -1,31 +1,31 @@
 /*! 
- *	TRSFace.cpp
+ *	DFNFace.cpp
  *  @authors   Pedro Lima
  *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
-#include "TRSFace.h"
-#include "TRSFractureMesh.h"
+#include "DFNFace.h"
+#include "DFNFractureMesh.h"
 #include "pzgeoquad.h"
 #include "pzgeotriangle.h"
 #include "TPZRefPattern.h"
 #include "tpzgeoelrefpattern.h"
 
 // Empty constructor
-TRSFace::TRSFace(){
+DFNFace::DFNFace(){
     fFaceIndex = -1;
     fIsCut = false;
 }
 
 //Constructor
-TRSFace::TRSFace(int64_t index, bool iscut){
+DFNFace::DFNFace(int64_t index, bool iscut){
     fFaceIndex = index;
     fIsCut = iscut;
 }
 
 /// Copy constructor
-TRSFace::TRSFace(const TRSFace &copy){
+DFNFace::DFNFace(const DFNFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fIsCut = copy.fIsCut;
     fStatus = copy.fStatus;
@@ -37,7 +37,7 @@ TRSFace::TRSFace(const TRSFace &copy){
 }
 
 /// Assignment operator
-TRSFace &TRSFace::operator=(const TRSFace &copy){
+DFNFace &DFNFace::operator=(const DFNFace &copy){
     fFaceIndex = copy.fFaceIndex;
     fIsCut = copy.fIsCut;
     fStatus = copy.fStatus;
@@ -50,28 +50,28 @@ TRSFace &TRSFace::operator=(const TRSFace &copy){
 }
 
 /// Define the element index and whether it cuts the plane
-void TRSFace::SetElementIndex(int64_t elindex, bool iscut){
+void DFNFace::SetElementIndex(int64_t elindex, bool iscut){
     fFaceIndex = elindex;
     fIsCut = iscut;
 }
 
 /// Element index
-int64_t TRSFace::ElementIndex() const{
+int64_t DFNFace::ElementIndex() const{
     return fFaceIndex;
 }
 
 /// Intersects the plane or not
-bool TRSFace::IsCut() const{
+bool DFNFace::IsCut() const{
     return fIsCut;
 }
 
 /// Return the subelement indices
-TPZVec<int64_t> TRSFace::SubElements() const{
+TPZVec<int64_t> DFNFace::SubElements() const{
     return fSubFaces;
 }
 
 /// Set the subelement indices
-void TRSFace::SetChildren(TPZVec<int64_t> subels){
+void DFNFace::SetChildren(TPZVec<int64_t> subels){
     fSubFaces = subels;
 }
 
@@ -86,7 +86,7 @@ void TRSFace::SetChildren(TPZVec<int64_t> subels){
 
 
 /// Divide the given this surface, generate subelements and return vector with indices
-void TRSFace::DivideSurface(int matid){
+void DFNFace::DivideSurface(int matid){
 	TPZGeoMesh *gmesh = fFracMesh->GetGeoMesh();
 	TPZGeoEl *face = gmesh->Element(fFaceIndex);
 	// check if face exists in mesh
@@ -113,10 +113,10 @@ void TRSFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// Intersection node at rib opposite to rib i
-			TRSRibs *ribB = fFracMesh->Rib(fRibs[i+2]);
+			DFNRibs *ribB = fFracMesh->Rib(fRibs[i+2]);
 			nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
 			
 			TPZVec<int64_t> child1(4);
@@ -138,10 +138,10 @@ void TRSFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false || fStatus[(i+3)%4+4]==false){i++;}
 			// Intersection node at rib clockwise adjacent to rib i
-			TRSRibs *ribA = fFracMesh->Rib(fRibs[(i+3)%4]);
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[(i+3)%4]);
 			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// Intersection node at rib i
-			TRSRibs *ribB = fFracMesh->Rib(fRibs[i]);
+			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
 
 			TPZVec<int64_t> child1(3);
@@ -175,7 +175,7 @@ void TRSFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// In-plane itersection node
 			nodeB = gmesh->Element(fIntersection)->NodeIndex(0);
@@ -220,10 +220,10 @@ void TRSFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+3]==false || fStatus[(i+2)%3+3]==false){i++;}
 			// Intersection node at rib right before (counter-clockwise) to rib i
-			TRSRibs *ribA = fFracMesh->Rib(fRibs[(i+2)%3]);
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[(i+2)%3]);
 			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// Intersection node at rib opposite to rib i
-			TRSRibs *ribB = fFracMesh->Rib(fRibs[i]);
+			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = gmesh->Element(ribB->IntersectionIndex())->NodeIndex(0);
 			
 			TPZVec<int64_t> child1(3);
@@ -246,7 +246,7 @@ void TRSFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+3]==false){i++;}
 			// Intersection node at rib i
-			TRSRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = gmesh->Element(ribA->IntersectionIndex())->NodeIndex(0);
 			// In-plane itersection node
 			nodeB = gmesh->Element(fIntersection)->NodeIndex(0);
@@ -397,7 +397,7 @@ void TRSFace::DivideSurface(int matid){
  * @param Status vector (boolean) that indicates which ribs and/or nodes are cut
  * @return Integer that indicates which split pattern to use. (check documentation)
  */
-int TRSFace::GetSplitPattern(TPZVec<bool> &status){
+int DFNFace::GetSplitPattern(TPZVec<bool> &status){
     // Count number of ribs and nodes cut
     int ribscut = 0;
 	int nodescut = 0;

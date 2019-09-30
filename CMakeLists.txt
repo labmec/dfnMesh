@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 2.8.0)
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE  INTERNAL FORCE )
 
-project (ReservoirSimulation)
+project (DFNMesh)
 
 IF (WIN32)
 	# Prevents timespec redefinition problem with Visual Studio 2015
@@ -107,6 +107,6 @@ endif()
 
 # include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_subdirectory(FractureMesh)
+add_subdirectory(dfnMeshSource)
 
 

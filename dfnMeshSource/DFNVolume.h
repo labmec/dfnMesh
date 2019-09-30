@@ -5,8 +5,8 @@
  *  @date      2019
  */
 
-#ifndef TRSVolume_h
-#define TRSVolume_h
+#ifndef DFNVolume_h
+#define DFNVolume_h
 
 #include <stdio.h>
 #include "pzmanvector.h"
@@ -18,7 +18,7 @@
  *  @author     Pedro Lima
  *  @date       2019
  */
-class TRSVolume
+class DFNVolume
 {
   private:
 	/// Volume GeoElement index within it's gmesh
@@ -37,20 +37,20 @@ class TRSVolume
     TPZVec<int64_t> fEnclosedFaces;
 
     // /// Pointer to a fracture mesh
-    // TRSFractureMesh *fFracMesh = nullptr;
+    // DFNFractureMesh *fFracMesh = nullptr;
 
   public:
     /// Empty constructor
-    TRSVolume();
+    DFNVolume();
     
     /// Constructor
-    TRSVolume(int64_t index, bool iscut);
+    DFNVolume(int64_t index, bool iscut);
     
     /// Copy constructor
-    TRSVolume(const TRSVolume &copy);
+    DFNVolume(const DFNVolume &copy);
     
     /// Assignment operator
-    TRSVolume &operator=(const TRSVolume &copy);
+    DFNVolume &operator=(const DFNVolume &copy);
     
     /// Define the element index and whether it cuts the plane
     void SetElementIndex(int64_t elindex, bool iscut);
@@ -73,4 +73,4 @@ class TRSVolume
     /// Get 2D elements enclosed by volume
     TPZVec<int64_t> GetFacesInVolume(){return fEnclosedFaces;}
 };
-#endif /* TRSVolume_h */
+#endif /* DFNVolume_h */

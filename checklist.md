@@ -97,7 +97,7 @@
   - [x] Store in mid-faces if has 2 ribs cut
   - [x] Store in end-faces if has 1 rib cut
 - [x] Find intersection points in end-faces
-  - [x] figure out 'prettiest' conversion from TPZGeoEl to TRSFracPlane
+  - [x] figure out 'prettiest' conversion from TPZGeoEl to DFNFracPlane
   - [x] create EPoint for intersection points 
 - [x] Connect intersection points to define fracture surface outline
   - [x] Connect them at the time an intersected face is found and pair of points are created

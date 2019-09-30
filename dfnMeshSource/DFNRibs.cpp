@@ -1,11 +1,11 @@
 /*! 
- *	TRSRibs.cpp
+ *	DFNRibs.cpp
  *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
  *  @date      2018-2019
  */
 
-#include "TRSRibs.h"
+#include "DFNRibs.h"
 #include "pzgeoel.h"
 #include "pzgnode.h"
 #include "pzgmesh.h"
@@ -16,18 +16,18 @@
 #include "TPZRefPatternDataBase.h"
 
 // Constructor
-TRSRibs::TRSRibs(){
+DFNRibs::DFNRibs(){
     fIsCut=false;
 }
 
 // Constructor using an index and a asking if the plane is cut or not
-TRSRibs::TRSRibs(int64_t index, bool IsCut){
+DFNRibs::DFNRibs(int64_t index, bool IsCut){
     fRibIndex=index;
     fIsCut=IsCut;
 }
 
 // Copy constructor
-TRSRibs::TRSRibs(const TRSRibs &copy){
+DFNRibs::DFNRibs(const DFNRibs &copy){
     fRibIndex = copy.fRibIndex;
     fIsCut = copy.fIsCut;
     fSubElements = copy.fSubElements;
@@ -36,7 +36,7 @@ TRSRibs::TRSRibs(const TRSRibs &copy){
 }
 
 // Assignment operator
-TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
+DFNRibs &DFNRibs::operator=(const DFNRibs &copy){
     fRibIndex = copy.fRibIndex;
     fIsCut = copy.fIsCut;
     fSubElements = copy.fSubElements;
@@ -51,7 +51,7 @@ TRSRibs &TRSRibs::operator=(const TRSRibs &copy){
  * @param Yes or no if the element is cutting the fracture plane
  */
 
-void TRSRibs::SetElementIndex(int64_t elindex, bool IsCut){
+void DFNRibs::SetElementIndex(int64_t elindex, bool IsCut){
     fRibIndex=elindex;
     fIsCut=IsCut;
 }
@@ -60,7 +60,7 @@ void TRSRibs::SetElementIndex(int64_t elindex, bool IsCut){
 * @return An index (geomesh associated) elements vector
 */
 
-int64_t TRSRibs::ElementIndex() const{
+int64_t DFNRibs::ElementIndex() const{
     return fRibIndex;
     
 }
@@ -70,14 +70,14 @@ int64_t TRSRibs::ElementIndex() const{
  * @param True or False if the plane is cut
  */
 
-void TRSRibs::SetIsCut(bool IsCut) {
+void DFNRibs::SetIsCut(bool IsCut) {
     fIsCut = IsCut;
 }
 /**
  * @return If the intersection point is within the fracture plane
  */
 
-bool TRSRibs::IsCut() const{
+bool DFNRibs::IsCut() const{
     return fIsCut;
 }
 
@@ -85,7 +85,7 @@ bool TRSRibs::IsCut() const{
  * @return An index (geomesh associated) subelements vector
  */
 
-TPZVec<int64_t> TRSRibs::SubElements() const{
+TPZVec<int64_t> DFNRibs::SubElements() const{
     return fSubElements;
 }
 
@@ -94,7 +94,7 @@ TPZVec<int64_t> TRSRibs::SubElements() const{
  * @param Subelements vector
  */
 
-void TRSRibs::SetChildren(const TPZVec<int64_t> &subels){
+void DFNRibs::SetChildren(const TPZVec<int64_t> &subels){
     fSubElements = subels;
 }
 
@@ -105,7 +105,7 @@ void TRSRibs::SetChildren(const TPZVec<int64_t> &subels){
  * @param Material id to assign for the new ribs
  */
 
-void TRSRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int matID){
+void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int matID){
     int iel_index = fRibIndex;          //Element index
     if(!gmesh->Element(iel_index)){     // If the element does not exist the code is going to break
         std::cout<<"No gel associated to the Rib\n";

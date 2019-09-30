@@ -6,14 +6,14 @@
  */
 
 
-#include "TRSFracPlane.h"
+#include "DFNFracPlane.h"
 #include <math.h>
 
 //Constructor
-TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
+DFNFracPlane::DFNFracPlane(const Matrix &CornerPoints)
 {
     if( !Check_Data_Consistency(CornerPoints) )	{
-		std::cout<<"Error at TRSFracPlane: Bad input data \n";
+		std::cout<<"Error at DFNFracPlane: Bad input data \n";
 		DebugStop();
 	}
 	//If data is consistent, fAxis was computed during consistency check
@@ -22,7 +22,7 @@ TRSFracPlane::TRSFracPlane(const Matrix &CornerPoints)
 }
 
 // Copy constructor
-TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
+DFNFracPlane::DFNFracPlane(const DFNFracPlane &copy){
 	fCornerPoints = copy.GetCornersX();
 	fAxis = copy.fAxis;
 	fArea = copy.area();
@@ -32,7 +32,7 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
 
 
 
- TRSFracPlane &TRSFracPlane::operator=(const TRSFracPlane &copy)
+ DFNFracPlane &DFNFracPlane::operator=(const DFNFracPlane &copy)
  {
 	fCornerPoints = copy.GetCornersX();
 	fAxis = copy.fAxis;
@@ -48,7 +48,7 @@ TRSFracPlane::TRSFracPlane(const TRSFracPlane &copy){
  * @return True if the four points are coplanar and the data is consistent
  * @return False if the points are not coplanar or the data is not consistent
  */
-bool TRSFracPlane::Check_Data_Consistency(Matrix CornerPoints)
+bool DFNFracPlane::Check_Data_Consistency(Matrix CornerPoints)
 {
 	// Checking vector consistency
 	int cols = CornerPoints.Cols();
@@ -109,7 +109,7 @@ bool TRSFracPlane::Check_Data_Consistency(Matrix CornerPoints)
  * @brief Get plane's corner points
  * @return Plane corner coordinates
  */
-Matrix TRSFracPlane::GetCornersX() const{
+Matrix DFNFracPlane::GetCornersX() const{
     return fCornerPoints;
 }
 
@@ -120,7 +120,7 @@ Matrix TRSFracPlane::GetCornersX() const{
  * zero to N. (This condition will automatically be met for triangles, but not 
  * always for quadrilaterals)
  */
-void TRSFracPlane::ComputeArea(){
+void DFNFracPlane::ComputeArea(){
 	int npoints = fCornerPoints.Cols();
 	switch(npoints){
 		case 3:{ //triangle
@@ -171,7 +171,7 @@ void TRSFracPlane::ComputeArea(){
  * @return False if the point is below the fracture plane
  */
 
-bool TRSFracPlane::Check_point_above(const TPZVec<REAL> &point) const{
+bool DFNFracPlane::Check_point_above(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture plane computation
         double point_distance = (point[0] - GetCornersX()(0,1))*(axis().GetVal(0,2)) 
@@ -193,7 +193,7 @@ bool TRSFracPlane::Check_point_above(const TPZVec<REAL> &point) const{
  * @return False if the rib is not cut by the fracture plane
  */
 
-bool TRSFracPlane::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
+bool DFNFracPlane::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
     //check for infinite plane
     if(Check_point_above(p1) != Check_point_above(p2)){
         //Rib cut by infinite plane
@@ -213,7 +213,7 @@ bool TRSFracPlane::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
  * @param Point below the plane (vector)
  * @return Intersecting point
  */
-TPZVec<double> TRSFracPlane::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
+TPZVec<double> DFNFracPlane::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
 {     
     TPZVec<double> Pint;
 
@@ -246,7 +246,7 @@ TPZVec<double> TRSFracPlane::CalculateIntersection(const TPZVec<REAL> &p1, const
  * @return False if the point is out of fracture plane
  */
 
-bool TRSFracPlane::IsPointInPlane(TPZVec<REAL> &point) 
+bool DFNFracPlane::IsPointInPlane(TPZVec<REAL> &point) 
 {
     int ncorners = fCornerPoints.Cols();
     REAL area = 0;
@@ -276,7 +276,7 @@ bool TRSFracPlane::IsPointInPlane(TPZVec<REAL> &point)
 }
 
 
-TPZManVector<int64_t,4> TRSFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh,int matID){
+TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh,int matID){
 	int64_t nels = gmesh->NElements();
 	int ncorners = fCornerPoints.Cols();
 	fPointsIndex.resize(ncorners);
@@ -309,7 +309,7 @@ TPZManVector<int64_t,4> TRSFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh,int m
 //  * @param Pointer to geometric mesh
 //  * @return Index for newly created element in gmesh
 //  */
-// int64_t TRSFracPlane::CreateElement(TPZGeoMesh *gmesh){
+// int64_t DFNFracPlane::CreateElement(TPZGeoMesh *gmesh){
 // 	// number of nodes for gmesh
 // 	int nnodes =  gmesh->NNodes();
 // 	// nomber of corners for fracplane

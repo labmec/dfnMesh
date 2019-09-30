@@ -22,9 +22,9 @@
 #include <map>
 #include <vector>
 
-#include "TRSFractureMesh.h"
-#include "TRSRibs.h"
-#include "TRSFace.h"
+#include "DFNFractureMesh.h"
+#include "DFNRibs.h"
+#include "DFNFace.h"
 
 
 
@@ -131,8 +131,8 @@ int main()
 
 
 	//  Construction of fracplane and FractureMesh
-	TRSFracPlane fracplane(plane);
-	TRSFractureMesh fracmesh(fracplane, gmesh, 40);
+	DFNFracPlane fracplane(plane);
+	DFNFractureMesh fracmesh(fracplane, gmesh, 40);
 
 	// Find and split intersected ribs
 	gRefDBase.InitializeUniformRefPattern(EOned);
@@ -230,8 +230,8 @@ int main()
 
 
 	//  Construction of fracplane and FractureMesh
-	TRSFracPlane fracplane2(plane);
-	TRSFractureMesh fracmesh2(fracplane2, gmesh, 40);
+	DFNFracPlane fracplane2(plane);
+	DFNFractureMesh fracmesh2(fracplane2, gmesh, 40);
 
 	// Find and split intersected ribs
 	fracmesh2.SplitRibs(19);

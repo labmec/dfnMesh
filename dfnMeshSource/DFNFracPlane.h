@@ -5,8 +5,8 @@
  *  @date      2019
  */
 
-#ifndef TRSFracPlane_h
-#define TRSFracPlane_h
+#ifndef DFNFracPlane_h
+#define DFNFracPlane_h
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -31,7 +31,7 @@ typedef TPZFMatrix<REAL> Matrix;
  *  @author    Pedro Lima
  *  @date      2019
  */
-class TRSFracPlane
+class DFNFracPlane
 {
   private:
 	/// Contains fracture corner points. Matrix 3xn (n is the number of corners)
@@ -51,16 +51,16 @@ class TRSFracPlane
 
   public:
 	/// Empty constructor
-	TRSFracPlane(){};
+	DFNFracPlane(){};
 
 	/// Define plane from 3 to 4 corner points. Matrix should be 3xN (3 coordinates for each of the N corner points)
-	TRSFracPlane(const Matrix &CornerPoints);
+	DFNFracPlane(const Matrix &CornerPoints);
 
 	/// Copy constructor
-	TRSFracPlane(const TRSFracPlane &copy);
+	DFNFracPlane(const DFNFracPlane &copy);
 
 	/// Assignment operator
-	TRSFracPlane &operator=(const TRSFracPlane &copy);
+	DFNFracPlane &operator=(const DFNFracPlane &copy);
 
 	/// Define corner coordinates
 	void SetPlane(Matrix &CornerPoints);
@@ -104,7 +104,7 @@ class TRSFracPlane
 	TPZManVector<int64_t,4> SetPointsInGeomesh(TPZGeoMesh *gmesh, int matID);
 
 	/**
-	 * @brief Returns index of GeoEl EPoint that was created for corner i using TRSFracPlane::SetPointsInGeomesh(gmesh, matID)
+	 * @brief Returns index of GeoEl EPoint that was created for corner i using DFNFracPlane::SetPointsInGeomesh(gmesh, matID)
 	 * @param Local index of corner
 	 */
 	int64_t PointElIndex(int i) const{
@@ -113,7 +113,7 @@ class TRSFracPlane
 
 //deprecated:
 	///@brief Creates a geometric element for this plane in pointed mesh
-	// int64_t TRSFracPlane::CreateElement(TPZGeoMesh *gmesh)
+	// int64_t DFNFracPlane::CreateElement(TPZGeoMesh *gmesh)
 
 	// /// Element index
 	// int64_t ElementIndex() const {return fFracIndex;}
@@ -122,4 +122,4 @@ class TRSFracPlane
 	bool Check_Data_Consistency(Matrix CornerPoints);
 };
 
-#endif /* TRSFracPlane */
+#endif /* DFNFracPlane */

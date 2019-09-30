@@ -1,24 +1,24 @@
 /*! 
- *	TRSFace.hpp
+ *	DFNFace.hpp
  *  @authors   Pedro Lima
  *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
-#ifndef TRSFace_hpp
-#define TRSFace_hpp
+#ifndef DFNFace_hpp
+#define DFNFace_hpp
 
 #include <stdio.h>
 #include "pzmanvector.h"
 #include "pzmatrix.h"
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
-#include "TRSRibs.h"
+#include "DFNRibs.h"
 
-class TRSFractureMesh;
+class DFNFractureMesh;
 
-/// TRSFace class describes a plane and whether it's cut by a plane. It also carries a method to split itself into smaller sub faces.
-class TRSFace
+/// DFNFace class describes a plane and whether it's cut by a plane. It also carries a method to split itself into smaller sub faces.
+class DFNFace
 {
     
 private:
@@ -41,7 +41,7 @@ private:
     int64_t fIntersection = -1;
     
     /// Pointer to a fracture mesh
-    TRSFractureMesh *fFracMesh = nullptr;
+    DFNFractureMesh *fFracMesh = nullptr;
 
     /// Pointer to father element
     TPZGeoEl *fFather = nullptr;
@@ -49,16 +49,16 @@ private:
 public:
     
     /// Empty constructor
-    TRSFace();
+    DFNFace();
     
     /// Constructor
-    TRSFace(int64_t index, bool iscut);
+    DFNFace(int64_t index, bool iscut);
     
     /// Copy constructor
-    TRSFace(const TRSFace &copy);
+    DFNFace(const DFNFace &copy);
     
     /// Assignment operator
-    TRSFace &operator=(const TRSFace &copy);
+    DFNFace &operator=(const DFNFace &copy);
     
     /// Define the element index and whether it cuts the plane
     void SetElementIndex(int64_t elindex, bool iscut);
@@ -105,7 +105,7 @@ public:
     int64_t IntersectionIndex() {return fIntersection;}
 
     /// Give face a pointer to which fracture is cutting it
-    void SetFractureMesh(TRSFractureMesh *FractureMesh){fFracMesh = FractureMesh;}
+    void SetFractureMesh(DFNFractureMesh *FractureMesh){fFracMesh = FractureMesh;}
 
     // /// Sets Father element
     // void SetFather(TPZGeoEl *father){ fFather = father;}
@@ -113,4 +113,4 @@ public:
     // TPZGeoEl *Father(){return fFather;}
 
 };
-#endif /* TRSFace_h */
+#endif /* DFNFace_h */

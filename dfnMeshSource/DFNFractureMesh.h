@@ -4,8 +4,8 @@
  *  @date      2018-2019
  */
 
-#ifndef TRSFractureMesh_h
-#define TRSFractureMesh_h
+#ifndef DFNFractureMesh_h
+#define DFNFractureMesh_h
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -18,10 +18,10 @@
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
 
-#include "TRSRibs.h"
-#include "TRSFace.h"
-#include "TRSVolume.h"
-#include "TRSFracPlane.h"
+#include "DFNRibs.h"
+#include "DFNFace.h"
+#include "DFNVolume.h"
+#include "DFNFracPlane.h"
 
 
 typedef TPZFMatrix<REAL> Matrix;
@@ -29,35 +29,35 @@ typedef TPZFMatrix<REAL> Matrix;
 /*! 
  *  @brief     Compares a geomesh with fracture plane to find intersections.
  *  @details   Intersection search is performed after creation of skeleton
- * elements with TRSFractureMesh::CreateSkeletonElements. Fracture plane should
- *  be a TRSFracPlane.
+ * elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
+ *  be a DFNFracPlane.
  *  @authors   Pedro Lima
  *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
-class TRSFractureMesh
+class DFNFractureMesh
 {
 private:
     /// Define a default tolerance
     REAL fTolerance = 1.e-4;
     
     /// Map of intersected ribs
-    std::map<int64_t, TRSRibs> fRibs;
+    std::map<int64_t, DFNRibs> fRibs;
     
     /// Map of intersected faces
-    std::map<int64_t, TRSFace> fMidFaces;
+    std::map<int64_t, DFNFace> fMidFaces;
     
     /// Map of end-fracture faces
-    std::map<int64_t, TRSFace> fEndFaces;
+    std::map<int64_t, DFNFace> fEndFaces;
 
     /// Map of intersected volumes
-    std::map<int64_t, TRSVolume> fVolumes;
+    std::map<int64_t, DFNVolume> fVolumes;
 
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 
     /// Bounded plane from a fracture
-    TRSFracPlane fFracplane;
+    DFNFracPlane fFracplane;
 
     // /// Fracplane's geometric element index
     // int64_t fFracplaneindex;
@@ -71,7 +71,7 @@ private:
 public:
     
     /// Empty constructor
-    TRSFractureMesh();
+    DFNFractureMesh();
     
     /**Define the fracture plane from 3 to 4 points
      * Points should be coplanar
@@ -79,13 +79,13 @@ public:
      * of a point
      *  
      */
-    TRSFractureMesh(TRSFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID);
+    DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID);
     
     /// Copy constructor
-    TRSFractureMesh(const TRSFractureMesh &copy);
+    DFNFractureMesh(const DFNFractureMesh &copy);
     
     /// Assignment operator
-    TRSFractureMesh &operator=(const TRSFractureMesh &copy);
+    DFNFractureMesh &operator=(const DFNFractureMesh &copy);
     
     /// Associate the geometric mesh
     void SetgeoMesh(TPZGeoMesh *gmesh){
@@ -98,7 +98,7 @@ public:
     }
     
     /// Return the corner nodes of the fracture
-    TRSFracPlane GetPlane() const;
+    DFNFracPlane GetPlane() const;
     
     /// Modify the default tolerance
     void SetTolerance(REAL tolerance);
@@ -110,7 +110,7 @@ private:
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    TPZVec<REAL> FindEndFracturePoint(TRSFace &face);
+    TPZVec<REAL> FindEndFracturePoint(DFNFace &face);
     
     void PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile);
 public:
@@ -119,25 +119,25 @@ public:
     void CreateSkeletonElements(int dimension, int matid);
     
     /// Access the ribs data structure
-    void AddRib(TRSRibs rib);
+    void AddRib(DFNRibs rib);
     
     /// Access mid-fracture faces' data structure
-    void AddMidFace(TRSFace &face);
+    void AddMidFace(DFNFace &face);
     
     /// Access end-fracture faces' data structure
-    void AddEndFace(TRSFace &face);
+    void AddEndFace(DFNFace &face);
 
     /// Insert new volume in data structure
-    void AddVolume(TRSVolume volume);
+    void AddVolume(DFNVolume volume);
 
     /// Pointer to rib of index 'index'
-    TRSRibs *Rib(int64_t index){return &fRibs[index];}
+    DFNRibs *Rib(int64_t index){return &fRibs[index];}
 
     /// Pointer to face of index 'index'
-    TRSFace *Face(int64_t index);
+    DFNFace *Face(int64_t index);
     
     /// Pointer to volume of index 'index'
-    TRSVolume *Volume(int64_t index){return &fVolumes[index];}
+    DFNVolume *Volume(int64_t index){return &fVolumes[index];}
     
     /// Find and split intersected faces
     void SplitFaces(int matID);
@@ -167,5 +167,5 @@ public:
     bool FindEnclosingVolume(TPZGeoEl *ifracface);
 };
 
-#endif /* TRSFractureMesh_h */
+#endif /* DFNFractureMesh_h */
 

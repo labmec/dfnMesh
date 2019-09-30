@@ -1,12 +1,12 @@
 /*! 
- *	TRSRibs.hpp
+ *	DFNRibs.hpp
  *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
  *  @date      2018-2019
  */
 
-#ifndef TRSRibs_h
-#define TRSRibs_h
+#ifndef DFNRibs_h
+#define DFNRibs_h
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -22,8 +22,8 @@
 
 typedef TPZFMatrix<REAL> Matrix;
 
-/// TRSRibs class describes ribs and whether it's cut by a plane. It also carries a method to split itself into two ribs at a given point.
-class TRSRibs
+/// DFNRibs class describes ribs and whether it's cut by a plane. It also carries a method to split itself into two ribs at a given point.
+class DFNRibs
 {
 private:
     
@@ -46,17 +46,17 @@ private:
 
 public:
     /// Empty constructor
-    TRSRibs();
+    DFNRibs();
     
     /// Rib defined by the element index, indicating whether the
     /// intersection point is within the fracture surface
-    TRSRibs(int64_t index, bool inplane);
+    DFNRibs(int64_t index, bool inplane);
     
     /// Copy constructor
-    TRSRibs(const TRSRibs &copy);
+    DFNRibs(const DFNRibs &copy);
     
     /// Assignment operator
-    TRSRibs &operator=(const TRSRibs &copy);
+    DFNRibs &operator=(const DFNRibs &copy);
     
     /**
      * @brief Set the index for an element if the fracture plane is cut by this element
@@ -91,4 +91,4 @@ public:
 
 };
 
-#endif /* TRSRibs_h */
+#endif /* DFNRibs_h */
