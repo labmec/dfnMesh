@@ -1,9 +1,11 @@
 # Ongoing
+- [ ] Geometrical center -> Centroid
 - [ ] Insert second plane
   - [x] Implement triangle splitting cases
   - [x] Set a second plane in main
   - [x] Call splitribs and splitfaces
-  - [ ] Set RefPatterns
+  - [x] Set RefPatterns
+  - [ ] Use PZ's data structure to specify level of element splitting
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
   - [x] Search which volume encloses each face
   - [x] Inform to volumes what faces lie inside it 
@@ -19,10 +21,10 @@
     - [x] Define physical groups of volumes 
     - [ ] Rewrite using gmsh API
 # ToDo
-- [ ] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
+- [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
 - [ ] Mesh fracplane 
-  - [x] Ear-clipping-like algorithm 
-    - [ ] Legalize triangles 
+  - [X] ~~*Ear-clipping-like algorithm*~~ [2019-09-30] 
+  - [ ] Legalize triangles 
 - [ ] Face splitting 
   - [x] Store status of each rib and node
   - [x] Identify case 

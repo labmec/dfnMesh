@@ -1,0 +1,139 @@
+
+		 GEOMETRIC TPZGeoMesh INFORMATIONS:
+
+TITLE-> 
+
+number of nodes               = 5
+number of elements            = 5
+number of free elements       = 0
+
+	Geometric Node Information:
+
+Index: 0 Node : fId = 2    Coordinates	1	0.3	0.7
+Index: 1 Node : fId = 0    Coordinates	1	0	0
+Index: 2 Node : fId = 1    Coordinates	1	1	0
+Index: 3 Node : fId = 3    Coordinates	1	0.56	0.44
+Index: 4 Node : fId = 4    Coordinates	1	0.56	0.3
+
+	Geometric Element Information:
+
+Element index      0
+Element id         0
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    3
+Corner nodes       3
+Nodes indexes          0 1 2 
+Number of sides    7
+Material id        20
+no father
+no subelements
+Neighbours for side   0 : 2/1 1/2 
+Neighbours for side   1 : 3/1 2/2 
+Neighbours for side   2 : 4/1 3/2 
+Neighbours for side   3 : 2/4 
+Neighbours for side   4 : 3/4 
+Neighbours for side   5 : 
+Neighbours for side   6 : 
+Reference element pointer address: 0x0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 0 1 2 
+
+Element index      1
+Element id         1
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    3
+Corner nodes       3
+Nodes indexes          4 3 0 
+Number of sides    7
+Material id        20
+no father
+no subelements
+Neighbours for side   0 : 4/0 3/0 2/0 
+Neighbours for side   1 : 4/2 
+Neighbours for side   2 : 0/0 2/1 
+Neighbours for side   3 : 4/5 
+Neighbours for side   4 : 
+Neighbours for side   5 : 2/3 
+Neighbours for side   6 : 
+Reference element pointer address: 0x0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 4 3 0 
+
+Element index      2
+Element id         2
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    3
+Corner nodes       3
+Nodes indexes          4 0 1 
+Number of sides    7
+Material id        20
+no father
+no subelements
+Neighbours for side   0 : 1/0 4/0 3/0 
+Neighbours for side   1 : 1/2 0/0 
+Neighbours for side   2 : 0/1 3/1 
+Neighbours for side   3 : 1/5 
+Neighbours for side   4 : 0/3 
+Neighbours for side   5 : 3/3 
+Neighbours for side   6 : 
+Reference element pointer address: 0x0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 4 0 1 
+
+Element index      3
+Element id         3
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    3
+Corner nodes       3
+Nodes indexes          4 1 2 
+Number of sides    7
+Material id        20
+no father
+no subelements
+Neighbours for side   0 : 2/0 1/0 4/0 
+Neighbours for side   1 : 2/2 0/1 
+Neighbours for side   2 : 0/2 4/1 
+Neighbours for side   3 : 2/5 
+Neighbours for side   4 : 0/4 
+Neighbours for side   5 : 4/3 
+Neighbours for side   6 : 
+Reference element pointer address: 0x0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 4 1 2 
+
+Element index      4
+Element id         4
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    3
+Corner nodes       3
+Nodes indexes          4 2 3 
+Number of sides    7
+Material id        20
+no father
+no subelements
+Neighbours for side   0 : 3/0 2/0 1/0 
+Neighbours for side   1 : 3/2 0/2 
+Neighbours for side   2 : 1/1 
+Neighbours for side   3 : 3/5 
+Neighbours for side   4 : 
+Neighbours for side   5 : 1/3 
+Neighbours for side   6 : 
+Reference element pointer address: 0x0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 4 2 3 
+
+
+Interface materials : 
+
+number = 0
+left material / right material -> interface material

@@ -261,7 +261,7 @@ void TRSFace::DivideSurface(int matid){
 				child2[2] = node[(i+2)%3];
 			TPZVec<int64_t> child3(3);
 				child3[0] = nodeB;
-				child3[1] = node[(i+3)%3];
+				child3[1] = node[(i+2)%3];
 				child3[2] = node[i];
 			TPZVec<int64_t> child4(3);
 				child4[0] = nodeB;
@@ -272,6 +272,7 @@ void TRSFace::DivideSurface(int matid){
 			child[1] = child2;
 			child[2] = child3;
 			child[3] = child4;
+			// DebugStop();
 			break;}
 		case 13:{
 			break;}
@@ -342,6 +343,11 @@ void TRSFace::DivideSurface(int matid){
 		childrenIndices[i] = index;
 	}
 	refPatternMesh.BuildConnectivity();
+	// int problematicface = 117;
+	// if(fFaceIndex == problematicface){
+	// 	std::ofstream meshprint3("meshprint3.txt");
+	// 	refPatternMesh.Print(meshprint3);
+	// } 
 	// define refPattern
 	TPZRefPattern *refpat = new TPZRefPattern(refPatternMesh);
 	TPZAutoPointer<TPZRefPattern> patternPointer(refpat);

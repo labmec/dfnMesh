@@ -339,7 +339,9 @@ void TRSFractureMesh::SplitFaces(int matID){
         // Create TRSFace
         TRSFace face(iel, true);
         face.SetRibs(rib_index); 
-        gel->SetMaterialId(matID);
+        // During development, elements at fracture surface have material id over fSurfaceMaterial
+        // if(gel->MaterialId() != fSurfaceMaterial) {gel->SetMaterialId(matID);}
+        if(gel->MaterialId() < fSurfaceMaterial) {gel->SetMaterialId(matID);}
         face.SetStatus(sidestatus);
         face.SetFractureMesh(this);
         // if(nribscut == 1) {gel->SetMaterialId(matID+17);} // this is here for graphical debugging only... comment it on release
@@ -350,7 +352,7 @@ void TRSFractureMesh::SplitFaces(int matID){
             case  1: AddEndFace(face);break;
             default: std::cout<<"\nNo more than 2 ribs should've been cut\n";DebugStop();
         }
-        Face(iel)->DivideSurface(20);
+        Face(iel)->DivideSurface(gel->MaterialId());
         
     }
     // fGMesh->BuildConnectivity();
@@ -402,7 +404,9 @@ TPZVec<REAL> TRSFractureMesh::FindEndFracturePoint(TRSFace &face){
 
 
 void TRSFractureMesh::SplitRibs(int matID){
-    gRefDBase.InitializeUniformRefPattern(EOned);
+    if(!gRefDBase.GetUniformRefPattern(EOned)){
+        gRefDBase.InitializeUniformRefPattern(EOned);
+    }
     //search gmesh for cut ribs
     int64_t Nels = fGMesh->NElements();
     for (int iel = 0; iel < Nels; iel++){
@@ -430,9 +434,11 @@ void TRSFractureMesh::SplitRibs(int matID){
             TRSRibs rib(iel, true);
             AddRib(rib);
             TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
-            gel->SetMaterialId(matID);
+            // During development, elements at fracture surface have material id over fSurfaceMaterial
+            // if(gel->MaterialId() != fSurfaceMaterial) {gel->SetMaterialId(matID);}
+            if(gel->MaterialId() < fSurfaceMaterial) {gel->SetMaterialId(matID);}
             Rib(iel)->DivideRib(fGMesh, ipoint, matID);
-            gel->SetMaterialId(fTransitionMaterial);
+            if(gel->MaterialId() < fSurfaceMaterial) {gel->SetMaterialId(fTransitionMaterial);}
 
             // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
         }
@@ -793,24 +799,50 @@ void TRSFractureMesh::CreateVolumes(){
     //     }
     // }
     // map all volumes that are cut
-    for(auto iface_itr = fMidFaces.begin(); iface_itr != fMidFaces.end(); iface_itr++){
-        int64_t iface = iface_itr->first;
-        TPZGeoEl *gel = fGMesh->Element(iface);
-        while(gel->Father()){
-            gel = gel->Father();
+    for(int i=1; i<3; i++){
+        auto begin = fMidFaces.begin();
+        auto end = fMidFaces.end();
+        if(i == 2){
+            begin = fEndFaces.begin();
+            end = fEndFaces.end();
         }
-
-        TPZGeoElSide gelside(gel,gel->NSides()-1);
-        TPZGeoElSide neighbour = gelside.Neighbour();
-        while(neighbour != gelside){
-            if(neighbour.Element()->Dimension() == 3){
-                int64_t iel = neighbour.Element()->Index();
-                TRSVolume volume(iel,true);
-                AddVolume(volume);
+        for(auto itr = begin; itr != end; itr++){
+            int64_t iface = itr->first;
+            TPZGeoEl *gel = fGMesh->Element(iface);
+            while(gel->Father()){
+                gel = gel->Father();
             }
-            neighbour = neighbour.Neighbour();
+
+            TPZGeoElSide gelside(gel,gel->NSides()-1);
+            TPZGeoElSide neighbour = gelside.Neighbour();
+            while(neighbour != gelside){
+                if(neighbour.Element()->Dimension() == 3){
+                    int64_t iel = neighbour.Element()->Index();
+                    TRSVolume volume(iel,true);
+                    AddVolume(volume);
+                }
+                neighbour = neighbour.Neighbour();
+            }
         }
     }
+    // for(auto itr = fEndFaces.begin(); itr != fEndFaces.end(); itr++){
+    //     int64_t iface =  itr->first;
+    //     TPZGeoEl *gel = fGMesh->Element(iface);
+    //     while(gel->Father()){
+    //         gel = gel->Father();
+    //     }
+
+    //     TPZGeoElSide gelside(gel,gel->NSides()-1);
+    //     TPZGeoElSide neighbour = gelside.Neighbour();
+    //     while(neighbour != gelside){
+    //         if(neighbour.Element()->Dimension() == 3){
+    //             int64_t iel = neighbour.Element()->Index();
+    //             TRSVolume volume(iel,true);
+    //             AddVolume(volume);
+    //         }
+    //         neighbour = neighbour.Neighbour();
+    //     }
+    // }
 
     // search through each element of the triangulated fracture surface to find their enclosing volume
     // iterate over fracplane's elements created at SplitFracturePlane
@@ -818,9 +850,9 @@ void TRSFractureMesh::CreateVolumes(){
         TPZGeoEl *gel = fGMesh->Element(iel);
         // if(gel->MaterialID() != fSurfaceMaterial){continue;}
         // During development, elements at fracture surface have material id over 40
-        if(gel->MaterialId() <= fSurfaceMaterial){continue;}
-        if(gel->Dimension() != 2){continue;}
-
+        if(gel->MaterialId() <= fSurfaceMaterial) continue;
+        if(gel->Dimension() != 2) continue;
+        if(gel->HasSubElement()) continue;
         // Find volume that encloses that element
         FindEnclosingVolume(gel);
     }
@@ -1126,8 +1158,6 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
                 TPZGeoElSide side = gelside.Neighbour();
                 while(side.Element()->Dimension() != 2) {side = side.Neighbour();}
                 TRSFace *iface = Face(side.Element()->Index());
-                // @ToDo change this to a recursive algorithm
-                // ------------------------------------------------------------------------------------- 
                 // if face is not cut, add it to the loop, else, add its children
                 if(side.Element()->HasSubElement() == false){
                     outfile << side.Element()->Index() << (iside < nsides-2? "," : "};\n");
@@ -1138,7 +1168,6 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
                     PrintYoungestChildren(sidegel,outfile);
                     outfile << (iside < nsides-2? "," : "};\n");
                 }
-                // -------------------------------------------------------------------------------------
             }
 
             // volume
@@ -1151,11 +1180,20 @@ void TRSFractureMesh::WriteGMSH(std::ofstream &outfile){
                 TPZManVector<int64_t,6> enclosedSurfaces(nsurfaces);
                 enclosedSurfaces = Volume(iel)->GetFacesInVolume();
 
-                // @ToDo will need PrintYoungestChildren here as well
+                // @ToDo may need PrintYoungestChildren here, depending on which elements FindEnclosingVolume is called on
+                // -------------------------------------------------------------------------------------
                 outfile << "Surface{";
                 for(int i = 0; i<nsurfaces; i++){
+                    // TPZGeoEl *surface = fGMesh->Element(enclosedSurfaces[i]);
+                    // if(surface->HasSubElement()){
+                    //     PrintYoungestChildren(surface,outfile);
+                    // }
+                    // else{
+                    //     outfile << enclosedSurfaces[i] << (i<nsurfaces-1?",":"} ");
+                    // }
                     outfile << enclosedSurfaces[i] << (i<nsurfaces-1?",":"} ");
                 }
+                // -------------------------------------------------------------------------------------
                 outfile << "In Volume{"<< iel+1 <<"};\n"; /* gmsh doesn't accept zero index elements */
             }
         }
