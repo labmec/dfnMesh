@@ -53,6 +53,9 @@ private:
     /// Map of intersected volumes
     std::map<int64_t, DFNVolume> fVolumes;
 
+    /// Map of elements on fracture surface
+    std::map<int64_t, TPZGeoEl *> fSurfEl;
+
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 

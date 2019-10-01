@@ -212,7 +212,7 @@ void DFNFractureMesh::AddMidFace(DFNFace &face){
     gelpointIndex = Rib(CutRibsIndex[1])->IntersectionIndex();
     ipoints[1] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
     int64_t nels = fGMesh->NElements();
-    fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+    this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
     
     
     int index= face.ElementIndex();
@@ -248,7 +248,8 @@ void DFNFractureMesh::AddEndFace(DFNFace &face){
                 int64_t gelpointIndex = Rib(rib_index[irib])->IntersectionIndex();
                 ipoints[0] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
                 ipoints[1] = nodeindex[0];
-                fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+                this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
+                break;
         }
     }
     int index= face.ElementIndex();
@@ -524,7 +525,7 @@ void DFNFractureMesh::SplitFractureEdge(){
 		auto it = edgemap[iedge]->begin();
         inodes[0] = fGMesh->Element(fFracplane.PointElIndex(iedge))->NodeIndex(0);
 		inodes[1] = it->second;
-		fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
+		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
 
         
         // iterate over iedge's map
@@ -532,14 +533,14 @@ void DFNFractureMesh::SplitFractureEdge(){
             nels++;
             inodes[0] = inodes[1];
             inodes[1] = it->second;
-            fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
+            this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
         }
 
 		// connect last end-intersection to edge last node
 		nels++;
 		inodes[0] = inodes[1];
         inodes[1] = fGMesh->Element(fFracplane.PointElIndex((iedge+1)%nedges))->NodeIndex(0);
-		fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
+		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
 	}
 	
 // fGMesh->BuildConnectivity();  ?
@@ -630,7 +631,7 @@ void DFNFractureMesh::SplitFracturePlane(){
             while(neig_i != neig0){
                 // if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() == fSurfaceMaterial){
                 // materials over 40 are being used during development to ifentify elements at fracture surface
-                if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() >= fSurfaceMaterial){
+                if(neig_i.Element()->Dimension() == 1 /*&& neig_i.Element()->MaterialId() >= fSurfaceMaterial*/ && fSurfEl[neig_i.Element()->Index()]){
                     // get opposite node 
                     if(neig_i.Element()->NodeIndex(0) == centerindex){
                         oppnode = neig_i.Element()->NodeIndex(1);
@@ -736,7 +737,7 @@ void DFNFractureMesh::SplitFracturePlane(){
 			nodeindices[1] = iedge->second;
 			nodeindices[2] = nextedge->second;
 			int64_t nelements = fGMesh->NElements();
-			fGMesh->CreateGeoElement(ETriangle, nodeindices, 47, nelements);
+			this->fSurfEl[nelements] = fGMesh->CreateGeoElement(ETriangle, nodeindices, 47, nelements);
 			
 			// create 1D GeoEl for opposite nodes
 			// check if segment to be created already exists first
@@ -748,7 +749,8 @@ void DFNFractureMesh::SplitFracturePlane(){
 				bool haskel = HasEqualDimensionNeighbour(gelside);
 				if (haskel == false)
 				{
-					TPZGeoElBC(gelside, 48);
+					TPZGeoElBC bcgeoel(gelside, 48);
+                    this->fSurfEl[bcgeoel.CreatedElement()->Index()] = bcgeoel.CreatedElement();
 				}
 			}
             

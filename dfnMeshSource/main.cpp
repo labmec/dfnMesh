@@ -242,12 +242,12 @@ int main()
 	fracmesh2.SplitFractureEdge();
 
 	// triangulation of fracture plane
-	fracmesh2.SplitFracturePlane();
+	// fracmesh2.SplitFracturePlane();
 
 	// Mesh transition volumes
 	// fracmesh2.CreateVolumes();
-	fracmesh2.CreateSkeletonElements(1,19);
 	gmesh->BuildConnectivity();
+	fracmesh2.CreateSkeletonElements(1,19);
 
 	//Print result
 	std::ofstream meshprint2("meshprint2.txt");
