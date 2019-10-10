@@ -23,6 +23,8 @@
 #include "DFNVolume.h"
 #include "DFNFracPlane.h"
 
+#include <gmsh.h>
+
 
 typedef TPZFMatrix<REAL> Matrix;
 

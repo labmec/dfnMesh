@@ -14,7 +14,6 @@
 #include <unordered_set>
 #include "TPZRefPatternDataBase.h"
 
-
 // Empty Constructor
 DFNFractureMesh::DFNFractureMesh(){
 }
@@ -558,6 +557,14 @@ void DFNFractureMesh::SplitFractureEdge(){
 
 
 void DFNFractureMesh::SplitFracturePlane(){
+    // initialize GMsh
+    gmsh::initialize();
+    gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
+    
+    
+    // close GMsh
+    gmsh::finalize();
+    
     //first, list all ipoints (points of intersection of mesh and fracplane)
     std::unordered_set<int64_t> ipoints;
 	
@@ -631,7 +638,7 @@ void DFNFractureMesh::SplitFracturePlane(){
             while(neig_i != neig0){
                 // if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() == fSurfaceMaterial){
                 // materials over 40 are being used during development to ifentify elements at fracture surface
-                if(neig_i.Element()->Dimension() == 1 /*&& neig_i.Element()->MaterialId() >= fSurfaceMaterial*/ && fSurfEl[neig_i.Element()->Index()]){
+                if(neig_i.Element()->Dimension() == 1 && fSurfEl.find(neig_i.Element()->Index()) != fSurfEl.end()/*&& neig_i.Element()->MaterialId() >= fSurfaceMaterial*/){
                     // get opposite node 
                     if(neig_i.Element()->NodeIndex(0) == centerindex){
                         oppnode = neig_i.Element()->NodeIndex(1);

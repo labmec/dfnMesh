@@ -33958,7 +33958,7 @@
         <Domain name="bool" id="14432.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="14432.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="14432.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="14432.Ambient" number_of_elements="1">
@@ -41840,7 +41840,10 @@
       </Property>
       <Property name="SelectionCellFieldDataArrayName" id="17801.SelectionCellFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="elIndex"/>
-        <Domain name="array_list" id="17801.SelectionCellFieldDataArrayName.array_list"/>
+        <Domain name="array_list" id="17801.SelectionCellFieldDataArrayName.array_list">
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="SelectionPointFieldDataArrayName" id="17801.SelectionPointFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="vtkOriginalPointIds"/>
@@ -41911,7 +41914,10 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="17801.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="17801.ColorArrayName.array_list">
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
         <Domain name="field_list" id="17801.ColorArrayName.field_list">
           <Entry value="0" text="Point Data"/>
           <Entry value="1" text="Cell Data"/>
@@ -41963,6 +41969,8 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17801.GlyphTableIndexArray.array_list">
           <String text="None"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="GlyphType" id="17801.GlyphType" number_of_elements="1">
@@ -42193,12 +42201,16 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17801.SelectOrientationVectors.array_list">
           <String text="None"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectScaleArray" id="17801.SelectScaleArray" number_of_elements="1">
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17801.SelectScaleArray.array_list">
           <String text="None"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectionCellLabelBold" id="17801.SelectionCellLabelBold" number_of_elements="1">
@@ -44482,7 +44494,7 @@
         <Domain name="input_type" id="18791.Input.input_type"/>
       </Property>
       <Property name="ShrinkFactor" id="18791.ShrinkFactor" number_of_elements="1">
-        <Element index="0" value="0.8"/>
+        <Element index="0" value="0.9"/>
         <Domain name="range" id="18791.ShrinkFactor.range"/>
       </Property>
     </Proxy>
@@ -44775,7 +44787,7 @@
       </Property>
       <Property name="ThresholdBetween" id="16871.ThresholdBetween" number_of_elements="2">
         <Element index="0" value="0"/>
-        <Element index="1" value="3088"/>
+        <Element index="1" value="10000"/>
         <Domain name="range" id="16871.ThresholdBetween.range"/>
       </Property>
       <Property name="UseContinuousCellRange" id="16871.UseContinuousCellRange" number_of_elements="1">
@@ -45633,14 +45645,14 @@
         <Domain name="range" id="19253.ViewTime.range"/>
       </Property>
       <Property name="CameraFocalPoint" id="19253.CameraFocalPoint" number_of_elements="3">
-        <Element index="0" value="1.420281658620201"/>
-        <Element index="1" value="0.8154578621112085"/>
-        <Element index="2" value="0.6434184809176818"/>
+        <Element index="0" value="0.32256906643751654"/>
+        <Element index="1" value="0.8986590730203011"/>
+        <Element index="2" value="1.4252564225545754"/>
       </Property>
       <Property name="CameraFocalPointInfo" id="19253.CameraFocalPointInfo" number_of_elements="3">
-        <Element index="0" value="1.420281658620201"/>
-        <Element index="1" value="0.8154578621112085"/>
-        <Element index="2" value="0.6434184809176818"/>
+        <Element index="0" value="0.32256906643751654"/>
+        <Element index="1" value="0.8986590730203011"/>
+        <Element index="2" value="1.4252564225545754"/>
       </Property>
       <Property name="CameraParallelScale" id="19253.CameraParallelScale" number_of_elements="1">
         <Element index="0" value="3.2015621187164243"/>
@@ -45649,27 +45661,27 @@
         <Element index="0" value="3.2015621187164243"/>
       </Property>
       <Property name="CameraPosition" id="19253.CameraPosition" number_of_elements="3">
-        <Element index="0" value="-4.84257777125466"/>
-        <Element index="1" value="-2.245183331236856"/>
-        <Element index="2" value="1.0484736251632905"/>
+        <Element index="0" value="5.938025136754823"/>
+        <Element index="1" value="0.5743061501828067"/>
+        <Element index="2" value="0.13615946156174838"/>
       </Property>
       <Property name="CameraPositionInfo" id="19253.CameraPositionInfo" number_of_elements="3">
-        <Element index="0" value="-4.84257777125466"/>
-        <Element index="1" value="-2.245183331236856"/>
-        <Element index="2" value="1.0484736251632905"/>
+        <Element index="0" value="5.938025136754823"/>
+        <Element index="1" value="0.5743061501828067"/>
+        <Element index="2" value="0.13615946156174838"/>
       </Property>
       <Property name="CameraViewAngle" id="19253.CameraViewAngle" number_of_elements="1">
         <Element index="0" value="30"/>
       </Property>
       <Property name="CameraViewUp" id="19253.CameraViewUp" number_of_elements="3">
-        <Element index="0" value="-0.1920467548237131"/>
-        <Element index="1" value="0.5043900161711236"/>
-        <Element index="2" value="0.8418484160159561"/>
+        <Element index="0" value="-0.09308171825529052"/>
+        <Element index="1" value="0.7911241650911716"/>
+        <Element index="2" value="-0.6045315121111878"/>
       </Property>
       <Property name="CameraViewUpInfo" id="19253.CameraViewUpInfo" number_of_elements="3">
-        <Element index="0" value="-0.1920467548237131"/>
-        <Element index="1" value="0.5043900161711236"/>
-        <Element index="2" value="0.8418484160159561"/>
+        <Element index="0" value="-0.09308171825529052"/>
+        <Element index="1" value="0.7911241650911716"/>
+        <Element index="2" value="-0.6045315121111878"/>
       </Property>
       <Property name="EyeAngle" id="19253.EyeAngle" number_of_elements="1">
         <Element index="0" value="2"/>
