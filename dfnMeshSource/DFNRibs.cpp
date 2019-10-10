@@ -112,55 +112,14 @@ void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
         DebugStop();
     }
     TPZGeoEl *gel = gmesh->Element(iel_index);
-    int64_t nelements = gmesh->NElements();
     int64_t nnodes = gmesh->NNodes();
-    // gmesh->NodeVec().Resize(nnodes+1);       //Adding an extra node
-    // gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord, *gmesh);
     
-    // // create GeoEl for intersection point
-    // TPZVec<int64_t> vnnodes(1,nnodes);
-    // gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);     // can't get 1D neighbours from nodes... so had to create GeoEl EPoint for all intersection points and track GeoEl index instead of nodeindex
-    // fIntersectionIndex = nelements;
-
-    // // Create children ribs
-    // // TPZManVector<TPZGeoEl *, 2> subelements(2);
-	// fSubElements.Resize(2);
-    // TPZVec<int64_t> cornerindexes(2);
-    // TPZManVector<TPZGeoEl *, 2> children(2); 
-    // //child 1
-    //     cornerindexes[0] = gel->NodeIndex(0);    //Setting the new rib node as node 0
-    //     cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
-    //     nelements++;
-    //     children[0] = gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
-    // // child 2
-    //     cornerindexes[0] = gel->NodeIndex(1);    //Setting the new rib node as node 0
-    //     cornerindexes[1] = nnodes;   //Setting the new rib node as node 1
-    //     nelements++;
-    //     children[1] = gmesh->CreateGeoElement(EOned, cornerindexes, matID, nelements);
-	// // SetChildren(SubElements);
-    //     nnodes = gmesh->NNodes();
-    //     gel->Divide(children);
-    //     nnodes = gmesh->NNodes();
-    // fSubElements[0] = nelements-1;              //Setting a new subelement
-    // fSubElements[1] = nelements;              //Setting a second new subelement
-
-    // TPZAutoPointer<TPZRefPattern> ptr = gel->GetRefPattern();
-    // gel->SetRefPattern(ptr);
 
     TPZManVector<TPZGeoEl *,2> children(2);
-    // if(!gRefDBase.GetUniformRefPattern(EOned))
-    // {
-    //     gRefDBase.InitializeUniformRefPattern(EOned);
-    // }
     gel->Divide(children);
-    // gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord, *gmesh);
+    // correct coordinates for intersection point 
     gmesh->NodeVec()[nnodes].SetCoord(IntersectionCoord);
-
-
-    // create GeoEl for intersection point
-    TPZVec<int64_t> vnnodes(1,nnodes);
-    gmesh->CreateGeoElement(EPoint,vnnodes,45,nelements);     
-    fIntersectionIndex = nelements;
+    fIntersectionIndex = nnodes;
 
     fSubElements.resize(2);
     fSubElements[0] = children[0]->Index();

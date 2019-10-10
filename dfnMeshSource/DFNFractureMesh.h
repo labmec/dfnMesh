@@ -115,7 +115,7 @@ private:
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    TPZVec<REAL> FindEndFracturePoint(DFNFace &face);
+    TPZManVector<REAL,3> FindEndFracturePoint(DFNFace &face);
     
     void PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile);
 public:

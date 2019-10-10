@@ -144,8 +144,8 @@ int main()
 	fracmesh.SplitFractureEdge();
 
 	// triangulation of fracture plane
-	fracmesh.SplitFracturePlane();
-
+	// fracmesh.SplitFracturePlane();
+	gmesh->BuildConnectivity();
 	fracmesh.CreateSkeletonElements(1,19);
 
 	// // Mesh transition volumes

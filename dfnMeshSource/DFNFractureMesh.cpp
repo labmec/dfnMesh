@@ -32,7 +32,7 @@ DFNFractureMesh::DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int
 
     // Create FracPlane's geometric element into mesh
     // fFracplaneindex = fFracplane.CreateElement(fGMesh);
-    fFracplane.SetPointsInGeomesh(fGMesh, fSurfaceMaterial);
+    fFracplane.SetPointsInGeomesh(fGMesh);
     
 }
 
@@ -206,13 +206,11 @@ void DFNFractureMesh::AddMidFace(DFNFace &face){
 
     // Connect intersection points
     TPZVec<int64_t> ipoints(2);
-    int64_t gelpointIndex = Rib(CutRibsIndex[0])->IntersectionIndex();
-    ipoints[0] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
-    gelpointIndex = Rib(CutRibsIndex[1])->IntersectionIndex();
-    ipoints[1] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
+    ipoints[0] = Rib(CutRibsIndex[0])->IntersectionIndex();
+    ipoints[1] = Rib(CutRibsIndex[1])->IntersectionIndex();
     int64_t nels = fGMesh->NElements();
-    this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
-    
+    this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, ipoints, fSurfaceMaterial+6, nels);
+                                                                        // +6 for graphical debugging
     
     int index= face.ElementIndex();
     fMidFaces[index]=face;
@@ -226,13 +224,10 @@ void DFNFractureMesh::AddMidFace(DFNFace &face){
 void DFNFractureMesh::AddEndFace(DFNFace &face){
     // Create geometric element for intersection node beetween EndFace and fracture edge
         TPZVec<REAL> coords = FindEndFracturePoint(face);
-        TPZVec<int64_t> nodeindex(1,0);
-        nodeindex[0] = fGMesh->NodeVec().AllocateNewElement();
-        fGMesh->NodeVec()[nodeindex[0]].Initialize(coords, *fGMesh);
-        int64_t nels = fGMesh->NElements();
-        fGMesh->CreateGeoElement(EPoint, nodeindex, 45, nels); // can't get 1D neighbours from nodes... so had to create GeoEl EPoint for all intersection points and track GeoEl index instead of nodeindex
-        face.SetIntersectionIndex(nels);
-        // std::cout<<"\n"<<face.ElementIndex
+        TPZManVector<int64_t> ipoints(2);
+        ipoints[0] = fGMesh->NodeVec().AllocateNewElement();
+        fGMesh->NodeVec()[ipoints[0]].Initialize(coords, *fGMesh);
+        face.SetIntersectionIndex(ipoints[0]);
     //iterate over ribs to connect intersection points
     TPZVec<int64_t> rib_index = face.GetRibs();
     int nribs = rib_index.size();
@@ -242,13 +237,10 @@ void DFNFractureMesh::AddEndFace(DFNFace &face){
         if(ribtest->IsCut() == true){
             // std::cout<<"single rib cut: "<<rib_index[irib]<<std::endl;
             // Connect intersection points
-                nels++;
-                TPZVec<int64_t> ipoints(2);
-                int64_t gelpointIndex = Rib(rib_index[irib])->IntersectionIndex();
-                ipoints[0] = fGMesh->Element(gelpointIndex)->NodeIndex(0);
-                ipoints[1] = nodeindex[0];
-                this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, ipoints, 46, nels);
-                break;
+                int64_t nels = fGMesh->NElements();
+                ipoints[1] = Rib(rib_index[irib])->IntersectionIndex();
+                this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, ipoints, fSurfaceMaterial+6, nels);
+                break;                                                                  // +6 for graphical debugging
         }
     }
     int index= face.ElementIndex();
@@ -313,7 +305,7 @@ void DFNFractureMesh::SplitFaces(int matID){
             if(ribtest->IsCut()==true){
             //check if ribtest was divided into two ribs, or a rib and a point
                 // get node where ribtest is cut
-                int64_t cutnode = fGMesh->Element(ribtest->IntersectionIndex())->NodeIndex(0);
+                int64_t cutnode = ribtest->IntersectionIndex();
                 TPZVec<int64_t> ribtestNodes(2);
                 fGMesh->Element(ribtest->ElementIndex())->GetNodeIndices(ribtestNodes);
                 // check if intersection is a corner node and assign status accordingly
@@ -371,7 +363,7 @@ void DFNFractureMesh::SplitFaces(int matID){
 
 
 
-TPZVec<REAL> DFNFractureMesh::FindEndFracturePoint(DFNFace &face){
+TPZManVector<REAL,3> DFNFractureMesh::FindEndFracturePoint(DFNFace &face){
     // Convert TPZGeoEl into DFNFracPlane
     TPZGeoEl *gelface = fGMesh->Element(face.ElementIndex());
     TPZFMatrix<REAL> corners;
@@ -434,7 +426,7 @@ void DFNFractureMesh::SplitRibs(int matID){
             DFNRibs rib(iel, true);
             AddRib(rib);
             TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
-            // During development, elements at fracture surface have material id over fSurfaceMaterial
+            // During development, elements at fracture surface have material id bigger than fSurfaceMaterial
             // if(gel->MaterialId() != fSurfaceMaterial) {gel->SetMaterialId(matID);}
             if(gel->MaterialId() < fSurfaceMaterial) {gel->SetMaterialId(matID);}
             Rib(iel)->DivideRib(fGMesh, ipoint, matID);
@@ -475,7 +467,7 @@ void DFNFractureMesh::SplitFractureEdge(){
     for (auto it = fEndFaces.begin(); it != fEndFaces.end(); it++){
         // get intersection node index and coordinates
         DFNFace *iface = &it->second;
-        int64_t ipointindex = fGMesh->Element(iface->IntersectionIndex())->NodeIndex(0);
+        int64_t ipointindex = iface->IntersectionIndex();
         TPZVec<REAL> ipointcoord(3);
         fGMesh->NodeVec()[ipointindex].GetCoordinates(ipointcoord);
 
@@ -516,15 +508,16 @@ void DFNFractureMesh::SplitFractureEdge(){
         if(edgemap[iedge]->size() == 0){continue;}
 
 		int64_t nels = fGMesh->NElements();
-		TPZManVector<int64_t> inodes(2);     //index of nodes to be connected
+		TPZManVector<int64_t,2> inodes(2);     //index of nodes to be connected
         //@FixIt
 		// TPZGeoEl *geofrac = fGMesh->Element(fFracplaneindex); //pointer to fracture GeoEl
 
 		// connect first end-face intersection to iedge's first node
 		auto it = edgemap[iedge]->begin();
-        inodes[0] = fGMesh->Element(fFracplane.PointElIndex(iedge))->NodeIndex(0);
+        int icorner = iedge; //for readability
+        inodes[0] = fFracplane.CornerIndex(icorner);
 		inodes[1] = it->second;
-		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
+		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
 
         
         // iterate over iedge's map
@@ -532,14 +525,14 @@ void DFNFractureMesh::SplitFractureEdge(){
             nels++;
             inodes[0] = inodes[1];
             inodes[1] = it->second;
-            this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
+            this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
         }
 
 		// connect last end-intersection to edge last node
 		nels++;
 		inodes[0] = inodes[1];
-        inodes[1] = fGMesh->Element(fFracplane.PointElIndex((iedge+1)%nedges))->NodeIndex(0);
-		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, 46, nels);
+        inodes[1] = fFracplane.CornerIndex((icorner+1)%nedges);
+		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
 	}
 	
 // fGMesh->BuildConnectivity();  ?
@@ -561,7 +554,7 @@ void DFNFractureMesh::SplitFracturePlane(){
     gmsh::initialize();
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
     
-    
+
     // close GMsh
     gmsh::finalize();
     
@@ -744,7 +737,7 @@ void DFNFractureMesh::SplitFracturePlane(){
 			nodeindices[1] = iedge->second;
 			nodeindices[2] = nextedge->second;
 			int64_t nelements = fGMesh->NElements();
-			this->fSurfEl[nelements] = fGMesh->CreateGeoElement(ETriangle, nodeindices, 47, nelements);
+			this->fSurfEl[nelements] = fGMesh->CreateGeoElement(ETriangle, nodeindices, fSurfaceMaterial+7, nelements);
 			
 			// create 1D GeoEl for opposite nodes
 			// check if segment to be created already exists first
@@ -756,7 +749,7 @@ void DFNFractureMesh::SplitFracturePlane(){
 				bool haskel = HasEqualDimensionNeighbour(gelside);
 				if (haskel == false)
 				{
-					TPZGeoElBC bcgeoel(gelside, 48);
+					TPZGeoElBC bcgeoel(gelside, fSurfaceMaterial+8);
                     this->fSurfEl[bcgeoel.CreatedElement()->Index()] = bcgeoel.CreatedElement();
 				}
 			}

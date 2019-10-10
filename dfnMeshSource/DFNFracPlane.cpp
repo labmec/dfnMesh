@@ -276,7 +276,7 @@ bool DFNFracPlane::IsPointInPlane(TPZVec<REAL> &point)
 }
 
 
-TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh,int matID){
+TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh){
 	int64_t nels = gmesh->NElements();
 	int ncorners = fCornerPoints.Cols();
 	fPointsIndex.resize(ncorners);
@@ -288,11 +288,7 @@ TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh,int m
 			coords[ico] = fCornerPoints(ico,ipoint);
 		}
 		gmesh->NodeVec()[nnodes+ipoint].Initialize(coords,*gmesh);
-		TPZManVector<int64_t,1> nodeindex(1);
-		nodeindex[0] = nnodes+ipoint;
-		int64_t elindex = nels+ipoint;
-		fPointsIndex[ipoint] = elindex;
-		gmesh->CreateGeoElement(EPoint,nodeindex,matID,elindex);
+		fPointsIndex[ipoint] = nnodes+ipoint;
 	}
 	return fPointsIndex;
 }
