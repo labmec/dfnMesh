@@ -117,7 +117,16 @@ private:
     /// Finds intersection point of fracture boundaries and geometric mesh faces
     TPZManVector<REAL,3> FindEndFracturePoint(DFNFace &face);
     
+    /**
+     *  @brief Navigate children tree to access most extreme branches
+     *  @param *gel pointer to geometric element of eldest ancestor
+     *  @param &outfile ofstream in which to write accessed data
+     */
     void PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile);
+    
+    /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
+    void SplitFractureEdge(std::list<int> &fracEdgeLoop);
+
 public:
     
     /// Insert intersection elements of lower dimension in the geometric mesh.
@@ -150,8 +159,6 @@ public:
     /// Find and split intersected ribs
     void SplitRibs(int matID);
 
-    /// Connects fracture-edge intersections (temporary name for lack of better one)
-    void SplitFractureEdge();
 
     /// Triangulates fracture plane
     void SplitFracturePlane();

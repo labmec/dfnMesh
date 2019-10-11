@@ -444,8 +444,8 @@ void DFNFractureMesh::SplitRibs(int matID){
 
 
 
-void DFNFractureMesh::SplitFractureEdge(){  
-
+void DFNFractureMesh::SplitFractureEdge(std::list<int> &fracEdgeLoop){ 
+    
     // Compute fracture edges' lenghts
     int nedges = fFracplane.GetCornersX().Cols();
     TPZVec<REAL> edgelength(nedges,0);
@@ -518,7 +518,7 @@ void DFNFractureMesh::SplitFractureEdge(){
         inodes[0] = fFracplane.CornerIndex(icorner);
 		inodes[1] = it->second;
 		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
-
+        fracEdgeLoop.push_back((int) nels);
         
         // iterate over iedge's map
         while(++it != edgemap[iedge]->end()){
@@ -526,6 +526,7 @@ void DFNFractureMesh::SplitFractureEdge(){
             inodes[0] = inodes[1];
             inodes[1] = it->second;
             this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
+            fracEdgeLoop.push_back((int) nels);
         }
 
 		// connect last end-intersection to edge last node
@@ -533,7 +534,8 @@ void DFNFractureMesh::SplitFractureEdge(){
 		inodes[0] = inodes[1];
         inodes[1] = fFracplane.CornerIndex((icorner+1)%nedges);
 		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
-	}
+        fracEdgeLoop.push_back((int) nels);
+    }
 	
 // fGMesh->BuildConnectivity();  ?
 }
@@ -550,213 +552,75 @@ void DFNFractureMesh::SplitFractureEdge(){
 
 
 void DFNFractureMesh::SplitFracturePlane(){
+    // First construct the edges of the fracture surface
+    std::list<int> fracEdgeLoop;
+    SplitFractureEdge(fracEdgeLoop);
+
     // initialize GMsh
     gmsh::initialize();
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
-    
+    // INSERT POINTS
+        // iterate over ribs and get their ipoints
+        for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
+            DFNRibs *irib = &itr->second;
+            if (irib->IsCut() == false){continue;}
+            int64_t inode = irib->IntersectionIndex();
+            TPZManVector<REAL, 3> coord(3);
+            fGMesh->NodeVec()[inode].GetCoordinates(coord);
+            gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode);
+        }
+        // iterate over endFaces and get their ipoints
+        for(auto itr = fEndFaces.begin(); itr != fEndFaces.end(); itr++){
+            DFNFace *iface = &itr->second;
+            if (iface->IsCut() == false){continue;}
+            int64_t inode = iface->IntersectionIndex();
+            TPZManVector<REAL, 3> coord(3);
+            fGMesh->NodeVec()[inode].GetCoordinates(coord);
+            gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode);
+        }
+        // Corners of fracture plane
+        {
+        int ncorners = fFracplane.GetCornersX().Cols();
+        for(int i = 0; i<ncorners; i++){
+            int64_t inode = fFracplane.CornerIndex(i);
+            TPZManVector<REAL, 3> coord(3);
+            fGMesh->NodeVec()[inode].GetCoordinates(coord);
+            gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode);
+        }
+        }
+    // INSERT LINES
+        for(auto iter = fSurfEl.begin(); iter != fSurfEl.end(); iter++){
+            int64_t iel = iter->first;
+            TPZGeoEl *gel = iter->second;
+            if(gel->Dimension() != 1) continue;
+            int64_t node0 = gel->NodeIndex(0);
+            int64_t node1 = gel->NodeIndex(1);
 
+            gmsh::model::geo::addLine(node0,node1,iel);
+        }
+    
+    //  CURVE LOOP
+        // move loop list into a vector
+        std::vector<int> edgeloopvector{std::make_move_iterator(std::begin(fracEdgeLoop)),
+                                        std::make_move_iterator(std::end(fracEdgeLoop))};
+        gmsh::model::geo::addCurveLoop(edgeloopvector,-1);
+
+    // SURFACE
+        gmsh::model::geo::addPlaneSurface({-1},-1);
+    
+    // lines in surface
+    // PHYSICAL GROUP
+
+    // transfinites
+    // synchronize
+    // mesh
+    // write (for testing)
+
+    // import back into PZ
     // close GMsh
     gmsh::finalize();
     
-    //first, list all ipoints (points of intersection of mesh and fracplane)
-    std::unordered_set<int64_t> ipoints;
-	
-    // iterate over ribs and get their ipoints
-    for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
-        DFNRibs *irib = &itr->second;
-		if (irib->IsCut() == false){continue;}
-        int64_t index = irib->IntersectionIndex();
-        ipoints.insert(index);
-    }
-    // iterate over endFaces and get their ipoints
-    for(auto itr = fEndFaces.begin(); itr != fEndFaces.end(); itr++){
-        DFNFace *iface = &itr->second;
-		if (iface->IsCut() == false){continue;}
-        int64_t index = iface->IntersectionIndex();
-        ipoints.insert(index);
-    }
-    // points of fracture plane (corners) require repetition of somewhat expensive computations and triangulation will always terminate without using them as center point anyway because mesh is composed of convex polyhedra 
-	// // List points from fracture plane
-    // int ncorners = fFracplane.GetCornersX().Cols();
-    // for(int i = 0; i<ncorners; i++){
-    //     ipoints.insert(fFracplane.PointElIndex(i));
-    // }
-	
-
-    //iterate over ipoints
-	fGMesh->BuildConnectivity();
-    for(auto itr = ipoints.begin(); itr != ipoints.end(); itr++){
-		// map of opposite nodes sorted by (cosine of) angle measured from a reference segment
-        std::map<REAL, int64_t> oppositenodes;
-		TPZGeoEl *ipoint = fGMesh->Element(*itr);
-		int64_t centerindex = ipoint->NodeIndex(0);
-        TPZGeoElSide neig0 = ipoint->Neighbour(0);
-        // Materials from 40 through 50 are being used for fracture mesh during debbuging
-        // while (neig0.Element()->Dimension() != 1 || neig0.Element()->MaterialId() != fSurfaceMaterial){
-        while (neig0.Element()->Dimension() != 1 || neig0.Element()->MaterialId() < fSurfaceMaterial){
-            neig0 = neig0.Neighbour();
-        }
-
-        // Reference segment vector
-        TPZManVector<REAL,3> ipointcoord(3);
-        // Sort edges using angle to the reference vector (scope to keep some variables local)
-        {
-            // Cosine of angle of segment from inode to opposite node (oppnode) relative to reference segment
-            REAL gamma = 1.0; 
-            // Opposite node index
-            int64_t oppnode;
-            if(neig0.Element()->NodeIndex(0) == centerindex){
-                oppnode = neig0.Element()->NodeIndex(1);
-            }
-            else{ oppnode = neig0.Element()->NodeIndex(0);}
-            // Insert reference opposite node in map
-            int64_t reference = oppnode;
-            oppositenodes.insert({gamma,reference});
-            // Reference segment vector
-            // TPZManVector<REAL,3> ipointcoord(3);
-            fGMesh->NodeVec()[centerindex].GetCoordinates(ipointcoord);
-            TPZManVector<REAL,3> vref(3);
-            fGMesh->NodeVec()[oppnode].GetCoordinates(vref);
-            vref[0] -= ipointcoord[0];
-            vref[1] -= ipointcoord[1];
-            vref[2] -= ipointcoord[2];
-            // normalize reference segment
-            REAL norm = sqrtl(vref[0]*vref[0]+vref[1]*vref[1]+vref[2]*vref[2]);
-            vref[0] = vref[0]/norm;
-            vref[1] = vref[1]/norm;
-            vref[2] = vref[2]/norm;
-
-            // Iterate over next 1D neighbours to sort segments from it according to angle to reference
-            TPZGeoElSide neig_i = neig0.Neighbour();
-            while(neig_i != neig0){
-                // if(neig_i.Element()->Dimension() == 1 && neig_i.Element()->MaterialId() == fSurfaceMaterial){
-                // materials over 40 are being used during development to ifentify elements at fracture surface
-                if(neig_i.Element()->Dimension() == 1 && fSurfEl.find(neig_i.Element()->Index()) != fSurfEl.end()/*&& neig_i.Element()->MaterialId() >= fSurfaceMaterial*/){
-                    // get opposite node 
-                    if(neig_i.Element()->NodeIndex(0) == centerindex){
-                        oppnode = neig_i.Element()->NodeIndex(1);
-                    }
-                    else{ oppnode = neig_i.Element()->NodeIndex(0);}
-                    // Compute segment vector
-                    TPZManVector<REAL,3> vi(3);
-                    fGMesh->NodeVec()[oppnode].GetCoordinates(vi);
-                    vi[0] -= ipointcoord[0];
-                    vi[1] -= ipointcoord[1];
-                    vi[2] -= ipointcoord[2];
-                    // normalize segment vector
-                    norm = sqrtl(vi[0]*vi[0]+vi[1]*vi[1]+vi[2]*vi[2]);
-                    vi[0] = vi[0]/norm;
-                    vi[1] = vi[1]/norm;
-                    vi[2] = vi[2]/norm;
-                    // compute cosine of angle
-                    gamma = vref[0]*vi[0]
-                            +vref[1]*vi[1]
-                            +vref[2]*vi[2];
-                    // cross product to determine quadrant of angle
-                    TPZManVector<REAL,3> cross(3);
-                    cross[0] = vref[1]*vi[2] - vref[2]*vi[1];
-                    cross[1] = vref[2]*vi[0] - vref[0]*vi[2];
-                    cross[2] = vref[0]*vi[1] - vref[1]*vi[0];
-                    // Dot product between cross and fracplane's normal vector
-                    REAL dot=cross[0]*fFracplane.axis(0,2)
-                            +cross[1]*fFracplane.axis(1,2)
-                            +cross[2]*fFracplane.axis(2,2);
-                    if(dot < 0){
-                        gamma = -(2+gamma);
-                    }
-                    // Insert opposite node in the map
-                    oppositenodes.insert({gamma, oppnode});
-                }
-                neig_i = neig_i.Neighbour();
-            }
-        }
-
-        // iterate over sorted opposite nodes 
-        for(auto iedge = oppositenodes.rbegin(); iedge != oppositenodes.rend(); iedge++){
-			auto nextedge = iedge;
-			nextedge++;
-			// nextedge = (iedge+1)%nedges
-			if(nextedge == oppositenodes.rend()){nextedge = oppositenodes.rbegin();}
-            
-			// check if element to be created already exists
-			bool test = false;
-			TPZGeoElSide neighbour = neig0.Neighbour();
-			while(neighbour != neig0){
-				if(neighbour.Element()->Dimension() == 2 && neighbour.Element()->MaterialId() >=fSurfaceMaterial){
-					TPZManVector<int64_t,3> testnodes(3);
-					neighbour.Element()->GetNodeIndices(testnodes);
-					for(int jnode = 0; jnode < 3; jnode++){
-						if(testnodes[jnode] == centerindex ||
-							testnodes[jnode] == iedge->second ||
-							testnodes[jnode] == nextedge->second)
-						{	
-							test = true;
-							continue;
-						}
-						else{
-							test = false; 
-							break;
-						}
-					}
-				}
-				if(test){break;}
-				neighbour = neighbour.Neighbour();
-			}
-			if(test){continue;}
-			
-			// if angle between consectutive segments is 180, then it's the edge of the mesh and no face should be created
-			TPZManVector<REAL,3> v1(3), v2(3);
-			fGMesh->NodeVec()[iedge->second].GetCoordinates(v1);
-				v1[0] -= ipointcoord[0];
-				v1[1] -= ipointcoord[1];
-				v1[2] -= ipointcoord[2];
-				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
-				v1[0] = v1[0]/norm;
-				v1[1] = v1[1]/norm;
-				v1[2] = v1[2]/norm;
-			fGMesh->NodeVec()[nextedge->second].GetCoordinates(v2);
-				v2[0] -= ipointcoord[0];
-				v2[1] -= ipointcoord[1];
-				v2[2] -= ipointcoord[2];
-				norm = sqrtl(v2[0]*v2[0]+v2[1]*v2[1]+v2[2]*v2[2]);
-				v2[0] = v2[0]/norm;
-				v2[1] = v2[1]/norm;
-				v2[2] = v2[2]/norm;
-				// compute cosine of angle
-				REAL gamma = v1[0]*v2[0]
-					    	+v1[1]*v2[1]
-					    	+v1[2]*v2[2];
-			// cos(180) = -1
-			if(fabs(gamma+1.)<fTolerance){continue;}
-            // if(nextedge->first - iedge->first > -2+fTolerance) continue;
-
-			// passed verifications, then
-            // create GeoEl triangle
-			TPZManVector<int64_t,3> nodeindices(3);
-			nodeindices[0] = centerindex;
-			nodeindices[1] = iedge->second;
-			nodeindices[2] = nextedge->second;
-			int64_t nelements = fGMesh->NElements();
-			this->fSurfEl[nelements] = fGMesh->CreateGeoElement(ETriangle, nodeindices, fSurfaceMaterial+7, nelements);
-			
-			// create 1D GeoEl for opposite nodes
-			// check if segment to be created already exists first
-			fGMesh->BuildConnectivity();
-			TPZGeoEl *newface = fGMesh->Element(nelements);
-			for (int iside = 3; iside < 6; iside++){
-				TPZGeoElSide gelside = newface->Neighbour(iside);
-				if (gelside.Dimension() != 1){continue;}
-				bool haskel = HasEqualDimensionNeighbour(gelside);
-				if (haskel == false)
-				{
-					TPZGeoElBC bcgeoel(gelside, fSurfaceMaterial+8);
-                    this->fSurfEl[bcgeoel.CreatedElement()->Index()] = bcgeoel.CreatedElement();
-				}
-			}
-            
-		}
-	oppositenodes.clear();
-    }
+    
 }
 
 
@@ -1267,7 +1131,7 @@ Volume{4,5,6,7};
 
 
 
-// iterate over 2D sides to look for faces that close the surface loop
+
 /**
  *  @brief Navigate children tree to access most extreme branches
  *  @param *gel pointer to geometric element of eldest ancestor
