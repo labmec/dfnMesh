@@ -11,7 +11,8 @@
 #include "DFNFractureMesh.h"
 #include <math.h>
 #include <cstdio>
-#include <unordered_set>
+// #include <unordered_set>
+#include <algorithm>
 #include "TPZRefPatternDataBase.h"
 
 // Empty Constructor
@@ -558,6 +559,7 @@ void DFNFractureMesh::SplitFracturePlane(){
 
     // initialize GMsh
     gmsh::initialize();
+    gmsh::model::add("testAPI2");
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
     // INSERT POINTS
         // iterate over ribs and get their ipoints
@@ -589,37 +591,66 @@ void DFNFractureMesh::SplitFracturePlane(){
         }
         }
     // INSERT LINES
+        // move loop list into a vector
+        std::vector<int> edgeloopvector{std::make_move_iterator(std::begin(fracEdgeLoop)),
+                                        std::make_move_iterator(std::end(fracEdgeLoop))};
+        std::vector<int> curvesInSurface;
         for(auto iter = fSurfEl.begin(); iter != fSurfEl.end(); iter++){
             int64_t iel = iter->first;
             TPZGeoEl *gel = iter->second;
             if(gel->Dimension() != 1) continue;
             int64_t node0 = gel->NodeIndex(0);
             int64_t node1 = gel->NodeIndex(1);
-
             gmsh::model::geo::addLine(node0,node1,iel);
+
+            bool lineIsInEdge = (std::find(edgeloopvector.begin(),edgeloopvector.end(),iel) != edgeloopvector.end());
+            if(lineIsInEdge == false){
+                curvesInSurface.push_back(iel);
+            }
         }
     
-    //  CURVE LOOP
-        // move loop list into a vector
-        std::vector<int> edgeloopvector{std::make_move_iterator(std::begin(fracEdgeLoop)),
-                                        std::make_move_iterator(std::end(fracEdgeLoop))};
-        gmsh::model::geo::addCurveLoop(edgeloopvector,-1);
+    // CURVE LOOP
+        int surfaceIndex = 1;
+        gmsh::model::geo::addCurveLoop(edgeloopvector,surfaceIndex);
 
     // SURFACE
-        gmsh::model::geo::addPlaneSurface({-1},-1);
+        gmsh::model::geo::addPlaneSurface({surfaceIndex},surfaceIndex);
     
     // lines in surface
-    // PHYSICAL GROUP
+        gmsh::model::geo::synchronize();
+        gmsh::model::mesh::embed(1,curvesInSurface,2,surfaceIndex);
+    // PHYSICAL GROUPS
+        // physical curve
+        // std::vector<int> * allLines;
+        // std::vector<int> * auxVector;
+        int nlines = curvesInSurface.size() + edgeloopvector.size();
+        if(curvesInSurface.size() > edgeloopvector.size()){
+            curvesInSurface.reserve(nlines);
+            curvesInSurface.insert(curvesInSurface.end(), edgeloopvector.begin(), edgeloopvector.end() );
+            gmsh::model::addPhysicalGroup(1,curvesInSurface,fSurfaceMaterial);
+            // auxVector = &edgeloopvector;
+        }else{
+            edgeloopvector.reserve(nlines);
+            edgeloopvector.insert(edgeloopvector.end(), curvesInSurface.begin(), curvesInSurface.end() );
+            gmsh::model::addPhysicalGroup(1,edgeloopvector,fSurfaceMaterial);
+            // auxVector = &curvesInSurface;
+        }
+        // allLines->reserve(allLines->size()+auxVector->size());
+        // allLines->insert(allLines->end(), auxVector->begin(), auxVector->end() );
+        // gmsh::model::addPhysicalGroup(1,*allLines,fSurfaceMaterial);
+        // physical surface
+        gmsh::model::addPhysicalGroup(2,{surfaceIndex},fSurfaceMaterial);
 
-    // transfinites
     // synchronize
+        gmsh::model::geo::synchronize();
     // mesh
+        gmsh::model::mesh::generate(2);
     // write (for testing)
-
-    // import back into PZ
+        gmsh::write("testAPI.msh");
     // close GMsh
     gmsh::finalize();
     
+    // import back into PZ
     
 }
 

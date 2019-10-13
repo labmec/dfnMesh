@@ -30,6 +30,8 @@
 
 #include "TPZRefPatternDataBase.h"
 
+#include <gmsh.h>
+
 //MATERIAL ID MAP
 // 1 gmesh (default)
 // 4 skeleton
@@ -45,7 +47,53 @@ using namespace std;
 int main()
 {
 
-	
+	// gmsh::initialize();
+    // gmsh::option::setNumber("Mesh.Algorithm", 1); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
+    
+    //     // points
+	// 	gmsh::model::geo::addPoint(-1.,-1.,0.,0.,1);
+	// 	gmsh::model::geo::addPoint(1.,-1.,0.,0.,2);
+	// 	gmsh::model::geo::addPoint(1.,1.,0.,0.,3);
+	// 	gmsh::model::geo::addPoint(-1.,1.,0.,0.,4);
+	// 	gmsh::model::geo::addPoint(-0.5,-1.,0.,0.,5);
+	// 	gmsh::model::geo::addPoint(0.5,1.,0.,0.,6);
+    //     // lines
+	// 	gmsh::model::geo::addLine(1, 5, 1);
+  	// 	gmsh::model::geo::addLine(5, 2, 2);
+  	// 	gmsh::model::geo::addLine(2, 3, 3);
+  	// 	gmsh::model::geo::addLine(3, 6, 4);
+  	// 	gmsh::model::geo::addLine(6, 4, 5);
+  	// 	gmsh::model::geo::addLine(4, 1, 6);
+  	// 	gmsh::model::geo::addLine(5, 6, 7);
+	// 	// surfaces
+	// 	gmsh::model::geo::addCurveLoop({1, 2, 3, 4, 5, 6}, 1);
+  	// 	gmsh::model::geo::addPlaneSurface({1}, 1);
+		    
+    // 	// line in surface
+    //     gmsh::model::geo::synchronize();
+    //     gmsh::model::mesh::embed(1,{7},2,1);
+    // // // PHYSICAL GROUPS
+    // //     // physical curve
+    // //     std::vector<int> * allLines;
+    // //     std::vector<int> * auxVector;
+    // //     if(curvesInSurface.size() > edgeloopvector.size()){
+    // //         auxVector = &edgeloopvector;
+    // //     }else{
+    // //         auxVector = &curvesInSurface;
+    // //     }
+    // //     allLines->insert(allLines->end(), auxVector->begin(), auxVector->end() );
+    // //     gmsh::model::addPhysicalGroup(1,*allLines,fSurfaceMaterial);
+    // //     // physical surface
+    // //     gmsh::model::addPhysicalGroup(2,{surfaceIndex},fSurfaceMaterial);
+
+    // // // synchronize
+    // //     gmsh::model::geo::synchronize();
+    // // mesh
+    //     gmsh::model::mesh::generate(2);
+    // // write (for testing)
+    //     gmsh::write("testAPI.msh");
+	// gmsh::finalize();
+
 	// Creating the Geo mesh
 
 	int dimel = 2;
@@ -141,10 +189,10 @@ int main()
 	// Find and split intersected faces
 	fracmesh.SplitFaces(18);
 	// Split edge of fracture
-	fracmesh.SplitFractureEdge();
+	// fracmesh.SplitFractureEdge();
 
 	// triangulation of fracture plane
-	// fracmesh.SplitFracturePlane();
+	fracmesh.SplitFracturePlane();
 	gmesh->BuildConnectivity();
 	fracmesh.CreateSkeletonElements(1,19);
 
@@ -180,7 +228,7 @@ int main()
 
 
 
-
+/*
 // SECOND PLANE
 
 
@@ -254,7 +302,7 @@ int main()
 	std::ofstream out2("./TestSurfaces2.vtk");
 	gmesh->Print(meshprint2);
 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out2, true);
-
+*/
 	return 0;
 }
 
