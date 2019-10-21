@@ -342,16 +342,10 @@ void DFNFace::DivideSurface(int matid){
 		refPatternMesh.CreateGeoElement(elemtype, refchild, matid, index);
 		childrenIndices[i] = index;
 	}
-	refPatternMesh.BuildConnectivity();
-	// int problematicface = 117;
-	// if(fFaceIndex == problematicface){
-	// 	std::ofstream meshprint3("meshprint3.txt");
-	// 	refPatternMesh.Print(meshprint3);
-	// } 
+	refPatternMesh.BuildConnectivity(); 
 	// define refPattern
-	TPZRefPattern *refpat = new TPZRefPattern(refPatternMesh);
-	TPZAutoPointer<TPZRefPattern> patternPointer(refpat);
-	face->SetRefPattern(patternPointer);
+	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
+	face->SetRefPattern(refpat);
 	
 //----------------------------------------------------------------------------
 
