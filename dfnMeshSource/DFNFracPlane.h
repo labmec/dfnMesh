@@ -37,7 +37,7 @@ class DFNFracPlane
 	/// Contains fracture corner points. Matrix 3xn (n is the number of corners)
 	Matrix fCornerPoints;
 	
-	/// Contains fracture axis Ax0,Ax1 and Ax2. Matrix 3x3
+	/// Axis that define fracture orientation (Ax0 from node1 to node0, Ax1 from node1 to node2 and Ax2 the normal vector). Matrix 3x3
 	Matrix fAxis ;
 
 	/// Area of plane

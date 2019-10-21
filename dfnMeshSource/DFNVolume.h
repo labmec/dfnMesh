@@ -28,13 +28,13 @@ class DFNVolume
     bool fIsCut;
 
     /// Vector of sub elements
-    TPZVec<int64_t> fSubEls;
+    TPZManVector<int64_t> fSubEls;
     
     /// Index of in-volume intersection EPoint
     int64_t fIntersection = -1;
     
     /// Indices of planes enclosed by volume
-    TPZVec<int64_t> fEnclosedFaces;
+    TPZManVector<int64_t> fEnclosedFaces;
 
     // /// Pointer to a fracture mesh
     // DFNFractureMesh *fFracMesh = nullptr;

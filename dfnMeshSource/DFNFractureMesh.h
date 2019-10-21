@@ -64,9 +64,6 @@ private:
     /// Bounded plane from a fracture
     DFNFracPlane fFracplane;
 
-    // /// Fracplane's geometric element index
-    // int64_t fFracplaneindex;
-
     /// Material id of elements at fracture surface
     int fSurfaceMaterial = 40;
 
@@ -127,6 +124,16 @@ private:
     /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
     void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 
+    /**
+     * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, and imported 
+     * elements are pushed to the back of TPZGeoMesh::ElementVector 
+     * (Must be called between the pair gmsh::initialize and gmsh::finalize of 
+     * the model from which elements should be read).
+     * @param Pointer to geometric mesh where elements should be inserted.
+     * @comment If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
+    */
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension);
+
 public:
     
     /// Insert intersection elements of lower dimension in the geometric mesh.
@@ -166,7 +173,7 @@ public:
     /// Write mesh elements to .geo file
     void WriteGMSH(std::ofstream &outfile);
 
-    /// Uses Gmsh to mesh volumes cut by fracture plane
+    /// Uses GMsh to mesh volumes cut by fracture plane
     void CreateVolumes();
 
     /// Sets material for elements at surface of fracture
