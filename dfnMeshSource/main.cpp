@@ -34,7 +34,7 @@
 
 
 void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane);
-void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL>> &planevector, TPZGeoMesh *gmesh);
+void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> *> &planevector, TPZGeoMesh *gmesh);
 //MATERIAL ID MAP
 // 1 gmesh (default)
 // 4 skeleton
@@ -49,40 +49,14 @@ using namespace std;
 
 int main()
 {
-	Matrix plane0(3,4);
-	Matrix plane1(3,4);
-	TPZManVector<TPZFMatrix<REAL>> planevector(2);
-	planevector[0] = plane0;
-	planevector[1] = plane1;
-
-	ReadExampleFromFile("example.txt",planevector,nullptr);
-	
-
-	// Creating the Geo mesh
-
-	int dimel = 2;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 2);
-	x1[2] = 0.;
-	TPZManVector<int, 2> nelx(2, dimel);
-	TPZGenGrid gengrid(nelx, x0, x1);
-	gengrid.SetElementType(EQuadrilateral);
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
-	gmesh->SetDimension(2);
-	gengrid.Read(gmesh);
 
-	// Mesh 3D
+	TPZManVector< TPZFMatrix<REAL> *> planevector(2);
+	planevector[0] = new Matrix;
+	planevector[1] = new Matrix;
 
-	TPZExtendGridDimension extend(gmesh,1.);
-	extend.SetElType(1);
-	TPZGeoMesh *gmesh3d = extend.ExtendedMesh(dimel);
-	gmesh = gmesh3d;
+	ReadExampleFromFile("example.txt",planevector,gmesh);
 	
-
-
-
-
-
-
 
 
 	// example fractures
@@ -96,13 +70,10 @@ int main()
 	// 1.3 1.3 1.3 1.3
 
 
-
-
-
-	Matrix plane(3, 4);
-	ReadFractureFromFile("fracture.txt", plane);
+	Matrix plane = *planevector[0];
+	// ReadFractureFromFile("fracture.txt", plane);
 	//  Construction of fracplane and FractureMesh
-	DFNFracPlane fracplane(plane);
+	DFNFracPlane fracplane(* planevector[0]);
 	DFNFractureMesh fracmesh(fracplane, gmesh, 40);
 
 	// Find and split intersected ribs
@@ -132,10 +103,10 @@ int main()
 
 
 // SECOND PLANE
-
-	ReadFractureFromFile("fracture2.txt", plane);
+	plane = *planevector[1];
+	// ReadFractureFromFile("fracture2.txt", plane);
 	// Construction of fracplane and FractureMesh
-	DFNFracPlane fracplane2(plane);
+	DFNFracPlane fracplane2(* planevector[1]);
 	DFNFractureMesh fracmesh2(fracplane2, gmesh, 40);
 
 	// Find and split intersected ribs
@@ -218,7 +189,7 @@ void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane){
 }
 
 
-void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL>> &planevector, TPZGeoMesh *gmesh){
+void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> *> &planevector, TPZGeoMesh *gmesh){
 	/*_______________________________________________________________
 						FILE FORMAT 
 
@@ -333,7 +304,7 @@ void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL>> &p
 			while(line.length() == 0){getline(plane_file, line);}
 			std::stringstream ss(line);
 			getline(ss, word, ' ');
-			if(word == "NumberOfFratures") {
+			if(word == "NumberOfFractures") {
 				getline(ss, word, ' ');
 				while (word.length() == 0){getline(ss, word, ' ');}
 				nfractures = std::stoi(word);
@@ -346,21 +317,19 @@ void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL>> &p
 				getline(plane_file, line);
 				std::stringstream ss(line);
 				getline(ss, aux, ' ');
-				while (aux.length() == 0){getline(ss, aux, ' ');}
 			}
+			int fracid;
+			int ncorners;
 			{
 				std::stringstream ss(line);
 				getline(ss, word, ' ');
 				while (word.length() == 0 || word == "Fracture"){getline(ss, word, ' ');}
-			}
-			int fracid = std::stoi(word);
-			{
-				std::stringstream ss(line);
+				fracid = std::stoi(word);
 				getline(ss, word, ' ');
 				while (word.length() == 0 || word == "Fracture"){getline(ss, word, ' ');}
+				ncorners = std::stoi(word);
 			}
-			int ncorners = std::stoi(word);
-			planevector[ifrac].Resize(3,ncorners);
+			planevector[ifrac]->Resize(3,ncorners);
 			std::cout<<"\nCorners of fracture #"<<fracid<<":\n";
 			for(int i=0; i<3; i++){
 				getline(plane_file, line);
@@ -368,8 +337,8 @@ void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL>> &p
 				int j = 0;
 				while (getline(ss, word, ' ')){
 					while (word.length() == 0){getline(ss, word, ' ');}
-					planevector[ifrac](i, j) = std::stod(word);
-					std::cout << planevector[ifrac](i, j) << (j<ncorners-1?", \t":"\n");
+					planevector[ifrac]->operator()(i, j) = std::stod(word);
+					std::cout << planevector[ifrac]->operator()(i, j) << (j<ncorners-1?", \t":"\n");
 					j++;
 				}
 			}
@@ -380,73 +349,26 @@ void ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL>> &p
 
 
 
+	// Creating the Geo mesh
 
-
-
-
-
-
-
-
-
-
-/*
-// Creating the Geo mesh
-
-	int dimel = 2;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 2);
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
+	x1[0] = Lx;
+	x1[1] = Ly;
 	x1[2] = 0.;
-	TPZManVector<int, 2> nelx(2, dimel);
-	TPZGenGrid gengrid(nelx, x0, x1);
-	gengrid.SetElementType(EQuadrilateral);
-	TPZGeoMesh *gmesh = new TPZGeoMesh;
+	TPZManVector<int, 2> ndiv(2);
+	ndiv[0] = nx;
+	ndiv[1] = ny;
+	TPZGenGrid gengrid(ndiv, x0, x1);
+	gengrid.SetElementType(eltype);
+	// TPZGeoMesh *gmesh = new TPZGeoMesh;
 	gmesh->SetDimension(2);
 	gengrid.Read(gmesh);
 
 	// Mesh 3D
 
-	TPZExtendGridDimension extend(gmesh,1.);
+	TPZExtendGridDimension extend(gmesh,Lz);
 	extend.SetElType(1);
-	TPZGeoMesh *gmesh3d = extend.ExtendedMesh(dimel);
+	TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nz);
 	gmesh = gmesh3d;
 
-	// count number of corners
-	while (npoints == 0){
-		ifstream plane_file(filename);
-		if (!plane_file){
-			std::cout << "Error reading file" << std::endl;
-			DebugStop();
-		}
-		getline(plane_file, line);
-		std::stringstream ss(line);
-		while (getline(ss, value, ' ')){
-			while (value.length() == 0){
-				getline(ss, value, ' ');
-			}
-			npoints++;
-		}
-	}
-	// then read points
-	plane.Resize(3,npoints);
-	{ //just a scope
-		int i = 0;
-		int j = 0;
-		std::cout << "Fracture plane defined as: \n";
-		ifstream plane_file(filename);
-		while (getline(plane_file, line)){
-			std::stringstream ss(line);
-			while (getline(ss, value, ' ')){
-				while (value.length() == 0){
-					getline(ss, value, ' ');
-				}
-				plane(i, j) = std::stod(value);
-				std::cout << plane(i, j) << (j<npoints-1?" , ":"\n");
-				j++;
-			}
-			j = 0;
-			i++;
-		}
-		std::cout << std::endl;
-	}
-*/
 }
