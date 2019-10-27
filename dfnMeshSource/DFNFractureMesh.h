@@ -129,7 +129,7 @@ private:
      * elements are pushed to the back of TPZGeoMesh::ElementVector 
      * (Must be called between the pair gmsh::initialize and gmsh::finalize of 
      * the model from which elements should be read).
-     * @param Pointer to geometric mesh where elements should be inserted.
+     * @param gmsh: Pointer to geometric mesh where elements should be inserted.
      * @comment If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
     */
     void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension);
@@ -178,6 +178,8 @@ public:
 
     /// Sets material for elements at surface of fracture
     void SetSurfaceMaterial(int matID);
+    /// Get material for elements at the surface of fracture
+    int GetSurfaceMaterial(){return fSurfaceMaterial;}
 
     /// Get material ID for elements at surface of fracture
     int MaterialID(){return fSurfaceMaterial;}

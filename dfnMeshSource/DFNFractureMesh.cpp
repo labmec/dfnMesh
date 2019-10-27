@@ -100,7 +100,7 @@ REAL DFNFractureMesh::GetTolerance() const{
 
 /**
  * @brief Check if the neighbour has equal dimension
- * @param Geo element side
+ * @param geliside GeoElement side
  */
 
 bool DFNFractureMesh::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
@@ -133,8 +133,8 @@ bool DFNFractureMesh::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
 
 /**
   * @brief Creates the skeleton mesh
-  * @param Dimension
-  * @param Material ID number
+  * @param dimension
+  * @param matid material ID number for skeleton elements
   */
 
 void DFNFractureMesh::CreateSkeletonElements(int dimension, int matid)
@@ -177,7 +177,7 @@ void DFNFractureMesh::CreateSkeletonElements(int dimension, int matid)
 
 /**
  * @brief Sets the rib idexes in the map
- * @param Ribs to be set
+ * @param rib Rib to be set
  */
 
 void DFNFractureMesh::AddRib(DFNRibs rib){
