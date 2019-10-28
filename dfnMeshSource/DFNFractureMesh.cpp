@@ -1,11 +1,10 @@
 /*! 
- *  @brief     Compares a geomesh with fracture plane to find intersections.
- *  @details   Intersection search is performed after creation of skeleton
- *  elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
+ *  @brief     Compares a geomesh with fracture plane to refine intersections, and mesh the surface of the fracture.
+ *  @details   Intersection search is performed after creation of skeleton mesh
+ *  with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a DFNFracPlane.
  *  @authors   Pedro Lima
- *  @authors   Jorge Ordoñez
- *  @date      2018-2019
+ *  @date      2019
  */
 
 #include "DFNFractureMesh.h"
@@ -263,7 +262,11 @@ DFNFace * DFNFractureMesh::Face(int64_t index){
     if(candidate != fMidFaces.end()){
         return &candidate->second;
     }
-    return &fEndFaces.find(index)->second;
+    candidate = fEndFaces.find(index);
+    if(candidate != fEndFaces.end()){
+        return &candidate->second;
+    }
+    return NULL;
 }
 
 
@@ -272,7 +275,7 @@ DFNFace * DFNFractureMesh::Face(int64_t index){
 /**
  * @brief Create cut surfaces
  * @param Material id
- * @comment This method was getting too long. Moved some of it into AddEndFace and AddMidFace.
+ * @note This method was getting too long. Moved some of it into AddEndFace and AddMidFace.
  */
 
 void DFNFractureMesh::SplitFaces(int matID){
@@ -567,7 +570,7 @@ void DFNFractureMesh::SplitFracturePlane(){
     // initialize GMsh
     gmsh::initialize();
     gmsh::model::add("testAPI2");
-    gmsh::option::setNumber("Mesh.Algorithm", 1); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
+    gmsh::option::setNumber("Mesh.Algorithm", 6); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
     // INSERT POINTS
         // iterate over ribs and get their ipoints
         for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
@@ -652,6 +655,7 @@ void DFNFractureMesh::SplitFracturePlane(){
         gmsh::model::geo::synchronize();
     // mesh
         gmsh::model::mesh::generate(2);
+        gmsh::model::mesh::optimize("Netgen");
     // write (for testing)
         gmsh::write("testAPI.msh");
     // import meshed plane back into PZ geoMesh
@@ -786,9 +790,35 @@ bool DFNFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 
     // map of indices for volumes that could contain the face
     std::map<REAL, int64_t> candidates;
-    
     // iterate over ifracface 1D sides 
     int nsides = ifracface->NSides();
+    bool condition = false;
+    TPZGeoEl * currentface = ifracface;
+    TPZGeoElSide aux;
+    while(condition==false){
+        for(int iside = 0; iside< nsides; iside++){
+            TPZGeoElSide gelside(currentface, iside);
+            TPZGeoElSide neig = gelside.Neighbour;
+
+            while (gelside != neig)
+            {
+                int mat = neig.Element()->MaterialId();
+                if (mat !=fSurfaceMaterial)
+                {
+                    condition = true;
+                    return true;
+                }
+                neig = neig.Neighbour();
+            }
+            
+        }
+        currentface = gelside.n
+    }
+
+
+
+
+
     for(int iside = 0; iside < nsides; iside++){
         if(ifracface->SideDimension(iside) != 1){continue;}
         TPZGeoElSide geliside(ifracface, iside);
@@ -849,6 +879,11 @@ bool DFNFractureMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
                 for(int ico = 0; ico < 3; ico++){dot += v1[ico]*v2[ico];}
                 if(dot>0){
                     candidates[dot] = ivolume.Element()->Index();
+                    if(dot+fTolerance > 1.0){
+                        // found perfect candidate
+                        fVolumes[ivolume.Element()->Index()].SetFaceInVolume(ifracface->Index());
+                        return true;
+                    }
                 }
             }
         }
