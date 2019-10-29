@@ -33,7 +33,7 @@ DFNFace::DFNFace(const DFNFace &copy){
     fSubFaces = copy.fSubFaces;
     fIntersection = copy.fIntersection;
 	fFracMesh = copy.fFracMesh;
-	fFather = copy.fFather;
+	fEnclosingVolume = copy.fEnclosingVolume;
 }
 
 /// Assignment operator
@@ -45,7 +45,7 @@ DFNFace &DFNFace::operator=(const DFNFace &copy){
     fSubFaces = copy.fSubFaces;
     fIntersection = copy.fIntersection;
 	fFracMesh = copy.fFracMesh;
-	fFather = copy.fFather;
+	fEnclosingVolume = copy.fEnclosingVolume;
     return *this;
 }
 
@@ -373,7 +373,6 @@ void DFNFace::DivideSurface(int matid){
 		// Tell the child who its father is
 		newface->SetFather(fFaceIndex);
 	}
-	// SetChildren(childrenIndices);
 	// create skeleton?
 }
 

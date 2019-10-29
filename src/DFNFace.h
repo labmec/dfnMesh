@@ -43,8 +43,8 @@ private:
     /// Pointer to a fracture mesh
     DFNFractureMesh *fFracMesh = nullptr;
 
-    /// Pointer to father element
-    TPZGeoEl *fFather = nullptr;
+    /// Index of enclosing volume (-1 if no enclosing volume has been set)
+    int64_t fEnclosingVolume = -1;
  
 public:
     
@@ -112,5 +112,9 @@ public:
     // /// Get pointer to father element
     // TPZGeoEl *Father(){return fFather;}
 
+    /// Set the volume in which this face is contained
+    void SetEnclosingVolume(int64_t volumeIndex){fEnclosingVolume = volumeIndex;}
+    /// Get the volume in which this face is contained
+    int64_t EnclosingVolume(){return fEnclosingVolume;}
 };
 #endif /* DFNFace_h */
