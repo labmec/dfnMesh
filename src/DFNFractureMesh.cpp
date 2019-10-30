@@ -1059,7 +1059,7 @@ void DFNFractureMesh::WriteGMSH(std::ofstream &outfile){
                 // find face element
                 TPZGeoElSide side = gelside.Neighbour();
                 while(side.Element()->Dimension() != 2) {side = side.Neighbour();}
-                DFNFace *iface = Face(side.Element()->Index());
+                // DFNFace *iface = Face(side.Element()->Index());
                 // if face is not cut, add it to the loop, else, add its children
                 if(side.Element()->HasSubElement() == false){
                     outfile << side.Element()->Index() << (iside < nsides-2? "," : "};\n");

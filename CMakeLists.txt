@@ -123,6 +123,6 @@ include_directories(${GMSH_INC})
 
 
 
-add_subdirectory(dfnMeshSource)
+add_subdirectory(src)
 
 
