@@ -100,7 +100,7 @@ public:
     }
     
     /// Return the corner nodes of the fracture
-    DFNFracPlane GetPlane() const;
+    DFNFracPlane &GetPlane();
     
     /// Modify the default tolerance
     void SetTolerance(REAL tolerance);

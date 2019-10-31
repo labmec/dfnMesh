@@ -18,7 +18,7 @@ DFNFracPlane::DFNFracPlane(const Matrix &CornerPoints)
 	}
 	//If data is consistent, fAxis was computed during consistency check
 	fCornerPoints = CornerPoints;
-	ComputeArea();
+	ComputeArea2();
 }
 
 // Copy constructor
@@ -95,7 +95,7 @@ bool DFNFracPlane::Check_Data_Consistency(Matrix CornerPoints)
 		//Checks if points are coplanar
 		if(std::abs(ver) > fTolerance){
 			std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
-			DebugStop();
+			// DebugStop();
 		}
 	}
 
@@ -160,7 +160,10 @@ void DFNFracPlane::ComputeArea(){
 			fArea = temp1 + temp2;
 			break;
 		}
-		default:{std::cout<<"Plane is not triangle nor quadrilateral? \n";DebugStop();}
+		default:{std::cout<<"Plane is not triangle nor quadrilateral? \n";
+
+			DebugStop();
+		}
 	}
 }
 
@@ -198,7 +201,7 @@ bool DFNFracPlane::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
     if(Check_point_above(p1) != Check_point_above(p2)){
         //Rib cut by infinite plane
         //then calculate intersection point and check if it's within plane boundaries
-        TPZVec<REAL> intersection = CalculateIntersection(p1, p2);
+        TPZManVector<REAL,3> intersection = CalculateIntersection(p1, p2);
         return IsPointInPlane(intersection);
     }
     else
@@ -294,9 +297,92 @@ TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh){
 }
 
 
+// TPZManVector<REAL,3> CrossProduct(TPZManVector<REAL,3> v1, TPZManVector<REAL,3> v2 ){
+// 	TPZManVector<REAL,3> cross(3,0);
+// 	cross[0] = v1[]
+// 	return cross;
+// }
 
+// area3D_Polygon(): compute the area of a 3D planar polygon
+//  Input:  int n = the number of vertices in the polygon
+//          Point* V = an array of n+1 points in a 2D plane with V[n]=V[0]
+//          Point N = a normal vector of the polygon's plane
+//  Return: the (float) area of the polygon
+REAL DFNFracPlane::ComputeArea2(){
+	int n = fCornerPoints.Cols();
+	TPZManVector<REAL,3> normal(3);
+	for(int i = 0; i<3; i++){
+		normal[i] = fAxis(i,2);
+	}
 
+    REAL area = 0;
+    REAL an, ax, ay, az; // abs value of normal and its coords
+    int  coord;           // coord to ignore: 1=x, 2=y, 3=z
+    int  i, j, k;         // loop indices
 
+    if (n < 3) return 0;  // a degenerate polygon
+
+    // select largest abs coordinate to ignore for projection
+    ax = fabs(normal[0]);    		// abs x-coord
+    ay = fabs(normal[1]);    		// abs y-coord
+    az = fabs(normal[2]);    		// abs z-coord
+
+    coord = 3;                    // ignore z-coord
+    if (ax > ay) {
+        if (ax > az) coord = 1;   // ignore x-coord
+    }
+    else if (ay > az) coord = 2;  // ignore y-coord
+
+    // compute area of the 2D projection
+    switch (coord) {
+      case 1:
+        for (i=1, j=2, k=0; i<n; i++, j++, k++){
+			j = j%n;
+            area += (fCornerPoints(1,i) * (fCornerPoints(2,j) - fCornerPoints(2,k)));
+		}
+        break;
+      case 2:
+        for (i=1, j=2, k=0; i<n; i++, j++, k++){
+			j = j%n;
+            area += (fCornerPoints(2,i) * (fCornerPoints(0,j) - fCornerPoints(0,k)));
+		}
+		break;
+      case 3:
+        for (i=1, j=2, k=0; i<n; i++, j++, k++){
+			j = j%n;
+            area += (fCornerPoints(0,i) 
+					*(fCornerPoints(1,j) 
+					- fCornerPoints(1,k)));
+		}
+        break;
+    }
+    switch (coord) {    // wrap-around term
+      case 1:
+		area += (fCornerPoints(1,0) * (fCornerPoints(2,1) - fCornerPoints(2,n-1)));
+        break;
+      case 2:
+		area += (fCornerPoints(2,0) * (fCornerPoints(0,1) - fCornerPoints(0,n-1)));
+        break;
+      case 3:
+		area += (fCornerPoints(0,0) * (fCornerPoints(1,1) - fCornerPoints(1,n-1)));
+        break;
+    }
+
+    // scale to get area before projection
+    an = sqrt( ax*ax + ay*ay + az*az); // length of normal vector
+    switch (coord) {
+      case 1:
+        area *= (an / (2 * normal[0]));
+        break;
+      case 2:
+        area *= (an / (2 * normal[1]));
+        break;
+      case 3:
+        area *= (an / (2 * normal[2]));
+    }
+	fArea = fabs(area);
+    return fArea;
+}
 
 
 

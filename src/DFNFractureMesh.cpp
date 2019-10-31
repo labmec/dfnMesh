@@ -28,8 +28,8 @@ DFNFractureMesh::DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int
     // @ToDo Maybe implement check for previously created skeleton
     // Create skeleton elements
     int materialSkeleton = 4;
-    CreateSkeletonElements(1, materialSkeleton);
     CreateSkeletonElements(2, materialSkeleton);
+    CreateSkeletonElements(1, materialSkeleton);
 
     // Create FracPlane's geometric element into mesh
     // fFracplaneindex = fFracplane.CreateElement(fGMesh);
@@ -67,7 +67,7 @@ DFNFractureMesh &DFNFractureMesh::operator=(const DFNFractureMesh &copy){
  * @return The plane corner coordinates
  */
 
-DFNFracPlane DFNFractureMesh::GetPlane() const{
+DFNFracPlane &DFNFractureMesh::GetPlane() {
     return fFracplane;
 }
 
@@ -181,7 +181,7 @@ void DFNFractureMesh::CreateSkeletonElements(int dimension, int matid)
 
 void DFNFractureMesh::AddRib(DFNRibs rib){
     int index= rib.ElementIndex();
-    fRibs[index]=rib;
+    fRibs.emplace(index,rib);
 }
 
 /**
@@ -335,6 +335,7 @@ void DFNFractureMesh::SplitFaces(int matID){
 
         // if there are ribs cut, create a face object
         if(nribscut == 0){continue;}
+        // std::cout<<"\nFace # "<<iel;
         // Create DFNFace
         DFNFace face(iel, true);
         face.SetRibs(rib_index); 
@@ -421,8 +422,8 @@ void DFNFractureMesh::SplitRibs(int matID){
         // Get rib's vertices
         int64_t p1 = gel->SideNodeIndex(2, 0);
         int64_t p2 = gel->SideNodeIndex(2, 1);
-        TPZVec<REAL> pp1(3);
-        TPZVec<REAL> pp2(3);
+        TPZManVector<REAL,3> pp1(3);
+        TPZManVector<REAL,3> pp2(3);
         fGMesh->NodeVec()[p1].GetCoordinates(pp1);
         fGMesh->NodeVec()[p2].GetCoordinates(pp2);
 
@@ -431,6 +432,7 @@ void DFNFractureMesh::SplitRibs(int matID){
 
         // Split rib
         if (resul == true){
+            std::cout<<"\nRib # "<<iel;
             DFNRibs rib(iel, true);
             AddRib(rib);
             TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
@@ -570,7 +572,7 @@ void DFNFractureMesh::SplitFracturePlane(){
     // initialize GMsh
     gmsh::initialize();
     gmsh::model::add("testAPI2");
-    gmsh::option::setNumber("Mesh.Algorithm", 6); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
+    gmsh::option::setNumber("Mesh.Algorithm", 1); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
     // INSERT POINTS
         // iterate over ribs and get their ipoints
         for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){

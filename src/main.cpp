@@ -95,6 +95,7 @@ int main(){
 	fracmesh.SplitRibs(18);
 	// Find and split intersected faces
 	fracmesh.SplitFaces(18);
+	std::cout<<"\n";
 	// triangulation of fracture plane
 	fracmesh.SplitFracturePlane();
 	//Print result
@@ -113,9 +114,33 @@ int main(){
 	// gmesh->BuildConnectivity();
 	// Find and split intersected faces
 	fracmesh2.SplitFaces(18);
+	std::cout<<"\n";
 	// triangulation of fracture plane
 	fracmesh2.SplitFracturePlane();
-	
+
+// THIRD PLANE
+	plane = planevector[2];
+	// Construction of fracplane and FractureMesh
+	DFNFracPlane fracplane3(plane);
+	DFNFractureMesh fracmesh3(fracplane3, gmesh, 40);
+	// Find and split intersected ribs
+	fracmesh3.SplitRibs(18);
+	// gmesh->BuildConnectivity();
+	// Find and split intersected faces
+	fracmesh3.SplitFaces(18);
+	std::cout<<"\n";
+	TPZManVector<int64_t,4> cornerindexes(4);
+	cornerindexes[0] = fracmesh3.GetPlane().CornerIndex(0);
+	cornerindexes[1] = fracmesh3.GetPlane().CornerIndex(1);
+	cornerindexes[2] = fracmesh3.GetPlane().CornerIndex(2);
+	cornerindexes[3] = fracmesh3.GetPlane().CornerIndex(3);
+
+	int64_t index = gmesh->NElements();
+	// gmesh->CreateGeoElement(EQuadrilateral, cornerindexes, 40, index);
+	gmesh->BuildConnectivity();
+
+	// triangulation of fracture plane
+	fracmesh3.SplitFracturePlane();
 
 	//Print result
 	std::ofstream meshprint("meshprint.txt");
@@ -127,6 +152,7 @@ int main(){
 	DFNMesh dfn;
 	dfn.fFractures.push_back(fracmesh);
 	dfn.fFractures.push_back(fracmesh2);
+	dfn.fFractures.push_back(fracmesh3);
 	gmesh->BuildConnectivity();
 	dfn.CreateVolumes();
 	return 0;
@@ -655,11 +681,12 @@ void DFNMesh::PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile){
         TPZGeoEl *ichild = gel->SubElement(i);
         if(ichild->HasSubElement()){
             PrintYoungestChildren(ichild,outfile);
-            outfile << (i < nchildren-1? "," : "");
         }
         else{
-            outfile << ichild->Index() << (i < nchildren-1? "," : "");
+            // outfile << ichild->Index() << (i < nchildren-1? "," : "");
+            outfile << ichild->Index();
         }
+		outfile << (i < nchildren-1? "," : "");
     }
     // outfile << (iside < nsides-2? "," : "};\n");
     

@@ -47,7 +47,7 @@ class DFNFracPlane
 	REAL fTolerance = 1.e-4;
 
 	/// If nodes of this plane have been added to a geometric mesh, this vector holds GeoNodes indices 
-	TPZManVector<int64_t, 4> fPointsIndex;
+	TPZManVector<int64_t, 5> fPointsIndex;
 
   public:
 	/// Empty constructor
@@ -120,6 +120,8 @@ class DFNFracPlane
   private:
 	/// Initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);
+
+	REAL ComputeArea2();
 };
 
 #endif /* DFNFracPlane */
