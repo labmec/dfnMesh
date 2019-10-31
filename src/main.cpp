@@ -128,16 +128,6 @@ int main(){
 	// gmesh->BuildConnectivity();
 	// Find and split intersected faces
 	fracmesh3.SplitFaces(18);
-	std::cout<<"\n";
-	TPZManVector<int64_t,4> cornerindexes(4);
-	cornerindexes[0] = fracmesh3.GetPlane().CornerIndex(0);
-	cornerindexes[1] = fracmesh3.GetPlane().CornerIndex(1);
-	cornerindexes[2] = fracmesh3.GetPlane().CornerIndex(2);
-	cornerindexes[3] = fracmesh3.GetPlane().CornerIndex(3);
-
-	int64_t index = gmesh->NElements();
-	// gmesh->CreateGeoElement(EQuadrilateral, cornerindexes, 40, index);
-	gmesh->BuildConnectivity();
 
 	// triangulation of fracture plane
 	fracmesh3.SplitFracturePlane();
