@@ -37,7 +37,7 @@ class DFNFracPlane
 	/// Contains fracture corner points. Matrix 3xn (n is the number of corners)
 	Matrix fCornerPoints;
 	
-	/// Contains fracture axis Ax0,Ax1 and Ax2. Matrix 3x3
+	/// Axis that define fracture orientation (Ax0 from node1 to node0, Ax1 from node1 to node2 and Ax2 the normal vector). Matrix 3x3
 	Matrix fAxis ;
 
 	/// Area of plane
@@ -46,8 +46,8 @@ class DFNFracPlane
 	/// Define a default tolerance
 	REAL fTolerance = 1.e-4;
 
-	/// If nodes of this plane have been added to a geometric mesh, this vector holds EPoints element indices 
-	TPZManVector<int64_t, 4> fPointsIndex;
+	/// If nodes of this plane have been added to a geometric mesh, this vector holds GeoNodes indices 
+	TPZManVector<int64_t, 5> fPointsIndex;
 
   public:
 	/// Empty constructor
@@ -97,17 +97,17 @@ class DFNFracPlane
    
 
 	/**
-	 * @brief Inserts corner nodes as EPoints in geometric mesh
+	 * @brief Inserts corner nodes in geometric mesh
 	 * @param Pointer to geometric mesh
-	 * @return Index for newly created element in gmesh
+	 * @return Vector with nodes indices in gmesh
 	 */
-	TPZManVector<int64_t,4> SetPointsInGeomesh(TPZGeoMesh *gmesh, int matID);
+	TPZManVector<int64_t,4> SetPointsInGeomesh(TPZGeoMesh *gmesh);
 
 	/**
-	 * @brief Returns index of GeoEl EPoint that was created for corner i using DFNFracPlane::SetPointsInGeomesh(gmesh, matID)
+	 * @brief Returns index of GeoNode that was created for corner i using DFNFracPlane::SetPointsInGeomesh(gmesh, matID)
 	 * @param Local index of corner
 	 */
-	int64_t PointElIndex(int i) const{
+	int64_t CornerIndex(int i) const{
 		return fPointsIndex[i];
 	}
 
@@ -120,6 +120,8 @@ class DFNFracPlane
   private:
 	/// Initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);
+
+	REAL ComputeArea2();
 };
 
 #endif /* DFNFracPlane */

@@ -23,6 +23,8 @@
 #include "DFNVolume.h"
 #include "DFNFracPlane.h"
 
+#include <gmsh.h>
+
 
 typedef TPZFMatrix<REAL> Matrix;
 
@@ -53,14 +55,14 @@ private:
     /// Map of intersected volumes
     std::map<int64_t, DFNVolume> fVolumes;
 
+    /// Map of elements on fracture surface
+    std::map<int64_t, TPZGeoEl *> fSurfEl;
+
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 
     /// Bounded plane from a fracture
     DFNFracPlane fFracplane;
-
-    // /// Fracplane's geometric element index
-    // int64_t fFracplaneindex;
 
     /// Material id of elements at fracture surface
     int fSurfaceMaterial = 40;
@@ -98,7 +100,7 @@ public:
     }
     
     /// Return the corner nodes of the fracture
-    DFNFracPlane GetPlane() const;
+    DFNFracPlane &GetPlane();
     
     /// Modify the default tolerance
     void SetTolerance(REAL tolerance);
@@ -110,9 +112,28 @@ private:
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    TPZVec<REAL> FindEndFracturePoint(DFNFace &face);
+    TPZManVector<REAL,3> FindEndFracturePoint(DFNFace &face);
     
+    /**
+     *  @brief Navigate children tree to access most extreme branches
+     *  @param *gel pointer to geometric element of eldest ancestor
+     *  @param &outfile ofstream in which to write accessed data
+     */
     void PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile);
+    
+    /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
+    void SplitFractureEdge(std::list<int> &fracEdgeLoop);
+
+    /**
+     * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, and imported 
+     * elements are pushed to the back of TPZGeoMesh::ElementVector 
+     * (Must be called between the pair gmsh::initialize and gmsh::finalize of 
+     * the model from which elements should be read).
+     * @param gmsh: Pointer to geometric mesh where elements should be inserted.
+     * @comment If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
+    */
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension);
+
 public:
     
     /// Insert intersection elements of lower dimension in the geometric mesh.
@@ -145,8 +166,6 @@ public:
     /// Find and split intersected ribs
     void SplitRibs(int matID);
 
-    /// Connects fracture-edge intersections (temporary name for lack of better one)
-    void SplitFractureEdge();
 
     /// Triangulates fracture plane
     void SplitFracturePlane();
@@ -154,11 +173,13 @@ public:
     /// Write mesh elements to .geo file
     void WriteGMSH(std::ofstream &outfile);
 
-    /// Uses Gmsh to mesh volumes cut by fracture plane
+    /// Uses GMsh to mesh volumes cut by fracture plane
     void CreateVolumes();
 
     /// Sets material for elements at surface of fracture
     void SetSurfaceMaterial(int matID);
+    /// Get material for elements at the surface of fracture
+    int GetSurfaceMaterial(){return fSurfaceMaterial;}
 
     /// Get material ID for elements at surface of fracture
     int MaterialID(){return fSurfaceMaterial;}
