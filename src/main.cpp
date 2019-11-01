@@ -82,7 +82,7 @@ int main(){
 	gRefDBase.InitializeUniformRefPattern(EOned);
 	TPZManVector< TPZFMatrix<REAL>> planevector(2);
 	TPZGeoMesh *gmesh;
-	gmesh = ReadExampleFromFile("example.txt",planevector);
+	gmesh = ReadExampleFromFile("examples/exampleOctagon.txt",planevector);
 
 
 
@@ -118,19 +118,19 @@ int main(){
 	// triangulation of fracture plane
 	fracmesh2.SplitFracturePlane();
 
-// THIRD PLANE
-	plane = planevector[2];
-	// Construction of fracplane and FractureMesh
-	DFNFracPlane fracplane3(plane);
-	DFNFractureMesh fracmesh3(fracplane3, gmesh, 40);
-	// Find and split intersected ribs
-	fracmesh3.SplitRibs(18);
-	// gmesh->BuildConnectivity();
-	// Find and split intersected faces
-	fracmesh3.SplitFaces(18);
+// // THIRD PLANE
+// 	plane = planevector[2];
+// 	// Construction of fracplane and FractureMesh
+// 	DFNFracPlane fracplane3(plane);
+// 	DFNFractureMesh fracmesh3(fracplane3, gmesh, 40);
+// 	// Find and split intersected ribs
+// 	fracmesh3.SplitRibs(18);
+// 	// gmesh->BuildConnectivity();
+// 	// Find and split intersected faces
+// 	fracmesh3.SplitFaces(18);
 
-	// triangulation of fracture plane
-	fracmesh3.SplitFracturePlane();
+// 	// triangulation of fracture plane
+// 	fracmesh3.SplitFracturePlane();
 
 	//Print result
 	std::ofstream meshprint("meshprint.txt");
@@ -142,7 +142,7 @@ int main(){
 	DFNMesh dfn;
 	dfn.fFractures.push_back(fracmesh);
 	dfn.fFractures.push_back(fracmesh2);
-	dfn.fFractures.push_back(fracmesh3);
+	// dfn.fFractures.push_back(fracmesh3);
 	gmesh->BuildConnectivity();
 	dfn.CreateVolumes();
 	return 0;

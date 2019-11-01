@@ -59,7 +59,7 @@ bool DFNFracPlane::Check_Data_Consistency(Matrix CornerPoints)
 		std::cout<<"Check the input data";
 		DebugStop();
 	}
-	if(cols < 3 || cols > 5){//To form a plane it is needed at least 3 points but no more than 4
+	if(cols < 3 || cols > 10){//To form a plane it is needed at least 3 points but no more than 4
 		std::cout<<"Check the input data (number of corner points, four is enough)";
 		DebugStop();
 	}

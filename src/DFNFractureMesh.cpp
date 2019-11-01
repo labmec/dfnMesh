@@ -572,7 +572,7 @@ void DFNFractureMesh::SplitFracturePlane(){
     // initialize GMsh
     gmsh::initialize();
     gmsh::model::add("testAPI2");
-    gmsh::option::setNumber("Mesh.Algorithm", 1); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
+    gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
     // INSERT POINTS
         // iterate over ribs and get their ipoints
         for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
