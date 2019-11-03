@@ -27,6 +27,7 @@
 	#include "DFNFractureMesh.h"
 	#include "DFNRibs.h"
 	#include "DFNFace.h"
+	#include "DFNVolume.h"
 
 	#include "TPZRefPatternDataBase.h"
 
@@ -418,7 +419,139 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
  * 	@brief Uses GMsh API to tetrahedralize a DFNVolume
  */ 
 void DFNMesh::Tetrahedralize2(DFNVolume *volume){
-	
+	// GMsh does not accept zero index entities
+    const int shift = 1;
+
+	TPZGeoMesh *gmesh = (*fFractures.begin())->GetGeoMesh();
+	int64_t ivol = volume->ElementIndex();
+	TPZGeoEl *volGel = gmesh->Element(ivol);
+	TPZManVector<int64_t> enclosedFaces = volume->GetFacesInVolume();
+
+	// Initialize GMsh
+	gmsh::initialize();
+		gmsh::option::setNumber("Mesh.Algorithm3D",1); // (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT) Default value: 1
+		// Insert nodes ______________________________
+		{
+			std::set<int64_t> nodes;
+			// corners of volume
+			for(int icorner = 0,
+					ncorners = volGel->NCornerNodes(); icorner < ncorners; icorner++){
+				int64_t inode = volGel->NodeIndex(icorner);
+				nodes.insert(inode);
+			}
+			// nodes of skeleton children faces
+			for(int nsides = volGel->NSides(),
+					iside = nsides-2; iside >= 0; iside--){
+				TPZGeoElSide gelside(volGel,iside);
+				if(gelside.Dimension() != 2) break;
+				TPZStack<TPZGeoEl *> unrefinedSons;
+				gelside.Element()->GetAllSiblings(unrefinedSons);
+				for(TPZGeoEl *child : unrefinedSons){
+					for(int icorner = 0,
+					ncorners = child->NCornerNodes(); icorner < ncorners; icorner++){
+						int64_t inode = child->NodeIndex(icorner);
+						nodes.insert(inode);
+					}
+				}
+			}
+			// nodes of enclosed faces
+			for(int iface = 0,
+					nfaces = enclosedFaces.size(); iface < nfaces; iface++){
+				TPZGeoEl *gel = gmesh->Element(enclosedFaces[iface]);
+				for(int icorner = 0,
+				ncorners = gel->NCornerNodes(); icorner < ncorners; icorner++){
+					int64_t inode = gel->NodeIndex(icorner);
+					nodes.insert(inode);
+				}
+			}
+			// Pass nodes to GMsh
+			for(int64_t inode : nodes){
+				TPZManVector<REAL,3> coord(3);
+				gmesh->NodeVec()[inode].GetCoordinates(coord);
+				gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode+shift);
+			}
+		}
+
+
+		// Insert Lines ______________________________
+		{
+			std::set<int64_t> lines;			
+			// edges of skeleton children faces
+			for(int nsides = volGel->NSides(),
+					iside = nsides-2; iside >= 0; iside--){
+				TPZStack<TPZGeoEl *> unrefinedSons;{
+					TPZGeoElSide vol_gelside(volGel,iside);
+					if(vol_gelside.Dimension() != 2) break;
+					vol_gelside.Element()->GetAllSiblings(unrefinedSons);
+				}
+				for(TPZGeoEl *child : unrefinedSons){
+					for(int iside_child = child->NCornerNodes(),
+							nsides_child = child->NSides(); iside_child < nsides_child-1; iside_child++){
+						TPZGeoElSide gelside(child,iside_child);
+						TPZGeoElSide neig = gelside.Neighbour();
+						while(neig.Dimension() != 1){
+							neig = neig.Neighbour();
+						}
+						int64_t iline = neig.Element()->Index();
+						lines.insert(iline);
+					}
+				}
+			}
+			// edges of enclosed faces
+			for(int iface = 0,
+					nfaces = enclosedFaces.size(); iface < nfaces; iface++){
+				TPZGeoEl *gel = gmesh->Element(enclosedFaces[iface]);
+				for(int iside = gel->NCornerNodes(),
+						nsides = gel->NSides(); iside < nsides-1; iside++){
+					TPZGeoElSide gelside(gel,iside);
+					TPZGeoElSide neig = gelside.Neighbour();
+					while(neig.Dimension() != 1){
+						neig = neig.Neighbour();
+					}
+					int64_t iline = neig.Element()->Index();
+					lines.insert(iline);
+				}
+			}
+			// Pass lines to GMsh
+			for(int64_t iline : lines){
+				TPZGeoEl *gel = gmesh->Element(iline);
+				int64_t node0 = gel->NodeIndex(0)+shift;
+				int64_t node1 = gel->NodeIndex(1)+shift;
+				gmsh::model::geo::addLine(node0,node1,iline+shift);
+				gmsh::model::geo::mesh::setTransfiniteCurve(iline+shift,2);
+			}
+		}
+		// Insert Faces ______________________________
+		{
+			std::set<int64_t> faces;
+			// skeleton children faces
+			// enclosed faces
+		}
+		// Insert Volume _____________________________
+		{
+			// Surface loop of skeleton youngest children
+		}
+		// Surfaces in Volume ________________________
+		{
+			// Construct an std::vector
+			gmsh::model::geo::synchronize();
+			// gmsh::model::mesh::embed(int dim, const std::vector<int> &tags, int inDim, int inTag);
+		}
+		// Physical groups ____________________________
+		{
+
+		}
+		// synchronize before meshing
+			gmsh::model::geo::synchronize();
+		// mesh
+			gmsh::model::mesh::generate(3);
+			gmsh::model::mesh::optimize("Netgen");
+		// write (for testing)
+			// gmsh::write("testAPI.msh");
+		// import meshed plane back into PZ geoMesh
+			// ImportElementsFromGMSH(gmesh,3);
+	// close GMsh
+	gmsh::finalize();
 }
 
 
