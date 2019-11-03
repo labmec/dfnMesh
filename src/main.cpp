@@ -52,6 +52,8 @@ struct DFNMesh{
 		void CreateVolumes();
 		/// Uses gmsh API to tetrahedralize volumes
     	void Tetrahedralize(DFNVolume *volume);
+		/// Uses gmsh API to tetrahedralize a DFNVolume
+		void Tetrahedralize2(DFNVolume *volume);
     	/// Find the volumetrical element that encloses a 2D element
     	bool FindEnclosingVolume(TPZGeoEl *ifracface);
 	// private:
@@ -61,10 +63,40 @@ struct DFNMesh{
     	 *  @param outfile: ofstream in which to write accessed data
     	 */
     	void PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile);
-		void QueueNeighbours(TPZGeoEl* gel,   std::list<int64_t> &candidate_queue);
+		
+		/**
+		 * @brief Navigate through neighbours of first level, than second level, and so on, until an element of a specific material id is found
+		 * @returns Index of eldest ancestor of such element
+		*/
 		int64_t SearchIndirectNeighbours(TPZGeoEl* gel);
+		/**
+		 * @brief Goes through all neighbours of gel and identifies if any of them has material id different of that from surface elements
+		 * @returns Index of eldest ancestor of first found neighbour that matches the material id criteria (macro element)
+		 * @note Later I might modify this to fill a vector/list with all neighbours that match the material id criteria
+		*/
 		int64_t FindAdjacentMacroEl(TPZGeoEl* gel);
+		/**
+		 * @brief Pushes all neighbours of a geometric element onto the back of a list
+		 * @note Not all neighbours are pushed to the list, but rather some criteria is specified so that it gets only those that are candidates of higher interest. Currently these would be 2D elements that are neighbours through the edges of gel.
+		 * @param gel: Pointer to geometric element
+		 * @param candidate_queue: Reference to current list of candidates 
+		*/
+		void QueueNeighbours(TPZGeoEl* gel,   std::list<int64_t> &candidate_queue);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //MATERIAL ID MAP
 // 1 gmesh (default)
@@ -223,14 +255,31 @@ void DFNMesh::CreateVolumes(){
 
 
 
+int64_t DFNMesh::SearchIndirectNeighbours(TPZGeoEl* gel){
+    
+    std::list<int64_t> candidate_queue;
+	std::set<int64_t> verified;
+    candidate_queue.push_back(gel->Index());
+    for (auto index : candidate_queue) {
+		if(verified.find(index) != verified.end()) continue;
+        TPZGeoEl *currentgel = gel->Mesh()->Element(index);
+		int64_t macroElindex = FindAdjacentMacroEl(currentgel);
+        if (macroElindex == -1) {
+            QueueNeighbours(currentgel, candidate_queue);
+        }
+        if (macroElindex >= 0) {
+            return macroElindex;;
+        }   
+		verified.insert(index);
+    }
+}
 
 
 
-/**
- * @brief Goes through all neighbours of gel and identifies if any of them has material id different of that from surface elements
- * @return Index of eldest ancestor of first found neighbour that matches the material id criteria (macro element)
- * @note Later I might modify this to fill a vector with all neighbours that match the material id criteria
-*/
+
+
+
+
 int64_t DFNMesh::FindAdjacentMacroEl(TPZGeoEl* gel){
 	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
     int nsides = gel->NSides();
@@ -252,24 +301,6 @@ int64_t DFNMesh::FindAdjacentMacroEl(TPZGeoEl* gel){
 }
 
 
-int64_t DFNMesh::SearchIndirectNeighbours(TPZGeoEl* gel){
-    
-    std::list<int64_t> candidate_queue;
-	std::set<int64_t> verified;
-    candidate_queue.push_back(gel->Index());
-    for (auto index : candidate_queue) {
-		if(verified.find(index) != verified.end()) continue;
-        TPZGeoEl *currentgel = gel->Mesh()->Element(index);
-		int64_t macroElindex = FindAdjacentMacroEl(currentgel);
-        if (macroElindex == -1) {
-            QueueNeighbours(currentgel, candidate_queue);
-        }
-        if (macroElindex >= 0) {
-            return macroElindex;;
-        }   
-		verified.insert(index);
-    }
-}
 
 
 void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue){
@@ -383,7 +414,12 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 
 
 
-
+/**
+ * 	@brief Uses GMsh API to tetrahedralize a DFNVolume
+ */ 
+void DFNMesh::Tetrahedralize2(DFNVolume *volume){
+	
+}
 
 
 
