@@ -43,7 +43,7 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 
 struct DFNMesh{
 	// private:
-		std::list<DFNFractureMesh> fFractures;
+		std::list<DFNFractureMesh *> fFractures;
 		std::map<int64_t, DFNVolume> fVolumes;
 	// public:
 		/// Pointer to volume of index 'index'
@@ -80,71 +80,35 @@ using namespace std;
 
 int main(){
 	gRefDBase.InitializeUniformRefPattern(EOned);
-	TPZManVector< TPZFMatrix<REAL>> planevector(2);
+	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh;
 	gmesh = ReadExampleFromFile("examples/exampleOctagon.txt",planevector);
 
-
-
-// FIRST PLANE
-	Matrix plane(planevector[0]);
-	//  Construction of fracplane and FractureMesh
-	DFNFracPlane fracplane(plane);
-	DFNFractureMesh fracmesh(fracplane, gmesh, 40);
-	// Find and split intersected ribs
-	fracmesh.SplitRibs(18);
-	// Find and split intersected faces
-	fracmesh.SplitFaces(18);
-	std::cout<<"\n";
-	// triangulation of fracture plane
-	fracmesh.SplitFracturePlane();
-	//Print result
-	std::ofstream out1("./TestSurfaces.vtk");
-	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
-
-
-
-// SECOND PLANE
-	plane = planevector[1];
-	// Construction of fracplane and FractureMesh
-	DFNFracPlane fracplane2(plane);
-	DFNFractureMesh fracmesh2(fracplane2, gmesh, 40);
-	// Find and split intersected ribs
-	fracmesh2.SplitRibs(18);
-	// gmesh->BuildConnectivity();
-	// Find and split intersected faces
-	fracmesh2.SplitFaces(18);
-	std::cout<<"\n";
-	// triangulation of fracture plane
-	fracmesh2.SplitFracturePlane();
-
-// // THIRD PLANE
-// 	plane = planevector[2];
-// 	// Construction of fracplane and FractureMesh
-// 	DFNFracPlane fracplane3(plane);
-// 	DFNFractureMesh fracmesh3(fracplane3, gmesh, 40);
-// 	// Find and split intersected ribs
-// 	fracmesh3.SplitRibs(18);
-// 	// gmesh->BuildConnectivity();
-// 	// Find and split intersected faces
-// 	fracmesh3.SplitFaces(18);
-
-// 	// triangulation of fracture plane
-// 	fracmesh3.SplitFracturePlane();
-
-	//Print result
-	std::ofstream meshprint("meshprint.txt");
-	std::ofstream out2("./TestSurfaces2.vtk");
-	gmesh->Print(meshprint);
-	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out2, true);
-
-	// Mesh transition volumes
+	int surfaceMaterial = 40;
+	int transitionMaterial = 20;
 	DFNMesh dfn;
-	dfn.fFractures.push_back(fracmesh);
-	dfn.fFractures.push_back(fracmesh2);
-	// dfn.fFractures.push_back(fracmesh3);
-	gmesh->BuildConnectivity();
+	for(int iplane = 0,
+		    nfractures = planevector.size(); iplane < nfractures; iplane++){
+		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
+		DFNFractureMesh *fracmesh = new DFNFractureMesh(*fracplane,gmesh,surfaceMaterial);
+		// Find and split intersected ribs
+		fracmesh->SplitRibs(transitionMaterial);
+		// Find and split intersected faces
+		fracmesh->SplitFaces(transitionMaterial);
+		std::cout<<"\n";
+		// Mesh fracture surface
+		fracmesh->SplitFracturePlane();
+		dfn.fFractures.push_back(fracmesh);
+		//Print result
+		std::ofstream meshprint("meshprint.txt");
+		std::ofstream out1("./TestSurfaces.vtk");
+		gmesh->Print(meshprint);
+		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
+	}
+	// Mesh transition volumes
 	dfn.CreateVolumes();
+
+
 	return 0;
 }
 
@@ -162,7 +126,7 @@ int main(){
 
 
 void DFNMesh::CreateVolumes(){
-    TPZGeoMesh *gmesh = fFractures.begin()->GetGeoMesh();
+    TPZGeoMesh *gmesh = (*fFractures.begin())->GetGeoMesh();
 	
 
     // map all volumes that are cut
@@ -192,7 +156,7 @@ void DFNMesh::CreateVolumes(){
     
     
 	// search through each 2D element of the triangulated fractures surfaces to find their enclosing volume
-	int surfaceMaterial = fFractures.begin()->GetSurfaceMaterial();
+	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
 	for(int64_t iel = 0; iel < nels; iel++){
 		TPZGeoEl *gel = gmesh->Element(iel);
 		// if(gel->MaterialID() != surfaceMaterial){continue;}
@@ -268,7 +232,7 @@ void DFNMesh::CreateVolumes(){
  * @note Later I might modify this to fill a vector with all neighbours that match the material id criteria
 */
 int64_t DFNMesh::FindAdjacentMacroEl(TPZGeoEl* gel){
-	int surfaceMaterial = fFractures.begin()->GetSurfaceMaterial();
+	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
     int nsides = gel->NSides();
         
 	for(int iside = nsides-2; iside >= 0; iside--){
@@ -341,7 +305,7 @@ void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue
 
 bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 	if(ifracface->Dimension()!=2) DebugStop();
-	int surfaceMaterial = fFractures.begin()->GetSurfaceMaterial();
+	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
     // get coordinates of geometric center of face
     TPZVec<REAL> faceCenter(3);
     {
@@ -435,17 +399,17 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
  * 	@brief Uses GMsh to tetrahedralize a DFNVolume
  */ 
 void DFNMesh::Tetrahedralize(DFNVolume *volume){
-    int mtransition = 18;
+    int mtransition = 20;
     int msurface = 40;
     int mintact = 1;
 	std::ofstream outfile("fracture1.geo");
 
-    TPZGeoMesh *pzgmesh = fFractures.begin()->GetGeoMesh();
+    TPZGeoMesh *pzgmesh = (*fFractures.begin())->GetGeoMesh();
 	int64_t ivol = volume->ElementIndex();
 
     // Giving fGMesh another name for readability's sake
     pzgmesh->BuildConnectivity();
-    fFractures.begin()->CreateSkeletonElements(1,mtransition);
+    (*fFractures.begin())->CreateSkeletonElements(1,mtransition);
     // Title
     outfile<<"//  Geo file generated by Discrete Fracture Network methods \n"
             <<"// Fracture #1 \n\n";
@@ -671,15 +635,11 @@ void DFNMesh::PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile){
         TPZGeoEl *ichild = gel->SubElement(i);
         if(ichild->HasSubElement()){
             PrintYoungestChildren(ichild,outfile);
-        }
-        else{
-            // outfile << ichild->Index() << (i < nchildren-1? "," : "");
+        }else{
             outfile << ichild->Index();
         }
 		outfile << (i < nchildren-1? "," : "");
     }
-    // outfile << (iside < nsides-2? "," : "};\n");
-    
 }
 
 

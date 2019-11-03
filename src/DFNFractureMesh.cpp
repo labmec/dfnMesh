@@ -659,7 +659,7 @@ void DFNFractureMesh::SplitFracturePlane(){
         gmsh::model::mesh::generate(2);
         gmsh::model::mesh::optimize("Netgen");
     // write (for testing)
-        gmsh::write("testAPI.msh");
+        // gmsh::write("testAPI.msh");
     // import meshed plane back into PZ geoMesh
         ImportElementsFromGMSH(fGMesh,2);
     // close GMsh
