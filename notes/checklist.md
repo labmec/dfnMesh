@@ -9,9 +9,8 @@ Phil's suggestions
 - [ ] If we use fatherID to define enclosing volume, would we hurt the robustness of PZ's MHM methods?
 
 Fran's suggestions
-- [ ] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
+- [x] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
 - [ ] Maybe 2D elements could carry the index of their enclosing volumes, this could be a useful optimization
-
     if neighbour has enclosing volume
         test for that enclosing volume
         if not found
@@ -40,11 +39,14 @@ Fran's suggestions
     - [x] Write volumes 
     - [x] Define physical groups of volumes 
     - [ ] Rewrite using gmsh API
+    - [ ] One volume at a time (to allow for refinement patterns)
+    - [ ] When sending stuff to GMsh, there might not be any intact volume, in which case, they must be ignored.
 # ToDo
 - [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
-- [ ] Mesh fracplane 
+- [x] Mesh fracplane 
   - [X] ~~*Ear-clipping-like algorithm*~~ [2019-09-30] 
-  - [ ] Legalize triangles 
+  - [x] Legalize triangles 
+  - [x] GMsh is doing it perfectly
 - [ ] Face splitting 
   - [x] Store status of each rib and node
   - [x] Identify case 

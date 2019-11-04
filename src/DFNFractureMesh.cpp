@@ -31,8 +31,7 @@ DFNFractureMesh::DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int
     CreateSkeletonElements(2, materialSkeleton);
     CreateSkeletonElements(1, materialSkeleton);
 
-    // Create FracPlane's geometric element into mesh
-    // fFracplaneindex = fFracplane.CreateElement(fGMesh);
+    // Set corner nodes of fracture into mesh
     fFracplane.SetPointsInGeomesh(fGMesh);
     
 }
