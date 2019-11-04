@@ -40,6 +40,7 @@ Fran's suggestions
     - [x] Define physical groups of volumes 
     - [ ] Rewrite using gmsh API
     - [ ] One volume at a time (to allow for refinement patterns)
+    - [ ] Check if child is of lower dimension than father
     - [ ] When sending stuff to GMsh, there might not be any intact volume, in which case, they must be ignored.
 # ToDo
 - [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary

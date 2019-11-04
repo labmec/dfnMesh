@@ -52,9 +52,9 @@ struct DFNMesh{
 		/// Uses GMsh to mesh volumes cut by fracture plane
 		void CreateVolumes();
 		/// Uses gmsh API to tetrahedralize volumes
-    	void Tetrahedralize(DFNVolume *volume);
+    	void TetrahedralizeAll(DFNVolume *volume);
 		/// Uses gmsh API to tetrahedralize a DFNVolume
-		void Tetrahedralize2(DFNVolume *volume);
+		void Tetrahedralize(DFNVolume *volume);
     	/// Find the volumetrical element that encloses a 2D element
     	bool FindEnclosingVolume(TPZGeoEl *ifracface);
 	// private:
@@ -211,14 +211,13 @@ void DFNMesh::CreateVolumes(){
 	// debug & verification__________________________________________________________________________
 	
 	
-	Tetrahedralize(&fVolumes.begin()->second);
+	// TetrahedralizeAll(&fVolumes.begin()->second);
 	gmesh->BuildConnectivity();
 	//Loop over list of volumes cut
 	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
     	DFNVolume *ivolume = &itr->second;
-		if(ivolume->ElementIndex()!=0) continue;
 		// Use GMsh to tetrahedralize volumes
-    	Tetrahedralize2(ivolume);
+    	Tetrahedralize(ivolume);
 	}
 	
 
@@ -419,7 +418,7 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 /**
  * 	@brief Uses GMsh API to tetrahedralize a DFNVolume
  */ 
-void DFNMesh::Tetrahedralize2(DFNVolume *volume){
+void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	// GMsh does not accept zero index entities
     const int shift = 1;
 	int surfaceMaterial = 40;
@@ -428,251 +427,181 @@ void DFNMesh::Tetrahedralize2(DFNVolume *volume){
 	TPZGeoMesh *gmesh = (*fFractures.begin())->GetGeoMesh();
 	int64_t ivol = volume->ElementIndex();
 	TPZGeoEl *volGel = gmesh->Element(ivol);
+
+	// List faces that form the volume shell
+	std::vector<int> surfaceloop;
+	for(int nsides = volGel->NSides(),
+		iside = nsides-2; iside >= 0; iside--){
+		TPZGeoElSide gelside(volGel,iside);
+		if(gelside.Dimension() != 2) break;
+		TPZGeoElSide neig = gelside.Neighbour();
+		while(neig.Element()->Dimension() != 2){ neig = neig.Neighbour();}
+		TPZStack<TPZGeoEl *> unrefinedSons;
+		if(neig.Element()->HasSubElement()){
+			neig.Element()->GetAllSiblings(unrefinedSons);
+		}else{ //if it has no child, use itself
+			unrefinedSons.push_back(neig.Element());
+		}
+		for(TPZGeoEl * iface : unrefinedSons){
+			if(iface->Dimension() != 2) continue;
+			surfaceloop.push_back(iface->Index());
+		}
+	}
+	// List faces that are enclosed in the volume
 	TPZManVector<int64_t> enclosedFaces = volume->GetFacesInVolume();
+
+	// List all lines
+	std::set<int64_t> lines;
+	// List edges from volume shell
+	for(int iface = 0,
+			nfaces = surfaceloop.size(); iface < nfaces; iface++){
+		TPZGeoEl *gel = gmesh->Element(surfaceloop[iface]);
+		for(int nsides = gel->NSides(),
+				nnodes = gel->NCornerNodes(),
+				iside = nsides-2; iside >= nnodes; iside--){
+			TPZGeoElSide gelside(gel,iside);
+			if(gelside.Dimension() != 1) break;
+			TPZGeoElSide neig = gelside.Neighbour();
+			while(neig.Element()->Dimension() != 1) neig = neig.Neighbour();
+			if(neig.Element()->HasSubElement()) continue;
+			lines.insert(neig.Element()->Index());
+		}
+	}
+	// List edges from faces in volume
+	for(int iface = 0,
+			nfaces = enclosedFaces.size(); iface < nfaces; iface++){
+		TPZGeoEl *gel = gmesh->Element(enclosedFaces[iface]);
+		for(int nsides = gel->NSides(),
+				nnodes = gel->NCornerNodes(),
+				iside = nsides-2; iside >= nnodes; iside--){
+			TPZGeoElSide gelside(gel,iside);
+			if(gelside.Dimension() != 1) break;
+			TPZGeoElSide neig = gelside.Neighbour();
+			while(neig.Element()->Dimension() != 1) neig = neig.Neighbour();
+			if(neig.Element()->HasSubElement()) continue;
+			lines.insert(neig.Element()->Index());
+		}
+	}
+
+	// List nodes
+	std::set<int64_t> nodes;
+	for(int64_t line : lines){
+		TPZGeoEl *gel = gmesh->Element(line);
+		nodes.insert(gel->NodeIndex(0));
+		nodes.insert(gel->NodeIndex(1));
+	}
 
 	// Initialize GMsh
 	gmsh::initialize();
-		gmsh::option::setNumber("Mesh.Algorithm3D",1); // (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT) Default value: 1
-		// Insert nodes ______________________________
+		gmsh::option::setNumber("Mesh.Algorithm3D",1);  // (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT) Default value: 1
+		// Insert nodes ____________________________________
+		for(int64_t inode : nodes){
+			TPZManVector<REAL,3> coord(3);
+			gmesh->NodeVec()[inode].GetCoordinates(coord);
+			gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode+shift);
+		}
+		// Insert lines ____________________________________
+		for(int64_t iline : lines){
+			TPZGeoEl *gel = gmesh->Element(iline);
+			int64_t node0 = gel->NodeIndex(0)+shift;
+			int64_t node1 = gel->NodeIndex(1)+shift;
+			gmsh::model::geo::addLine(node0,node1,iline+shift);
+			gmsh::model::geo::mesh::setTransfiniteCurve(iline+shift,2);
+		}
+		// Insert faces ____________________________________
 		{
-			std::set<int64_t> nodes;
-			// corners of volume
-			for(int icorner = 0,
-					ncorners = volGel->NCornerNodes(); icorner < ncorners; icorner++){
-				int64_t inode = volGel->NodeIndex(icorner);
-				nodes.insert(inode);
-			}
-			// nodes of skeleton children faces
-			for(int nsides = volGel->NSides(),
-					iside = nsides-2; iside >= 0; iside--){
-				TPZGeoElSide gelside(volGel,iside);
-				if(gelside.Dimension() != 2) break;
+		std::vector<int> wiretag(1);
+		// Faces in volume shell
+		for(int64_t faceindex : surfaceloop){
+			TPZGeoEl *face = gmesh->Element(faceindex);
+			int nnodes = face->NCornerNodes();
+			int nedges = nnodes;
+			TPZManVector<int64_t,4> facenodevec(nnodes);
+			face->GetNodeIndices(facenodevec);
+			// line loop
+			std::vector<int> lineloop(nedges);
+			for(int iside = nnodes; iside < nnodes+nedges; iside++){
+				TPZGeoElSide gelside(face,iside);
 				TPZGeoElSide neig = gelside.Neighbour();
-				while(neig.Element()->Dimension() != 2){ neig = neig.Neighbour();}
-				TPZStack<TPZGeoEl *> unrefinedSons;
-				if(neig.Element()->HasSubElement()){
-					neig.Element()->GetAllSiblings(unrefinedSons);
-				}else{ //if it has no child, use itself
-					unrefinedSons.push_back(neig.Element());
-				}
-				for(TPZGeoEl *child : unrefinedSons){
-					for(int icorner = 0,
-					ncorners = child->NCornerNodes(); icorner < ncorners; icorner++){
-						int64_t inode = child->NodeIndex(icorner);
-						nodes.insert(inode);
-					}
+				// find line element
+				while(neig.Element()->Dimension()!=1){neig = neig.Neighbour();}
+				// find first node of line at the face
+				int inode = 0;
+				while(facenodevec[inode] != neig.SideNodeIndex(0)) inode++;
+				// check orientation by comparing second node of line with next node of face
+				if(neig.SideNodeIndex(1) == facenodevec[(inode+1)%nnodes]){
+					lineloop[iside-nnodes] = neig.Element()->Index() + shift;
+				}else{
+					lineloop[iside-nnodes] = - (neig.Element()->Index() + shift);
 				}
 			}
-			// nodes of enclosed faces
-			for(int iface = 0,
-					nfaces = enclosedFaces.size(); iface < nfaces; iface++){
-				TPZGeoEl *gel = gmesh->Element(enclosedFaces[iface]);
-				for(int icorner = 0,
-				ncorners = gel->NCornerNodes(); icorner < ncorners; icorner++){
-					int64_t inode = gel->NodeIndex(icorner);
-					nodes.insert(inode);
-				}
-			}
-			// Pass nodes to GMsh
-			for(int64_t inode : nodes){
-				TPZManVector<REAL,3> coord(3);
-				gmesh->NodeVec()[inode].GetCoordinates(coord);
-				gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode+shift);
-			}
+			// insert curve loop
+			wiretag[0] = gmsh::model::geo::addCurveLoop(lineloop,face->Index()+shift);
+			// insert surface
+			gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);	
 		}
-
-
-		// Insert Lines ______________________________
-		{
-			std::set<int64_t> lines;			
-			// edges of skeleton children faces
-			for(int nsides = volGel->NSides(),
-					iside = nsides-2; iside >= 0; iside--){
-				TPZStack<TPZGeoEl *> unrefinedSons;{
-					TPZGeoElSide vol_gelside(volGel,iside);
-					if(vol_gelside.Dimension() != 2) break;
-					TPZGeoElSide neig = vol_gelside.Neighbour();
-					while(neig.Dimension() != 2) neig = neig.Neighbour();
-					if(neig.Element()->HasSubElement()){
-						neig.Element()->GetAllSiblings(unrefinedSons);
-					}else{ //if it has no child, use itself
-						unrefinedSons.push_back(neig.Element());
-					}
-				}
-				for(TPZGeoEl *child : unrefinedSons){
-					for(int iside_child = child->NCornerNodes(),
-							nsides_child = child->NSides(); iside_child < nsides_child-1; iside_child++){
-						TPZGeoElSide gelside(child,iside_child);
-						TPZGeoElSide neig = gelside.Neighbour();
-						while(neig.Dimension() != 1){
-							neig = neig.Neighbour();
-						}
-						int64_t iline = neig.Element()->Index();
-						lines.insert(iline);
-					}
+		// Enclosed faces
+		for(int64_t faceindex : enclosedFaces){
+			TPZGeoEl *face = gmesh->Element(faceindex);
+			int nnodes = face->NCornerNodes();
+			int nedges = nnodes;
+			TPZManVector<int64_t,4> facenodevec(nnodes);
+			face->GetNodeIndices(facenodevec);
+			// line loop
+			std::vector<int> lineloop(nedges);
+			for(int iside = nnodes; iside < nnodes+nedges; iside++){
+				TPZGeoElSide gelside(face,iside);
+				TPZGeoElSide neig = gelside.Neighbour();
+				// find line element
+				while(neig.Element()->Dimension()!=1){neig = neig.Neighbour();}
+				// find first node of line at the face
+				int inode = 0;
+				while(facenodevec[inode] != neig.SideNodeIndex(0)) inode++;
+				// check orientation by comparing second node of line with next node of face
+				if(neig.SideNodeIndex(1) == facenodevec[(inode+1)%nnodes]){
+					lineloop[iside-nnodes] = neig.Element()->Index() + shift;
+				}else{
+					lineloop[iside-nnodes] = - (neig.Element()->Index() + shift);
 				}
 			}
-			// edges of enclosed faces
-			for(int iface = 0,
-					nfaces = enclosedFaces.size(); iface < nfaces; iface++){
-				TPZGeoEl *gel = gmesh->Element(enclosedFaces[iface]);
-				for(int iside = gel->NCornerNodes(),
-						nsides = gel->NSides(); iside < nsides-1; iside++){
-					TPZGeoElSide gelside(gel,iside);
-					TPZGeoElSide neig = gelside.Neighbour();
-					while(neig.Dimension() != 1){
-						neig = neig.Neighbour();
-					}
-					int64_t iline = neig.Element()->Index();
-					lines.insert(iline);
-				}
-			}
-			// Pass lines to GMsh
-			for(int64_t iline : lines){
-				TPZGeoEl *gel = gmesh->Element(iline);
-				int64_t node0 = gel->NodeIndex(0)+shift;
-				int64_t node1 = gel->NodeIndex(1)+shift;
-				gmsh::model::geo::addLine(node0,node1,iline+shift);
-				gmsh::model::geo::mesh::setTransfiniteCurve(iline+shift,2);
-			}
+			// insert curve loop
+			wiretag[0] = gmsh::model::geo::addCurveLoop(lineloop,face->Index()+shift);
+			// insert surface
+			gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);	
 		}
-		// Insert Faces ______________________________
-		int counter = 0;
-		{
-			std::vector<int> wiretag(1);
-			// skeleton children faces
-			for(int nsides = volGel->NSides(),
-					iside = nsides-2; iside >= 0; iside--){
-				TPZStack<TPZGeoEl *> unrefinedSons;{
-					TPZGeoElSide vol_gelside(volGel,iside);
-					if(vol_gelside.Dimension() != 2) break;
-					TPZGeoElSide neig = vol_gelside.Neighbour();
-					while(neig.Dimension() != 2) neig = neig.Neighbour();
-					if(neig.Element()->HasSubElement()){
-						neig.Element()->GetAllSiblings(unrefinedSons);
-					}else{ //if it has no child, use itself
-						unrefinedSons.push_back(neig.Element());
-					}
-				}
-				for(TPZGeoEl *face : unrefinedSons){
-					counter++;
-					if(face->Dimension() != 2) continue;
-					int64_t faceindex = face->Index();
-					int nnodes = face->NCornerNodes();
-					int nedges = nnodes;
-					TPZManVector<int64_t,4> facenodevec(nnodes);
-					face->GetNodeIndices(facenodevec);
-					// line loop
-					std::vector<int> lineloop(nedges);
-					for(int iside = nnodes; iside < nnodes+nedges; iside++){
-						TPZGeoElSide gelside(face,iside);
-						TPZGeoElSide neig = gelside.Neighbour();
-						// find line element
-						while(neig.Element()->Dimension()!=1){neig = neig.Neighbour();}
-						// find first node of line at the face
-						int inode = 0;
-						while(facenodevec[inode] != neig.SideNodeIndex(0)) inode++;
-						// check orientation by comparing second node of line with next node of face
-						if(neig.SideNodeIndex(1) == facenodevec[(inode+1)%nnodes]){
-							lineloop[iside-nnodes] = neig.Element()->Index() + shift;
-						}else{
-							lineloop[iside-nnodes] = - (neig.Element()->Index() + shift);
-						}
-					}
-					// insert curve loop
-					wiretag[0] = gmsh::model::geo::addCurveLoop(lineloop,face->Index()+shift);
-					// insert surface
-					gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);
-				}
-			}
-			// enclosed faces
-			for(int iface = 0,
-					nfaces = enclosedFaces.size(); iface < nfaces; iface++){
-				TPZGeoEl *face = gmesh->Element(enclosedFaces[iface]);
-				if(face->Dimension() != 2) continue;
-				int64_t faceindex = face->Index();
-				int nnodes = face->NCornerNodes();
-				int nedges = nnodes;
-				TPZManVector<int64_t,4> facenodevec(nnodes);
-				face->GetNodeIndices(facenodevec);
-				// line loop
-				std::vector<int> lineloop(nedges);
-				for(int iside = nnodes; iside < nnodes+nedges; iside++){
-					TPZGeoElSide gelside(face,iside);
-					TPZGeoElSide neig = gelside.Neighbour();
-					// find line element
-					while(neig.Element()->Dimension()!=1){neig = neig.Neighbour();}
-					// find first node of line at the face
-					int inode = 0;
-					while(facenodevec[inode] != neig.SideNodeIndex(0)) inode++;
-					// check orientation by comparing second node of line with next node of face
-					if(neig.SideNodeIndex(1) == facenodevec[(inode+1)%nnodes]){
-						lineloop[iside-nnodes] = neig.Element()->Index() + shift;
-					}else{
-						lineloop[iside-nnodes] = - (neig.Element()->Index() + shift);
-					}
-				}
-				// insert curve loop
-				wiretag[0] = gmsh::model::geo::addCurveLoop(lineloop,face->Index()+shift);
-				// insert surface
-				gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);
-			}
 		}
-		// Insert Volume _____________________________
+		
+		// Insert volumes ____________________________________
 		std::vector<int> shelltag(1);
-		std::vector<int> surfaceloop;
-		{
-			// Surface loop of skeleton youngest children
-			surfaceloop.reserve(counter);
-			for(int nsides = volGel->NSides(),
-					iside = nsides-2; iside >= 0; iside--){
-				TPZStack<TPZGeoEl *> unrefinedSons;{
-					TPZGeoElSide vol_gelside(volGel,iside);
-					if(vol_gelside.Dimension() != 2) break;
-					TPZGeoElSide neig = vol_gelside.Neighbour();
-					while(neig.Dimension() != 2) neig = neig.Neighbour();
-					if(neig.Element()->HasSubElement()){
-						neig.Element()->GetAllSiblings(unrefinedSons);
-					}else{ //if it has no child, use itself
-						unrefinedSons.push_back(neig.Element());
-					}
-				}
-				for(TPZGeoEl *face : unrefinedSons){
-					surfaceloop.push_back(face->Index()+shift);
-				}
-			}
-			shelltag[0] = gmsh::model::geo::addSurfaceLoop(surfaceloop,ivol+shift);
-			gmsh::model::geo::addVolume(shelltag,shelltag[0]);
+		// Shift surfaceloop indices
+		for(int nsurfaces = surfaceloop.size(),
+				i = 0; i < nsurfaces; i++){
+			surfaceloop[i] += shift;
 		}
-		// Surfaces in Volume ________________________
-		int nfacesenclosed = enclosedFaces.size();
-		std::vector<int> facesinvolume(nfacesenclosed);
-		{
-			for(int i = 0; i<nfacesenclosed; i++){
-				facesinvolume[i] = enclosedFaces[i] + shift;
+		shelltag[0] = gmsh::model::geo::addSurfaceLoop(surfaceloop,ivol+shift);
+		gmsh::model::geo::addVolume(shelltag,shelltag[0]);
+		
+		// Surfaces in Volume ________________________________
+			int nfacesenclosed = enclosedFaces.size();
+			std::vector<int> facesinvolume(nfacesenclosed);
+			{
+				for(int i = 0; i<nfacesenclosed; i++){
+					facesinvolume[i] = enclosedFaces[i] + shift;
+				}
+				gmsh::model::geo::synchronize(); // synchronize is required before embedding
+				gmsh::model::mesh::embed(2, facesinvolume, 3, ivol+shift);
 			}
-			gmsh::model::geo::synchronize();
-			gmsh::model::mesh::embed(2, facesinvolume, 3, ivol+shift);
-		}
 		// Physical groups ____________________________
-		{
 			gmsh::model::addPhysicalGroup(2,facesinvolume,surfaceMaterial);
 			gmsh::model::addPhysicalGroup(2,surfaceloop,transitionMaterial);
 			gmsh::model::addPhysicalGroup(3,shelltag,transitionMaterial);
-		}
+		
+		
 		// synchronize before meshing
 			gmsh::model::geo::synchronize();
 		// mesh
 			gmsh::model::mesh::generate(3);
-			gmsh::model::mesh::optimize("Netgen");
-		// write (for testing)
-			gmsh::write("testAPI_volume.msh");
-		// import meshed plane back into PZ geoMesh
-			// create dummy mesh
-			// define volume's refinement pattern
-			// set subelements
-			// ImportElementsFromGMSH(gmesh,3);
-	// close GMsh
+		// gmsh::write("testAPI_volume.msh");
 	gmsh::finalize();
 }
 
@@ -689,7 +618,7 @@ void DFNMesh::Tetrahedralize2(DFNVolume *volume){
 /**
  * 	@brief Uses GMsh to tetrahedralize a DFNVolume
  */ 
-void DFNMesh::Tetrahedralize(DFNVolume *volume){
+void DFNMesh::TetrahedralizeAll(DFNVolume *volume){
     int mtransition = 18;
     int msurface = 40;
     int mintact = 1;
