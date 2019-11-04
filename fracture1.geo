@@ -255,8 +255,5 @@ Surface{111,112,120,121} In Volume{4};
 
 Physical Volume(18) = {1,2,3,4};
 
-Physical Volume(1) = {
 Transfinite Surface {Physical Surface(1)};
 Recombine Surface {Physical Surface(1)};
-
-Transfinite Volume {Physical Volume(1)};

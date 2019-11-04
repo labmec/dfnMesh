@@ -112,7 +112,7 @@ struct DFNMesh{
 using namespace std;
 
 int main(){
-	gRefDBase.InitializeUniformRefPattern(EOned);
+	// gRefDBase.InitializeUniformRefPattern(EOned);
 	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh;
 	gmesh = ReadExampleFromFile("examples/exampleMinimal.txt",planevector);
