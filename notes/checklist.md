@@ -1,7 +1,7 @@
 # Ongoing
 
-- [ ] Geometrical center -> Centroid
-- [ ] Insert second plane
+- [ ] Geometrical center -> Centroid (in documentation)
+- [x] Insert second plane
   - [x] Implement triangle splitting cases
   - [x] Set a second plane in main
   - [x] Call splitribs and splitfaces
@@ -11,6 +11,7 @@
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
   - [x] Search which volume encloses each face
   - [x] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
+  - [x] One volume at a time (to allow for refinement patterns)
   - [x] Inform to volumes what faces lie inside it 
   - [ ] **Write geometry to GMSH** 
     - [x] Write points 
@@ -23,9 +24,10 @@
     - [x] Write volumes 
     - [x] Define physical groups of volumes 
     - [x] Rewrite using gmsh API
-    - [x] One volume at a time (to allow for refinement patterns)
-    - [ ] Check if child is of lower dimension than father
-    - [ ] When sending stuff to GMsh, there might not be any intact volume, in which case, they must be ignored.
+    - [x] Check if child is of lower dimension than father
+    - [x] When sending stuff to GMsh, there might not be any intact volume, in which case, they must be ignored.
+    - [x] Pass a container to ImportElementsFromGMsh with old nodes
+    - [x] set transfinite stuff
 # ToDo
 - [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
 - [x] Mesh fracplane 
@@ -38,21 +40,21 @@
   - [x] Store all intersections for each face 
   - [x] Father elements 
   - [ ] Quadrilateral splitting 
-    - [x] Case 1 
-    - [x] Case 2 
-    - [ ] Case 3 
+    - [x] Case 1
+    - [x] Case 2
+    - [ ] Case 3
     - [ ] Case 4
-    - [x] Case 5 
-    - [ ] Case 6 
-    - [ ] Case 7 
+    - [x] Case 5
+    - [ ] Case 6
+    - [ ] Case 7
     - [ ] Case 8 (No ribs 1) 
     - [ ] Case 9 (No ribs 2) 
   - [ ] Triangle splitting 
-    - [x] Case 10 
-    - [ ] Case 11 
-    - [x] Case 12 
-    - [ ] Case 13 
-    - [ ] Case 14 
+    - [x] Case 10
+    - [ ] Case 11
+    - [x] Case 12
+    - [ ] Case 13
+    - [ ] Case 14
     - [ ] Case 15 (No ribs 1) 
     - [ ] Case 16 (No ribs 2) 
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 

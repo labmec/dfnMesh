@@ -255,5 +255,6 @@ Surface{111,112,120,121} In Volume{4};
 
 Physical Volume(18) = {1,2,3,4};
 
+Transfinite Curve {:} = 2;
 Transfinite Surface {Physical Surface(1)};
 Recombine Surface {Physical Surface(1)};

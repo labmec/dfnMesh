@@ -404,9 +404,9 @@ TPZManVector<REAL,3> DFNFractureMesh::FindEndFracturePoint(DFNFace &face){
 
 
 void DFNFractureMesh::SplitRibs(int matID){
-    if(!gRefDBase.GetUniformRefPattern(EOned)){
-        gRefDBase.InitializeUniformRefPattern(EOned);
-    }
+    // if(!gRefDBase.GetUniformRefPattern(EOned)){
+    //     gRefDBase.InitializeUniformRefPattern(EOned);
+    // }
     //search gmesh for cut ribs
     int64_t Nels = fGMesh->NElements();
     for (int iel = 0; iel < Nels; iel++){
@@ -655,7 +655,7 @@ void DFNFractureMesh::SplitFracturePlane(){
         gmsh::model::geo::synchronize();
     // mesh
         gmsh::model::mesh::generate(2);
-        gmsh::model::mesh::optimize("Netgen");
+        // gmsh::model::mesh::optimize("Netgen");
     // write (for testing)
         // gmsh::write("testAPI.msh");
     // import meshed plane back into PZ geoMesh
