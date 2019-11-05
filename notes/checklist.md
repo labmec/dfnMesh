@@ -1,33 +1,17 @@
 # Ongoing
 
-Phil's suggestions
-- [ ] Search for volumes that contain corner nodes
-  - [ ] Ribs that have that node, are contained by the same volume
-  - [ ] Faces that have that node, are contained by the same volume
-- [ ] From the fracture outline, contours may be generated and these have an easily found containing volume. All elements in that contour will inevitably belong to the same volume.
-- [ ] If eldest ancestor has father ID of an element of higher dimension than itself, then that father ID belongs to a MHM element and that MHM element is the enclosing volume (or enclosing area).
-- [ ] If we use fatherID to define enclosing volume, would we hurt the robustness of PZ's MHM methods?
-
-Fran's suggestions
-- [ ] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
-- [ ] Maybe 2D elements could carry the index of their enclosing volumes, this could be a useful optimization
-
-    if neighbour has enclosing volume
-        test for that enclosing volume
-        if not found
-            test for all 3D neighbours
-
-
-
-- [ ] Geometrical center -> Centroid
-- [ ] Insert second plane
+- [ ] Geometrical center -> Centroid (in documentation)
+- [x] Insert second plane
   - [x] Implement triangle splitting cases
   - [x] Set a second plane in main
   - [x] Call splitribs and splitfaces
   - [x] Set RefPatterns
+    - [x] Refpattern for ribs shouldn't be uniform
   - [x] Use PZ's data structure to specify level of element splitting
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
   - [x] Search which volume encloses each face
+  - [x] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
+  - [x] One volume at a time (to allow for refinement patterns)
   - [x] Inform to volumes what faces lie inside it 
   - [ ] **Write geometry to GMSH** 
     - [x] Write points 
@@ -39,39 +23,44 @@ Fran's suggestions
     - [x] Write surface loops 
     - [x] Write volumes 
     - [x] Define physical groups of volumes 
-    - [ ] Rewrite using gmsh API
+    - [x] Rewrite using gmsh API
+    - [x] Check if child is of lower dimension than father
+    - [x] When sending stuff to GMsh, there might not be any intact volume, in which case, they must be ignored.
+    - [x] Pass a container to ImportElementsFromGMsh with old nodes
+    - [x] set transfinite stuff
 # ToDo
 - [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
-- [ ] Mesh fracplane 
+- [x] Mesh fracplane 
   - [X] ~~*Ear-clipping-like algorithm*~~ [2019-09-30] 
-  - [ ] Legalize triangles 
+  - [x] Legalize triangles 
+  - [x] GMsh is doing it perfectly
 - [ ] Face splitting 
   - [x] Store status of each rib and node
   - [x] Identify case 
   - [x] Store all intersections for each face 
   - [x] Father elements 
   - [ ] Quadrilateral splitting 
-    - [x] Case 1 
-    - [x] Case 2 
-    - [ ] Case 3 
+    - [x] Case 1
+    - [x] Case 2
+    - [ ] Case 3
     - [ ] Case 4
-    - [x] Case 5 
-    - [ ] Case 6 
-    - [ ] Case 7 
+    - [x] Case 5
+    - [ ] Case 6
+    - [ ] Case 7
     - [ ] Case 8 (No ribs 1) 
     - [ ] Case 9 (No ribs 2) 
   - [ ] Triangle splitting 
-    - [x] Case 10 
-    - [ ] Case 11 
-    - [x] Case 12 
-    - [ ] Case 13 
-    - [ ] Case 14 
+    - [x] Case 10
+    - [ ] Case 11
+    - [x] Case 12
+    - [ ] Case 13
+    - [ ] Case 14
     - [ ] Case 15 (No ribs 1) 
     - [ ] Case 16 (No ribs 2) 
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
   - [x] Search which volume encloses each face
   - [x] Inform to volumes what faces lie inside it 
-  - [ ] Write geometry to GMSH 
+  - [x] Write geometry to GMSH 
     - [x] Write points 
     - [x] Write Lines 
     - [x] Define physical groups of lines 
@@ -81,7 +70,7 @@ Fran's suggestions
     - [x] Write surface loops 
     - [x] Write volumes 
     - [x] Define physical groups of volumes 
-    - [ ] Rewrite using gmsh API
+    - [x] Rewrite using gmsh API
 - [ ] Check if rib cut happens too close to vertex 
 - [ ] Check if face intersection happens too close to rib 
 - [ ] Search for critical cases 
@@ -126,3 +115,25 @@ Fran's suggestions
   - [x] find which edge cuts them
   - [x] sort them
   - [x] connect points accordingly
+
+
+
+
+
+
+# Archived
+Phil's suggestions
+- [ ] Search for volumes that contain corner nodes
+  - [ ] Ribs that have that node, are contained by the same volume
+  - [ ] Faces that have that node, are contained by the same volume
+- [ ] From the fracture outline, contours may be generated and these have an easily found containing volume. All elements in that contour will inevitably belong to the same volume.
+- [ ] If eldest ancestor has father ID of an element of higher dimension than itself, then that father ID belongs to a MHM element and that MHM element is the enclosing volume (or enclosing area).
+- [ ] If we use fatherID to define enclosing volume, would we hurt the robustness of PZ's MHM methods?
+
+Fran's suggestions
+- [x] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
+- [ ] Maybe 2D elements could carry the index of their enclosing volumes, this could be a useful optimization
+    if neighbour has enclosing volume
+        test for that enclosing volume
+        if not found
+            test for all 3D neighbours
