@@ -67,14 +67,14 @@ struct DFNMesh{
 };
 
 //MATERIAL ID MAP
-// 1 gmesh (default)
-// 4 skeleton
-// 12 ribs that will be divided
-// 18 children ribs
-// 20 mid-fracture cut faces
-// 35 end-fracture cut faces
-// 40 Fracture plane
-// 45 Intersection points in end-faces
+	// 1 gmesh (default)
+	// 4 skeleton
+	// 12 ribs that will be divided
+	// 18 children ribs
+	// 20 mid-fracture cut faces
+	// 35 end-fracture cut faces
+	// 40 Fracture plane
+	// 45 Intersection points in end-faces
 
 using namespace std;
 
