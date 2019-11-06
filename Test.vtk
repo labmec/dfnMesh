@@ -1,0 +1,26 @@
+# vtk DataFile Version 3.0
+TPZGeoMesh VTK Visualization
+ASCII
+
+DATASET UNSTRUCTURED_GRID
+POINTS 3 float
+1 0 0 
+3 0 0 
+1 0 0 
+
+CELLS 2 5
+2 0 1
+1 2
+
+CELL_TYPES 2
+3
+1
+
+CELL_DATA 2
+FIELD FieldData 2
+material 1 2 int
+1
+1
+elIndex 1 2 int
+1
+2

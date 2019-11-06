@@ -49,6 +49,7 @@
     - [ ] Case 7
     - [ ] Case 8 (No ribs 1) 
     - [ ] Case 9 (No ribs 2) 
+    - [ ] Special case
   - [ ] Triangle splitting 
     - [x] Case 10
     - [ ] Case 11
@@ -57,6 +58,7 @@
     - [ ] Case 14
     - [ ] Case 15 (No ribs 1) 
     - [ ] Case 16 (No ribs 2) 
+    - [ ] Special case
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
   - [x] Search which volume encloses each face
   - [x] Inform to volumes what faces lie inside it 
@@ -71,13 +73,17 @@
     - [x] Write volumes 
     - [x] Define physical groups of volumes 
     - [x] Rewrite using gmsh API
-- [ ] Check if rib cut happens too close to vertex 
+- [x] Check if rib cut happens too close to vertex 
 - [ ] Check if face intersection happens too close to rib 
+- [ ] Check if face intersection happens too close to vertex 
 - [ ] Search for critical cases 
   - [ ] Fractures that are almost parallel to mesh plane 
-  - [ ] Fracture that overlaps mesh plane should not divide anything 
+  - [ ] Fracture that overlaps mesh plane should not divide anything, but rather incorporate mesh ribs onto its plane to define the fracture outline.
+    - [ ] The problem with this, is that fracture surface mesh would be made up of MHM faces. This is a considerably different code than the one we've written so far.
+    - [ ] A probable solution for this would be using GMsh to mesh all planes parallel to fracture surface (one at a time) in order to keep the father->children structure.
+      - [ ] If so, it might help to define another map for faces that are parallel to fracPlane.
 - [ ] Id volumes that contain fracture corners 
-- [ ] Check if point is too close to vertex -> rib -> face 
+  - [ ] Check if point is too close to vertex -> rib -> face 
 - [ ] Change comparisons from a == b to $|a-b|<\varepsilon$
 
 

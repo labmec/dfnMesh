@@ -51,7 +51,7 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
  * @param oldnodes: A set of indices of the old nodes that were used to define the geometry in 
  * GMsh (so that new nodes may be identified)
  */
-void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> oldnodes);
+void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes);
 
 struct DFNMesh{
 	// private:
@@ -123,6 +123,8 @@ struct DFNMesh{
 using namespace std;
 
 int main(){
+
+
 	// gRefDBase.InitializeUniformRefPattern(EOned);
 	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh;
@@ -153,8 +155,8 @@ int main(){
 	dfn.CreateVolumes();
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
-		std::ofstream out1("./TestSurfaces.vtk");
 		gmesh->Print(meshprint);
+		std::ofstream out1("./TestSurfaces.vtk");
 		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 
 
@@ -179,7 +181,7 @@ int main(){
 
 
 
-void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> oldnodes){
+void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes){
     // GMsh does not accept zero index entities
     const int shift = 1;
 
@@ -226,25 +228,11 @@ void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t>
         }
     }
     
-    // remember to use mapGMshToPZ to translate from GMsh node index to PZ nodeindex
-
-
-
 
     
     int64_t nels = gmesh->NElements();
     std::vector<std::pair<int, int> > dim_to_physical_groups;
     gmsh::model::getPhysicalGroups(dim_to_physical_groups);
-   
-    // std::vector<std::pair<int, int> > entities_0d;
-    // std::vector<std::pair<int, int> > entities_1d;
-    // std::vector<std::pair<int, int> > entities_2d;
-    // std::vector<std::pair<int, int> > entities_3d;
-    // gmsh::model::getEntities(entities_0d,0);
-    // gmsh::model::getEntities(entities_1d,1);
-    // gmsh::model::getEntities(entities_2d,2);
-    // gmsh::model::getEntities(entities_3d,3);
-    // gmsh::model::getEntities(entities_kd,dimension);
    
     /// inserting the elements
     for (auto group: dim_to_physical_groups) {
@@ -761,7 +749,7 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 		// std::cout<<"Face #"<<ifracface->Index()<<" \tin volume #"<<volumeindex<<"\n";
         return true;
     }
-    std::cout<<"\n DFNFractureMesh::FindEnclosingVolume found no enclosing volume for element #"<<ifracface->Index()<<"\n";
+    std::cout<<"\n DFNMesh::FindEnclosingVolume found no enclosing volume for element #"<<ifracface->Index()<<"\n";
     DebugStop();
     return false;
 }

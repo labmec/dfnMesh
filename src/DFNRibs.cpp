@@ -1,7 +1,7 @@
 /*! 
  *	DFNRibs.cpp
- *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
+ *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
@@ -47,8 +47,8 @@ DFNRibs &DFNRibs::operator=(const DFNRibs &copy){
 
 /**
  * @brief Set the index for an element if the fracture plane is cut by this element
- * @param Element index
- * @param Yes or no if the element is cutting the fracture plane
+ * @param elindex Element index
+ * @param IsCut: flag if the element is cut by the fracture plane
  */
 
 void DFNRibs::SetElementIndex(int64_t elindex, bool IsCut){
@@ -119,17 +119,23 @@ void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
             TPZGeoMesh refPatternMesh;
             int refnnodes = 3;
             // check if point should be snapped to vertex
-                // TPZManVector<REAL,3> qsi(3,2);
-                // gel->ComputeXInverse(IntersectionCoord,qsi,1E-5);
-                // if(qsi[0] < -0.95 || qsi[0] > 0.95){nnodes = 2;}
+                TPZManVector<REAL,3> qsi(1,2);
+                gel->ComputeXInverse(IntersectionCoord,qsi,1E-5);
+
+                fIntersectionIndex = 2;
+                if(qsi[0] < -0.95 || qsi[0] > 0.95){
+                    refnnodes = 2;
+                    if(qsi[0] < -0.95) fIntersectionIndex = 0;
+                    else fIntersectionIndex = 1; 
+                }
         // set nodes
             refPatternMesh.NodeVec().Resize(refnnodes);
             TPZManVector<REAL,3> coord(3);
-            gmesh->NodeVec()[gel->NodeIndex(0)].GetCoordinates(coord);
-            refPatternMesh.NodeVec()[0].Initialize(coord,refPatternMesh);
-            gmesh->NodeVec()[gel->NodeIndex(1)].GetCoordinates(coord);
-            refPatternMesh.NodeVec()[1].Initialize(coord,refPatternMesh);
-            refPatternMesh.NodeVec()[2].Initialize(IntersectionCoord,refPatternMesh);
+            for(int i = 0; i<2; i++){
+                gmesh->NodeVec()[gel->NodeIndex(i)].GetCoordinates(coord);
+                refPatternMesh.NodeVec()[i].Initialize(coord,refPatternMesh);
+            }
+            if(fIntersectionIndex == 2) refPatternMesh.NodeVec()[2].Initialize(IntersectionCoord,refPatternMesh);
         // insert father
             TPZManVector<int64_t,2> cornerindices(2);
             cornerindices[0] = 0;
@@ -138,13 +144,18 @@ void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
             refPatternMesh.CreateGeoElement(EOned, cornerindices, matID, elindex);
         // insert children
             cornerindices[0] = 0;
-            cornerindices[1] = 2;
+            cornerindices[1] = (fIntersectionIndex == 0 ? 1 : fIntersectionIndex);
             elindex = 1;
             refPatternMesh.CreateGeoElement(EOned, cornerindices, matID, elindex);
-            cornerindices[0] = 2;
-            cornerindices[1] = 1;
             elindex = 2;
-            refPatternMesh.CreateGeoElement(EOned, cornerindices, matID, elindex);
+            if(fIntersectionIndex == 2){
+                cornerindices[0] = 2;
+                cornerindices[1] = 1;
+                refPatternMesh.CreateGeoElement(EOned, cornerindices, matID, elindex);
+            }else{
+                TPZManVector<int64_t,1> pointindex(1,fIntersectionIndex);
+                refPatternMesh.CreateGeoElement(EPoint, pointindex, matID, elindex);
+            }
                         
             refPatternMesh.BuildConnectivity(); 
             // define refPattern
@@ -152,29 +163,49 @@ void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
             gel->SetRefPattern(refpat);
     }
 
-    TPZManVector<TPZGeoEl *,2> children(2);
-    // gel->Divide(children);
-    // correct coordinates for intersection point 
+
+    // set new node in gmesh 
     int64_t nnodes = gmesh->NNodes();
-    gmesh->NodeVec().Resize(nnodes+1);
-    gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord,*gmesh);
-    fIntersectionIndex = nnodes;
+    MElementType etype;
+    switch(fIntersectionIndex){
+        case 0:{
+            fIntersectionIndex = gel->NodeIndex(0); 
+            etype = EPoint;
+            break;}
+        case 1:{
+            fIntersectionIndex = gel->NodeIndex(1);
+            etype = EPoint;
+            break;}
+        case 2:{
+            gmesh->NodeVec().Resize(nnodes+1);
+            gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord,*gmesh);
+            fIntersectionIndex = nnodes;
+            etype = EOned;
+            break;
+        }
+        default: DebugStop();
+    }
 
-    TPZManVector<int64_t,2> cornerindices(2);
-    cornerindices[0] = gel->NodeIndex(0);
-    cornerindices[1] = fIntersectionIndex;
-    int64_t elindex = gmesh->NElements();
-    TPZGeoEl *child = gmesh->CreateGeoElement(EOned, cornerindices, matID, elindex);
-    gel->SetSubElement(0,child);
-    cornerindices[0] = fIntersectionIndex;
-    cornerindices[1] = gel->NodeIndex(1);
-    elindex++;
-    child = gmesh->CreateGeoElement(EOned, cornerindices, matID, elindex);
-    gel->SetSubElement(1,child);
-    // fSubElements.resize(2);
-    // fSubElements[0] = children[0]->Index();
-    // fSubElements[1] = children[1]->Index();
-
+    // set children
+        TPZManVector<int64_t,2> cornerindices(2);
+        TPZGeoEl *child;
+    // first child
+        cornerindices[0] = gel->NodeIndex(0);
+        cornerindices[1] = (etype == EPoint ? gel->NodeIndex(1) : fIntersectionIndex);
+        int64_t elindex = gmesh->NElements();
+        child = gmesh->CreateGeoElement(EOned, cornerindices, matID, elindex);
+        gel->SetSubElement(0,child);
+    // second child
+        if(etype == EOned){
+            cornerindices[1] = gel->NodeIndex(1);
+        }else{
+            cornerindices.Resize(1);
+        }
+        cornerindices[0] = fIntersectionIndex;
+        elindex++;
+        child = gmesh->CreateGeoElement(etype, cornerindices, matID, elindex);
+        gel->SetSubElement(1,child);
+    
 }
 
 

@@ -1,6 +1,5 @@
 /*! 
  *  @authors   Pedro Lima
- *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
@@ -34,7 +33,6 @@ typedef TPZFMatrix<REAL> Matrix;
  * elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a DFNFracPlane.
  *  @authors   Pedro Lima
- *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 class DFNFractureMesh
@@ -174,8 +172,6 @@ public:
     /// Get material ID for elements at surface of fracture
     int MaterialID(){return fSurfaceMaterial;}
 
-    /// Find the volumetrical element that encloses a 2D element
-    bool FindEnclosingVolume(TPZGeoEl *ifracface);
 };
 
 #endif /* DFNFractureMesh_h */

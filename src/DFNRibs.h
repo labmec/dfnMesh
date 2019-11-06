@@ -1,7 +1,7 @@
 /*! 
  *	DFNRibs.hpp
- *  @authors   Jorge Ordoñez
  *  @authors   Pedro Lima
+ *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
