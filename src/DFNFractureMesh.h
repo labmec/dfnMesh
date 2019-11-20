@@ -30,7 +30,7 @@ typedef TPZFMatrix<REAL> Matrix;
 /*! 
  *  @brief     Compares a geomesh with fracture plane to find intersections.
  *  @details   Intersection search is performed after creation of skeleton
- * elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
+ *  elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a DFNFracPlane.
  *  @authors   Pedro Lima
  *  @date      2018-2019
