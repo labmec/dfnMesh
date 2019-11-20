@@ -93,14 +93,14 @@ void DFNFace::DivideSurface(int matid){
    	if(!face){DebugStop();}
 	
 	// Vector of face's node indices
-	TPZVec<int64_t> node;
+	TPZManVector<int64_t,4> node;
 	face->GetNodeIndices(node);
 	
 	// Determine pattern of refinement
 	int splitcase = GetSplitPattern(fStatus);
 	
 	// Vector of children elements
-	TPZVec<TPZVec<int64_t>> child;
+	TPZManVector<TPZManVector<int64_t,4>,6> child;
 	// Vector of refinement elements (nodes numbered as in master element)
 	std::map<int64_t, int64_t> refnode;
 	for(int i = 0; i<node.size(); i++) refnode.insert({node[i], i});
@@ -119,19 +119,16 @@ void DFNFace::DivideSurface(int matid){
 			DFNRibs *ribB = fFracMesh->Rib(fRibs[i+2]);
 			nodeB = ribB->IntersectionIndex();
 			
-			TPZVec<int64_t> child1(4);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[i+1];
-				child1[3] = node[i+2];
-			TPZVec<int64_t> child2(4);
-				child2[0] = nodeA;
-				child2[1] = nodeB;
-				child2[2] = node[(i+3)%4];
-				child2[3] = node[i];
-			
-			child[0] = child1;
-			child[1] = child2;
+			child[0].Resize(4);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[i+1];
+				child[0][3] = node[i+2];
+			child[1].resize(4);
+				child[1][0] = nodeA;
+				child[1][1] = nodeB;
+				child[1][2] = node[(i+3)%4];
+				child[1][3] = node[i];
 			break;}
 		case 2:{
 			child.resize(4);
@@ -144,31 +141,56 @@ void DFNFace::DivideSurface(int matid){
 			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeA;
-				child1[1] = nodeB;
-				child1[2] = node[i];
-			TPZVec<int64_t> child2(3);
-				child2[0] = nodeB;
-				child2[1] = node[(i+1)%4];
-				child2[2] = node[(i+2)%4];
-			TPZVec<int64_t> child3(3);
-				child3[0] = nodeA;
-				child3[1] = nodeB;
-				child3[2] = node[(i+2)%4];
-			TPZVec<int64_t> child4(3);
-				child4[0] = nodeA;
-				child4[1] = node[(i+2)%4];
-				child4[2] = node[(i+3)%4];
-
-			child[0] = child1;
-			child[1] = child2;
-			child[2] = child3;
-			child[3] = child4;
+			child[0].Resize(3);
+				child[0][0] = nodeA;
+				child[0][1] = nodeB;
+				child[0][2] = node[i];
+			child[1].resize(3);
+				child[1][0] = nodeB;
+				child[1][1] = node[(i+1)%4];
+				child[1][2] = node[(i+2)%4];
+			child[2].resize(3);
+				child[2][0] = nodeA;
+				child[2][1] = nodeB;
+				child[2][2] = node[(i+2)%4];
+			child[3].resize(3);
+				child[3][0] = nodeA;
+				child[3][1] = node[(i+2)%4];
+				child[3][2] = node[(i+3)%4];
 			break;}
 		case 3:{
+			child.resize(2);
+			int i = fStatus[1];
+			child[0].Resize(3);
+				child[0][0] = node[i];
+				child[0][1] = node[i+1];
+				child[0][2] = node[i+2];
+			child[1].resize(3);
+				child[1][0] = node[i];
+				child[1][1] = node[i+2];
+				child[1][2] = node[(i+3)%4];
 			break;}
-		case 4:{
+		case 4:
+		case 7:{
+			child.resize(3);
+			int i = 0;
+			while(fStatus[i+4]==false) i++;
+			// Intersection node at rib i
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			nodeA = ribA->IntersectionIndex();
+
+			child[0].resize(3);
+				child[0][0] = nodeA;
+				child[0][1] = node[(i+1)%4];
+				child[0][2] = node[(i+2)%4];
+			child[1].resize(3);
+				child[1][0] = nodeA;
+				child[1][1] = node[(i+2)%4];
+				child[1][2] = node[(i+3)%4];
+			child[2].resize(3);
+				child[2][0] = nodeA;
+				child[2][1] = node[(i+1)%4];
+				child[2][2] = node[(i+2)%4];
 			break;}
 		case 5:{
 			child.resize(5);
@@ -180,40 +202,42 @@ void DFNFace::DivideSurface(int matid){
 			// In-plane itersection node
 			nodeB = fIntersection;
 
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[(i+1)%4];
-			TPZVec<int64_t> child2(3);
-				child2[0] = nodeB;
-				child2[1] = node[(i+1)%4];
-				child2[2] = node[(i+2)%4];
-			TPZVec<int64_t> child3(3);
-				child3[0] = nodeB;
-				child3[1] = node[(i+2)%4];
-				child3[2] = node[(i+3)%4];
-			TPZVec<int64_t> child4(3);
-				child4[0] = nodeB;
-				child4[1] = node[(i+3)%4];
-				child4[2] = node[i];
-			TPZVec<int64_t> child5(3);
-				child5[0] = nodeB;
-				child5[1] = node[i];
-				child5[2] = nodeA;
-
-			child[0] = child1;
-			child[1] = child2;
-			child[2] = child3;
-			child[3] = child4;
-			child[4] = child5;
+			child[0].Resize(3);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[(i+1)%4];
+			child[1].resize(3);
+				child[1][0] = nodeB;
+				child[1][1] = node[(i+1)%4];
+				child[1][2] = node[(i+2)%4];
+			child[2].resize(3);
+				child[2][0] = nodeB;
+				child[2][1] = node[(i+2)%4];
+				child[2][2] = node[(i+3)%4];
+			child[3].resize(3);
+				child[3][0] = nodeB;
+				child[3][1] = node[(i+3)%4];
+				child[3][2] = node[i];
+			child[4].resize(3);
+				child[4][0] = nodeB;
+				child[4][1] = node[i];
+				child[4][2] = nodeA;
 			break;}
-		case 6:{
-			break;}
-		case 7:{
-			break;}
-		case 8:{
+		case 6:
+		// case 7 == case 4
+		case 8:{ // case 8 == case 6
+			// In-plane itersection node
+			nodeB = fIntersection;
+			child.resize(4);
+			for(int i; i<4; i++) {
+				child[i].resize(3);
+				child[i][0] = nodeB;
+				child[i][1] = node[i];
+				child[i][2] = node[(i+1)%4];
+			}
 			break;}
 		case 9:{
+			// @ToDo
 			break;}
 		case 10:{
 			child.resize(2);
@@ -226,20 +250,33 @@ void DFNFace::DivideSurface(int matid){
 			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 			
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[i];
-			TPZVec<int64_t> child2(4);
-				child2[0] = nodeA;
-				child2[1] = nodeB;
-				child2[2] = node[(i+1)%3];
-				child2[3] = node[(i+2)%3];
-
-			child[0] = child1;
-			child[1] = child2;
+			child[0].Resize(3);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[i];
+			child[1].resize(4);
+				child[1][0] = nodeA;
+				child[1][1] = nodeB;
+				child[1][2] = node[(i+1)%3];
+				child[1][3] = node[(i+2)%3];
 			break;}
-		case 11:{
+		case 11:
+		case 14:{ //case 11 == case 14
+			child.resize(2);
+			int i=0;
+			while(fStatus[i+3] == false) i++;
+			// Intersection node at rib i
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			nodeA = ribA->IntersectionIndex(); 
+
+			child[0].resize(3);
+				child[0][0] = nodeA;
+				child[0][1] = node[(i+1)%3];
+				child[0][2] = node[(i+2)%3];
+			child[1].resize(3);
+				child[1][0] = nodeA;
+				child[1][1] = node[(i+2)%3];
+				child[1][2] = node[i];
 			break;}
 		case 12:{
 			child.resize(4);
@@ -251,43 +288,45 @@ void DFNFace::DivideSurface(int matid){
 			// In-plane itersection node
 			nodeB = fIntersection;
 
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[(i+1)%3];
-			TPZVec<int64_t> child2(3);
-				child2[0] = nodeB;
-				child2[1] = node[(i+1)%3];
-				child2[2] = node[(i+2)%3];
-			TPZVec<int64_t> child3(3);
-				child3[0] = nodeB;
-				child3[1] = node[(i+2)%3];
-				child3[2] = node[i];
-			TPZVec<int64_t> child4(3);
-				child4[0] = nodeB;
-				child4[1] = node[i];
-				child4[2] = nodeA;
-
-			child[0] = child1;
-			child[1] = child2;
-			child[2] = child3;
-			child[3] = child4;
-			// DebugStop();
+			child[0].Resize(3);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[(i+1)%3];
+			child[1].resize(3);
+				child[1][0] = nodeB;
+				child[1][1] = node[(i+1)%3];
+				child[1][2] = node[(i+2)%3];
+			child[2].resize(3);
+				child[2][0] = nodeB;
+				child[2][1] = node[(i+2)%3];
+				child[2][2] = node[i];
+			child[3].resize(3);
+				child[3][0] = nodeB;
+				child[3][1] = node[i];
+				child[3][2] = nodeA;
 			break;}
-		case 13:{
-			break;}
-		case 14:{
-			break;}
+		case 13: // case 13 == case 15
+		// case 14 == case 11
 		case 15:{
+			// In-plane itersection node
+			nodeB = fIntersection;
+			child.resize(3);
+			for(int i; i<3; i++) {
+				child[i].resize(3);
+				child[i][0] = nodeB;
+				child[i][1] = node[i];
+				child[i][2] = node[(i+1)%3];
+			}
 			break;}
 		case 16:{
+			// @ToDo
 			break;}
 		default: DebugStop();
 	}
 
 	int nchildren = child.size();
 	TPZManVector<int64_t,6> childrenIndices(nchildren,0);
-	childrenIndices.Shrink();
+
 
 // defining Refinement Pattern
 //----------------------------------------------------------------------------
