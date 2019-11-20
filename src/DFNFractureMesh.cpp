@@ -517,14 +517,23 @@ void DFNFractureMesh::SplitFractureEdge(std::list<int> &fracEdgeLoop){
 	//iterate over edges to split them
 	for (int iedge = 0; iedge < nedges; iedge++)
 	{
-        if(edgemap[iedge]->size() == 0){std::cout<<"\n Is there an edge of the fracture that doesn't cut any element? \n";DebugStop();}
-
 		int64_t nels = fGMesh->NElements();
 		TPZManVector<int64_t,2> inodes(2);     //index of nodes to be connected
+        int icorner = iedge; //for readability
+        
+        if(edgemap[iedge]->size() == 0){
+            std::cout<<"\n Is there an edge of the fracture that doesn't cut any element? \n";
+            // DebugStop();
+            inodes[0] = fFracplane.CornerIndex(icorner);
+            inodes[1] = fFracplane.CornerIndex((icorner+1)%nedges);
+            this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
+            fracEdgeLoop.push_back((int) nels + shift);
+            continue;
+        }
+
 
 		// connect first end-face intersection to iedge's first node
 		auto it = edgemap[iedge]->begin();
-        int icorner = iedge; //for readability
         inodes[0] = fFracplane.CornerIndex(icorner);
 		inodes[1] = it->second;
 		this->fSurfEl[nels] = fGMesh->CreateGeoElement(EOned, inodes, fSurfaceMaterial+6, nels);
