@@ -112,7 +112,7 @@ void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
         DebugStop();
     }
     TPZGeoEl *gel = gmesh->Element(iel_index);
-    
+    if(matID == -1) matID = gel->MaterialId();
     // Set refinement pattern
     {
         // dummy mesh

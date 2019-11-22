@@ -431,14 +431,14 @@ void DFNFractureMesh::SplitRibs(int matID){
 
         // Split rib
         if (resul == true){
-            std::cout<<"\nRib # "<<iel;
+            // std::cout<<"\nRib # "<<iel;
             DFNRibs rib(iel, true);
             AddRib(rib);
             TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
             // During development, elements at fracture surface have material id bigger than fSurfaceMaterial
             // if(gel->MaterialId() != fSurfaceMaterial) {gel->SetMaterialId(matID);}
             if(gel->MaterialId() < fSurfaceMaterial) {gel->SetMaterialId(matID);}
-            Rib(iel)->DivideRib(fGMesh, ipoint, matID);
+            Rib(iel)->DivideRib(fGMesh, ipoint, -1);
             if(gel->MaterialId() < fSurfaceMaterial) {gel->SetMaterialId(fTransitionMaterial);}
 
             // std::cout<<"Element: "<<iel<<" Side: "<<side<<" Rib status: "<<resul<<" Fracture : 1"<<"\n";
