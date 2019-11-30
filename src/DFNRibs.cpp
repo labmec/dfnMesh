@@ -195,6 +195,7 @@ void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
         int64_t elindex = gmesh->NElements();
         child = gmesh->CreateGeoElement(EOned, cornerindices, matID, elindex);
         gel->SetSubElement(0,child);
+        child->SetFather(gel->Index());
     // second child
         if(etype == EOned){
             cornerindices[1] = gel->NodeIndex(1);
@@ -205,6 +206,7 @@ void DFNRibs::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int ma
         elindex++;
         child = gmesh->CreateGeoElement(etype, cornerindices, matID, elindex);
         gel->SetSubElement(1,child);
+        child->SetFather(gel->Index());
     
 }
 

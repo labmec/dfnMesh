@@ -189,8 +189,8 @@ void DFNFace::DivideSurface(int matid){
 				child[1][2] = node[(i+3)%4];
 			child[2].resize(3);
 				child[2][0] = nodeA;
-				child[2][1] = node[(i+1)%4];
-				child[2][2] = node[(i+2)%4];
+				child[2][1] = node[(i+3)%4];
+				child[2][2] = node[i];
 			break;}
 		case 5:{
 			child.resize(5);
@@ -227,11 +227,11 @@ void DFNFace::DivideSurface(int matid){
 		// case 7 == case 4
 		case 8:{ // case 8 == case 6
 			// In-plane itersection node
-			nodeB = fIntersection;
+			nodeA = fIntersection;
 			child.resize(4);
-			for(int i; i<4; i++) {
+			for(int i=0; i<4; i++) {
 				child[i].resize(3);
-				child[i][0] = nodeB;
+				child[i][0] = nodeA;
 				child[i][1] = node[i];
 				child[i][2] = node[(i+1)%4];
 			}
@@ -309,11 +309,11 @@ void DFNFace::DivideSurface(int matid){
 		// case 14 == case 11
 		case 15:{
 			// In-plane itersection node
-			nodeB = fIntersection;
+			nodeA = fIntersection;
 			child.resize(3);
-			for(int i; i<3; i++) {
+			for(int i=0; i<3; i++) {
 				child[i].resize(3);
-				child[i][0] = nodeB;
+				child[i][0] = nodeA;
 				child[i][1] = node[i];
 				child[i][2] = node[(i+1)%3];
 			}
