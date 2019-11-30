@@ -18,7 +18,7 @@ DFNFracPlane::DFNFracPlane(const Matrix &CornerPoints)
 	}
 	//If data is consistent, fAxis was computed during consistency check
 	fCornerPoints = CornerPoints;
-	ComputeArea2();
+	ComputeArea();
 }
 
 // Copy constructor
@@ -113,59 +113,59 @@ Matrix DFNFracPlane::GetCornersX() const{
     return fCornerPoints;
 }
 
-/**
- * @brief Computes area of plane
- * @details Enumeration of corner points should follow standard PZ topology, where 
- * corner nodes are numbered counter-clockwise (clockwise should work as well) from
- * zero to N. (This condition will automatically be met for triangles, but not 
- * always for quadrilaterals)
- */
-void DFNFracPlane::ComputeArea(){
-	int npoints = fCornerPoints.Cols();
-	switch(npoints){
-		case 3:{ //triangle
-			//Area equals half the norm of the cross product between two edges
-			REAL temp = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
-				temp += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
-				temp += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
+// /**
+//  * @brief Computes area of plane
+//  * @details Enumeration of corner points should follow standard PZ topology, where 
+//  * corner nodes are numbered counter-clockwise (clockwise should work as well) from
+//  * zero to N. (This condition will automatically be met for triangles, but not 
+//  * always for quadrilaterals)
+//  */
+// void DFNFracPlane::ComputeArea(){
+// 	int npoints = fCornerPoints.Cols();
+// 	switch(npoints){
+// 		case 3:{ //triangle
+// 			//Area equals half the norm of the cross product between two edges
+// 			REAL temp = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
+// 				temp += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
+// 				temp += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
 						
-			fArea = sqrtl(temp)/2;
-			break;
-		}
-		case 4:{ //quadrilateral
-			//Area equals the sum of two triangles that fill the quadrilateral
-			//Compute area of first triangle
-			REAL temp1 = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
-				temp1 += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
-				temp1 += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
+// 			fArea = sqrtl(temp)/2;
+// 			break;
+// 		}
+// 		case 4:{ //quadrilateral
+// 			//Area equals the sum of two triangles that fill the quadrilateral
+// 			//Compute area of first triangle
+// 			REAL temp1 = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
+// 				temp1 += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
+// 				temp1 += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
 				
-				temp1 = sqrtl(temp1)/2;
+// 				temp1 = sqrtl(temp1)/2;
 			
-			//Define vectors that correspond to the other two edges (as opposed to Ax0 and Ax1)
-			TPZManVector<REAL, 3> ax3(3);
-					ax3[0] = fCornerPoints(0,1) - fCornerPoints(0,2);
-					ax3[1] = fCornerPoints(1,1) - fCornerPoints(1,2);
-					ax3[2] = fCornerPoints(2,1) - fCornerPoints(2,2);
-			TPZManVector<REAL, 3> ax4(3);
-					ax4[0] = fCornerPoints(0,3) - fCornerPoints(0,2);
-					ax4[1] = fCornerPoints(1,3) - fCornerPoints(1,2);
-					ax4[2] = fCornerPoints(2,3) - fCornerPoints(2,2);
-			//Compute area of second triangle
-			REAL temp2 = pow(ax3[1]*ax4[2] - ax3[2]*ax4[1],2);
-				temp2 += pow(ax3[2]*ax4[0] - ax3[0]*ax4[2],2);
-				temp2 += pow(ax3[0]*ax4[1] - ax3[1]*ax4[0],2);
+// 			//Define vectors that correspond to the other two edges (as opposed to Ax0 and Ax1)
+// 			TPZManVector<REAL, 3> ax3(3);
+// 					ax3[0] = fCornerPoints(0,1) - fCornerPoints(0,2);
+// 					ax3[1] = fCornerPoints(1,1) - fCornerPoints(1,2);
+// 					ax3[2] = fCornerPoints(2,1) - fCornerPoints(2,2);
+// 			TPZManVector<REAL, 3> ax4(3);
+// 					ax4[0] = fCornerPoints(0,3) - fCornerPoints(0,2);
+// 					ax4[1] = fCornerPoints(1,3) - fCornerPoints(1,2);
+// 					ax4[2] = fCornerPoints(2,3) - fCornerPoints(2,2);
+// 			//Compute area of second triangle
+// 			REAL temp2 = pow(ax3[1]*ax4[2] - ax3[2]*ax4[1],2);
+// 				temp2 += pow(ax3[2]*ax4[0] - ax3[0]*ax4[2],2);
+// 				temp2 += pow(ax3[0]*ax4[1] - ax3[1]*ax4[0],2);
 				
-				temp2 = sqrtl(temp2)/2;
+// 				temp2 = sqrtl(temp2)/2;
 
-			fArea = temp1 + temp2;
-			break;
-		}
-		default:{std::cout<<"Plane is not triangle nor quadrilateral? \n";
+// 			fArea = temp1 + temp2;
+// 			break;
+// 		}
+// 		default:{std::cout<<"Plane is not triangle nor quadrilateral? \n";
 
-			DebugStop();
-		}
-	}
-}
+// 			DebugStop();
+// 		}
+// 	}
+// }
 
 /**
  * @brief Checks if a point is above or below the fracture plane
@@ -303,12 +303,14 @@ TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh){
 // 	return cross;
 // }
 
-// area3D_Polygon(): compute the area of a 3D planar polygon
-//  Input:  int n = the number of vertices in the polygon
-//          Point* V = an array of n+1 points in a 2D plane with V[n]=V[0]
-//          Point N = a normal vector of the polygon's plane
-//  Return: the (float) area of the polygon
-REAL DFNFracPlane::ComputeArea2(){
+/**
+ * @brief Computes area of plane
+ * @details Enumeration of corner points should follow standard PZ topology, where 
+ * corner nodes are numbered counter-clockwise (clockwise should work as well) from
+ * zero to N. (This condition will automatically be met for triangles, but not 
+ * always for quadrilaterals)
+ */
+REAL DFNFracPlane::ComputeArea(){
 	int n = fCornerPoints.Cols();
 	TPZManVector<REAL,3> normal(3);
 	for(int i = 0; i<3; i++){
