@@ -157,7 +157,8 @@ void DFNFractureMesh::CreateSkeletonElements(int dimension, int matid)
             bool haskel = HasEqualDimensionNeighbour(gelside);
             if (haskel == false)
             {
-                // gel->CreateBCGeoEl(iside, matid);
+                if(matid == -1) matid = gel->MaterialId();
+                // TPZGeoElBC(gelside, matid);
                 if(gel->MaterialId() >= fSurfaceMaterial) TPZGeoElBC(gelside, fSurfaceMaterial+6);
                 else TPZGeoElBC(gelside, matid);
             }
@@ -342,9 +343,6 @@ void DFNFractureMesh::SplitFaces(int matID){
                     sidestatus[iside+nedges] = true;
                 }
                 
-                // // store cut rib 
-                // CutRibsIndex[nribscut]=rib_index[iside];
-                
                 nribscut++;
             }
         }
@@ -358,7 +356,6 @@ void DFNFractureMesh::SplitFaces(int matID){
             if(sidestatus[i+nedges]) edgescut++;
         }
         if(edgescut == 0 && cornerscut == 1) nribscut = 1;
-        // std::cout<<"\nFace # "<<iel;
         // Create DFNFace
         DFNFace face(iel, true);
         face.SetRibs(rib_index); 
@@ -379,10 +376,13 @@ void DFNFractureMesh::SplitFaces(int matID){
             if(gel->MaterialId() < fSurfaceMaterial) {gel->SetMaterialId(matID);}
             Face(iel)->DivideSurface(gel->MaterialId());
         }
-        
+
+        // //Print result
+		// 	std::ofstream out1("./TestSurfaces.vtk");
+		// 	TPZVTKGeoMesh::PrintGMeshVTK(fGMesh, out1, true);
     }
     fGMesh->BuildConnectivity();
-    CreateSkeletonElements(1, fTransitionMaterial);
+    CreateSkeletonElements(1, fTransitionMaterial+3);
 }
 
 
