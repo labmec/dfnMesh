@@ -117,14 +117,11 @@ bool gBigPlanes_Q = true;
 
 
 //MATERIAL ID MAP
-	// 1 gmesh (default)
-	// 4 skeleton
-	// 12 ribs that will be divided
-	// 18 children ribs
-	// 20 mid-fracture cut faces
-	// 35 end-fracture cut faces
-	// 40 Fracture plane
-	// 45 Intersection points in end-faces
+	// 1  gmesh (default)
+	// 4  MHM skeleton
+	// 18 cut planes
+	// 46 Fracture 1D elements
+	// 47 Fracture plane
 
 using namespace std;
 
@@ -134,10 +131,7 @@ int main(){
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
 	ReadExampleFromFile("examples/UniSim1.txt",planevector);
 	TPZGmshReader reader;
-	gmesh = reader.GeometricGmshMesh4("examples/UnisimMesh10x10.msh", gmesh);
-	//Print result
-		std::ofstream out1("./TestSurfaces.vtk");
-		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
+	gmesh = reader.GeometricGmshMesh4("examples/UnisimMesh30x30.msh", gmesh);
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
 	DFNMesh dfn;
@@ -150,11 +144,6 @@ int main(){
 			fracmesh->SplitFaces(transitionMaterial);
 		// Mesh fracture surface
 			fracmesh->SplitFracturePlane();
-		//Print result
-			std::ofstream meshprint("meshprint.txt");
-			std::ofstream out1("./TestSurfaces.vtk");
-			gmesh->Print(meshprint);
-			TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 		//insert fracture
 			dfn.fFractures.push_back(fracmesh);
 	}
@@ -163,7 +152,7 @@ int main(){
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
 		gmesh->Print(meshprint);
-		// std::ofstream out1("./TestSurfaces.vtk");
+		std::ofstream out1("./TestSurfaces.vtk");
 		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 
 
@@ -247,12 +236,12 @@ void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t>
         std::vector< int > entities;
         gmsh::model::getEntitiesForPhysicalGroup(dim, physical_identifier, entities);
 
-		// #ifdef PZDEBUG
-		// 	if(dimension == 3){
-		// 		physical_identifier++; // to differ cut volumes from cut faces
-		// 		std::cout<<"\n@comment: For better graphics, volumetrical transition elements have material id shifted\n";
-		// 	}
-		// #endif
+		#ifdef PZDEBUG
+			if(dimension == 3){
+				physical_identifier++; // to differ cut volumes from cut faces
+				std::cout<<"\n@comment: For better graphics, volumetrical transition elements have material id shifted\n";
+			}
+		#endif
 		for (auto tag: entities) {
 		// std::cout<<"______________________test - tag = "<<tag;
            
@@ -646,6 +635,8 @@ int64_t DFNMesh::SearchIndirectNeighbours(TPZGeoEl* gel){
         }   
 		verified.insert(index);
     }
+	// If this point is reached, current element is surrounded by elements that have been deleted and, therefore, is not in the domain (and should also be deleted).
+	return -1;
 }
 
 
@@ -711,7 +702,9 @@ void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue
 
 bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 	if(ifracface->Dimension()!=2) DebugStop();
+	int64_t ifracfaceindex = ifracface->Index();
 	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
+	TPZGeoMesh *gmesh = ifracface->Mesh();
     // get coordinates of geometric center of face
     TPZVec<REAL> faceCenter(3);
     {
@@ -723,6 +716,14 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
     std::map<REAL, int64_t> candidates;
     {
 		int64_t macroElindex = SearchIndirectNeighbours(ifracface);
+		if(macroElindex == -1){
+			if(!gBigPlanes_Q){
+				std::cout<<"\n "<<__PRETTY_FUNCTION__<<" found no enclosing volume for element #"<<ifracface->Index()<<"\n";
+				DebugStop();
+			}
+			gmesh->DeleteElement(ifracface,ifracface->Index());
+			return false;
+		}
 		TPZGeoEl *macroEl = ifracface->Mesh()->Element(macroElindex);
 		// get macroEl's center coordinates
 		TPZManVector<REAL,3> macroElCenter(3);
@@ -768,7 +769,6 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 		}
 	}
 	// return best candidate 
-	TPZGeoMesh *gmesh = ifracface->Mesh();
     if(candidates.size() > 0){
         // reverse iterator (rbegin) gives biggest key in map
         int64_t volumeindex = candidates.rbegin()->second;
