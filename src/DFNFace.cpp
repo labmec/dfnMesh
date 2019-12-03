@@ -101,9 +101,9 @@ void DFNFace::DivideSurface(int matid){
 	
 	// Vector of children elements
 	TPZManVector<TPZManVector<int64_t,4>,6> child;
-	// Vector of refinement elements (nodes numbered as in master element)
-	std::map<int64_t, int64_t> refnode;
-	for(int i = 0; i<node.size(); i++) refnode.insert({node[i], i});
+	// Maps geometric mesh index to refinement mesh index
+	std::map<int64_t, int64_t> gmesh_to_rmesh;
+	for(int i = 0; i<node.size(); i++) gmesh_to_rmesh.insert({node[i], i});
 
 	// Divide surface according to split pattern (these algorithms make no sense without documentation)
 	int64_t nodeA, nodeB;
@@ -330,9 +330,9 @@ void DFNFace::DivideSurface(int matid){
 
 // defining Refinement Pattern
 //----------------------------------------------------------------------------
-	
-	refnode.insert({nodeA,node.size()});
-	refnode.insert({nodeB,node.size()+1});
+	{
+	gmesh_to_rmesh.insert({nodeA,node.size()});
+	gmesh_to_rmesh.insert({nodeB,node.size()+1});
 	// set mesh to define refinement pattern
 	TPZGeoMesh refPatternMesh;
 	// count number of nodes for refinement pattern
@@ -345,11 +345,11 @@ void DFNFace::DivideSurface(int matid){
 
 	// insert nodes
 	refPatternMesh.NodeVec().Resize(refNNodes);
-	for(auto itr = refnode.begin(); itr != refnode.end(); itr++){
-		if(itr->second == refNNodes) break;
+	for(auto itr = gmesh_to_rmesh.begin(); itr != gmesh_to_rmesh.end(); itr++){
+		int64_t refnode = itr->second;
+		if(refnode == refNNodes) continue;
 		TPZManVector<REAL,3> coord(3);
 		int64_t meshnode = itr->first;
-		int64_t refnode = itr->second;
 		gmesh->NodeVec()[meshnode].GetCoordinates(coord);
 		// refPatternMesh.NodeVec().AllocateNewElement();
 		refPatternMesh.NodeVec()[refnode].Initialize(coord,refPatternMesh);
@@ -376,16 +376,19 @@ void DFNFace::DivideSurface(int matid){
 		int64_t index = i+1;
 		// int64_t index = i;
 		TPZManVector<int64_t,4> refchild(ncorners);
-		for(int k = 0; k<ncorners; k++) refchild[k] = refnode[child[i][k]];
+		for(int k = 0; k<ncorners; k++) refchild[k] = gmesh_to_rmesh[child[i][k]];
 		// for colorful printing use matid+3*i or something like that
 		refPatternMesh.CreateGeoElement(elemtype, refchild, matid, index);
-		childrenIndices[i] = index;
 	}
 	refPatternMesh.BuildConnectivity(); 
+        //Print result
+		// if(true);
+			// std::ofstream out2("./TestRefMesh.vtk");
+			// TPZVTKGeoMesh::PrintGMeshVTK(&refPatternMesh, out2, true);
 	// define refPattern
 	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
 	face->SetRefPattern(refpat);
-	
+	}
 //----------------------------------------------------------------------------
 
 	for (int i = 0; i < nchildren; i++)
