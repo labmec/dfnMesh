@@ -164,8 +164,26 @@ int main(){
 
 
 
-
-
+/**
+ * @brief Deletes all elements that share the same eldest ancestor as gel, then deletes the ancestor
+ * @param gel: Any member of the family
+*/
+void DeleteFamily(TPZGeoEl *gel){
+	TPZGeoMesh *gmesh = gel->Mesh();
+	if(!gel->Father()){
+		gmesh->DeleteElement(gel);
+		return;
+	}
+	TPZGeoEl *elder = gel->EldestAncestor();
+	while(elder->HasSubElement()){
+		TPZStack<TPZGeoEl*> youngestChildren;
+		elder->GetAllSiblings(youngestChildren);
+		for(auto child : youngestChildren){
+			gmesh->DeleteElement(child);
+		}	
+	}
+	gmesh->DeleteElement(elder);
+}
 
 
 
@@ -239,7 +257,7 @@ void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t>
 		#ifdef PZDEBUG
 			if(dimension == 3){
 				physical_identifier++; // to differ cut volumes from cut faces
-				std::cout<<"\n@comment: For better graphics, volumetrical transition elements have material id shifted\n";
+				//std::cout<<"\n@comment: For better graphics, volumetrical transition elements have material id shifted\n";
 			}
 		#endif
 		for (auto tag: entities) {
@@ -568,10 +586,7 @@ void DFNMesh::CreateVolumes(){
 	}
 	
 	
-	gmesh->BuildConnectivity();
-	//Print result
-		std::ofstream out1("./TestSurfaces.vtk");
-		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
+	// gmesh->BuildConnectivity();
 	MeshAll();
 	gmsh::initialize();
 	//Loop over list of volumes cut
@@ -721,7 +736,8 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 				std::cout<<"\n "<<__PRETTY_FUNCTION__<<" found no enclosing volume for element #"<<ifracface->Index()<<"\n";
 				DebugStop();
 			}
-			gmesh->DeleteElement(ifracface,ifracface->Index());
+			DeleteFamily(ifracface);
+			// gmesh->DeleteElement(ifracface,ifracface->Index());
 			return false;
 		}
 		TPZGeoEl *macroEl = ifracface->Mesh()->Element(macroElindex);
@@ -790,7 +806,8 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
     	std::cout<<"\n "<<__PRETTY_FUNCTION__<<" found no enclosing volume for element #"<<ifracface->Index()<<"\n";
 		DebugStop();
 	}
-	gmesh->DeleteElement(ifracface,ifracface->Index());
+	DeleteFamily(ifracface);
+	// gmesh->DeleteElement(ifracface,ifracface->Index());
     return false;
 }
 
@@ -1276,7 +1293,7 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 				while (getline(ss, word, ' ')){
 					while (word.length() == 0){getline(ss, word, ' ');}
 					planevector[ifrac](i, j) = std::stod(word);
-					std::cout << planevector[ifrac](i, j) << (j<ncorners-1?", \t":"\n");
+					std::cout << std::setw(14) << std::setprecision(6) << std::right << planevector[ifrac](i, j) << (j<ncorners-1?",":"\n");
 					j++;
 				}
 			}
