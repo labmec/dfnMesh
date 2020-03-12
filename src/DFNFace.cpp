@@ -331,63 +331,63 @@ void DFNFace::DivideSurface(int matid){
 // defining Refinement Pattern
 //----------------------------------------------------------------------------
 	{
-	gmesh_to_rmesh.insert({nodeA,node.size()});
-	gmesh_to_rmesh.insert({nodeB,node.size()+1});
-	// set mesh to define refinement pattern
-	TPZGeoMesh refPatternMesh;
-	// count number of nodes for refinement pattern
-	int refNNodes = face->NCornerNodes();
-	if(this->fIntersection >= 0) refNNodes++;
-	int ncornersfather = face->NCornerNodes();
-	for(int irib=ncornersfather;irib<fStatus.size();irib++){
-		if(this->fStatus[irib]) refNNodes++;
-	}
-
-	// insert nodes
-	refPatternMesh.NodeVec().Resize(refNNodes);
-	for(auto itr = gmesh_to_rmesh.begin(); itr != gmesh_to_rmesh.end(); itr++){
-		int64_t refnode = itr->second;
-		if(refnode == refNNodes) continue;
-		TPZManVector<REAL,3> coord(3);
-		int64_t meshnode = itr->first;
-		gmesh->NodeVec()[meshnode].GetCoordinates(coord);
-		// refPatternMesh.NodeVec().AllocateNewElement();
-		refPatternMesh.NodeVec()[refnode].Initialize(coord,refPatternMesh);
-	}
-
-	
-	// insert father
-	{
-		MElementType elemtype = face->Type();
-		TPZManVector<int64_t,4> cornerindices(ncornersfather);
-		for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
-		int64_t index = 0;
-		refPatternMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
-	}
-	// insert children
-	for (int i = 0; i < nchildren; i++)
-	{
-		int ncorners = child[i].size();
-		MElementType elemtype;
-		switch (ncorners){
-			case 3: elemtype = ETriangle; break;
-			case 4: elemtype = EQuadrilateral; break;
+		gmesh_to_rmesh.insert({nodeA,node.size()});
+		gmesh_to_rmesh.insert({nodeB,node.size()+1});
+		// set mesh to define refinement pattern
+		TPZGeoMesh refPatternMesh;
+		// count number of nodes for refinement pattern
+		int refNNodes = face->NCornerNodes();
+		if(this->fIntersection >= 0) refNNodes++;
+		int ncornersfather = face->NCornerNodes();
+		for(int irib=ncornersfather;irib<fStatus.size();irib++){
+			if(this->fStatus[irib]) refNNodes++;
 		}
-		int64_t index = i+1;
-		// int64_t index = i;
-		TPZManVector<int64_t,4> refchild(ncorners);
-		for(int k = 0; k<ncorners; k++) refchild[k] = gmesh_to_rmesh[child[i][k]];
-		// for colorful printing use matid+3*i or something like that
-		refPatternMesh.CreateGeoElement(elemtype, refchild, matid, index);
-	}
-	refPatternMesh.BuildConnectivity(); 
-        //Print result
-		// if(true);
-			// std::ofstream out2("./TestRefMesh.vtk");
-			// TPZVTKGeoMesh::PrintGMeshVTK(&refPatternMesh, out2, true);
-	// define refPattern
-	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
-	face->SetRefPattern(refpat);
+	
+		// insert nodes
+		refPatternMesh.NodeVec().Resize(refNNodes);
+		for(auto itr = gmesh_to_rmesh.begin(); itr != gmesh_to_rmesh.end(); itr++){
+			int64_t refnode = itr->second;
+			if(refnode == refNNodes) continue;
+			TPZManVector<REAL,3> coord(3);
+			int64_t meshnode = itr->first;
+			gmesh->NodeVec()[meshnode].GetCoordinates(coord);
+			// refPatternMesh.NodeVec().AllocateNewElement();
+			refPatternMesh.NodeVec()[refnode].Initialize(coord,refPatternMesh);
+		}
+	
+		
+		// insert father
+		{
+			MElementType elemtype = face->Type();
+			TPZManVector<int64_t,4> cornerindices(ncornersfather);
+			for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
+			int64_t index = 0;
+			refPatternMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
+		}
+		// insert children
+		for (int i = 0; i < nchildren; i++)
+		{
+			int ncorners = child[i].size();
+			MElementType elemtype;
+			switch (ncorners){
+				case 3: elemtype = ETriangle; break;
+				case 4: elemtype = EQuadrilateral; break;
+			}
+			int64_t index = i+1;
+			// int64_t index = i;
+			TPZManVector<int64_t,4> refchild(ncorners);
+			for(int k = 0; k<ncorners; k++) refchild[k] = gmesh_to_rmesh[child[i][k]];
+			// for colorful printing use matid+3*i or something like that
+			refPatternMesh.CreateGeoElement(elemtype, refchild, matid, index);
+		}
+		refPatternMesh.BuildConnectivity(); 
+    	    //Print result
+			// if(true);
+				// std::ofstream out2("./TestRefMesh.vtk");
+				// TPZVTKGeoMesh::PrintGMeshVTK(&refPatternMesh, out2, true);
+		// define refPattern
+		TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
+		face->SetRefPattern(refpat);
 	}
 //----------------------------------------------------------------------------
 

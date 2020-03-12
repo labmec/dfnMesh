@@ -90,7 +90,7 @@ struct DFNMesh{
 		int64_t FindAdjacentMacroEl(TPZGeoEl* gel);
 		/**
 		 * @brief Pushes all neighbours of a geometric element onto the back of a list
-		 * @note Not all neighbours are pushed to the list, but rather some criteria is specified so that it gets only those that are candidates of higher interest. Currently these would be 2D elements that are neighbours through the edges of gel.
+		 * @note Not all neighbours are pushed to the list, but rather some criteria are specified so that it gets only those that are candidates of higher interest. Currently these would be 2D elements that are neighbours through the edges of gel.
 		 * @param gel: Pointer to geometric element
 		 * @param candidate_queue: Reference to current list of candidates 
 		*/
@@ -121,17 +121,20 @@ bool gBigPlanes_Q = true;
 	// 4  MHM skeleton
 	// 18 cut planes
 	// 46 Fracture 1D elements
-	// 47 Fracture plane
+	// 47 Fracture surface
 
 using namespace std;
 
 int main(){
-
+	std::cout<<"\n\n running... \n\n";
 	TPZManVector< TPZFMatrix<REAL>> planevector;
-	TPZGeoMesh *gmesh = new TPZGeoMesh;
-	ReadExampleFromFile("examples/UniSim1.txt",planevector);
-	TPZGmshReader reader;
-	gmesh = reader.GeometricGmshMesh4("examples/UnisimMesh30x30.msh", gmesh);
+	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector);
+	// For unisim _________________________________________________________________________________________________
+	// ReadExampleFromFile("examples/UniSim1.txt",planevector);
+	// TPZGeoMesh *gmesh = new TPZGeoMesh;
+	// TPZGmshReader reader;
+	// gmesh = reader.GeometricGmshMesh4("examples/UnisimMesh30x30.msh", gmesh);
+	// For unisim _________________________________________________________________________________________________
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
 	DFNMesh dfn;
@@ -140,6 +143,11 @@ int main(){
 		DFNFractureMesh *fracmesh = new DFNFractureMesh(*fracplane,gmesh,surfaceMaterial);
 		// Find and split intersected ribs
 			fracmesh->SplitRibs(transitionMaterial);
+	//Print result
+		std::ofstream meshprint("meshprint.txt");
+		gmesh->Print(meshprint);
+		std::ofstream out1("./TestSurfaces.vtk");
+		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
 		// Find and split intersected faces
 			fracmesh->SplitFaces(transitionMaterial);
 		// Mesh fracture surface
@@ -148,13 +156,13 @@ int main(){
 			dfn.fFractures.push_back(fracmesh);
 	}
 	// Mesh transition volumes
-	dfn.CreateVolumes();
+	// dfn.CreateVolumes();
+
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
 		gmesh->Print(meshprint);
 		std::ofstream out1("./TestSurfaces.vtk");
 		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
-
 
 	return 0;
 }
@@ -165,7 +173,7 @@ int main(){
 
 
 /**
- * @brief Deletes all elements that share the same eldest ancestor as gel, then deletes the ancestor
+ * @brief Deletes gel and all elements that share the same eldest ancestor, then deletes the ancestor
  * @param gel: Any member of the family
 */
 void DeleteFamily(TPZGeoEl *gel){
@@ -440,7 +448,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 		// insert surface
 		gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);	
 		gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
-		if(face->Type() == EQuadrilateral) gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
+		// if(face->Type() == EQuadrilateral) gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
 	}
 	// Enclosed faces
 	for(int64_t faceindex : enclosedFaces){
@@ -471,7 +479,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 		// insert surface
 		gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);	
 		gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
-		if(face->Type() == EQuadrilateral) gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
+		// if(face->Type() == EQuadrilateral) gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
 	}
 	}
 	
@@ -1315,14 +1323,17 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 	ndiv[1] = ny;
 	TPZGenGrid gengrid(ndiv, x0, x1);
 	gengrid.SetElementType(eltype);
-	gmesh->SetDimension(2);
+	gengrid.SetRefpatternElements(true);
 	gengrid.Read(gmesh);
+	gmesh->SetDimension(2);
 
 	// Mesh 3D
-	Lz = Lz/nz;
-	TPZExtendGridDimension extend(gmesh,Lz);
-	extend.SetElType(1);
-	TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nz);
-	gmesh = gmesh3d;
+	if(nz != 0){
+		Lz = Lz/nz;
+		TPZExtendGridDimension extend(gmesh,Lz);
+		extend.SetElType(1);
+		TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nz);
+		gmesh = gmesh3d;
+	}
 	return gmesh;
 }
