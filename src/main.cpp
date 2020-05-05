@@ -128,13 +128,15 @@ using namespace std;
 int main(){
 	std::cout<<"\n\n running... \n\n";
 	TPZManVector< TPZFMatrix<REAL>> planevector;
-	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector);
-	// For unisim _________________________________________________________________________________________________
+	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector);
+	// Read .msh _________________________________________________________________________________________________
 	// ReadExampleFromFile("examples/UniSim1.txt",planevector);
 	// TPZGeoMesh *gmesh = new TPZGeoMesh;
-	// TPZGmshReader reader;
-	// gmesh = reader.GeometricGmshMesh4("examples/UnisimMesh30x30.msh", gmesh);
-	// For unisim _________________________________________________________________________________________________
+	{
+		TPZGmshReader reader;
+		gmesh = reader.GeometricGmshMesh4("examples/flemisch_case1.msh", gmesh);
+	}
+	// Read .msh _________________________________________________________________________________________________
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
 	DFNMesh dfn;
@@ -156,7 +158,7 @@ int main(){
 			dfn.fFractures.push_back(fracmesh);
 	}
 	// Mesh transition volumes
-	// dfn.CreateVolumes();
+	dfn.CreateVolumes();
 
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
@@ -185,7 +187,7 @@ void DeleteFamily(TPZGeoEl *gel){
 	TPZGeoEl *elder = gel->EldestAncestor();
 	while(elder->HasSubElement()){
 		TPZStack<TPZGeoEl*> youngestChildren;
-		elder->GetAllSiblings(youngestChildren);
+		elder->YoungestChildren(youngestChildren);
 		for(auto child : youngestChildren){
 			gmesh->DeleteElement(child);
 		}	
@@ -342,7 +344,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 		while(neig.Element()->Dimension() != 2){ neig = neig.Neighbour();}
 		TPZStack<TPZGeoEl *> unrefinedSons;
 		if(neig.Element()->HasSubElement()){
-			neig.Element()->GetAllSiblings(unrefinedSons);
+			neig.Element()->YoungestChildren(unrefinedSons);
 		}else{ //if it has no child, use itself
 			unrefinedSons.push_back(neig.Element());
 		}

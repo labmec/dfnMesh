@@ -407,7 +407,7 @@ void DFNFace::DivideSurface(int matid){
 		
 		face->SetSubElement(i,newface);
 		// Tell the child who its father is
-		newface->SetFather(fFaceIndex);
+		newface->SetFatherIndex(fFaceIndex);
 	}
 	// create skeleton?
 }
