@@ -150,7 +150,7 @@ Surface(20) = {20};
 Transfinite Curve{:} = 2;
 Transfinite Surface{:};
 Recombine Surface{:};
-Mesh 2;
+// Mesh 2;
 Extrude {0, 100, 0} {
     Surface{:}; 
     Layers{5}; 
@@ -158,3 +158,5 @@ Extrude {0, 100, 0} {
 }
 Physical Volume(1) = Volume{:};
 // Transfinite Volume{:};
+//+
+Physical Surface(2) = {1, 2, 3, 4};
