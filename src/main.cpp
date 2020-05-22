@@ -134,6 +134,7 @@ int main(){
 	// TPZGeoMesh *gmesh = new TPZGeoMesh;
 	{
 		TPZGmshReader reader;
+		gmesh = nullptr; // ReadExampleFromFile() creates a mesh, so if we're reading a mesh, the pointer must be cleared
 		gmesh = reader.GeometricGmshMesh4("examples/flemisch_case1.msh", gmesh);
 	}
 	// Read .msh _________________________________________________________________________________________________
