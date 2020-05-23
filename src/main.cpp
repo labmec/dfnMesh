@@ -4,7 +4,8 @@
 	#include <pz_config.h>
 	#endif
 	#include "pzgmesh.h"
-	#include "pzgengrid.h"
+	#include "MMeshType.h"
+	#include "TPZGenGrid2D.h"
 	#include "TPZExtendGridDimension.h"
 	#include "TPZVTKGeoMesh.h"
 	#include "TPZGeoMeshBuilder.h"
@@ -40,7 +41,14 @@
 
 
 void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane);
-TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector, std::string mshfile = "no-mesh");
+/**
+ * @brief Define which example to run. See example file sintax in function definition
+ * @param filename: path to the file that defines the example
+ * @param planevector: vector to fill with corners of the fractures
+ * @param mshfile: [optional] path to .msh file (if applicable)
+ * @returns pointer to geometric mesh created/read
+*/
+TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector, std::string mshfile = "no-msh-file");
 /**
  * @brief Imports d-dimensional elements from a GMsh::model to a TPZGeoMesh. Imported 
  * elements are pushed to the back of TPZGeoMesh::ElementVector.
@@ -104,7 +112,15 @@ struct DFNMesh{
  */
 bool gBigPlanes_Q = true;
 
+void PrintPreamble(){
+	std::string neopzversion = "[commit hash] 85f5651ec57ef214fa9fceabcc42caf504148b44";
+	std::string gmshversion = "4.5.6";
+	std::cout<<"\n";
+	std::cout<<"\nNeoPZ assumed version: " << neopzversion;
+	std::cout<<"\nGMsh assumed version: " << gmshversion << "\n\n";
+	std::cout<<"Runing...\n\n";
 
+}
 
 
 
@@ -126,18 +142,11 @@ bool gBigPlanes_Q = true;
 using namespace std;
 
 int main(){
-	std::cout<<"\n\n running... \n\n";
+	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
-	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
-	// Read .msh _________________________________________________________________________________________________
-	// ReadExampleFromFile("examples/UniSim1.txt",planevector);
-	// TPZGeoMesh *gmesh = new TPZGeoMesh;
-	// {
-	// 	TPZGmshReader reader;
-	// 	gmesh = nullptr; // ReadExampleFromFile() creates a mesh, so if we're reading a mesh, the pointer must be cleared
-	// 	gmesh = reader.GeometricGmshMesh4("examples/flemisch_case1.msh", gmesh);
-	// }
-	// Read .msh _________________________________________________________________________________________________
+	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/example.txt",planevector);
+	// TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
+
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
 	DFNMesh dfn;
@@ -166,7 +175,7 @@ int main(){
 		gmesh->Print(meshprint);
 		std::ofstream out1("./TestSurfaces.vtk");
 		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
-
+	std::cout<<"\n\n ...the end.\n\n";
 	return 0;
 }
 
@@ -1199,12 +1208,12 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 	 */
 
 	string line, word;
-	bool create_mesh_Q = mshfile == "no-mesh";
+	bool create_mesh_Q = mshfile == "no-msh-file";
 	// const string Domain = "Domain";
 	// const string Mesh("Mesh"), Fractures("NumberOfFractures");
 	int i, j, nfractures;
 	REAL Lx, Ly, Lz;
-	MElementType eltype;
+	MMeshType eltype;
 	int nx, ny, nz;
 
 	// Read file
@@ -1247,9 +1256,9 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 					getline(ss, word, ' ');
 					while (word.length() == 0){getline(ss, word, ' ');}
 					if(word == "EQuadrilateral"){
-						eltype = EQuadrilateral;
-					}else if(word == "ETriangle"){
-						eltype = ETriangle;
+						eltype = MMeshType::EQuadrilateral;
+					}else if(word == "ETriangle" || word == "ETriangular"){
+						eltype = MMeshType::ETriangular;
 					}else{ std::cout<<"\nError reading file\n"; DebugStop();}
 				}
 				getline(plane_file, line);
@@ -1328,7 +1337,7 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 		TPZManVector<int, 2> ndiv(2);
 		ndiv[0] = nx;
 		ndiv[1] = ny;
-		TPZGenGrid gengrid(ndiv, x0, x1);
+		TPZGenGrid2D gengrid(ndiv, x0, x1);
 		gengrid.SetElementType(eltype);
 		gengrid.SetRefpatternElements(true);
 		gengrid.Read(gmesh);
