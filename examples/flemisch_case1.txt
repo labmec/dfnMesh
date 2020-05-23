@@ -1,10 +1,3 @@
-Domain
-100.0 100.0 100.0
-
-Mesh
-EQuadrilateral
-7 7 7
-
 NumberOfFractures 1
 
 Fracture 0 4

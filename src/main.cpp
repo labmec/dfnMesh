@@ -40,7 +40,7 @@
 
 
 void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane);
-TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector);
+TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector, std::string mshfile = "no-mesh");
 /**
  * @brief Imports d-dimensional elements from a GMsh::model to a TPZGeoMesh. Imported 
  * elements are pushed to the back of TPZGeoMesh::ElementVector.
@@ -128,15 +128,15 @@ using namespace std;
 int main(){
 	std::cout<<"\n\n running... \n\n";
 	TPZManVector< TPZFMatrix<REAL>> planevector;
-	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector);
+	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
 	// Read .msh _________________________________________________________________________________________________
 	// ReadExampleFromFile("examples/UniSim1.txt",planevector);
 	// TPZGeoMesh *gmesh = new TPZGeoMesh;
-	{
-		TPZGmshReader reader;
-		gmesh = nullptr; // ReadExampleFromFile() creates a mesh, so if we're reading a mesh, the pointer must be cleared
-		gmesh = reader.GeometricGmshMesh4("examples/flemisch_case1.msh", gmesh);
-	}
+	// {
+	// 	TPZGmshReader reader;
+	// 	gmesh = nullptr; // ReadExampleFromFile() creates a mesh, so if we're reading a mesh, the pointer must be cleared
+	// 	gmesh = reader.GeometricGmshMesh4("examples/flemisch_case1.msh", gmesh);
+	// }
 	// Read .msh _________________________________________________________________________________________________
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
@@ -1155,7 +1155,7 @@ void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane){
 }
 
 
-TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector){
+TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector, std::string mshfile){
 	/*_______________________________________________________________
 						FILE FORMAT 
 
@@ -1199,6 +1199,7 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 	 */
 
 	string line, word;
+	bool create_mesh_Q = mshfile == "no-mesh";
 	// const string Domain = "Domain";
 	// const string Mesh("Mesh"), Fractures("NumberOfFractures");
 	int i, j, nfractures;
@@ -1209,64 +1210,66 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 	// Read file
 	ifstream plane_file(filename);
 	if (!plane_file){
-		std::cout << "Error reading file" << std::endl;
+		std::cout << "\nCouldn't find file " << filename << std::endl;
 		DebugStop();
 	}
 	// Go through it line by line
 	while (getline(plane_file, line)){
-		{
-			std::stringstream ss(line);
-			getline(ss, word, ' ');
-		}
-		if(word == "Domain"){
-			getline(plane_file, line);
-			std::stringstream ss(line);
-			getline(ss, word, ' ');
-			while (word.length() == 0){getline(ss, word, ' ');}
-			Lx = std::stod(word);
-			getline(ss, word, ' ');
-			while (word.length() == 0){getline(ss, word, ' ');}
-			Ly = std::stod(word);
-			getline(ss, word, ' ');
-			while (word.length() == 0){getline(ss, word, ' ');}
-			Lz = std::stod(word);
-		}
-
-		{
-			getline(plane_file, line);
-			while(line.length() == 0){getline(plane_file, line);}
-			std::stringstream ss(line);
-			getline(ss, word, ' ');
-		}
-		if(word == "Mesh"){
-			getline(plane_file, line);
+		if(create_mesh_Q){
 			{
 				std::stringstream ss(line);
 				getline(ss, word, ' ');
-				while (word.length() == 0){getline(ss, word, ' ');}
-				if(word == "EQuadrilateral"){
-					eltype = EQuadrilateral;
-				}else if(word == "ETriangle"){
-					eltype = ETriangle;
-				}else{ std::cout<<"\nError reading file\n"; DebugStop();}
 			}
-			getline(plane_file, line);
-			{
+			if(word == "Domain"){
+				getline(plane_file, line);
 				std::stringstream ss(line);
 				getline(ss, word, ' ');
 				while (word.length() == 0){getline(ss, word, ' ');}
-				nx = std::stoi(word);
+				Lx = std::stod(word);
 				getline(ss, word, ' ');
 				while (word.length() == 0){getline(ss, word, ' ');}
-				ny = std::stoi(word);
+				Ly = std::stod(word);
 				getline(ss, word, ' ');
 				while (word.length() == 0){getline(ss, word, ' ');}
-				nz = std::stoi(word);
+				Lz = std::stod(word);
 			}
+
+			{
+				getline(plane_file, line);
+				while(line.length() == 0){getline(plane_file, line);}
+				std::stringstream ss(line);
+				getline(ss, word, ' ');
+			}
+			if(word == "Mesh"){
+				getline(plane_file, line);
+				{
+					std::stringstream ss(line);
+					getline(ss, word, ' ');
+					while (word.length() == 0){getline(ss, word, ' ');}
+					if(word == "EQuadrilateral"){
+						eltype = EQuadrilateral;
+					}else if(word == "ETriangle"){
+						eltype = ETriangle;
+					}else{ std::cout<<"\nError reading file\n"; DebugStop();}
+				}
+				getline(plane_file, line);
+				{
+					std::stringstream ss(line);
+					getline(ss, word, ' ');
+					while (word.length() == 0){getline(ss, word, ' ');}
+					nx = std::stoi(word);
+					getline(ss, word, ' ');
+					while (word.length() == 0){getline(ss, word, ' ');}
+					ny = std::stoi(word);
+					getline(ss, word, ' ');
+					while (word.length() == 0){getline(ss, word, ' ');}
+					nz = std::stoi(word);
+				}
+			}
+			getline(plane_file, line);
 		}
 
 		{
-			getline(plane_file, line);
 			while(line.length() == 0){getline(plane_file, line);}
 			std::stringstream ss(line);
 			getline(ss, word, ' ');
@@ -1317,26 +1320,31 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 
 	// Creating the Geo mesh
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
-	x1[0] = Lx;
-	x1[1] = Ly;
-	x1[2] = 0.;
-	TPZManVector<int, 2> ndiv(2);
-	ndiv[0] = nx;
-	ndiv[1] = ny;
-	TPZGenGrid gengrid(ndiv, x0, x1);
-	gengrid.SetElementType(eltype);
-	gengrid.SetRefpatternElements(true);
-	gengrid.Read(gmesh);
-	gmesh->SetDimension(2);
+	if(create_mesh_Q){
+		TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
+		x1[0] = Lx;
+		x1[1] = Ly;
+		x1[2] = 0.;
+		TPZManVector<int, 2> ndiv(2);
+		ndiv[0] = nx;
+		ndiv[1] = ny;
+		TPZGenGrid gengrid(ndiv, x0, x1);
+		gengrid.SetElementType(eltype);
+		gengrid.SetRefpatternElements(true);
+		gengrid.Read(gmesh);
+		gmesh->SetDimension(2);
 
-	// Mesh 3D
-	if(nz != 0){
-		Lz = Lz/nz;
-		TPZExtendGridDimension extend(gmesh,Lz);
-		extend.SetElType(1);
-		TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nz);
-		gmesh = gmesh3d;
+		// Mesh 3D
+		if(nz != 0){
+			Lz = Lz/nz;
+			TPZExtendGridDimension extend(gmesh,Lz);
+			extend.SetElType(1);
+			TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nz);
+			gmesh = gmesh3d;
+		}
+	}else{
+		TPZGmshReader reader;
+		gmesh = reader.GeometricGmshMesh4(mshfile, gmesh);
 	}
 	return gmesh;
 }

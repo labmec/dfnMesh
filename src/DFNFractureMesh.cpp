@@ -561,6 +561,7 @@ void DFNFractureMesh::SplitFractureEdge(std::list<int> &fracEdgeLoop){
     // GMsh does not accept zero index entities
     const int shift = 1;
 
+    bool warning_message_Q = true;
     //Once intersections on fracture-edges have been properly ordered and mapped by edge
 	//iterate over edges to split them
 	for (int iedge = 0; iedge < nedges; iedge++)
@@ -571,7 +572,10 @@ void DFNFractureMesh::SplitFractureEdge(std::list<int> &fracEdgeLoop){
         
         if(edgemap[iedge]->size() == 0){
             #ifdef PZDEBUG
-                std::cout<<"\n Is there an edge of the fracture that doesn't cut any element? \n";
+                if(warning_message_Q){
+                    std::cout<<"\n Warning: Is there an edge of a fracture that doesn't cut any element? \n\n";
+                    warning_message_Q = false;
+                }
             #endif //PZDEBUG
             // DebugStop();
             inodes[0] = fFracplane.CornerIndex(icorner);

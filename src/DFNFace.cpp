@@ -488,6 +488,7 @@ int DFNFace::GetSplitPattern(TPZVec<bool> &status){
 			case 2:
 				splitcase = 10;
 				break;
+			default: DebugStop();break;
 		}
 	}
 	return splitcase;
