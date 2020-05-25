@@ -112,6 +112,9 @@ struct DFNMesh{
  */
 bool gBigPlanes_Q = true;
 
+/**
+ * @brief information and assumptions
+*/
 void PrintPreamble(){
 	std::string neopzversion = "[commit hash] 85f5651ec57ef214fa9fceabcc42caf504148b44";
 	std::string gmshversion = "4.5.6";
@@ -144,8 +147,7 @@ using namespace std;
 int main(){
 	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
-	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/example.txt",planevector);
-	// TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
+	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
 
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
@@ -184,6 +186,101 @@ int main(){
 
 
 
+
+
+
+
+/**
+ * @brief Deletes face + ribs (if left isolated) + nodes (if left isolated)
+ * @param face: 2D element to be deleted
+*/
+void DeleteElementAndRibs(TPZGeoEl *face){
+	TPZGeoMesh *gmesh = face->Mesh();
+	// queue ribs
+	int nribs = face->NNodes();
+	// int nribs = (face->Type() == MElementType::EQuadrilateral ? 4 : 3);
+	TPZManVector<int64_t, 4> ribs(nribs,-1);
+	for(int irib = 0; irib < nribs; irib++){
+		TPZGeoElSide faceside(face,irib+nribs);
+		for(TPZGeoElSide neighbour = faceside.Neighbour(); neighbour != faceside; neighbour = neighbour.Neighbour()){
+			if(neighbour.Element()->Dimension() == 1){
+				ribs[irib] = neighbour.Element()->Index(); 
+				break;
+			}
+		}
+	}
+	// delete face
+	gmesh->DeleteElement(face);
+	// then, delete face's ribs and nodes if necessary
+	for(int irib = 0; irib < nribs; irib++){
+		if(ribs[irib] == -1) continue;
+		TPZGeoEl *ribgel = gmesh->Element(ribs[irib]);
+		TPZManVector<int64_t,2> nodes(2,-1);
+		for(int iside = 0; iside < 3 ; iside++){
+			TPZGeoElSide ribgelside(ribgel,iside);
+			TPZGeoElSide neighbour = ribgelside.Neighbour();
+			bool delete_Q = true;
+			// @todo maybe add exception for 0D neighbour
+			if(iside < 2){
+				if(neighbour == ribgelside){
+					nodes[iside] = ribgel->NodeIndex(iside);
+				}
+			}else{
+				while(neighbour != ribgelside){
+					if(neighbour.Element()->Dimension() == 2){
+						delete_Q = false; 
+						break;
+					}
+					neighbour = neighbour.Neighbour();
+				}
+				if(delete_Q){gmesh->DeleteElement(ribgel,ribs[irib]);}
+			}
+		}
+		// delete node
+		for(int inode : nodes){
+			if(inode < 0) continue;
+			gmesh->NodeVec().SetFree(inode);
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+/**
+ * @brief Deletes gel + children + isolated ribs + unused nodes
+ * @note It will assume element has been found not to belong to the domain of interest and will not verify
+ * @param gel: pointer to the geometric element
+*/
+void CropExternalElement(TPZGeoEl *gel){
+	TPZGeoMesh *gmesh = gel->Mesh();
+	// If an element is external to the domain, then its eldest ancestor and all the refinement tree are also external
+	TPZGeoEl *elder = gel;
+	if(gel->Father()){elder = gel->EldestAncestor();}
+	// Start from youngest children and go up the tree
+	while(elder->HasSubElement()){
+		TPZStack<TPZGeoEl*> youngestChildren;
+		elder->YoungestChildren(youngestChildren);
+		for(auto child : youngestChildren){
+			DeleteElementAndRibs(child);
+		}
+	}
+	DeleteElementAndRibs(elder);
+}
+
+
+
+
+
+
+
+
+
 /**
  * @brief Deletes gel and all elements that share the same eldest ancestor, then deletes the ancestor
  * @param gel: Any member of the family
@@ -195,7 +292,7 @@ void DeleteFamily(TPZGeoEl *gel){
 		return;
 	}
 	TPZGeoEl *elder = gel->EldestAncestor();
-	while(elder->HasSubElement()){
+	while(elder->HasSubElement()){ //this looks redundant, but I'll need it to delete ribs and nodes eventually
 		TPZStack<TPZGeoEl*> youngestChildren;
 		elder->YoungestChildren(youngestChildren);
 		for(auto child : youngestChildren){
@@ -590,7 +687,7 @@ void DFNMesh::CreateVolumes(){
         }
     }
     
-    
+    gmesh->BuildConnectivity(); //@todo remove this after test
 	// search through each 2D element of the triangulated fractures surfaces to find their enclosing volume
 	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
 	for(int64_t iel = 0; iel < nels; iel++){
@@ -756,7 +853,7 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 				std::cout<<"\n "<<__PRETTY_FUNCTION__<<" found no enclosing volume for element #"<<ifracface->Index()<<"\n";
 				DebugStop();
 			}
-			DeleteFamily(ifracface);
+			CropExternalElement(ifracface);
 			// gmesh->DeleteElement(ifracface,ifracface->Index());
 			return false;
 		}
@@ -826,7 +923,8 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
     	std::cout<<"\n "<<__PRETTY_FUNCTION__<<" found no enclosing volume for element #"<<ifracface->Index()<<"\n";
 		DebugStop();
 	}
-	DeleteFamily(ifracface);
+	// DeleteFamily(ifracface);
+	CropExternalElement(ifracface);
 	// gmesh->DeleteElement(ifracface,ifracface->Index());
     return false;
 }
