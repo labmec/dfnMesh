@@ -147,7 +147,8 @@ using namespace std;
 int main(){
 	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
-	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
+	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector);
+	// TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
 
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
@@ -165,12 +166,18 @@ int main(){
 		// Find and split intersected faces
 			fracmesh->SplitFaces(transitionMaterial);
 		// Mesh fracture surface
+		if(gmesh->Dimension() == 3){
 			fracmesh->SplitFracturePlane();
+		}
 		//insert fracture
 			dfn.fFractures.push_back(fracmesh);
 	}
 	// Mesh transition volumes
-	dfn.CreateVolumes();
+	if(gmesh->Dimension() == 3){
+		dfn.CreateVolumes();
+	}else{
+		dfn.MeshAll();
+	}
 
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
@@ -687,7 +694,7 @@ void DFNMesh::CreateVolumes(){
         }
     }
     
-    gmesh->BuildConnectivity(); //@todo remove this after test
+    // gmesh->BuildConnectivity(); //@todo remove this after test
 	// search through each 2D element of the triangulated fractures surfaces to find their enclosing volume
 	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
 	for(int64_t iel = 0; iel < nels; iel++){
@@ -1057,7 +1064,7 @@ void DFNMesh::MeshAll(){
         for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
             outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
         }
-        outfile<<"\nPhysical Surface("<<msurface<<") = {";
+        if(pzgmesh->Dimension() == 3) outfile<<"\nPhysical Surface("<<msurface<<") = {";
         for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
             outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
         }
@@ -1068,8 +1075,8 @@ void DFNMesh::MeshAll(){
     }
 
     // write volumes
+    if(pzgmesh->Dimension() == 3){
     outfile << "\n\n// VOLUMES DEFINITION \n\n";
-    {
         // declare lists to define physical groups
         std::list<int64_t> groupSurface;
         std::list<int64_t> groupTransition;
@@ -1154,6 +1161,7 @@ void DFNMesh::MeshAll(){
 	outfile<<"\nTransfinite Curve {:} = 2;\n";
     outfile<<"Transfinite Surface {Physical Surface("<<mintact<<")};\n";
     outfile<<"Recombine Surface {Physical Surface("<<mintact<<")};\n";
+    outfile<<"Recombine Surface {Physical Surface("<<mtransition<<")};\n";
 
 }
 
