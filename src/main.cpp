@@ -41,6 +41,7 @@
 
 
 void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane);
+
 /**
  * @brief Define which example to run. See example file sintax in function definition
  * @param filename: path to the file that defines the example
@@ -49,6 +50,7 @@ void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane);
  * @returns pointer to geometric mesh created/read
 */
 TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector, std::string mshfile = "no-msh-file");
+
 /**
  * @brief Imports d-dimensional elements from a GMsh::model to a TPZGeoMesh. Imported 
  * elements are pushed to the back of TPZGeoMesh::ElementVector.
@@ -72,7 +74,7 @@ struct DFNMesh{
 		/// Uses GMsh to mesh volumes cut by fracture plane
 		void CreateVolumes();
 		/// Uses gmsh API to tetrahedralize volumes
-    	void MeshAll();
+    	void ExportGMshCAD(std::string filename);
 		/// Uses gmsh API to tetrahedralize a DFNVolume
 		void Tetrahedralize(DFNVolume *volume);
     	/// Find the volumetrical element that encloses a 2D element
@@ -156,28 +158,28 @@ int main(){
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
 		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
 		DFNFractureMesh *fracmesh = new DFNFractureMesh(*fracplane,gmesh,surfaceMaterial);
-		// Find and split intersected ribs
-			fracmesh->SplitRibs(transitionMaterial);
+	// Find and split intersected ribs
+		fracmesh->SplitRibs(transitionMaterial);
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
 		gmesh->Print(meshprint);
 		std::ofstream out1("./TestSurfaces.vtk");
 		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
-		// Find and split intersected faces
-			fracmesh->SplitFaces(transitionMaterial);
-		// Mesh fracture surface
+	// Find and split intersected faces
+		fracmesh->SplitFaces(transitionMaterial);
+	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			fracmesh->SplitFracturePlane();
 		}
-		//insert fracture
-			dfn.fFractures.push_back(fracmesh);
+	//insert fracture
+		dfn.fFractures.push_back(fracmesh);
 	}
 	// Mesh transition volumes
 	if(gmesh->Dimension() == 3){
 		dfn.CreateVolumes();
-	}else{
-		dfn.MeshAll();
 	}
+	dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+
 
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
@@ -711,7 +713,6 @@ void DFNMesh::CreateVolumes(){
 	
 	
 	// gmesh->BuildConnectivity();
-	MeshAll();
 	gmsh::initialize();
 	//Loop over list of volumes cut
 	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
@@ -947,14 +948,14 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 
 
 /**
- * 	@brief Uses GMsh to tetrahedralize a DFNVolume
+ * 	@brief Creates a .geo for the mesh
  */ 
-void DFNMesh::MeshAll(){
+void DFNMesh::ExportGMshCAD(std::string filename){
 	const int shift = 1;
     int mtransition = 18;
     int msurface = 40;
     int mintact = 1;
-	std::ofstream outfile("fracture1.geo");
+	std::ofstream outfile(filename);
 
     TPZGeoMesh *pzgmesh = (*fFractures.begin())->GetGeoMesh();
 	
@@ -992,7 +993,6 @@ void DFNMesh::MeshAll(){
             if(gel->HasSubElement()) continue;
             // if(gel->MaterialId() == fTransitionMaterial) continue;
             outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
-    // @ToDo this is kind of a mess, but only for debugging
             // list it according to material
             if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
             else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
@@ -1054,7 +1054,6 @@ void DFNMesh::MeshAll(){
             }
             // surface
             outfile << "Surface("<<iel+shift<<") = {"<<iel+shift<<"};\n";
-            // @ToDo this is kind of a mess, but only for debugging
             if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
             else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
             else groupIntact.push_back(iel+shift);
