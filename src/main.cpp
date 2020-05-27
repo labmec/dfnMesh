@@ -1004,10 +1004,31 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             // if(gel->MaterialId() == fTransitionMaterial) continue;
             outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
             // list it according to material
-            if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
-            else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
-            else groupIntact.push_back(iel+shift);
+			if(!entered_Q) continue;
+			if(pzgmesh->Dimension() == 2){
+				if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
+				else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
+				else groupIntact.push_back(iel+shift);
+				// if(gel->MaterialId() == mtransition) groupTransition.push_back(iel+shift);
+				// else if (gel->MaterialId() == mtransition) groupTransition.push_back(iel+shift);
+				// else groupIntact.push_back(iel+shift);
+			}
         }
+        // write physical groups
+		if(pzgmesh->Dimension() == 2){
+			outfile<<"\nPhysical Curve("<<mtransition<<") = {";
+			for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
+				outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
+			}
+			outfile<<"\nPhysical Curve("<<msurface<<") = {";
+			for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
+				outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
+			}
+			outfile<<"\nPhysical Curve("<<mintact<<") = {";
+			for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
+				outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
+			}
+		}
         // // write physical groups
         // outfile<<"\nPhysical Curve("<<mtransition<<") = {";
         // for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
