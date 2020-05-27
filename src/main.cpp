@@ -1001,8 +1001,44 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			if(!gel) continue;
             if(gel->Dimension() != 1) continue;
             if(gel->HasSubElement()) continue;
-            // if(gel->MaterialId() == fTransitionMaterial) continue;
-            outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
+            // Only 2 types of lines are needed:
+			// lines with material id of fracture
+			// @todo if(gel->MaterialId() == msurface){
+			bool entered_Q = false;
+			if(gel->MaterialId() >= msurface){
+				outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
+				entered_Q = true;
+			}
+			// lines whose elder is an edge of an element with no father
+			if(entered_Q == false){
+				TPZGeoEl *elder = gel;
+				if(gel->Father()) {elder = gel->EldestAncestor();}
+				TPZGeoElSide elderside(elder,2);
+				TPZGeoElSide neighbour = elderside.Neighbour();
+				while(neighbour != elderside){
+					// if(neighbour.Element()->Dimension() == 3){ // @todo[see next line] this condition is great but won't work if we're in 2D
+					if(!neighbour.Element()->Father()){ // @todo this should fix it
+            			outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
+						entered_Q = true;
+						break;
+					}
+					neighbour = neighbour.Neighbour();
+				}
+			// if(entered_Q) continue;
+			}
+			// lines that have a 2D fracture surface neighbour through side 2 // @todo only works in 3D
+			//@todo: [suggested fix] filter for material id of the line itself... (not sure about how robust this would be)
+			// {
+			// 	TPZGeoElSide gelside(gel,2);
+			// 	TPZGeoElSide neighbour = gelside.Neighbour();
+			// 	while(neighbour != gelside){
+			// 		// if(neighbour.Element()->MaterialId() == msurface){
+			// 		if(neighbour.Element()->MaterialId() >= msurface){ //@todo I should've already fixed these material ids
+	        //   			outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
+			// 			break;
+			// 		}
+			// 	}
+			// }
             // list it according to material
 			if(!entered_Q) continue;
 			if(pzgmesh->Dimension() == 2){
@@ -1029,19 +1065,6 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 				outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
 			}
 		}
-        // // write physical groups
-        // outfile<<"\nPhysical Curve("<<mtransition<<") = {";
-        // for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-        //     outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
-        // }
-        // outfile<<"\nPhysical Curve("<<msurface<<") = {";
-        // for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
-        //     outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
-        // }
-        // outfile<<"\nPhysical Curve("<<mintact<<") = {";
-        // for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
-        //     outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
-        // }
     }
     // write faces
     outfile << "\n\n// FACES DEFINITION \n\n";
@@ -1106,7 +1129,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 
     // write volumes
     if(pzgmesh->Dimension() == 3){
-    outfile << "\n\n// VOLUMES DEFINITION \n\n";
+    	outfile << "\n\n// VOLUMES DEFINITION \n\n";
         // declare lists to define physical groups
         std::list<int64_t> groupSurface;
         std::list<int64_t> groupTransition;
@@ -1191,7 +1214,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	outfile<<"\nTransfinite Curve {:} = 2;\n";
     outfile<<"Transfinite Surface {Physical Surface("<<mintact<<")};\n";
     outfile<<"Recombine Surface {Physical Surface("<<mintact<<")};\n";
-    outfile<<"Recombine Surface {Physical Surface("<<mtransition<<")};\n";
+    // outfile<<"Recombine Surface {Physical Surface("<<mtransition<<")};\n";
 
 }
 
