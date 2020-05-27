@@ -36,8 +36,8 @@ class DFNVolume
     /// Indices of planes enclosed by volume
     TPZManVector<int64_t> fEnclosedFaces;
 
-    // /// Pointer to a fracture mesh
-    // DFNFractureMesh *fFracMesh = nullptr;
+    // /// Submesh
+    // TPZGeoMesh *submesh;
 
   public:
     /// Empty constructor

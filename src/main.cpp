@@ -39,8 +39,12 @@
 	#define fTolerance 1e-5
 //includes
 
-
-void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane);
+/**
+ * @brief Calls ReadExampleFromFile but for a single fracture
+ * @param filename: path to the file that defines the fracture
+ * @param planevector: Matrix to fill with corners of the fracture
+*/
+void ReadFracture(std::string filename, TPZFMatrix<REAL> &plane);
 
 /**
  * @brief Define which example to run. See example file sintax in function definition
@@ -68,6 +72,12 @@ struct DFNMesh{
 	// private:
 		std::list<DFNFractureMesh *> fFractures;
 		std::map<int64_t, DFNVolume> fVolumes;
+		// REAL fToleranceLength = 1e-5;
+		// REAL fToleranceRatio = 0.2;
+		// TPZGeoMesh *fgmesh;
+		// int fmaterialintact = 1;
+		// int fmaterialtransition = 2;
+		// int fmaterialfracture = 3;
 	// public:
 		/// Pointer to volume of index 'index'
 		DFNVolume *Volume(int64_t index){return &fVolumes[index];}
@@ -137,13 +147,13 @@ void PrintPreamble(){
 
 
 
-//MATERIAL ID MAP
-	// 1  gmesh (default)
-	// 4  MHM skeleton
-	// 18 cut planes
-	// 46 Fracture 1D elements
-	// 47 Fracture surface
-
+//-------------------------------------------------------------------------------------------------
+//   __  __      _      _   _   _     
+//  |  \/  |    / \    | | | \ | |
+//  | |\/| |   / _ \   | | |  \| |
+//  | |  | |  / ___ \  | | | |\  |
+//  |_|  |_| /_/   \_\ |_| |_| \_|
+//-------------------------------------------------------------------------------------------------
 using namespace std;
 
 int main(){
@@ -1222,50 +1232,10 @@ void DFNMesh::PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile){
 
 
 
-/// This is old, but can be improved to work for files with list of fractures
-void ReadFractureFromFile(std::string filename, TPZFMatrix<REAL> &plane){
-	//    Reading coordinates of a plane from txt file
-	string value;
-	int npoints = 0;
-	string line;
-	// count number of corners
-	while (npoints == 0){
-		ifstream plane_file(filename);
-		if (!plane_file){
-			std::cout << "Error reading file" << std::endl;
-			DebugStop();
-		}
-		getline(plane_file, line);
-		std::stringstream ss(line);
-		while (getline(ss, value, ' ')){
-			while (value.length() == 0){
-				getline(ss, value, ' ');
-			}
-			npoints++;
-		}
-	}
-	// then read points
-	plane.Resize(3,npoints);
-	{ //just a scope
-		int i = 0;
-		int j = 0;
-		std::cout << "Fracture plane defined as: \n";
-		ifstream plane_file(filename);
-		while (getline(plane_file, line)){
-			std::stringstream ss(line);
-			while (getline(ss, value, ' ')){
-				while (value.length() == 0){
-					getline(ss, value, ' ');
-				}
-				plane(i, j) = std::stod(value);
-				std::cout << plane(i, j) << (j<npoints-1?" , ":"\n");
-				j++;
-			}
-			j = 0;
-			i++;
-		}
-		std::cout << std::endl;
-	}
+void ReadFracture(std::string filename, TPZFMatrix<REAL> &plane){
+	TPZManVector<TPZFMatrix<REAL>> planevector;
+	ReadExampleFromFile(filename, planevector);
+	plane = planevector[0];
 }
 
 
