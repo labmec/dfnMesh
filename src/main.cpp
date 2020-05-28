@@ -1067,18 +1067,18 @@ void DFNMesh::ExportGMshCAD(std::string filename){
         }
         // write physical groups
 		if(pzgmesh->Dimension() == 2){
-			outfile<<"\nPhysical Curve("<<mtransition<<") = {";
-			for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-				outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
-			}
+			// outfile<<"\nPhysical Curve("<<mtransition<<") = {";
+			// for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
+			// 	outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
+			// }
 			outfile<<"\nPhysical Curve("<<msurface<<") = {";
 			for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
 				outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
 			}
-			outfile<<"\nPhysical Curve("<<mintact<<") = {";
-			for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
-				outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
-			}
+			// outfile<<"\nPhysical Curve("<<mintact<<") = {";
+			// for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
+			// 	outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
+			// }
 		}
     }
     // write faces
@@ -1099,6 +1099,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 
 			// faces of the fracture surface
 			do{//pseudo do-while just so I can use break to skip code
+				if(pzgmesh->Dimension()==2) break;
 				if(gel->HasSubElement()) break;
 				// @todo if(gel->MaterialId() != msurface) break;
 				if(gel->MaterialId() < msurface) break;
@@ -1113,6 +1114,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			// faces of coarse elements
 			do{//pseudo do-while just so I can use break to skip code
 				if(type == 1) break;
+				if(pzgmesh->Dimension()==2 && !gel->Father()){type = 2; break;}
 				if(gel->Father()) break;
 				// if(gel->MaterialId() == mintact) {type = 2; break;}
 				int nsides = gel->NSides();
@@ -1128,34 +1130,71 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			} while (false);//pseudo do-while just so I can use break to skip code
 
             if(!type) continue;
+			bool planesurface_Q = false;
             // curve loop
             outfile << "Curve Loop(" << iel+shift << ") = {";
             int nnodes = gel->NCornerNodes();
             int nedges = nnodes; //for readability 
             TPZManVector<int64_t,4> facenodevec(nnodes);
             gel->GetNodeIndices(facenodevec);
+			int64_t reference_node = facenodevec[0];
             // curve loops require a proper orientation of lines
             for(int iside = nedges; iside < 2*nedges; iside++){
-				int orientation = 1;
                 TPZGeoElSide gelside(gel,iside);
                 TPZGeoElSide side = gelside.Neighbour();
                 // find line element
                 while(side.Element()->Dimension() != 1) {side = side.Neighbour();}
-                // find first node of line
-                int inode = 0;
-                while(facenodevec[inode] != side.SideNodeIndex(0)) ++inode;
-                // check orientation by comparing second node of line with next node of face
-                int64_t index=0;
-                    if(side.SideNodeIndex(1)==facenodevec[(inode+1)%nedges]){
-                        index = side.Element()->Index() +shift;
-                    }
-                    else{
-                        index = -side.Element()->Index() -shift;
-                    }
-                outfile << index <<(iside < 2*nedges-1? "," : "};\n");
+				TPZGeoEl *irib = side.Element();
+				TPZStack<TPZGeoEl*> children;
+				if(irib->HasSubElement()){
+					irib->YoungestChildren(children);
+				}else{
+					children.Push(irib);
+				}
+				int nchildren = children.NElements();
+				if(nchildren > 1) planesurface_Q = 1;
+				int children_added = 0;
+                int64_t index = 0;
+				//@todo for an unfortunate quick improvisation I had ribs refined into a rib and a point when fractures pass through the node, but this will be fixed soon
+				{// @todo temporary exception
+					TPZStack<TPZGeoEl*> aux_children;
+					for(auto child : children){
+						if(child->Dimension() != 0){
+							aux_children.Push(child);
+						}else{nchildren--;}
+					}
+					children = aux_children;
+				}
+				TPZManVector<bool> added_list(nchildren,false);
+				while(children_added < nchildren){
+					// find next child and check orientation
+					int orientation = 1;
+					for(int ichild = 0; ichild<nchildren; ichild++){
+						if(added_list[ichild]) continue;
+						TPZGeoEl *child = children[ichild];
+						if(child->NodeIndex(0) == reference_node){
+							orientation = 1;
+							reference_node = child->NodeIndex(1); // next node becomes reference
+							index = child->Index();
+							added_list[ichild] = true;
+							break;
+						}
+						else if(child->NodeIndex(1) == reference_node){
+							orientation = -1;
+							reference_node = child->NodeIndex(0); // next node becomes reference
+							index = child->Index();
+							added_list[ichild] = true;
+							break;
+						}
+					}
+					// add child
+					children_added++;
+					index = orientation*(index+shift);
+                	outfile << index <<(iside + children_added < 2*nedges-1 + nchildren ? "," : "};\n");
+				}
             }
             // surface
-
+			if(planesurface_Q) outfile << "Plane ";
             outfile << "Surface("<<iel+shift<<") = {"<<iel+shift<<"};\n";
             if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
             else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
