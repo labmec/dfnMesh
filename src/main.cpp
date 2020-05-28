@@ -128,7 +128,7 @@ bool gBigPlanes_Q = true;
  * @brief information and assumptions
 */
 void PrintPreamble(){
-	std::string neopzversion = "[commit hash] 85f5651ec57ef214fa9fceabcc42caf504148b44";
+	std::string neopzversion = "/commit/85f5651"; // https://github.com/labmec/neopz/commit/...
 	std::string gmshversion = "4.5.6";
 	std::cout<<"\n";
 	std::cout<<"\nNeoPZ assumed version: " << neopzversion;
@@ -1015,14 +1015,16 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             if(gel->Dimension() != 1) continue;
             if(gel->HasSubElement()) continue;
             // Only 2 types of lines are needed:
-			// lines with material id of fracture
+			// fracture lines
+			// i.e. lines with material id of fracture
 			// @todo if(gel->MaterialId() == msurface){
 			bool entered_Q = false;
 			if(gel->MaterialId() >= msurface){
 				outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
 				entered_Q = true;
 			}
-			// lines whose elder is an edge of an element with no father
+			// edges of macro elements
+			// i.e. lines whose elder is an edge of an element with no father
 			if(entered_Q == false){
 				TPZGeoEl *elder = gel;
 				if(gel->Father()) {elder = gel->EldestAncestor();}
@@ -1091,17 +1093,50 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             TPZGeoEl *gel = pzgmesh->Element(iel);
 			if(!gel) continue;
             if(gel->Dimension() != 2) continue;
-            if(gel->HasSubElement()) continue;
-            // if(gel->MaterialId() == fTransitionMaterial) continue;
-            
+
+			// 2 types of faces should enter
+			int type = 0;
+
+			// faces of the fracture surface
+			do{//pseudo do-while just so I can use break to skip code
+				if(gel->HasSubElement()) break;
+				// @todo if(gel->MaterialId() != msurface) break;
+				if(gel->MaterialId() < msurface) break;
+				TPZGeoEl *elder = gel;
+				if(gel->Father()) elder = gel->EldestAncestor();
+				int nsides = elder->NSides();
+				TPZGeoElSide elderside(elder,nsides-1);
+				TPZGeoElSide neighbour = elderside.Neighbour();
+				if(elderside == neighbour) type = 1;
+			} while (false); //pseudo do-while just so I can use break to skip code
+
+			// faces of coarse elements
+			do{//pseudo do-while just so I can use break to skip code
+				if(type == 1) break;
+				if(gel->Father()) break;
+				// if(gel->MaterialId() == mintact) {type = 2; break;}
+				int nsides = gel->NSides();
+				TPZGeoElSide gelside(gel,nsides-1);
+				TPZGeoElSide neighbour = gelside.Neighbour();
+				while(neighbour != gelside){
+					if(neighbour.Element()->Dimension() == 3){
+						type = 2;
+						break;
+					}
+					neighbour = neighbour.Neighbour();
+				} 
+			} while (false);//pseudo do-while just so I can use break to skip code
+
+            if(!type) continue;
+            // curve loop
+            outfile << "Curve Loop(" << iel+shift << ") = {";
             int nnodes = gel->NCornerNodes();
             int nedges = nnodes; //for readability 
             TPZManVector<int64_t,4> facenodevec(nnodes);
             gel->GetNodeIndices(facenodevec);
-            // line loop
-            outfile << "Line Loop(" << iel+shift << ") = {";
-            // line loops require a proper orientation of lines
-            for(int iside = nedges; iside<2*nedges; iside++){
+            // curve loops require a proper orientation of lines
+            for(int iside = nedges; iside < 2*nedges; iside++){
+				int orientation = 1;
                 TPZGeoElSide gelside(gel,iside);
                 TPZGeoElSide side = gelside.Neighbour();
                 // find line element
@@ -1120,6 +1155,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
                 outfile << index <<(iside < 2*nedges-1? "," : "};\n");
             }
             // surface
+
             outfile << "Surface("<<iel+shift<<") = {"<<iel+shift<<"};\n";
             if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
             else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
@@ -1139,6 +1175,10 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
         }
     }
+
+	// Line {x} In Surface {y}
+	// @Todo
+
 
     // write volumes
     if(pzgmesh->Dimension() == 3){
