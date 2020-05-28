@@ -156,10 +156,23 @@ void PrintPreamble(){
 //-------------------------------------------------------------------------------------------------
 using namespace std;
 
-int main(){
+int main(int argc, char* argv[]){
+	#ifdef LOG4CXX
+    	// InitializePZLOG();
+	#endif
 	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
-	TPZGeoMesh *gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector);
+	TPZGeoMesh *gmesh = nullptr;
+	switch(argc){
+		case 0:
+		case 1: gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector); 
+				break;
+		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);
+				break;
+		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);
+				break;
+		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
+	}
 	// TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
 
 	int surfaceMaterial = 40;
