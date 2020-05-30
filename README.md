@@ -19,7 +19,7 @@ This project is highly dependent in 2 open source libs:
 ### [NeoPZ](https://github.com/labmec/neopz "NeoPZ repository")
 ### [GMsh](https://gitlab.onelab.info/gmsh/gmsh "GMsh repository")
 
-(see main() in each branch for its assumed version of each library)
+(see <code> main() </code> in each branch for its assumed version of each library)
 
 ## Cool graphics
 <p>
