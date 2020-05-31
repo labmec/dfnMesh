@@ -157,6 +157,4 @@ Extrude {0, 100, 0} {
     Recombine;
 }
 Physical Volume(1) = Volume{:};
-// Transfinite Volume{:};
-//+
-Physical Surface(2) = {1, 2, 3, 4};
+
