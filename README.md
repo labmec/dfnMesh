@@ -1,8 +1,4 @@
-
-
-<p align="center"> 
- <h1> DFNMesh </h1>
-</p>
+<h1 align="center">DFNMesh</h1>
 
 <p align="justify">
 The main goal of this project is to provide an intersection searching-and-processing tool that is able to insert polygons into a tridimensional coarse mesh and refine it to conform to these polygons. Ultimately describing a fractured medium, as a two-level discretisation mesh, for Discrete Fracture Network (DFN) flow simulation methods available in <a href="https://github.com/labmec/neopz">NeoPZ</a>.
