@@ -51,7 +51,7 @@ private:
     std::map<int64_t, DFNFace> fEndFaces;
 
     /// Map of intersected volumes
-    std::map<int64_t, DFNVolume> fVolumes;
+    // std::map<int64_t, DFNVolume> fVolumes;
 
     /// Map of elements on fracture surface
     std::map<int64_t, TPZGeoEl *> fSurfEl;
@@ -73,7 +73,8 @@ public:
     /// Empty constructor
     DFNFractureMesh();
     
-    /**Define the fracture plane from 3 to 4 points
+    /**
+     * Define the fracture plane from 3 to 4 points
      * Points should be coplanar
      * The matrix should be dimension 3xN, each column defining the coordinates
      * of a point
@@ -116,12 +117,12 @@ private:
     void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 
     /**
-     * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, and imported 
-     * elements are pushed to the back of TPZGeoMesh::ElementVector 
+     * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, 
+     * and imported elements are pushed to the back of TPZGeoMesh::ElementVector 
      * (Must be called between the pair gmsh::initialize and gmsh::finalize of 
      * the model from which elements should be read).
      * @param gmsh: Pointer to geometric mesh where elements should be inserted.
-     * @comment If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
+     * @note If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
     */
     void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension);
 
@@ -149,7 +150,7 @@ public:
     DFNFace *Face(int64_t index);
     
     /// Pointer to volume of index 'index'
-    DFNVolume *Volume(int64_t index){return &fVolumes[index];}
+    // DFNVolume *Volume(int64_t index){return &fVolumes[index];}
     
     /// Find and split intersected faces
     void SplitFaces(int matID);

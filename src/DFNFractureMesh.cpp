@@ -39,14 +39,7 @@ DFNFractureMesh::DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int
 
 // Copy constructor
 DFNFractureMesh::DFNFractureMesh(const DFNFractureMesh &copy){
-    fGMesh = copy.fGMesh;
-    fTolerance = copy.GetTolerance();
-    fRibs = copy.fRibs;
-    fMidFaces = copy.fMidFaces;
-	fEndFaces = copy.fEndFaces;
-    fFracplane = copy.fFracplane;
-    fSurfaceMaterial = copy.fSurfaceMaterial;
-    fTransitionMaterial = copy.fTransitionMaterial;
+    this->operator=(copy);
 }
 
 // Assignment operator
@@ -736,10 +729,10 @@ void DFNFractureMesh::SplitFracturePlane(){
 }
 
 
-void DFNFractureMesh::AddVolume(DFNVolume volume){
-    int index = volume.ElementIndex();
-    fVolumes[index] = volume;
-}
+// void DFNFractureMesh::AddVolume(DFNVolume volume){
+//     int index = volume.ElementIndex();
+//     fVolumes[index] = volume;
+// }
 
 
 

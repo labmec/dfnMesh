@@ -20,10 +20,7 @@ DFNVolume::DFNVolume(int64_t index, bool iscut){
 
 /// Copy constructor
 DFNVolume::DFNVolume(const DFNVolume &copy){
-    fVolumeIndex = copy.fVolumeIndex;
-    fIsCut = copy.fIsCut;
-    fSubEls = copy.fSubEls;
-    fIntersection = copy.fIntersection;
+    this->operator=(copy);
 }
 
 /// Assignment operator
