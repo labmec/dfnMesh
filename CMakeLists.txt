@@ -108,13 +108,21 @@ endif()
 # include_directories(${OpenCV_INCLUDE_DIRS})
 
 # linking with GMSH
-find_library(GMSH_LIB gmsh)
+option(GMsh_as_library "Whether GMsh should be used as debuggable library. It's only useful if GMsh was compiled in debug." ON)
+if (GMsh_as_library)
+# if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	find_library(GMSH_LIB gmsh HINTS /home/pedro/projetos/library/gmsh-install/lib ../lib/gmsh-install/lib NO_DEFAULT_PATH)
+	find_path(GMSH_INC gmsh.h HINTS /home/pedro/projetos/library/gmsh-install/include ../lib/gmsh-install/include NO_DEFAULT_PATH)
+ELSE()
+	find_library(GMSH_LIB gmsh)
+	find_path(GMSH_INC gmsh.h)
+ENDIF()
+
 link_libraries(${GMSH_LIB})
 if(NOT GMSH_LIB)
   message(FATAL_ERROR "Could not find libgmsh")
 endif()
 
-find_path(GMSH_INC gmsh.h)
 if(NOT GMSH_INC)
   message(FATAL_ERROR "Could not find gmsh.h")
 endif()
