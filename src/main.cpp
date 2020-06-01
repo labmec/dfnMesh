@@ -200,8 +200,9 @@ int main(int argc, char* argv[]){
 	// Mesh transition volumes
 	if(gmesh->Dimension() == 3){
 		dfn.CreateVolumes();
+	}else{
+		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 	}
-	dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 
 
 	//Print result
@@ -736,6 +737,7 @@ void DFNMesh::CreateVolumes(){
 	
 	
 	// gmesh->BuildConnectivity();
+	ExportGMshCAD("dfnExport.geo");
 	gmsh::initialize();
 	//Loop over list of volumes cut
 	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
@@ -974,14 +976,19 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
  * 	@brief Creates a .geo for the mesh
  */ 
 void DFNMesh::ExportGMshCAD(std::string filename){
+	// gmsh doesn't accept index zero elements
 	const int shift = 1;
+	// materials
     int mtransition = 18;
     int msurface = 40;
     int mintact = 1;
 	std::ofstream outfile(filename);
 
     TPZGeoMesh *pzgmesh = (*fFractures.begin())->GetGeoMesh();
-	
+	// Number of elements in the mesh
+    int64_t nels = pzgmesh->NElements();
+	// Dimension of the mesh
+	int mesh_dim = pzgmesh->Dimension();
 
     // Giving fGMesh another name for readability's sake
     pzgmesh->BuildConnectivity();
@@ -1001,7 +1008,6 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     }
     
     // write edges
-    int64_t nels = pzgmesh->NElements();
     outfile << "\n\n// LINES DEFINITION \n\n";
     {
         // declare lists to define physical groups
@@ -1056,7 +1062,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			// }
             // list it according to material
 			if(!entered_Q) continue;
-			if(pzgmesh->Dimension() == 2){
+			if(mesh_dim == 2){
 				if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
 				else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
 				else groupIntact.push_back(iel+shift);
@@ -1066,7 +1072,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			}
         }
         // write physical groups
-		if(pzgmesh->Dimension() == 2){
+		if(mesh_dim == 2){
 			// outfile<<"\nPhysical Curve("<<mtransition<<") = {";
 			// for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
 			// 	outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
@@ -1099,7 +1105,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 
 			// faces of the fracture surface
 			do{//pseudo do-while just so I can use break to skip code
-				if(pzgmesh->Dimension()==2) break;
+				if(mesh_dim==2) break;
 				if(gel->HasSubElement()) break;
 				// @todo if(gel->MaterialId() != msurface) break;
 				if(gel->MaterialId() < msurface) break;
@@ -1114,7 +1120,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			// faces of coarse elements
 			do{//pseudo do-while just so I can use break to skip code
 				if(type == 1) break;
-				if(pzgmesh->Dimension()==2 && !gel->Father()){type = 2; break;}
+				if(mesh_dim==2 && !gel->Father()){type = 2; break;}
 				if(gel->Father()) break;
 				// if(gel->MaterialId() == mintact) {type = 2; break;}
 				int nsides = gel->NSides();
@@ -1205,7 +1211,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
         for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
             outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
         }
-        if(pzgmesh->Dimension() == 3) outfile<<"\nPhysical Surface("<<msurface<<") = {";
+        if(mesh_dim == 3) outfile<<"\nPhysical Surface("<<msurface<<") = {";
         for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
             outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
         }
@@ -1216,11 +1222,64 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     }
 
 	// Line {x} In Surface {y}
-	// @Todo
+	{
+		outfile << "\n\n// EMBEDDED CURVES \n\n";
+		for(int iel = 0; iel < nels; iel++){
+			TPZGeoEl *gel = pzgmesh->Element(iel);
+			if(!gel) continue;
+			if(gel->Dimension() != 2) continue;
+			if(gel->Father()) continue;
+			if(!gel->HasSubElement()) continue;
+			if(mesh_dim == 3){
+				int nsides = gel->NSides();
+				TPZGeoElSide gelside(gel,nsides-1);
+				TPZGeoElSide neighbour = gelside.Neighbour();
+				if(neighbour == gelside) continue;
+			}
 
+			TPZStack<TPZGeoEl*> children;
+			gel->YoungestChildren(children);
+			// queue all possible ribs using youngest children
+			std::set<TPZGeoEl*> candidate_ribs;
+			for(TPZGeoEl* child : children){
+				int nribs = child->NNodes();
+				for(int cside = nribs; cside < 2*nribs; cside++){
+					TPZGeoElSide childside(child,cside);
+					TPZGeoElSide neig = childside.Neighbour();
+					for(/*void*/; neig != childside; neig = neig.Neighbour()){
+						if(neig.Element()->Dimension() != 1) continue;
+						// @todo if(neig.Element()->MaterialId() != msurface) continue;
+						if(neig.Element()->MaterialId() < msurface) continue;
+						candidate_ribs.insert(neig.Element());
+					}
+				}
+			}
+			outfile << "Curve{";
+			bool should_enter = true;
+			auto end = candidate_ribs.end();
+			for(auto it = candidate_ribs.begin(); it != end;/*void*/){
+				TPZGeoEl *rib = *it;
+				TPZGeoEl *elder = (rib->Father()? rib->EldestAncestor() : rib);
+				TPZGeoElSide elderside(elder,2);
+				TPZGeoElSide neig = elderside.Neighbour();
+				while(neig != elderside){
+					if(neig.Element()->Dimension() == mesh_dim && !neig.Element()->Father()){
+						should_enter = false;
+						break;
+					}
+					neig = neig.Neighbour();
+				}
+				if(!should_enter) {++it;continue;}
+				outfile<<rib->Index()+shift<<(++it != end?",":"}");
+			}
+			outfile << " In Surface{"<<iel+shift<<"};\n";
+		}
+
+	}
+	
 
     // write volumes
-    if(pzgmesh->Dimension() == 3){
+    if(mesh_dim == 3){
     	outfile << "\n\n// VOLUMES DEFINITION \n\n";
         // declare lists to define physical groups
         std::list<int64_t> groupSurface;
@@ -1231,7 +1290,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             TPZGeoEl *gel = pzgmesh->Element(iel);
 			if(!gel) continue;
             if(gel->Dimension() != 3) continue;
-            if(gel->HasSubElement()) continue;
+            // if(gel->HasSubElement()) continue; // redundant for now, but leaving it here just in case
 
             // Surface loop
             // gmsh doesn't accept zero index elements
@@ -1243,22 +1302,12 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             bool volumeIsCut = false;
             for(int iside = nnodes; iside < nsides-1; iside++){
                 if(gel->SideDimension(iside) != 2) continue;
-                TPZGeoElSide gelside(gel,iside);
-                // if(gelside.Dimension() < 2) DebugStop();
                 // find face element
+                TPZGeoElSide gelside(gel,iside);
                 TPZGeoElSide side = gelside.Neighbour();
                 while(side.Element()->Dimension() != 2) {side = side.Neighbour();}
-                // DFNFace *iface = Face(side.Element()->Index());
-                // if face is not cut, add it to the loop, else, add its children
-                if(side.Element()->HasSubElement() == false){
-                    outfile << side.Element()->Index()+shift << (iside < nsides-2? "," : "};\n");
-                }
-                else{
-                    volumeIsCut = true;
-                    TPZGeoEl *sidegel = side.Element();
-                    PrintYoungestChildren(sidegel,outfile);
-                    outfile << (iside < nsides-2? "," : "};\n");
-                }
+				outfile << side.Element()->Index()+shift << (iside < nsides-2? "," : "};\n");
+				if(side.Element()->HasSubElement()) volumeIsCut = true;
             }
 
             // volume
@@ -1303,7 +1352,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 		}
     }
     
-	outfile<<"\nTransfinite Curve {:} = 2;\n";
+	// outfile<<"\nTransfinite Curve {:} = 2;\n";
     outfile<<"Transfinite Surface {Physical Surface("<<mintact<<")};\n";
     outfile<<"Recombine Surface {Physical Surface("<<mintact<<")};\n";
     // outfile<<"Recombine Surface {Physical Surface("<<mtransition<<")};\n";
