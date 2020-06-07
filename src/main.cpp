@@ -1,7 +1,7 @@
 
 //includes
 	#ifdef HAVE_CONFIG_H
-	#include <pz_config.h>
+		#include <pz_config.h>
 	#endif
 	#include "pzgmesh.h"
 	#include "MMeshType.h"
@@ -9,9 +9,7 @@
 	#include "TPZExtendGridDimension.h"
 	#include "TPZVTKGeoMesh.h"
 	#include "TPZGeoMeshBuilder.h"
-
-	// #include "pzlog.h"
-
+	
 	#include <stdio.h>
 	#include <math.h>
 	#include <iostream>
@@ -36,6 +34,7 @@
 
 	#include <gmsh.h>
 
+	// #include "pzlog.h"
 	#define fTolerance 1e-5
 //includes
 
@@ -68,6 +67,11 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
  */
 void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes);
 
+
+
+/**
+ * @brief Describes a fractured MHM geomesh
+*/
 struct DFNMesh{
 	// private:
 		std::list<DFNFractureMesh *> fFractures;
@@ -78,16 +82,22 @@ struct DFNMesh{
 		// int fmaterialintact = 1;
 		// int fmaterialtransition = 2;
 		// int fmaterialfracture = 3;
+
 	// public:
+
 		/// Pointer to volume of index 'index'
 		DFNVolume *Volume(int64_t index){return &fVolumes[index];}
-		/// Uses GMsh to mesh volumes cut by fracture plane
+		
+		/// Setup datastructure for fractured volumes (including finding fracture elements enclosed by them)
 		void CreateVolumes();
-		/// Uses gmsh API to tetrahedralize volumes
+		
+		/// Exports a .geo file for this mesh
     	void ExportGMshCAD(std::string filename);
+		
 		/// Uses gmsh API to tetrahedralize a DFNVolume
 		void Tetrahedralize(DFNVolume *volume);
-    	/// Find the volumetrical element that encloses a 2D element
+    	
+		/// Find the volumetrical element that encloses a 2D element
     	bool FindEnclosingVolume(TPZGeoEl *ifracface);
 	// private:
 		/**
@@ -115,6 +125,12 @@ struct DFNMesh{
 		 * @param candidate_queue: Reference to current list of candidates 
 		*/
 		void QueueNeighbours(TPZGeoEl* gel,   std::list<int64_t> &candidate_queue);
+
+		/**
+		 * @brief Tetrahedralize fractured volumes and refine intact volumes
+		 * @todo refine intact volumes and maybe pass a target measure for subelements size as parameter
+		*/
+		void GenerateSubMesh();
 };
 
 /** 
@@ -173,7 +189,6 @@ int main(int argc, char* argv[]){
 				break;
 		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
 	}
-	// TPZGeoMesh *gmesh = ReadExampleFromFile("examples/flemisch_case1.txt",planevector,"examples/flemisch_case1.msh");
 
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
@@ -183,11 +198,13 @@ int main(int argc, char* argv[]){
 		DFNFractureMesh *fracmesh = new DFNFractureMesh(*fracplane,gmesh,surfaceMaterial);
 	// Find and split intersected ribs
 		fracmesh->SplitRibs(transitionMaterial);
-	//Print result
-		std::ofstream meshprint("meshprint.txt");
-		gmesh->Print(meshprint);
-		std::ofstream out1("./TestSurfaces.vtk");
-		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
+		if(false){
+		//Print result
+			std::ofstream meshprint("meshprint.txt");
+			gmesh->Print(meshprint);
+			std::ofstream out1("./TestSurfaces.vtk");
+			TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
+		}
 	// Find and split intersected faces
 		fracmesh->SplitFaces(transitionMaterial);
 	// Mesh fracture surface
@@ -219,7 +236,17 @@ int main(int argc, char* argv[]){
 
 
 
-
+void DFNMesh::GenerateSubMesh(){
+	gmsh::initialize();
+	//Loop over list of fractured volumes
+	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
+    	DFNVolume *ivolume = &itr->second;
+		// Use GMsh to tetrahedralize volumes
+		// if(ivolume->ElementIndex() != 2) continue;
+    	Tetrahedralize(ivolume);
+	}
+	gmsh::finalize();	
+}
 
 
 
@@ -273,6 +300,8 @@ void DeleteElementAndRibs(TPZGeoEl *face){
 		for(int inode : nodes){
 			if(inode < 0) continue;
 			gmesh->NodeVec().SetFree(inode);
+			gmesh->NodeVec()[inode].SetNodeId(-1);
+			// delete &gmesh->NodeVec()[inode];
 		}
 	}
 }
@@ -738,15 +767,7 @@ void DFNMesh::CreateVolumes(){
 	
 	// gmesh->BuildConnectivity();
 	ExportGMshCAD("dfnExport.geo");
-	gmsh::initialize();
-	//Loop over list of volumes cut
-	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
-    	DFNVolume *ivolume = &itr->second;
-		// Use GMsh to tetrahedralize volumes
-		// if(ivolume->ElementIndex() != 2) continue;
-    	Tetrahedralize(ivolume);
-	}
-	gmsh::finalize();	
+
 
 }
 
@@ -1002,6 +1023,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     int64_t nnodes = pzgmesh->NNodes();
     // @ToDo Do we need physical groups for points too?
     for (int64_t inode = 0; inode < nnodes; inode++){
+		if(pzgmesh->NodeVec()[inode].Id() < 0) continue;
         TPZManVector<REAL, 3> co(3,0.);
         pzgmesh->NodeVec()[inode].GetCoordinates(co);
         outfile << "Point(" << inode+shift << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << "};\n";

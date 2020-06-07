@@ -1,6 +1,6 @@
 /*! 
  *  @authors   Pedro Lima
- *  @date      2018-2019
+ *  @date      2018-2020
  */
 
 #ifndef DFNFractureMesh_h
@@ -27,13 +27,11 @@
 
 typedef TPZFMatrix<REAL> Matrix;
 
-/*! 
- *  @brief     Compares a geomesh with fracture plane to find intersections.
+/** 
+ *  @brief     Describes a surface mesh for a fracture and all ribs & faces that are intersected by it.
  *  @details   Intersection search is performed after creation of skeleton
  *  elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a DFNFracPlane.
- *  @authors   Pedro Lima
- *  @date      2018-2019
  */
 class DFNFractureMesh
 {
@@ -50,16 +48,13 @@ private:
     /// Map of end-fracture faces
     std::map<int64_t, DFNFace> fEndFaces;
 
-    /// Map of intersected volumes
-    // std::map<int64_t, DFNVolume> fVolumes;
-
     /// Map of elements on fracture surface
     std::map<int64_t, TPZGeoEl *> fSurfEl;
 
     /// Pointer for the geometric mesh
     TPZGeoMesh *fGMesh;
 
-    /// Bounded plane from a fracture
+    /// A planar polygon that indicates an insertion point for a fracture
     DFNFracPlane fFracplane;
 
     /// Material id of elements at fracture surface
@@ -148,9 +143,6 @@ public:
 
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);
-    
-    /// Pointer to volume of index 'index'
-    // DFNVolume *Volume(int64_t index){return &fVolumes[index];}
     
     /// Find and split intersected faces
     void SplitFaces(int matID);

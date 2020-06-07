@@ -32,7 +32,9 @@ DFNFractureMesh::DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int
     CreateSkeletonElements(1, materialSkeleton);
 
     // Set corner nodes of fracture into mesh
-    TPZManVector<int64_t,4> nodeindices = fFracplane.SetPointsInGeomesh(fGMesh);
+    if(gmesh->Dimension() == 3){
+        TPZManVector<int64_t,4> nodeindices = fFracplane.SetPointsInGeomesh(fGMesh);
+    }
     // int64_t index;
     // gmesh->CreateGeoElement(EQuadrilateral,nodeindices,40,index);
 }
