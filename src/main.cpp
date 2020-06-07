@@ -34,7 +34,7 @@
 
 	#include <gmsh.h>
 
-	// #include "pzlog.h"
+	#include "pzlog.h"
 	#define fTolerance 1e-5
 //includes
 
@@ -174,7 +174,7 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 	#ifdef LOG4CXX
-    	// InitializePZLOG();
+    	InitializePZLOG();
 	#endif
 	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
