@@ -193,12 +193,13 @@ int main(int argc, char* argv[]){
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
 	DFNMesh dfn;
+	// Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
 		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
 		DFNFractureMesh *fracmesh = new DFNFractureMesh(*fracplane,gmesh,surfaceMaterial);
 	// Find and split intersected ribs
 		fracmesh->SplitRibs(transitionMaterial);
-		if(false){
+		if(false){ //debug
 		//Print result
 			std::ofstream meshprint("meshprint.txt");
 			gmesh->Print(meshprint);
@@ -215,12 +216,9 @@ int main(int argc, char* argv[]){
 		dfn.fFractures.push_back(fracmesh);
 	}
 	// Mesh transition volumes
-	if(gmesh->Dimension() == 3){
 		dfn.CreateVolumes();
-	}else{
 		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
-	}
-
+		dfn.GenerateSubMesh();
 
 	//Print result
 		std::ofstream meshprint("meshprint.txt");
@@ -237,6 +235,10 @@ int main(int argc, char* argv[]){
 
 
 void DFNMesh::GenerateSubMesh(){
+    TPZGeoMesh *gmesh = (*fFractures.begin())->GetGeoMesh();
+	int dim = gmesh->Dimension();
+	if(dim != 3) return; //@todo temporary while DFNVolume isn't generalized to 2D meshes
+	
 	gmsh::initialize();
 	//Loop over list of fractured volumes
 	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
@@ -567,7 +569,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	}
 	
 	// gmsh::initialize();
-	std::string mshfilename("testAPI_volume");
+	std::string mshfilename("debug/testAPI_volume");
 	mshfilename += std::to_string(ivol);
 	// gmsh::model::add(mshfilename);
 	mshfilename += ".msh";
@@ -684,10 +686,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	// mesh
 		gmsh::model::mesh::generate(3);
 	// gmsh::write(mshfilename);
-	// if(ivol != 0){ // (for debug) the first volume should overwrite previous model, then the rest can be merged
-	// 	gmsh::merge("testAPI_volume.msh");
-	// }
-	gmsh::write("testAPI_volume.msh");
+	// gmsh::write("debug/testAPI_volume.msh");
 	// import meshed volume back into PZ geoMesh
 		ImportElementsFromGMSH(gmesh,3,nodes);
 	gmsh::clear();
@@ -723,12 +722,13 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 void DFNMesh::CreateVolumes(){
     TPZGeoMesh *gmesh = (*fFractures.begin())->GetGeoMesh();
 	
-
+	int dim = gmesh->Dimension();
+	if(dim != 3) return; //@todo temporary while DFNVolume isn't generalized to 2D meshes
     // map all volumes that are cut
     int64_t nels = gmesh->NElements();
 	for (int64_t iel = 0; iel < nels; iel++){
         TPZGeoEl *gel = gmesh->Element(iel);
-        if(gel->Dimension() != 3){continue;}
+        if(gel->Dimension() != dim){continue;}
         int nsides = gel->NSides();
         // int ncorners = gel->NCornerNodes();
 		// int nfaces = (int) (nsides+1-2*ncorners)/2 //from Euler's characteristic
@@ -763,11 +763,6 @@ void DFNMesh::CreateVolumes(){
 		// Find volume that encloses that element
 		FindEnclosingVolume(gel);
 	}
-	
-	
-	// gmesh->BuildConnectivity();
-	ExportGMshCAD("dfnExport.geo");
-
 
 }
 
