@@ -508,21 +508,18 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	// List faces that form the volume shell
 	std::vector<int> surfaceloop;
 	for(int nsides = volGel->NSides(),
-		iside = nsides-2; iside >= 0; iside--){
+					 iside = nsides-2; iside >= 0; iside--){
 		TPZGeoElSide gelside(volGel,iside);
 		if(gelside.Dimension() != 2) break;
 		TPZGeoElSide neig = gelside.Neighbour();
-		while(neig.Element()->Dimension() != 2){ neig = neig.Neighbour();}
-		TPZStack<TPZGeoEl *> unrefinedSons;
-		if(neig.Element()->HasSubElement()){
-			neig.Element()->YoungestChildren(unrefinedSons);
-		}else{ //if it has no child, use itself
-			unrefinedSons.push_back(neig.Element());
+		while(neig.Element()->Dimension() != 2){ 
+			neig = neig.Neighbour();
+			if(neig == gelside){
+				PZError << "\n\n Error at "<<__PRETTY_FUNCTION__<<"\n"<<"There shouldn't be a volume without skeleton\n\n";
+				DebugStop();
+			}
 		}
-		for(TPZGeoEl * iface : unrefinedSons){
-			if(iface->Dimension() != 2) continue;
-			surfaceloop.push_back(iface->Index());
-		}
+		surfaceloop.push_back(neig.Element()->Index());
 	}
 	// List faces that are enclosed in the volume
 	TPZManVector<int64_t> enclosedFaces = volume->GetFacesInVolume();
@@ -540,8 +537,15 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 			if(gelside.Dimension() != 1) break;
 			TPZGeoElSide neig = gelside.Neighbour();
 			while(neig.Element()->Dimension() != 1) neig = neig.Neighbour();
-			if(neig.Element()->HasSubElement()) continue;
-			lines.insert(neig.Element()->Index());
+			TPZStack<*TPZGeoEl> unrefined_lines;
+			if(neig.Element()->HasSubElement()){
+				neig.Element()->YoungestChildren(unrefined_lines);
+			}else{
+				unrefined_lines.Push(neig.Element());
+			}
+			for(auto line : unrefined_lines){
+				lines.insert(line->Index());
+			}
 		}
 	}
 	// List edges from faces in volume
@@ -555,8 +559,15 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 			if(gelside.Dimension() != 1) break;
 			TPZGeoElSide neig = gelside.Neighbour();
 			while(neig.Element()->Dimension() != 1) neig = neig.Neighbour();
-			if(neig.Element()->HasSubElement()) continue;
-			lines.insert(neig.Element()->Index());
+			TPZStack<*TPZGeoEl> unrefined_lines;
+			if(neig.Element()->HasSubElement()){
+				neig.Element()->YoungestChildren(unrefined_lines);
+			}else{
+				unrefined_lines.Push(neig.Element());
+			}
+			for(auto line : unrefined_lines){
+				lines.insert(line->Index());
+			}
 		}
 	}
 
@@ -569,7 +580,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	}
 	
 	// gmsh::initialize();
-	std::string mshfilename("debug/testAPI_volume");
+	std::string mshfilename("LOG/testAPI_volume");
 	mshfilename += std::to_string(ivol);
 	// gmsh::model::add(mshfilename);
 	mshfilename += ".msh";
@@ -686,7 +697,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	// mesh
 		gmsh::model::mesh::generate(3);
 	// gmsh::write(mshfilename);
-	// gmsh::write("debug/testAPI_volume.msh");
+	gmsh::write("LOG/testAPI_volume.msh");
 	// import meshed volume back into PZ geoMesh
 		ImportElementsFromGMSH(gmesh,3,nodes);
 	gmsh::clear();
@@ -1064,25 +1075,14 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 				}
 			// if(entered_Q) continue;
 			}
-			// lines that have a 2D fracture surface neighbour through side 2 // @todo only works in 3D
-			//@todo: [suggested fix] filter for material id of the line itself... (not sure about how robust this would be)
-			// {
-			// 	TPZGeoElSide gelside(gel,2);
-			// 	TPZGeoElSide neighbour = gelside.Neighbour();
-			// 	while(neighbour != gelside){
-			// 		// if(neighbour.Element()->MaterialId() == msurface){
-			// 		if(neighbour.Element()->MaterialId() >= msurface){ //@todo I should've already fixed these material ids
-	        //   			outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
-			// 			break;
-			// 		}
-			// 	}
-			// }
+			
             // list it according to material
 			if(!entered_Q) continue;
 			if(mesh_dim == 2){
 				if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
 				else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
 				else groupIntact.push_back(iel+shift);
+				// @todo
 				// if(gel->MaterialId() == mtransition) groupTransition.push_back(iel+shift);
 				// else if (gel->MaterialId() == mtransition) groupTransition.push_back(iel+shift);
 				// else groupIntact.push_back(iel+shift);
@@ -1090,18 +1090,10 @@ void DFNMesh::ExportGMshCAD(std::string filename){
         }
         // write physical groups
 		if(mesh_dim == 2){
-			// outfile<<"\nPhysical Curve("<<mtransition<<") = {";
-			// for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-			// 	outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
-			// }
 			outfile<<"\nPhysical Curve("<<msurface<<") = {";
 			for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
 				outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
 			}
-			// outfile<<"\nPhysical Curve("<<mintact<<") = {";
-			// for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
-			// 	outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
-			// }
 		}
     }
     // write faces
