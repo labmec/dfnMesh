@@ -128,7 +128,7 @@ struct DFNMesh{
 
 		/**
 		 * @brief Tetrahedralize fractured volumes and refine intact volumes
-		 * @todo refine intact volumes and maybe pass a target measure for subelements size as parameter
+		 * @todo refine intact volumes and maybe we could pass a target measure for subelements size as parameter
 		*/
 		void GenerateSubMesh();
 };
@@ -243,8 +243,8 @@ void DFNMesh::GenerateSubMesh(){
 	//Loop over list of fractured volumes
 	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
     	DFNVolume *ivolume = &itr->second;
+		// if(ivolume->ElementIndex() != 1) continue;
 		// Use GMsh to tetrahedralize volumes
-		// if(ivolume->ElementIndex() != 2) continue;
     	Tetrahedralize(ivolume);
 	}
 	gmsh::finalize();	
@@ -502,6 +502,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	int transitionMaterial = 18;
 
 	TPZGeoMesh *gmesh = (*fFractures.begin())->GetGeoMesh();
+	int mesh_dim = gmesh->Dimension();
 	int64_t ivol = volume->ElementIndex();
 	TPZGeoEl *volGel = gmesh->Element(ivol);
 	// std::cout<<"\n\n _________   volume # "<<ivol<<"\n";
@@ -537,7 +538,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 			if(gelside.Dimension() != 1) break;
 			TPZGeoElSide neig = gelside.Neighbour();
 			while(neig.Element()->Dimension() != 1) neig = neig.Neighbour();
-			TPZStack<*TPZGeoEl> unrefined_lines;
+			TPZStack<TPZGeoEl*> unrefined_lines;
 			if(neig.Element()->HasSubElement()){
 				neig.Element()->YoungestChildren(unrefined_lines);
 			}else{
@@ -559,7 +560,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 			if(gelside.Dimension() != 1) break;
 			TPZGeoElSide neig = gelside.Neighbour();
 			while(neig.Element()->Dimension() != 1) neig = neig.Neighbour();
-			TPZStack<*TPZGeoEl> unrefined_lines;
+			TPZStack<TPZGeoEl*> unrefined_lines;
 			if(neig.Element()->HasSubElement()){
 				neig.Element()->YoungestChildren(unrefined_lines);
 			}else{
@@ -580,6 +581,8 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	}
 	
 	// gmsh::initialize();
+	std::string modelname = "model"+std::to_string(ivol);
+	gmsh::model::add(modelname);
 	std::string mshfilename("LOG/testAPI_volume");
 	mshfilename += std::to_string(ivol);
 	// gmsh::model::add(mshfilename);
@@ -610,28 +613,61 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 		int nedges = nnodes;
 		TPZManVector<int64_t,4> facenodevec(nnodes);
 		face->GetNodeIndices(facenodevec);
-		// line loop
-		std::vector<int> lineloop(nedges);
+		// line loop ________________________________________________________________________
+		std::vector<int> lineloop;
+		int64_t reference_node = face->NodeIndex(0);
+		bool planesurface_Q = false;
 		for(int iside = nnodes; iside < nnodes+nedges; iside++){
 			TPZGeoElSide gelside(face,iside);
-			TPZGeoElSide neig = gelside.Neighbour();
+			TPZGeoElSide side = gelside.Neighbour();
 			// find line element
-			while(neig.Element()->Dimension()!=1){neig = neig.Neighbour();}
-			// find first node of line at the face
-			int inode = 0;
-			while(facenodevec[inode] != neig.SideNodeIndex(0)) inode++;
-			// check orientation by comparing second node of line with next node of face
-			if(neig.SideNodeIndex(1) == facenodevec[(inode+1)%nnodes]){
-				lineloop[iside-nnodes] = neig.Element()->Index() + shift;
+			while(side.Element()->Dimension() != 1) {side = side.Neighbour();}
+			TPZGeoEl *irib = side.Element();
+			TPZStack<TPZGeoEl*> children;
+			if(irib->HasSubElement()){
+				irib->YoungestChildren(children);
 			}else{
-				lineloop[iside-nnodes] = - (neig.Element()->Index() + shift);
+				children.Push(irib);
+			}
+			int nchildren = children.NElements();
+			if(nchildren > 1) planesurface_Q = 1;
+			int children_added = 0;
+			int64_t index = 0;
+			TPZManVector<bool> added_list(nchildren,false);
+			while(children_added < nchildren){
+				// find next child and check orientation
+				int orientation = 1;
+				for(int ichild = 0; ichild<nchildren; ichild++){
+					if(added_list[ichild]) continue;
+					TPZGeoEl *child = children[ichild];
+					if(child->NodeIndex(0) == reference_node){
+						orientation = 1;
+						reference_node = child->NodeIndex(1); // next node becomes reference
+						index = child->Index();
+						added_list[ichild] = true;
+						break;
+					}
+					else if(child->NodeIndex(1) == reference_node){
+						orientation = -1;
+						reference_node = child->NodeIndex(0); // next node becomes reference
+						index = child->Index();
+						added_list[ichild] = true;
+						break;
+					}
+				}
+				// add child
+				children_added++;
+				index = orientation*(index+shift);
+				lineloop.push_back(index);
 			}
 		}
-		// insert curve loop
+		// insert curve loop ________________________________________________________________
 		wiretag[0] = gmsh::model::geo::addCurveLoop(lineloop,face->Index()+shift);
 		// insert surface
-		gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);	
-		gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
+		if(planesurface_Q){gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
+		}else{gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);}
+		
+		// @todo gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
 		// if(face->Type() == EQuadrilateral) gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
 	}
 	// Enclosed faces
@@ -667,6 +703,52 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	}
 	}
 	
+	{// begin Lines-in-Surface ________________________________________________
+	// "lines of fracture surface whose elder does not have a mesh_dim neighbour without father"
+	for(int iface : surfaceloop){
+		TPZGeoEl *gel = gmesh->Element(iface);
+		if(!gel->HasSubElement()) continue;
+		TPZStack<TPZGeoEl *> children;
+		gel->YoungestChildren(children);
+		// queue all possible lines by checking 1D neighbours of children
+		std::set<TPZGeoEl *> candidate_ribs;
+		for(auto child : children){
+			int nribs = child->NNodes();
+			for(int cside = nribs; cside < 2*nribs; cside++){
+				TPZGeoElSide childside(child,cside);
+				TPZGeoElSide neig = childside.Neighbour();
+				for(/*void*/; neig != childside; neig = neig.Neighbour()){
+					if(neig.Element()->Dimension() != 1) continue;
+					// @todo if(neig.Element()->MaterialId() != surfaceMaterial) continue;
+					if(neig.Element()->MaterialId() < surfaceMaterial) continue;
+					candidate_ribs.insert(neig.Element());
+				}
+			}
+		}
+		bool should_enter = true;
+		std::vector<int> lines_in_surface;
+		auto end = candidate_ribs.end();
+		for(auto it = candidate_ribs.begin(); it != end;it++){
+			TPZGeoEl *rib = *it;
+			TPZGeoEl *elder = (rib->Father()? rib->EldestAncestor() : rib);
+			TPZGeoElSide elderside(elder,2);
+			TPZGeoElSide neig = elderside.Neighbour();
+			while(neig != elderside){
+				if(neig.Element()->Dimension() == mesh_dim && !neig.Element()->Father()){
+					should_enter = false;
+					break;
+				}
+				neig = neig.Neighbour();
+			}
+			if(!should_enter){continue;}
+			lines_in_surface.push_back(rib->Index()+shift);
+		}
+		gmsh::model::geo::synchronize(); // synchronize is required before embedding
+		gmsh::model::mesh::embed(1,lines_in_surface,2,iface+shift);
+	}
+	}// end Lines-in-Surface __________________________________________________
+
+
 	// Insert volumes ____________________________________
 	std::vector<int> shelltag(1);
 	// Shift surfaceloop indices
@@ -696,11 +778,12 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 		gmsh::model::geo::synchronize();
 	// mesh
 		gmsh::model::mesh::generate(3);
-	// gmsh::write(mshfilename);
-	gmsh::write("LOG/testAPI_volume.msh");
+	gmsh::write(mshfilename);
+	// gmsh::write("LOG/testAPI_volume.msh");
 	// import meshed volume back into PZ geoMesh
 		ImportElementsFromGMSH(gmesh,3,nodes);
-	gmsh::clear();
+	gmsh::model::remove();
+	// gmsh::clear();
 	// gmsh::finalize();
 }
 
@@ -1146,7 +1229,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 
             if(!type) continue;
 			bool planesurface_Q = false;
-            // curve loop
+            // curve loop _______________________________________
             outfile << "Curve Loop(" << iel+shift << ") = {";
             int nnodes = gel->NCornerNodes();
             int nedges = nnodes; //for readability 
@@ -1207,7 +1290,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 					index = orientation*(index+shift);
                 	outfile << index <<(iside + children_added < 2*nedges-1 + nchildren ? "," : "};\n");
 				}
-            }
+            } // close curve loop _______________________________________
             // surface
 			if(planesurface_Q) outfile << "Plane ";
             outfile << "Surface("<<iel+shift<<") = {"<<iel+shift<<"};\n";
