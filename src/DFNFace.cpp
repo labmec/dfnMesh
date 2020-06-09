@@ -93,17 +93,17 @@ void DFNFace::DivideSurface(int matid){
    	if(!face){DebugStop();}
 	
 	// Vector of face's node indices
-	TPZVec<int64_t> node;
+	TPZManVector<int64_t,4> node;
 	face->GetNodeIndices(node);
 	
 	// Determine pattern of refinement
 	int splitcase = GetSplitPattern(fStatus);
 	
 	// Vector of children elements
-	TPZVec<TPZVec<int64_t>> child;
-	// Vector of refinement elements (nodes numbered as in master element)
-	std::map<int64_t, int64_t> refnode;
-	for(int i = 0; i<node.size(); i++) refnode.insert({node[i], i});
+	TPZManVector<TPZManVector<int64_t,4>,6> child;
+	// Maps geometric mesh index to refinement mesh index
+	std::map<int64_t, int64_t> gmesh_to_rmesh;
+	for(int i = 0; i<node.size(); i++) gmesh_to_rmesh.insert({node[i], i});
 
 	// Divide surface according to split pattern (these algorithms make no sense without documentation)
 	int64_t nodeA, nodeB;
@@ -119,19 +119,16 @@ void DFNFace::DivideSurface(int matid){
 			DFNRibs *ribB = fFracMesh->Rib(fRibs[i+2]);
 			nodeB = ribB->IntersectionIndex();
 			
-			TPZVec<int64_t> child1(4);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[i+1];
-				child1[3] = node[i+2];
-			TPZVec<int64_t> child2(4);
-				child2[0] = nodeA;
-				child2[1] = nodeB;
-				child2[2] = node[(i+3)%4];
-				child2[3] = node[i];
-			
-			child[0] = child1;
-			child[1] = child2;
+			child[0].Resize(4);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[i+1];
+				child[0][3] = node[i+2];
+			child[1].resize(4);
+				child[1][0] = nodeA;
+				child[1][1] = nodeB;
+				child[1][2] = node[(i+3)%4];
+				child[1][3] = node[i];
 			break;}
 		case 2:{
 			child.resize(4);
@@ -144,31 +141,56 @@ void DFNFace::DivideSurface(int matid){
 			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeA;
-				child1[1] = nodeB;
-				child1[2] = node[i];
-			TPZVec<int64_t> child2(3);
-				child2[0] = nodeB;
-				child2[1] = node[(i+1)%4];
-				child2[2] = node[(i+2)%4];
-			TPZVec<int64_t> child3(3);
-				child3[0] = nodeA;
-				child3[1] = nodeB;
-				child3[2] = node[(i+2)%4];
-			TPZVec<int64_t> child4(3);
-				child4[0] = nodeA;
-				child4[1] = node[(i+2)%4];
-				child4[2] = node[(i+3)%4];
-
-			child[0] = child1;
-			child[1] = child2;
-			child[2] = child3;
-			child[3] = child4;
+			child[0].Resize(3);
+				child[0][0] = nodeA;
+				child[0][1] = nodeB;
+				child[0][2] = node[i];
+			child[1].resize(3);
+				child[1][0] = nodeB;
+				child[1][1] = node[(i+1)%4];
+				child[1][2] = node[(i+2)%4];
+			child[2].resize(3);
+				child[2][0] = nodeA;
+				child[2][1] = nodeB;
+				child[2][2] = node[(i+2)%4];
+			child[3].resize(3);
+				child[3][0] = nodeA;
+				child[3][1] = node[(i+2)%4];
+				child[3][2] = node[(i+3)%4];
 			break;}
 		case 3:{
+			child.resize(2);
+			int i = fStatus[1];
+			child[0].Resize(3);
+				child[0][0] = node[i];
+				child[0][1] = node[i+1];
+				child[0][2] = node[i+2];
+			child[1].resize(3);
+				child[1][0] = node[i];
+				child[1][1] = node[i+2];
+				child[1][2] = node[(i+3)%4];
 			break;}
-		case 4:{
+		case 4:
+		case 7:{
+			child.resize(3);
+			int i = 0;
+			while(fStatus[i+4]==false) i++;
+			// Intersection node at rib i
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			nodeA = ribA->IntersectionIndex();
+
+			child[0].resize(3);
+				child[0][0] = nodeA;
+				child[0][1] = node[(i+1)%4];
+				child[0][2] = node[(i+2)%4];
+			child[1].resize(3);
+				child[1][0] = nodeA;
+				child[1][1] = node[(i+2)%4];
+				child[1][2] = node[(i+3)%4];
+			child[2].resize(3);
+				child[2][0] = nodeA;
+				child[2][1] = node[(i+3)%4];
+				child[2][2] = node[i];
 			break;}
 		case 5:{
 			child.resize(5);
@@ -180,40 +202,42 @@ void DFNFace::DivideSurface(int matid){
 			// In-plane itersection node
 			nodeB = fIntersection;
 
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[(i+1)%4];
-			TPZVec<int64_t> child2(3);
-				child2[0] = nodeB;
-				child2[1] = node[(i+1)%4];
-				child2[2] = node[(i+2)%4];
-			TPZVec<int64_t> child3(3);
-				child3[0] = nodeB;
-				child3[1] = node[(i+2)%4];
-				child3[2] = node[(i+3)%4];
-			TPZVec<int64_t> child4(3);
-				child4[0] = nodeB;
-				child4[1] = node[(i+3)%4];
-				child4[2] = node[i];
-			TPZVec<int64_t> child5(3);
-				child5[0] = nodeB;
-				child5[1] = node[i];
-				child5[2] = nodeA;
-
-			child[0] = child1;
-			child[1] = child2;
-			child[2] = child3;
-			child[3] = child4;
-			child[4] = child5;
+			child[0].Resize(3);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[(i+1)%4];
+			child[1].resize(3);
+				child[1][0] = nodeB;
+				child[1][1] = node[(i+1)%4];
+				child[1][2] = node[(i+2)%4];
+			child[2].resize(3);
+				child[2][0] = nodeB;
+				child[2][1] = node[(i+2)%4];
+				child[2][2] = node[(i+3)%4];
+			child[3].resize(3);
+				child[3][0] = nodeB;
+				child[3][1] = node[(i+3)%4];
+				child[3][2] = node[i];
+			child[4].resize(3);
+				child[4][0] = nodeB;
+				child[4][1] = node[i];
+				child[4][2] = nodeA;
 			break;}
-		case 6:{
-			break;}
-		case 7:{
-			break;}
-		case 8:{
+		case 6:
+		// case 7 == case 4
+		case 8:{ // case 8 == case 6
+			// In-plane itersection node
+			nodeA = fIntersection;
+			child.resize(4);
+			for(int i=0; i<4; i++) {
+				child[i].resize(3);
+				child[i][0] = nodeA;
+				child[i][1] = node[i];
+				child[i][2] = node[(i+1)%4];
+			}
 			break;}
 		case 9:{
+			// @ToDo
 			break;}
 		case 10:{
 			child.resize(2);
@@ -226,20 +250,33 @@ void DFNFace::DivideSurface(int matid){
 			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 			
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[i];
-			TPZVec<int64_t> child2(4);
-				child2[0] = nodeA;
-				child2[1] = nodeB;
-				child2[2] = node[(i+1)%3];
-				child2[3] = node[(i+2)%3];
-
-			child[0] = child1;
-			child[1] = child2;
+			child[0].Resize(3);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[i];
+			child[1].resize(4);
+				child[1][0] = nodeA;
+				child[1][1] = nodeB;
+				child[1][2] = node[(i+1)%3];
+				child[1][3] = node[(i+2)%3];
 			break;}
-		case 11:{
+		case 11:
+		case 14:{ //case 11 == case 14
+			child.resize(2);
+			int i=0;
+			while(fStatus[i+3] == false) i++;
+			// Intersection node at rib i
+			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			nodeA = ribA->IntersectionIndex(); 
+
+			child[0].resize(3);
+				child[0][0] = nodeA;
+				child[0][1] = node[(i+1)%3];
+				child[0][2] = node[(i+2)%3];
+			child[1].resize(3);
+				child[1][0] = nodeA;
+				child[1][1] = node[(i+2)%3];
+				child[1][2] = node[i];
 			break;}
 		case 12:{
 			child.resize(4);
@@ -251,102 +288,107 @@ void DFNFace::DivideSurface(int matid){
 			// In-plane itersection node
 			nodeB = fIntersection;
 
-			TPZVec<int64_t> child1(3);
-				child1[0] = nodeB;
-				child1[1] = nodeA;
-				child1[2] = node[(i+1)%3];
-			TPZVec<int64_t> child2(3);
-				child2[0] = nodeB;
-				child2[1] = node[(i+1)%3];
-				child2[2] = node[(i+2)%3];
-			TPZVec<int64_t> child3(3);
-				child3[0] = nodeB;
-				child3[1] = node[(i+2)%3];
-				child3[2] = node[i];
-			TPZVec<int64_t> child4(3);
-				child4[0] = nodeB;
-				child4[1] = node[i];
-				child4[2] = nodeA;
-
-			child[0] = child1;
-			child[1] = child2;
-			child[2] = child3;
-			child[3] = child4;
-			// DebugStop();
+			child[0].Resize(3);
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
+				child[0][2] = node[(i+1)%3];
+			child[1].resize(3);
+				child[1][0] = nodeB;
+				child[1][1] = node[(i+1)%3];
+				child[1][2] = node[(i+2)%3];
+			child[2].resize(3);
+				child[2][0] = nodeB;
+				child[2][1] = node[(i+2)%3];
+				child[2][2] = node[i];
+			child[3].resize(3);
+				child[3][0] = nodeB;
+				child[3][1] = node[i];
+				child[3][2] = nodeA;
 			break;}
-		case 13:{
-			break;}
-		case 14:{
-			break;}
+		case 13: // case 13 == case 15
+		// case 14 == case 11
 		case 15:{
+			// In-plane itersection node
+			nodeA = fIntersection;
+			child.resize(3);
+			for(int i=0; i<3; i++) {
+				child[i].resize(3);
+				child[i][0] = nodeA;
+				child[i][1] = node[i];
+				child[i][2] = node[(i+1)%3];
+			}
 			break;}
 		case 16:{
+			// @ToDo
 			break;}
 		default: DebugStop();
 	}
 
 	int nchildren = child.size();
 	TPZManVector<int64_t,6> childrenIndices(nchildren,0);
-	childrenIndices.Shrink();
+
 
 // defining Refinement Pattern
 //----------------------------------------------------------------------------
-	
-	refnode.insert({nodeA,node.size()});
-	refnode.insert({nodeB,node.size()+1});
-	// set mesh to define refinement pattern
-	TPZGeoMesh refPatternMesh;
-	// count number of nodes for refinement pattern
-	int refNNodes = face->NCornerNodes();
-	if(this->fIntersection >= 0) refNNodes++;
-	int ncornersfather = face->NCornerNodes();
-	for(int irib=ncornersfather;irib<fStatus.size();irib++){
-		if(this->fStatus[irib]) refNNodes++;
-	}
-
-	// insert nodes
-	refPatternMesh.NodeVec().Resize(refNNodes);
-	for(auto itr = refnode.begin(); itr != refnode.end(); itr++){
-		if(itr->second == refNNodes) break;
-		TPZManVector<REAL,3> coord(3);
-		int64_t meshnode = itr->first;
-		int64_t refnode = itr->second;
-		gmesh->NodeVec()[meshnode].GetCoordinates(coord);
-		// refPatternMesh.NodeVec().AllocateNewElement();
-		refPatternMesh.NodeVec()[refnode].Initialize(coord,refPatternMesh);
-	}
-
-	
-	// insert father
 	{
-		MElementType elemtype = face->Type();
-		TPZManVector<int64_t,4> cornerindices(ncornersfather);
-		for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
-		int64_t index = 0;
-		refPatternMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
-	}
-	// insert children
-	for (int i = 0; i < nchildren; i++)
-	{
-		int ncorners = child[i].size();
-		MElementType elemtype;
-		switch (ncorners){
-			case 3: elemtype = ETriangle; break;
-			case 4: elemtype = EQuadrilateral; break;
+		gmesh_to_rmesh.insert({nodeA,node.size()});
+		gmesh_to_rmesh.insert({nodeB,node.size()+1});
+		// set mesh to define refinement pattern
+		TPZGeoMesh refPatternMesh;
+		// count number of nodes for refinement pattern
+		int refNNodes = face->NCornerNodes();
+		if(this->fIntersection >= 0) refNNodes++;
+		int ncornersfather = face->NCornerNodes();
+		for(int irib=ncornersfather;irib<fStatus.size();irib++){
+			if(this->fStatus[irib]) refNNodes++;
 		}
-		int64_t index = i+1;
-		// int64_t index = i;
-		TPZManVector<int64_t,4> refchild(ncorners);
-		for(int k = 0; k<ncorners; k++) refchild[k] = refnode[child[i][k]];
-		// for colorful printing use matid+3*i or something like that
-		refPatternMesh.CreateGeoElement(elemtype, refchild, matid, index);
-		childrenIndices[i] = index;
-	}
-	refPatternMesh.BuildConnectivity(); 
-	// define refPattern
-	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
-	face->SetRefPattern(refpat);
 	
+		// insert nodes
+		refPatternMesh.NodeVec().Resize(refNNodes);
+		for(auto itr = gmesh_to_rmesh.begin(); itr != gmesh_to_rmesh.end(); itr++){
+			int64_t refnode = itr->second;
+			if(refnode == refNNodes) continue;
+			TPZManVector<REAL,3> coord(3);
+			int64_t meshnode = itr->first;
+			gmesh->NodeVec()[meshnode].GetCoordinates(coord);
+			// refPatternMesh.NodeVec().AllocateNewElement();
+			refPatternMesh.NodeVec()[refnode].Initialize(coord,refPatternMesh);
+		}
+	
+		
+		// insert father
+		{
+			MElementType elemtype = face->Type();
+			TPZManVector<int64_t,4> cornerindices(ncornersfather);
+			for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
+			int64_t index = 0;
+			refPatternMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
+		}
+		// insert children
+		for (int i = 0; i < nchildren; i++)
+		{
+			int ncorners = child[i].size();
+			MElementType elemtype;
+			switch (ncorners){
+				case 3: elemtype = ETriangle; break;
+				case 4: elemtype = EQuadrilateral; break;
+			}
+			int64_t index = i+1;
+			// int64_t index = i;
+			TPZManVector<int64_t,4> refchild(ncorners);
+			for(int k = 0; k<ncorners; k++) refchild[k] = gmesh_to_rmesh[child[i][k]];
+			// for colorful printing use matid+3*i or something like that
+			refPatternMesh.CreateGeoElement(elemtype, refchild, matid, index);
+		}
+		refPatternMesh.BuildConnectivity(); 
+    	    //Print result
+			// if(true);
+				// std::ofstream out2("./TestRefMesh.vtk");
+				// TPZVTKGeoMesh::PrintGMeshVTK(&refPatternMesh, out2, true);
+		// define refPattern
+		TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
+		face->SetRefPattern(refpat);
+	}
 //----------------------------------------------------------------------------
 
 	for (int i = 0; i < nchildren; i++)
@@ -365,7 +407,7 @@ void DFNFace::DivideSurface(int matid){
 		
 		face->SetSubElement(i,newface);
 		// Tell the child who its father is
-		newface->SetFather(fFaceIndex);
+		newface->SetFatherIndex(fFaceIndex);
 	}
 	// create skeleton?
 }
@@ -446,6 +488,7 @@ int DFNFace::GetSplitPattern(TPZVec<bool> &status){
 			case 2:
 				splitcase = 10;
 				break;
+			default: DebugStop();break;
 		}
 	}
 	return splitcase;

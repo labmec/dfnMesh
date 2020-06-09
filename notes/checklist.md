@@ -1,84 +1,38 @@
 # Ongoing
 
+- [ ] HANDLING ELEMENTS WITH BAD ASPECT RATIO
+  - [ ] Discard bad elements and project plane mesh to where nodes were snapped
+  - [ ] Formalize logic behind bad-elements-handling
+  - [x] Check if rib cut happens too close to vertex 
+    - [ ] Two ribs leave the same vertex, point element should be the same
+          @notes: 1 element can't have 2 fathers... gotta figure out how this will affect the code downstream
+    - [ ] Fracture through a vertex isn't perfect yet... the overlapping of (at least 3) edges coming out of the same vertex needs fixing
+  - [ ] Check if face intersection happens too close to rib 
+  - [ ] Check if face intersection happens too close to vertex 
+  - [ ] Use split-case id inside FractureMesh::SplitFaces to define if we're currently in a special case and what should be done about it
+  - [ ] Search for critical cases 
+    - [ ] Fractures that are almost parallel to mesh plane 
+    - [ ] Fracture that overlaps mesh plane should not divide anything, but rather incorporate mesh ribs onto its plane to define the fracture outline.
+      - [ ] The problem with this, is that fracture surface mesh would be made up of MHM faces. This is a considerably different code than the one we've written so far.
+      - [ ] A probable solution for this would be using GMsh to mesh all planes parallel to fracture surface (one at a time) in order to keep the father->children structure.
+        - [ ] If so, it might help to define another map for faces that are parallel to fracPlane.
 - [ ] Geometrical center -> Centroid (in documentation)
-- [x] Insert second plane
-  - [x] Implement triangle splitting cases
-  - [x] Set a second plane in main
-  - [x] Call splitribs and splitfaces
-  - [x] Set RefPatterns
-    - [x] Refpattern for ribs shouldn't be uniform
-  - [x] Use PZ's data structure to specify level of element splitting
-- [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
-  - [x] Search which volume encloses each face
-  - [x] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
-  - [x] One volume at a time (to allow for refinement patterns)
-  - [x] Inform to volumes what faces lie inside it 
-  - [ ] **Write geometry to GMSH** 
-    - [x] Write points 
-    - [x] Write Lines 
-    - [x] Define physical groups of lines 
-    - [x] Write faces 
-    - [x] Define physical groups of faces 
-    - [x] Test rules for proper definition of surface loops 
-    - [x] Write surface loops 
-    - [x] Write volumes 
-    - [x] Define physical groups of volumes 
-    - [x] Rewrite using gmsh API
-    - [x] Check if child is of lower dimension than father
-    - [x] When sending stuff to GMsh, there might not be any intact volume, in which case, they must be ignored.
-    - [x] Pass a container to ImportElementsFromGMsh with old nodes
-    - [x] set transfinite stuff
+
+
+
+
 # ToDo
-- [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
-- [x] Mesh fracplane 
-  - [X] ~~*Ear-clipping-like algorithm*~~ [2019-09-30] 
-  - [x] Legalize triangles 
-  - [x] GMsh is doing it perfectly
 - [ ] Face splitting 
-  - [x] Store status of each rib and node
-  - [x] Identify case 
-  - [x] Store all intersections for each face 
-  - [x] Father elements 
   - [ ] Quadrilateral splitting 
-    - [x] Case 1
-    - [x] Case 2
-    - [ ] Case 3
-    - [ ] Case 4
-    - [x] Case 5
-    - [ ] Case 6
-    - [ ] Case 7
-    - [ ] Case 8 (No ribs 1) 
-    - [ ] Case 9 (No ribs 2) 
+    - [ ] Case 9 (No ribs 2) https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+    - [ ] Special case
   - [ ] Triangle splitting 
-    - [x] Case 10
-    - [ ] Case 11
-    - [x] Case 12
-    - [ ] Case 13
-    - [ ] Case 14
-    - [ ] Case 15 (No ribs 1) 
-    - [ ] Case 16 (No ribs 2) 
+    - [ ] Case 16 (No ribs 2) https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+    - [ ] Special case
 - [ ] Tetrahedralization on volumetric mesh (gmesh should do it) 
-  - [x] Search which volume encloses each face
-  - [x] Inform to volumes what faces lie inside it 
-  - [x] Write geometry to GMSH 
-    - [x] Write points 
-    - [x] Write Lines 
-    - [x] Define physical groups of lines 
-    - [x] Write faces 
-    - [x] Define physical groups of faces 
-    - [x] Test rules for proper definition of surface loops 
-    - [x] Write surface loops 
-    - [x] Write volumes 
-    - [x] Define physical groups of volumes 
-    - [x] Rewrite using gmsh API
-- [ ] Check if rib cut happens too close to vertex 
-- [ ] Check if face intersection happens too close to rib 
-- [ ] Search for critical cases 
-  - [ ] Fractures that are almost parallel to mesh plane 
-  - [ ] Fracture that overlaps mesh plane should not divide anything 
+  - [ ] GMsh suffers to define a 3D mesh in a volume that requires pyramids
 - [ ] Id volumes that contain fracture corners 
-- [ ] Check if point is too close to vertex -> rib -> face 
-- [ ] Change comparisons from a == b to $|a-b|<\varepsilon$
+  - [ ] Check if point is too close to vertex -> rib -> face 
 
 
 # Done and Documented
@@ -115,6 +69,60 @@
   - [x] find which edge cuts them
   - [x] sort them
   - [x] connect points accordingly
+- [x] Change comparisons from a == b to $|a-b|<\varepsilon$
+- [x] Insert second plane
+  - [x] Implement triangle splitting cases
+  - [x] Set a second plane in main
+  - [x] Call splitribs and splitfaces
+  - [x] Set RefPatterns
+    - [x] Refpattern for ribs shouldn't be uniform
+  - [x] Use PZ's data structure to specify level of element splitting
+- [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
+- [x] Mesh fracplane 
+  - [X] ~~*Ear-clipping-like algorithm*~~ [2019-09-30] 
+  - [x] Legalize triangles 
+  - [x] GMsh is doing it perfectly
+- [x] Face splitting 
+  - [x] Store status of each rib and node
+  - [x] Identify case 
+  - [x] Store all intersections for each face 
+  - [x] Father elements 
+  - [x] Quadrilateral splitting 
+    - [x] Case 1
+    - [x] Case 2
+    - [x] Case 3
+    - [x] Case 4
+    - [x] Case 5
+    - [x] Case 6
+    - [x] Case 7
+    - [x] Case 8 (No ribs 1) 
+  - [x] Triangle splitting 
+    - [x] Case 10
+    - [x] Case 11
+    - [x] Case 12
+    - [x] Case 13
+    - [x] Case 14
+    - [x] Case 15 (No ribs 1) 
+- [x] Tetrahedralization on volumetric mesh (gmesh should do it) 
+  - [x] Search which volume encloses each face
+  - [x] Search through 2nd (& 3rd, 4th...) level neighbours until a child of an MHM element is found
+  - [x] One volume at a time (to allow for refinement patterns)
+  - [x] Inform to volumes what faces lie inside it 
+  - [x] **Write geometry to GMSH** 
+    - [x] Write points 
+    - [x] Write Lines 
+    - [x] Define physical groups of lines 
+    - [x] Write faces 
+    - [x] Define physical groups of faces 
+    - [x] Test rules for proper definition of surface loops 
+    - [x] Write surface loops 
+    - [x] Write volumes 
+    - [x] Define physical groups of volumes 
+    - [x] Rewrite using gmsh API
+    - [x] Check if child is of lower dimension than father
+    - [x] When sending stuff to GMsh, there might not be any intact volume, in which case, they must be ignored.
+    - [x] Pass a container to ImportElementsFromGMsh with old nodes
+    - [x] set transfinite stuff
 
 
 

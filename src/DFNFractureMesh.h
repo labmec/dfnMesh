@@ -1,6 +1,5 @@
 /*! 
  *  @authors   Pedro Lima
- *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 
@@ -31,10 +30,9 @@ typedef TPZFMatrix<REAL> Matrix;
 /*! 
  *  @brief     Compares a geomesh with fracture plane to find intersections.
  *  @details   Intersection search is performed after creation of skeleton
- * elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
+ *  elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
  *  be a DFNFracPlane.
  *  @authors   Pedro Lima
- *  @authors   Jorge Ordoñez
  *  @date      2018-2019
  */
 class DFNFractureMesh
@@ -68,7 +66,7 @@ private:
     int fSurfaceMaterial = 40;
 
     /// Material id of mesh elements cut by fracture
-    int fTransitionMaterial = 20;
+    int fTransitionMaterial = 18;
 
 public:
     
@@ -112,7 +110,7 @@ private:
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    TPZManVector<REAL,3> FindEndFracturePoint(DFNFace &face);
+    bool FindEndFracturePoint(DFNFace &face, TPZVec<REAL> &ipoint);
     
     /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
     void SplitFractureEdge(std::list<int> &fracEdgeLoop);
@@ -136,10 +134,10 @@ public:
     void AddRib(DFNRibs rib);
     
     /// Access mid-fracture faces' data structure
-    void AddMidFace(DFNFace &face);
+    bool AddMidFace(DFNFace &face);
     
     /// Access end-fracture faces' data structure
-    void AddEndFace(DFNFace &face);
+    bool AddEndFace(DFNFace &face);
 
     /// Insert new volume in data structure
     void AddVolume(DFNVolume volume);
@@ -174,8 +172,6 @@ public:
     /// Get material ID for elements at surface of fracture
     int MaterialID(){return fSurfaceMaterial;}
 
-    /// Find the volumetrical element that encloses a 2D element
-    bool FindEnclosingVolume(TPZGeoEl *ifracface);
 };
 
 #endif /* DFNFractureMesh_h */

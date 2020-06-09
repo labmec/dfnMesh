@@ -78,7 +78,7 @@ class DFNFracPlane
 	double area() const { return fArea; }
 
 	/// Compute area of plane
-	void ComputeArea();
+	REAL ComputeArea();
 
 	/// Return true if the rib intersects the plane
 	bool Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
@@ -121,7 +121,6 @@ class DFNFracPlane
 	/// Initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);
 
-	REAL ComputeArea2();
 };
 
 #endif /* DFNFracPlane */
