@@ -3,14 +3,15 @@ Point(1) = {1,0,0};
 Point(2) = {0,1,0};
 Point(3) = {0,0,1};
 
-// intruders
-distortion = 0.;
+// intruders ------------------------------------------
+distortion = -0.2;
 Point(4) = {0.5,distortion,distortion};
+// Point(4) = {0.5,0,-.01};
 Point(5) = {0.333,0.333,0};
 Line(10) = {0,4};
 Line(11) = {4,1};
 Line(12) = {4,5};
-// intruders
+// intruders ------------------------------------------
 
 
 

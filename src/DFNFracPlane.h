@@ -1,5 +1,5 @@
 /*! 
- *  @brief     Describes a rectangular plane from four corner points.
+ *  @brief     Describes a planar polygon from it's corner points.
  *  @details   
  *  @author    Pedro Lima
  *  @date      2019
@@ -23,13 +23,11 @@
 typedef TPZFMatrix<REAL> Matrix;
 
 /*! 
- *  @brief     Describes a triangular or quadrilateral plane from it's corner points.
+ *  @brief     Describes a planar polygon from it's corner points.
  *  @details Enumeration of corner points should follow standard PZ topology, where 
  *  corner nodes are numbered counter-clockwise (clockwise should work as well) from
  *  zero to N. (This condition will automatically be met for triangles, but not 
- *  always for quadrilaterals)
- *  @author    Pedro Lima
- *  @date      2019
+ *  always for quadrilaterals and higher order polygons)
  */
 class DFNFracPlane
 {

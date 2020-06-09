@@ -23,11 +23,7 @@ DFNFracPlane::DFNFracPlane(const Matrix &CornerPoints)
 
 // Copy constructor
 DFNFracPlane::DFNFracPlane(const DFNFracPlane &copy){
-	fCornerPoints = copy.GetCornersX();
-	fAxis = copy.fAxis;
-	fArea = copy.area();
-	fTolerance = copy.fTolerance;
-	fPointsIndex = copy.fPointsIndex;
+    this->operator=(copy);
 }
 
 

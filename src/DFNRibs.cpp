@@ -28,18 +28,13 @@ DFNRibs::DFNRibs(int64_t index, bool IsCut){
 
 // Copy constructor
 DFNRibs::DFNRibs(const DFNRibs &copy){
-    fRibIndex = copy.fRibIndex;
-    fIsCut = copy.fIsCut;
-    fSubElements = copy.fSubElements;
-    fIntersectionIndex = copy.fIntersectionIndex;
-    fFather = copy.fFather;
+    this->operator=(copy);
 }
 
 // Assignment operator
 DFNRibs &DFNRibs::operator=(const DFNRibs &copy){
     fRibIndex = copy.fRibIndex;
     fIsCut = copy.fIsCut;
-    fSubElements = copy.fSubElements;
     fIntersectionIndex = copy.fIntersectionIndex;
     fFather = copy.fFather;
     return *this;
@@ -81,22 +76,22 @@ bool DFNRibs::IsCut() const{
     return fIsCut;
 }
 
-/**
- * @return An index (geomesh associated) subelements vector
- */
+// /**
+//  * @return An index (geomesh associated) subelements vector
+//  */
 
-TPZVec<int64_t> DFNRibs::SubElements() const{
-    return fSubElements;
-}
+// TPZVec<int64_t> DFNRibs::SubElements() const{
+//     return fSubElements;
+// }
 
-/**
- * @brief Define the divided rib
- * @param Subelements vector
- */
+// /**
+//  * @brief Define the divided rib
+//  * @param Subelements vector
+//  */
 
-void DFNRibs::SetChildren(const TPZVec<int64_t> &subels){
-    fSubElements = subels;
-}
+// void DFNRibs::SetChildren(const TPZVec<int64_t> &subels){
+//     fSubElements = subels;
+// }
 
 /**
  * @brief Divide a 1D element into 2 1D elements (for now)

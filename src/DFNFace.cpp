@@ -26,14 +26,7 @@ DFNFace::DFNFace(int64_t index, bool iscut){
 
 /// Copy constructor
 DFNFace::DFNFace(const DFNFace &copy){
-    fFaceIndex = copy.fFaceIndex;
-    fIsCut = copy.fIsCut;
-    fStatus = copy.fStatus;
-    fRibs = copy.fRibs;
-    fSubFaces = copy.fSubFaces;
-    fIntersection = copy.fIntersection;
-	fFracMesh = copy.fFracMesh;
-	fEnclosingVolume = copy.fEnclosingVolume;
+    this->operator=(copy);
 }
 
 /// Assignment operator

@@ -34,7 +34,7 @@ private:
     bool fIsCut;
     
     /// Indices of the subelements
-    TPZManVector<int64_t,2> fSubElements;
+    // TPZManVector<int64_t,2> fSubElements;
     
     // /// Intersection point index
     // int64_t fIntersectionIndex = -1;
