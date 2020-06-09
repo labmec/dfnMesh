@@ -86,9 +86,6 @@ public:
     ///Divide the given rib and generate the subelements
     void DivideRib(TPZGeoMesh *gmesh, TPZVec<REAL> interpoint,int matID);
 
-    /// Get father rib
-    int64_t FatherRib(){ return fFather;}
-
 };
 
 #endif /* DFNRibs_h */

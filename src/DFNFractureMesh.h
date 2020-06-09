@@ -154,8 +154,6 @@ public:
     /// Triangulates fracture plane
     void SplitFracturePlane();
 
-    /// Uses GMsh to mesh volumes cut by fracture plane
-    void CreateVolumes();
 
     /// Sets material for elements at surface of fracture
     void SetSurfaceMaterial(int matID);
