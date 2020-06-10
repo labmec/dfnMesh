@@ -6,7 +6,7 @@
  */
 
 #include "DFNFace.h"
-#include "DFNFractureMesh.h"
+#include "DFNFracture.h"
 #include "pzgeoquad.h"
 #include "pzgeotriangle.h"
 #include "TPZRefPattern.h"
@@ -106,10 +106,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 			// Intersection node at rib opposite to rib i
-			DFNRibs *ribB = fFracMesh->Rib(fRibs[i+2]);
+			DFNRib *ribB = fFracMesh->Rib(fRibs[i+2]);
 			nodeB = ribB->IntersectionIndex();
 			
 			child[0].Resize(4);
@@ -128,10 +128,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false || fStatus[(i+3)%4+4]==false){i++;}
 			// Intersection node at rib clockwise adjacent to rib i
-			DFNRibs *ribA = fFracMesh->Rib(fRibs[(i+3)%4]);
+			DFNRib *ribA = fFracMesh->Rib(fRibs[(i+3)%4]);
 			nodeA = ribA->IntersectionIndex();
 			// Intersection node at rib i
-			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 
 			child[0].Resize(3);
@@ -169,7 +169,7 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false) i++;
 			// Intersection node at rib i
-			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 
 			child[0].resize(3);
@@ -190,7 +190,7 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 			// In-plane itersection node
 			nodeB = fIntersection;
@@ -237,10 +237,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+3]==false || fStatus[(i+2)%3+3]==false){i++;}
 			// Intersection node at rib right before (counter-clockwise) to rib i
-			DFNRibs *ribA = fFracMesh->Rib(fRibs[(i+2)%3]);
+			DFNRib *ribA = fFracMesh->Rib(fRibs[(i+2)%3]);
 			nodeA = ribA->IntersectionIndex();
 			// Intersection node at rib opposite to rib i
-			DFNRibs *ribB = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribB = fFracMesh->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 			
 			child[0].Resize(3);
@@ -259,7 +259,7 @@ void DFNFace::DivideSurface(int matid){
 			int i=0;
 			while(fStatus[i+3] == false) i++;
 			// Intersection node at rib i
-			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex(); 
 
 			child[0].resize(3);
@@ -276,7 +276,7 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+3]==false){i++;}
 			// Intersection node at rib i
-			DFNRibs *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 			// In-plane itersection node
 			nodeB = fIntersection;

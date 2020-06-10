@@ -3,8 +3,8 @@
  *  @date      2018-2020
  */
 
-#ifndef DFNFractureMesh_h
-#define DFNFractureMesh_h
+#ifndef DFNFracture_h
+#define DFNFracture_h
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -17,7 +17,7 @@
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
 
-#include "DFNRibs.h"
+#include "DFNRib.h"
 #include "DFNFace.h"
 #include "DFNVolume.h"
 #include "DFNFracPlane.h"
@@ -30,17 +30,17 @@ typedef TPZFMatrix<REAL> Matrix;
 /** 
  *  @brief     Describes a surface mesh for a fracture and all ribs & faces that are intersected by it.
  *  @details   Intersection search is performed after creation of skeleton
- *  elements with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
+ *  elements with DFNFracture::CreateSkeletonElements. Fracture plane should
  *  be a DFNFracPlane.
  */
-class DFNFractureMesh
+class DFNFracture
 {
 private:
     /// Define a default tolerance
     REAL fTolerance = 1.e-4;
     
     /// Map of intersected ribs
-    std::map<int64_t, DFNRibs> fRibs;
+    std::map<int64_t, DFNRib> fRibs;
     
     /// Map of intersected faces
     std::map<int64_t, DFNFace> fMidFaces;
@@ -66,7 +66,7 @@ private:
 public:
     
     /// Empty constructor
-    DFNFractureMesh();
+    DFNFracture();
     
     /**
      * Define the fracture plane from 3 to 4 points
@@ -75,13 +75,13 @@ public:
      * of a point
      *  
      */
-    DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID);
+    DFNFracture(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID);
     
     /// Copy constructor
-    DFNFractureMesh(const DFNFractureMesh &copy);
+    DFNFracture(const DFNFracture &copy);
     
     /// Assignment operator
-    DFNFractureMesh &operator=(const DFNFractureMesh &copy);
+    DFNFracture &operator=(const DFNFracture &copy);
     
     /// Associate the geometric mesh
     void SetgeoMesh(TPZGeoMesh *gmesh){
@@ -127,7 +127,7 @@ public:
     void CreateSkeletonElements(int dimension, int matid);
     
     /// Access the ribs data structure
-    void AddRib(DFNRibs rib);
+    void AddRib(DFNRib rib);
     
     /// Access mid-fracture faces' data structure
     bool AddMidFace(DFNFace &face);
@@ -139,7 +139,7 @@ public:
     void AddVolume(DFNVolume volume);
 
     /// Pointer to rib of index 'index'
-    DFNRibs *Rib(int64_t index){return &fRibs[index];}
+    DFNRib *Rib(int64_t index){return &fRibs[index];}
 
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);
@@ -165,5 +165,5 @@ public:
 
 };
 
-#endif /* DFNFractureMesh_h */
+#endif /* DFNFracture_h */
 

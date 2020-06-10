@@ -24,8 +24,8 @@
 	#include <map>
 	#include <vector>
 
-	#include "DFNFractureMesh.h"
-	#include "DFNRibs.h"
+	#include "DFNFracture.h"
+	#include "DFNRib.h"
 	#include "DFNFace.h"
 	#include "DFNVolume.h"
 
@@ -74,7 +74,7 @@ void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t>
 */
 struct DFNMesh{
 	// private:
-		std::list<DFNFractureMesh *> fFractures;
+		std::list<DFNFracture *> fFractures;
 		std::map<int64_t, DFNVolume> fVolumes;
 		// REAL fToleranceLength = 1e-5;
 		// REAL fToleranceRatio = 0.2;
@@ -196,7 +196,7 @@ int main(int argc, char* argv[]){
 	// Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
 		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
-		DFNFractureMesh *fracmesh = new DFNFractureMesh(*fracplane,gmesh,surfaceMaterial);
+		DFNFracture *fracmesh = new DFNFracture(*fracplane,gmesh,surfaceMaterial);
 	// Find and split intersected ribs
 		fracmesh->SplitRibs(transitionMaterial);
 		if(false){ //debug

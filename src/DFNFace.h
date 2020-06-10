@@ -13,9 +13,9 @@
 #include "pzmatrix.h"
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
-#include "DFNRibs.h"
+#include "DFNRib.h"
 
-class DFNFractureMesh;
+class DFNFracture;
 
 /// DFNFace class describes a plane and whether it's cut by a plane. It also carries a method to split itself into smaller sub faces.
 class DFNFace
@@ -41,7 +41,7 @@ private:
     int64_t fIntersection = -1;
     
     /// Pointer to a fracture mesh
-    DFNFractureMesh *fFracMesh = nullptr;
+    DFNFracture *fFracMesh = nullptr;
 
     /// Index of enclosing volume (-1 if no enclosing volume has been set)
     int64_t fEnclosingVolume = -1;
@@ -105,7 +105,7 @@ public:
     int64_t IntersectionIndex() {return fIntersection;}
 
     /// Give face a pointer to which fracture is cutting it
-    void SetFractureMesh(DFNFractureMesh *FractureMesh){fFracMesh = FractureMesh;}
+    void SetFractureMesh(DFNFracture *FractureMesh){fFracMesh = FractureMesh;}
 
     // /// Sets Father element
     // void SetFather(TPZGeoEl *father){ fFather = father;}

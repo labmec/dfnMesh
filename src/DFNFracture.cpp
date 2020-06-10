@@ -1,13 +1,13 @@
 /*! 
  *  @brief     Compares a geomesh with fracture plane to refine intersections, and mesh the surface of the fracture.
  *  @details   Intersection search is performed after creation of skeleton mesh
- *  with DFNFractureMesh::CreateSkeletonElements. Fracture plane should
+ *  with DFNFracture::CreateSkeletonElements. Fracture plane should
  *  be a DFNFracPlane.
  *  @authors   Pedro Lima
  *  @date      2019
  */
 
-#include "DFNFractureMesh.h"
+#include "DFNFracture.h"
 #include <math.h>
 #include <cstdio>
 // #include <unordered_set>
@@ -16,11 +16,11 @@
 #include "TPZGeoMeshBuilder.h"
 
 // Empty Constructor
-DFNFractureMesh::DFNFractureMesh(){
+DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFractureMesh::DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID){
+DFNFracture::DFNFracture(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID){
     fFracplane = FracPlane;
     fGMesh = gmesh;
     fSurfaceMaterial = matID;
@@ -40,12 +40,12 @@ DFNFractureMesh::DFNFractureMesh(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int
 }
 
 // Copy constructor
-DFNFractureMesh::DFNFractureMesh(const DFNFractureMesh &copy){
+DFNFracture::DFNFracture(const DFNFracture &copy){
     this->operator=(copy);
 }
 
 // Assignment operator
-DFNFractureMesh &DFNFractureMesh::operator=(const DFNFractureMesh &copy){
+DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
     fGMesh = copy.fGMesh;
     fTolerance = copy.GetTolerance();
     fRibs = copy.fRibs;
@@ -62,7 +62,7 @@ DFNFractureMesh &DFNFractureMesh::operator=(const DFNFractureMesh &copy){
  * @return The plane corner coordinates
  */
 
-DFNFracPlane &DFNFractureMesh::GetPlane() {
+DFNFracPlane &DFNFracture::GetPlane() {
     return fFracplane;
 }
 
@@ -71,7 +71,7 @@ DFNFracPlane &DFNFractureMesh::GetPlane() {
  * @param Tolerance
  */
 
-void DFNFractureMesh::SetTolerance(REAL tolerance){
+void DFNFracture::SetTolerance(REAL tolerance){
     fTolerance = tolerance;
 }
 
@@ -80,7 +80,7 @@ void DFNFractureMesh::SetTolerance(REAL tolerance){
  * @return The tolerance
  */
 
-REAL DFNFractureMesh::GetTolerance() const{
+REAL DFNFracture::GetTolerance() const{
     return fTolerance;
 }
 
@@ -97,7 +97,7 @@ REAL DFNFractureMesh::GetTolerance() const{
  * @param geliside GeoElement side
  */
 
-bool DFNFractureMesh::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
+bool DFNFracture::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
     
     int dimension = gelside.Dimension();
 
@@ -131,7 +131,7 @@ bool DFNFractureMesh::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
   * @param matid material ID number for skeleton elements
   */
 
-void DFNFractureMesh::CreateSkeletonElements(int dimension, int matid)
+void DFNFracture::CreateSkeletonElements(int dimension, int matid)
 {
     int nel = fGMesh->NElements();
     for (int iel = 0; iel < nel; iel++)
@@ -176,7 +176,7 @@ void DFNFractureMesh::CreateSkeletonElements(int dimension, int matid)
  * @param rib Rib to be set
  */
 
-void DFNFractureMesh::AddRib(DFNRibs rib){
+void DFNFracture::AddRib(DFNRib rib){
     int index= rib.ElementIndex();
     fRibs.emplace(index,rib);
 }
@@ -186,7 +186,7 @@ void DFNFractureMesh::AddRib(DFNRibs rib){
  * @param Face to be set
  */
 
-bool DFNFractureMesh::AddMidFace(DFNFace &face){
+bool DFNFracture::AddMidFace(DFNFace &face){
     // iterate over ribs to find intersected ones
     int nribscut = 0;
     TPZManVector<int64_t,2> CutRibsIndex(2);
@@ -194,7 +194,7 @@ bool DFNFractureMesh::AddMidFace(DFNFace &face){
     int nribs = rib_index.size();
     for (int irib = 0; irib < nribs; irib++)
     {
-        DFNRibs *ribtest = &fRibs[rib_index[irib]];
+        DFNRib *ribtest = &fRibs[rib_index[irib]];
         if(ribtest->IsCut() == true){
             CutRibsIndex[nribscut]=rib_index[irib];
             nribscut++;
@@ -221,7 +221,7 @@ bool DFNFractureMesh::AddMidFace(DFNFace &face){
  * @param Face to be set
  */
 
-bool DFNFractureMesh::AddEndFace(DFNFace &face){
+bool DFNFracture::AddEndFace(DFNFace &face){
     // Create geometric element for intersection node beetween EndFace and fracture edge
         TPZManVector<REAL,3> coords(3);
         bool ipoint_exists = FindEndFracturePoint(face,coords);
@@ -235,7 +235,7 @@ bool DFNFractureMesh::AddEndFace(DFNFace &face){
     int nribs = rib_index.size();
     for (int irib = 0; irib < nribs; irib++)
     {
-        DFNRibs *ribtest = &fRibs[rib_index[irib]];
+        DFNRib *ribtest = &fRibs[rib_index[irib]];
         if(ribtest->IsCut() == true){
             // std::cout<<"single rib cut: "<<rib_index[irib]<<std::endl;
             // Connect intersection points
@@ -258,7 +258,7 @@ bool DFNFractureMesh::AddEndFace(DFNFace &face){
 
 
 
-DFNFace * DFNFractureMesh::Face(int64_t index){
+DFNFace * DFNFracture::Face(int64_t index){
     auto candidate = fMidFaces.find(index);
     if(candidate != fMidFaces.end()){
         return &candidate->second;
@@ -279,7 +279,7 @@ DFNFace * DFNFractureMesh::Face(int64_t index){
  * @note This method was getting too long. Moved some of it into AddEndFace and AddMidFace.
  */
 
-void DFNFractureMesh::SplitFaces(int matID){
+void DFNFracture::SplitFaces(int matID){
 
     fGMesh->BuildConnectivity();
 
@@ -318,7 +318,7 @@ void DFNFractureMesh::SplitFaces(int matID){
                 }
                 if(neig.Element()->Dimension() == 1) rib_index[iside] = neig.Element()->Index();
             }
-            DFNRibs *ribtest = &fRibs[rib_index[iside]];
+            DFNRib *ribtest = &fRibs[rib_index[iside]];
             if(ribtest->IsCut()==true){
             //check if ribtest was divided into two ribs, or a rib and a point
                 // get node where ribtest is cut
@@ -393,7 +393,7 @@ void DFNFractureMesh::SplitFaces(int matID){
 
 
 
-bool DFNFractureMesh::FindEndFracturePoint(DFNFace &face,TPZVec<REAL> &ipoint){
+bool DFNFracture::FindEndFracturePoint(DFNFace &face,TPZVec<REAL> &ipoint){
     // Convert TPZGeoEl into DFNFracPlane
     TPZGeoEl *gelface = fGMesh->Element(face.ElementIndex());
     TPZFMatrix<REAL> corners(3,4);
@@ -434,7 +434,7 @@ bool DFNFractureMesh::FindEndFracturePoint(DFNFace &face,TPZVec<REAL> &ipoint){
             }
         }
     }
-    // std::cout<<"\n DFNFractureMesh::FindEndFracturePoint\n";
+    // std::cout<<"\n DFNFracture::FindEndFracturePoint\n";
     // std::cout << "\nFailed to find intersection point in end-fracture face index: " << face.ElementIndex() << std::endl;
     // DebugStop();
     return false;
@@ -446,7 +446,7 @@ bool DFNFractureMesh::FindEndFracturePoint(DFNFace &face,TPZVec<REAL> &ipoint){
 
 
 
-void DFNFractureMesh::SplitRibs(int matID){
+void DFNFracture::SplitRibs(int matID){
     // if(!gRefDBase.GetUniformRefPattern(EOned)){
     //     gRefDBase.InitializeUniformRefPattern(EOned);
     // }
@@ -475,7 +475,7 @@ void DFNFractureMesh::SplitRibs(int matID){
         // Split rib
         if (resul == true){
             // std::cout<<"\nRib # "<<iel;
-            DFNRibs rib(iel, true);
+            DFNRib rib(iel, true);
             AddRib(rib);
             TPZVec<REAL> ipoint = fFracplane.CalculateIntersection(pp1, pp2);
             // During development, elements at fracture surface have material id bigger than fSurfaceMaterial
@@ -496,7 +496,7 @@ void DFNFractureMesh::SplitRibs(int matID){
 
 
 
-void DFNFractureMesh::SplitFractureEdge(std::list<int> &fracEdgeLoop){ 
+void DFNFracture::SplitFractureEdge(std::list<int> &fracEdgeLoop){ 
     
     // Compute fracture edges' lenghts
     int nedges = fFracplane.GetCornersX().Cols();
@@ -619,7 +619,7 @@ fGMesh->BuildConnectivity();
 
 
 
-void DFNFractureMesh::SplitFracturePlane(){
+void DFNFracture::SplitFracturePlane(){
     // GMsh does not accept zero index entities
     const int shift = 1;
     // First construct the edges of the fracture surface
@@ -634,7 +634,7 @@ void DFNFractureMesh::SplitFracturePlane(){
         std::set<int64_t> pointset;
         
         for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
-            DFNRibs *irib = &itr->second;
+            DFNRib *irib = &itr->second;
             if (irib->IsCut() == false){continue;}
             int64_t inode = irib->IntersectionIndex();
             pointset.insert(inode);
@@ -731,7 +731,7 @@ void DFNFractureMesh::SplitFracturePlane(){
 }
 
 
-// void DFNFractureMesh::AddVolume(DFNVolume volume){
+// void DFNFracture::AddVolume(DFNVolume volume){
 //     int index = volume.ElementIndex();
 //     fVolumes[index] = volume;
 // }
@@ -739,7 +739,7 @@ void DFNFractureMesh::SplitFracturePlane(){
 
 
 /// Sets material for elements at surface of fracture (40 is default)
-void DFNFractureMesh::SetSurfaceMaterial(int matID = 40){
+void DFNFracture::SetSurfaceMaterial(int matID = 40){
     int64_t nels = fGMesh->NElements();
     for (int64_t iel = 0; iel < nels; iel++)
     {
@@ -784,7 +784,7 @@ void DFNFractureMesh::SetSurfaceMaterial(int matID = 40){
 
 
 
-void DFNFractureMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
+void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
     // GMsh does not accept zero index entities
     const int shift = 1;
 
@@ -794,7 +794,7 @@ void DFNFractureMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
 
     // iterate over ribs and get intersection nodes
     for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
-        DFNRibs *irib = &itr->second;
+        DFNRib *irib = &itr->second;
         if (irib->IsCut() == false) continue;
         int pznode = (int) irib->IntersectionIndex() +shift;
 
