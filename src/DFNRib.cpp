@@ -15,16 +15,12 @@
 #include "pzcompel.h"
 #include "TPZRefPatternDataBase.h"
 
-// Constructor
-DFNRib::DFNRib(){
-    fIsCut=false;
-}
 
-// Constructor using an index and a asking if the plane is cut or not
-DFNRib::DFNRib(int64_t index, bool IsCut){
-    fRibIndex=index;
-    fIsCut=IsCut;
-}
+/// Default constructor takes a pointer to geometric element
+DFNRib::DFNRib(TPZGeoEl *gel) :
+    fGeoEl(gel),
+    fStatus({0,0,0})
+{};
 
 // Copy constructor
 DFNRib::DFNRib(const DFNRib &copy){
@@ -33,75 +29,38 @@ DFNRib::DFNRib(const DFNRib &copy){
 
 // Assignment operator
 DFNRib &DFNRib::operator=(const DFNRib &copy){
-    fRibIndex = copy.fRibIndex;
-    fIsCut = copy.fIsCut;
+    fGeoEl = copy.fGeoEl;
+    fStatus = copy.fStatus;
+    fCoord = copy.fCoord;
     fIntersectionIndex = copy.fIntersectionIndex;
-    fFather = copy.fFather;
     return *this;
 }
 
-/**
- * @brief Set the index for an element if the fracture plane is cut by this element
- * @param elindex Element index
- * @param IsCut: flag if the element is cut by the fracture plane
- */
+/// Get real intersection coordinates
+TPZManVector<REAL, 3> DFNRib::RealCoord(){
+    TPZManVector<REAL, 3> coord(3, 0);
+    TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
-void DFNRib::SetElementIndex(int64_t elindex, bool IsCut){
-    fRibIndex=elindex;
-    fIsCut=IsCut;
+    if(this->IsCut()){
+        if(fIntersectionIndex >= 0){
+            gmesh->NodeVec()[fIntersectionIndex].GetCoordinates(coord);
+        }else{
+            coord = fCoord;
+        }
+    }else{
+        if(fStatus[0] == 1){
+            fGeoEl->NodePtr(0)->GetCoordinates(coord);
+        }else{
+            fGeoEl->NodePtr(1)->GetCoordinates(coord);
+        }
+    }
+    return coord;
 }
 
-/**
-* @return An index (geomesh associated) elements vector
-*/
-
-int64_t DFNRib::ElementIndex() const{
-    return fRibIndex;
-    
-}
-
-/**
- * @brief Set if the cut is within the plane
- * @param True or False if the plane is cut
- */
-
-void DFNRib::SetIsCut(bool IsCut) {
-    fIsCut = IsCut;
-}
-/**
- * @return If the intersection point is within the fracture plane
- */
-
-bool DFNRib::IsCut() const{
-    return fIsCut;
-}
-
-// /**
-//  * @return An index (geomesh associated) subelements vector
-//  */
-
-// TPZVec<int64_t> DFNRib::SubElements() const{
-//     return fSubElements;
-// }
-
-// /**
-//  * @brief Define the divided rib
-//  * @param Subelements vector
-//  */
-
-// void DFNRib::SetChildren(const TPZVec<int64_t> &subels){
-//     fSubElements = subels;
-// }
-
-/**
- * @brief Divide a 1D element into 2 1D elements (for now)
- * @param Mesh
- * @param Intersection point between the fracture plane and the rib
- * @param Material id to assign for the new ribs
- */
-
-void DFNRib::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int matID){
-    int iel_index = fRibIndex;          //Element index
+/// Divide the given rib and generate the subelements of material id matID
+void DFNRib::RefineRib(int matID){
+    int iel_index = this->Index();          //Element index
+    TPZGeoMesh *gmesh = fGeoEl->Mesh();
     if(!gmesh->Element(iel_index)){     // If the element does not exist the code is going to break
         std::cout<<"No gel associated to the Rib\n";
         DebugStop();
@@ -115,7 +74,7 @@ void DFNRib::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int mat
             int refnnodes = 3;
             // check if point should be snapped to vertex
                 TPZManVector<REAL,3> qsi(1,2);
-                gel->ComputeXInverse(IntersectionCoord,qsi,1E-5);
+                gel->ComputeXInverse(fCoord,qsi,1E-5);
 
                 fIntersectionIndex = 2;
                 if(qsi[0] < -0.95 || qsi[0] > 0.95){
@@ -130,7 +89,7 @@ void DFNRib::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int mat
                 gmesh->NodeVec()[gel->NodeIndex(i)].GetCoordinates(coord);
                 refPatternMesh.NodeVec()[i].Initialize(coord,refPatternMesh);
             }
-            if(fIntersectionIndex == 2) refPatternMesh.NodeVec()[2].Initialize(IntersectionCoord,refPatternMesh);
+            if(fIntersectionIndex == 2) refPatternMesh.NodeVec()[2].Initialize(fCoord,refPatternMesh);
         // insert father
             TPZManVector<int64_t,2> cornerindices(2);
             cornerindices[0] = 0;
@@ -173,7 +132,7 @@ void DFNRib::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int mat
             break;}
         case 2:{
             gmesh->NodeVec().Resize(nnodes+1);
-            gmesh->NodeVec()[nnodes].Initialize(IntersectionCoord,*gmesh);
+            gmesh->NodeVec()[nnodes].Initialize(fCoord,*gmesh);
             fIntersectionIndex = nnodes;
             etype = EOned;
             break;
@@ -206,4 +165,14 @@ void DFNRib::DivideRib(TPZGeoMesh *gmesh,TPZVec<REAL> IntersectionCoord, int mat
 }
 
 
-
+/**
+ * @brief Check geometry of intersection against a tolerance, snaps intersection 
+ * to closest side(s) if necessary and modifies affected neighbours.
+ * @return True if any optimization has been made.
+ * @param fracture: A pointer to a DFNFracture object
+ * @param tol: Minimum acceptable length
+*/
+bool DFNRib::Optimize(DFNFracture *fracture, REAL tol){
+    //@todo
+    return false;
+}
