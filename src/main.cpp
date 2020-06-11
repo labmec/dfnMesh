@@ -78,13 +78,14 @@ struct DFNMesh{
 		std::map<int64_t, DFNVolume> fVolumes;
 		// REAL fToleranceLength = 1e-5;
 		// REAL fToleranceRatio = 0.2;
-		// TPZGeoMesh *fgmesh;
+		TPZGeoMesh *fgmesh;
 		// int fmaterialintact = 1;
 		// int fmaterialtransition = 2;
 		// int fmaterialfracture = 3;
 
 	// public:
-
+		/// Constructor
+		DFNMesh(TPZGeoMesh *gmesh): fgmesh(gmesh) {};
 		/// Pointer to volume of index 'index'
 		DFNVolume *Volume(int64_t index){return &fVolumes[index];}
 		
@@ -152,7 +153,19 @@ void PrintPreamble(){
 	std::cout<<"Runing...\n\n";
 
 }
-
+/**
+ * @brief Prints DFN Geometric Mesh. 
+ * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
+ * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
+ * @param MaterialIDs...
+ * @todo
+*/
+void PrintMesh(DFNMesh *dfn
+			, std::string pzmesh = "pzmesh.txt"
+			, std::string vtkmesh = "vtkmesh.vtk"
+			, int fracture = 3
+			, int transition = 2
+			, int intact = 1);
 
 
 
@@ -192,39 +205,32 @@ int main(int argc, char* argv[]){
 
 	int surfaceMaterial = 40;
 	int transitionMaterial = 18;
-	DFNMesh dfn;
+	DFNMesh dfn(gmesh);
 	// Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
 		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
-		DFNFracture *fracmesh = new DFNFracture(*fracplane,gmesh,surfaceMaterial);
+		DFNFracture *fracture = new DFNFracture(*fracplane,gmesh,surfaceMaterial);
 	// Find and split intersected ribs
-		fracmesh->SplitRibs(transitionMaterial);
-		if(false){ //debug
+		fracture->SplitRibs(transitionMaterial);
 		//Print result
-			std::ofstream meshprint("meshprint.txt");
-			gmesh->Print(meshprint);
-			std::ofstream out1("./TestSurfaces.vtk");
-			TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
-		}
-	// Find and split intersected faces
-		fracmesh->SplitFaces(transitionMaterial);
-	// Mesh fracture surface
-		if(gmesh->Dimension() == 3){
-			fracmesh->SplitFracturePlane();
-		}
-	//insert fracture
-		dfn.fFractures.push_back(fracmesh);
+		PrintMesh(&dfn);
+	// // Find and split intersected faces
+		// fracture->SplitFaces(transitionMaterial);
+	// // Mesh fracture surface
+	// 	if(gmesh->Dimension() == 3){
+	// 		fracture->SplitFracturePlane();
+	// 	}
+	// //insert fracture
+	// 	dfn.fFractures.push_back(fracture);
 	}
 	// Mesh transition volumes
-		dfn.CreateVolumes();
-		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
-		dfn.GenerateSubMesh();
+		// dfn.CreateVolumes();
+		// dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+		// dfn.GenerateSubMesh();
 
 	//Print result
-		std::ofstream meshprint("meshprint.txt");
-		gmesh->Print(meshprint);
-		std::ofstream out1("./TestSurfaces.vtk");
-		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
+		PrintMesh(&dfn);
+
 	std::cout<<"\n\n ...the end.\n\n";
 
 	return 0;
@@ -232,6 +238,23 @@ int main(int argc, char* argv[]){
 
 
 
+void PrintMesh(DFNMesh *dfn
+			, std::string pzmesh
+			, std::string vtkmesh
+			, int fracture
+			, int transition
+			, int intact)
+{
+	TPZGeoMesh *gmesh = dfn->fgmesh;
+	if(pzmesh != "skip"){
+		std::ofstream meshprint(pzmesh);
+		gmesh->Print(meshprint);
+	}
+	if(vtkmesh != "skip"){
+		std::ofstream out1(vtkmesh);
+		TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true);
+	}
+}
 
 
 

@@ -92,7 +92,7 @@ public:
      * @brief Check if element should be refined
      * @return False if only one node or only two consecutive nodes have been intersected
     */
-    bool IsIntersected() const;
+    bool IsIntersected(){return true;}
     
     /// Reference to status vector
     TPZManVector<int> &StatusVec(){return fStatus;}

@@ -19397,10 +19397,10 @@
     </Proxy>
     <Proxy group="sources" type="LegacyVTKFileReader" id="13861" servers="1">
       <Property name="FileNameInfo" id="13861.FileNameInfo" number_of_elements="1">
-        <Element index="0" value="/home/pedro/projetos/dfnMesh/TestSurfaces.vtk"/>
+        <Element index="0" value="/home/pedro/projetos/dfnMesh/vtkmesh.vtk"/>
       </Property>
       <Property name="FileNames" id="13861.FileNames" number_of_elements="1">
-        <Element index="0" value="/home/pedro/projetos/dfnMesh/TestSurfaces.vtk"/>
+        <Element index="0" value="/home/pedro/projetos/dfnMesh/vtkmesh.vtk"/>
         <Domain name="files" id="13861.FileNames.files"/>
       </Property>
       <Property name="TimestepValues" id="13861.TimestepValues"/>
@@ -20227,7 +20227,7 @@
       <Item id="15289" name="CutMesh"/>
       <Item id="14099" name="ElementRange"/>
       <Item id="14575" name="Fracplane"/>
-      <Item id="13861" name="TestSurfaces.vtk"/>
+      <Item id="13861" name="vtkmesh.vtk"/>
       <Item id="14813" name="UncutMesh"/>
       <Item id="14337" name="iPoints"/>
     </ProxyCollection>
