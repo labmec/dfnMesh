@@ -1,8 +1,8 @@
 /*! 
  *	DFNFace.cpp
  *  @authors   Pedro Lima
- *  @authors   Jorge Ordoñez
- *  @date      2018-2019
+ *  @authors   Philippe Devloo
+ *  @date      2018-2020
  */
 
 #include "DFNFace.h"
@@ -12,16 +12,14 @@
 #include "TPZRefPattern.h"
 #include "tpzgeoelrefpattern.h"
 
-// Empty constructor
-DFNFace::DFNFace(){
-    fFaceIndex = -1;
-    fIsCut = false;
-}
 
 //Constructor
-DFNFace::DFNFace(int64_t index, bool iscut){
-    fFaceIndex = index;
-    fIsCut = iscut;
+DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
+	fGeoEl(gel),
+	fFracture(fracture)
+{
+	int nsides = gel->NSides();
+	fStatus.Resize(nsides,0);
 }
 
 /// Copy constructor
@@ -31,42 +29,16 @@ DFNFace::DFNFace(const DFNFace &copy){
 
 /// Assignment operator
 DFNFace &DFNFace::operator=(const DFNFace &copy){
-    fFaceIndex = copy.fFaceIndex;
-    fIsCut = copy.fIsCut;
-    fStatus = copy.fStatus;
-    fRibs = copy.fRibs;
-    fSubFaces = copy.fSubFaces;
-    fIntersection = copy.fIntersection;
-	fFracMesh = copy.fFracMesh;
-	fEnclosingVolume = copy.fEnclosingVolume;
+    fGeoEl = copy.fGeoEl;
+	fStatus = copy.fStatus;
+	fCoord = copy.fCoord;
+	fIntersectionIndex = copy.fIntersectionIndex;
+	fFracture = copy.fFracture;
+	fRibs = copy.fRibs;
+    fRefMesh = copy.fRefMesh;
     return *this;
 }
 
-/// Define the element index and whether it cuts the plane
-void DFNFace::SetElementIndex(int64_t elindex, bool iscut){
-    fFaceIndex = elindex;
-    fIsCut = iscut;
-}
-
-/// Element index
-int64_t DFNFace::ElementIndex() const{
-    return fFaceIndex;
-}
-
-/// Intersects the plane or not
-bool DFNFace::IsCut() const{
-    return fIsCut;
-}
-
-/// Return the subelement indices
-TPZVec<int64_t> DFNFace::SubElements() const{
-    return fSubFaces;
-}
-
-/// Set the subelement indices
-void DFNFace::SetChildren(TPZVec<int64_t> subels){
-    fSubFaces = subels;
-}
 
 
 
@@ -78,10 +50,11 @@ void DFNFace::SetChildren(TPZVec<int64_t> subels){
 
 
 
-/// Divide the given this surface, generate subelements and return vector with indices
-void DFNFace::DivideSurface(int matid){
-	TPZGeoMesh *gmesh = fFracMesh->GetGeoMesh();
-	TPZGeoEl *face = gmesh->Element(fFaceIndex);
+
+/// Check if should be refined and generate the subelements of material id matID
+void DFNFace::Refine(int matid){
+	TPZGeoEl *face = fGeoEl;
+	TPZGeoMesh *gmesh = face->Mesh();
 	// check if face exists in mesh
    	if(!face){DebugStop();}
 	
@@ -106,10 +79,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracture->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 			// Intersection node at rib opposite to rib i
-			DFNRib *ribB = fFracMesh->Rib(fRibs[i+2]);
+			DFNRib *ribB = fFracture->Rib(fRibs[i+2]);
 			nodeB = ribB->IntersectionIndex();
 			
 			child[0].Resize(4);
@@ -128,10 +101,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false || fStatus[(i+3)%4+4]==false){i++;}
 			// Intersection node at rib clockwise adjacent to rib i
-			DFNRib *ribA = fFracMesh->Rib(fRibs[(i+3)%4]);
+			DFNRib *ribA = fFracture->Rib(fRibs[(i+3)%4]);
 			nodeA = ribA->IntersectionIndex();
 			// Intersection node at rib i
-			DFNRib *ribB = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribB = fFracture->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 
 			child[0].Resize(3);
@@ -169,7 +142,7 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false) i++;
 			// Intersection node at rib i
-			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracture->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 
 			child[0].resize(3);
@@ -190,10 +163,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracture->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 			// In-plane itersection node
-			nodeB = fIntersection;
+			nodeB = fIntersectionIndex;
 
 			child[0].Resize(3);
 				child[0][0] = nodeB;
@@ -220,7 +193,7 @@ void DFNFace::DivideSurface(int matid){
 		// case 7 == case 4
 		case 8:{ // case 8 == case 6
 			// In-plane itersection node
-			nodeA = fIntersection;
+			nodeA = fIntersectionIndex;
 			child.resize(4);
 			for(int i=0; i<4; i++) {
 				child[i].resize(3);
@@ -237,10 +210,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+3]==false || fStatus[(i+2)%3+3]==false){i++;}
 			// Intersection node at rib right before (counter-clockwise) to rib i
-			DFNRib *ribA = fFracMesh->Rib(fRibs[(i+2)%3]);
+			DFNRib *ribA = fFracture->Rib(fRibs[(i+2)%3]);
 			nodeA = ribA->IntersectionIndex();
 			// Intersection node at rib opposite to rib i
-			DFNRib *ribB = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribB = fFracture->Rib(fRibs[i]);
 			nodeB = ribB->IntersectionIndex();
 			
 			child[0].Resize(3);
@@ -259,7 +232,7 @@ void DFNFace::DivideSurface(int matid){
 			int i=0;
 			while(fStatus[i+3] == false) i++;
 			// Intersection node at rib i
-			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracture->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex(); 
 
 			child[0].resize(3);
@@ -276,10 +249,10 @@ void DFNFace::DivideSurface(int matid){
 			int i = 0;
 			while(fStatus[i+3]==false){i++;}
 			// Intersection node at rib i
-			DFNRib *ribA = fFracMesh->Rib(fRibs[i]);
+			DFNRib *ribA = fFracture->Rib(fRibs[i]);
 			nodeA = ribA->IntersectionIndex();
 			// In-plane itersection node
-			nodeB = fIntersection;
+			nodeB = fIntersectionIndex;
 
 			child[0].Resize(3);
 				child[0][0] = nodeB;
@@ -302,7 +275,7 @@ void DFNFace::DivideSurface(int matid){
 		// case 14 == case 11
 		case 15:{
 			// In-plane itersection node
-			nodeA = fIntersection;
+			nodeA = fIntersectionIndex;
 			child.resize(3);
 			for(int i=0; i<3; i++) {
 				child[i].resize(3);
@@ -330,7 +303,7 @@ void DFNFace::DivideSurface(int matid){
 		TPZGeoMesh refPatternMesh;
 		// count number of nodes for refinement pattern
 		int refNNodes = face->NCornerNodes();
-		if(this->fIntersection >= 0) refNNodes++;
+		if(this->fIntersectionIndex >= 0) refNNodes++;
 		int ncornersfather = face->NCornerNodes();
 		for(int irib=ncornersfather;irib<fStatus.size();irib++){
 			if(this->fStatus[irib]) refNNodes++;
@@ -400,7 +373,7 @@ void DFNFace::DivideSurface(int matid){
 		
 		face->SetSubElement(i,newface);
 		// Tell the child who its father is
-		newface->SetFatherIndex(fFaceIndex);
+		newface->SetFatherIndex(this->Index());
 	}
 	// create skeleton?
 }
@@ -425,7 +398,7 @@ void DFNFace::DivideSurface(int matid){
  * @param Status vector (boolean) that indicates which ribs and/or nodes are cut
  * @return Integer that indicates which split pattern to use. (check documentation)
  */
-int DFNFace::GetSplitPattern(TPZVec<bool> &status){
+int DFNFace::GetSplitPattern(TPZManVector<int> &status){
     // Count number of ribs and nodes cut
     int ribscut = 0;
 	int nodescut = 0;
@@ -449,7 +422,7 @@ int DFNFace::GetSplitPattern(TPZVec<bool> &status){
 				break;
 			case 1:
 				switch(nodescut){
-					case 0: if(fIntersection == -1){splitcase = 4;break;}
+					case 0: if(fIntersectionIndex == -1){splitcase = 4;break;}
 							else{splitcase = 5;break;}
 					case 1: splitcase = 7;break;
 				}
@@ -473,7 +446,7 @@ int DFNFace::GetSplitPattern(TPZVec<bool> &status){
 				break;
 			case 1:
 				switch(nodescut){
-					case 0: if(fIntersection == -1){splitcase = 14;break;}
+					case 0: if(fIntersectionIndex == -1){splitcase = 14;break;}
 							else{splitcase = 12;break;}
 					case 1: splitcase = 11;break;
 				}

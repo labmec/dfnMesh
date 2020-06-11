@@ -1,0 +1,8 @@
+input = self.GetUnstructuredGridInput() 
+output = self.GetUnstructuredGridOutput()
+output.GetPointData().PassData(input.GetPointData())
+output.GetCellData().PassData(input.GetCellData()) 
+cellTypes = vtk.vtkUnsignedCharArray() 
+cellTypes.DeepCopy(input.GetCellTypesArray())
+cellTypes.SetName("Cell Types") 
+output.GetCellData().AddArray(cellTypes)

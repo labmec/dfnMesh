@@ -17,8 +17,9 @@
 
 
 /// Default constructor takes a pointer to geometric element
-DFNRib::DFNRib(TPZGeoEl *gel) :
+DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture) :
     fGeoEl(gel),
+    fFracture(Fracture),
     fStatus({0,0,0})
 {};
 
@@ -41,24 +42,18 @@ TPZManVector<REAL, 3> DFNRib::RealCoord(){
     TPZManVector<REAL, 3> coord(3, 0);
     TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
-    if(this->IsCut()){
-        if(fIntersectionIndex >= 0){
-            gmesh->NodeVec()[fIntersectionIndex].GetCoordinates(coord);
-        }else{
-            coord = fCoord;
-        }
-    }else{
-        if(fStatus[0] == 1){
-            fGeoEl->NodePtr(0)->GetCoordinates(coord);
-        }else{
-            fGeoEl->NodePtr(1)->GetCoordinates(coord);
-        }
+    if(fStatus[2] && fIntersectionIndex >= 0){
+        gmesh->NodeVec()[fIntersectionIndex].GetCoordinates(coord);
     }
+    else if(fStatus[2]){coord = fCoord;}
+    else if(fStatus[0]){fGeoEl->NodePtr(0)->GetCoordinates(coord);}
+    else if(fStatus[1]){fGeoEl->NodePtr(1)->GetCoordinates(coord);}
+    
     return coord;
 }
 
 /// Divide the given rib and generate the subelements of material id matID
-void DFNRib::RefineRib(int matID){
+void DFNRib::Refine(int matID){
     int iel_index = this->Index();          //Element index
     TPZGeoMesh *gmesh = fGeoEl->Mesh();
     if(!gmesh->Element(iel_index)){     // If the element does not exist the code is going to break
@@ -169,10 +164,9 @@ void DFNRib::RefineRib(int matID){
  * @brief Check geometry of intersection against a tolerance, snaps intersection 
  * to closest side(s) if necessary and modifies affected neighbours.
  * @return True if any optimization has been made.
- * @param fracture: A pointer to a DFNFracture object
- * @param tol: Minimum acceptable length
+ * @param tolDist: Minimum acceptable length
 */
-bool DFNRib::Optimize(DFNFracture *fracture, REAL tol){
+bool DFNRib::Optimize(REAL tolDist){
     //@todo
     return false;
 }

@@ -40,12 +40,15 @@ private:
 	/// Index of intersection node
 	int64_t fIntersectionIndex = -1;
 
+    /// Pointer to the fracture
+    DFNFracture *fFracture = nullptr;
+
 public:
     /// Empty constructor
     DFNRib(): fGeoEl(nullptr), fStatus({0,0,0}){};
     
     /// Default constructor takes a pointer to geometric element
-    DFNRib(TPZGeoEl *gel);
+    DFNRib(TPZGeoEl *gel, DFNFracture *Fracture);
     
     /// Copy constructor
     DFNRib(const DFNRib &copy);
@@ -53,6 +56,9 @@ public:
     /// Assignment operator
     DFNRib &operator=(const DFNRib &copy);
     
+    /// Destructor
+    ~DFNRib(){};
+
     /// Element index
     int64_t Index() const {return fGeoEl->Index();}
     
@@ -70,15 +76,18 @@ public:
     /// Get anticipated intersection coordinates
     TPZManVector<REAL, 3> AntCoord(){return fCoord;}
 
-    /// Get real intersection coordinates
+    /// Get real intersection coordinates (after optimization)
     TPZManVector<REAL, 3> RealCoord();
 
+    /// Give face a pointer to which fracture is cutting it
+    void SetFracture(DFNFracture *Fracture){fFracture = Fracture;}
+
     /**
-     * @brief Check if rib should be refined
-     * @return True if status vector is {0,0,1}, else returns false
+     * @brief Flag if rib was found to be intersected at any side
+     * @return True if any element of status vector is true
     */
-    bool IsCut() const{
-        return (!fStatus[0] && !fStatus[1] && fStatus[2]);
+    bool IsIntersected() const{
+        return (fStatus[0] || fStatus[1] || fStatus[2]);
     }
 
     /// Set Status Vector (topology of intersection)
@@ -98,13 +107,20 @@ public:
      * @brief Check geometry of intersection against a tolerance, snaps intersection 
      * to closest side(s) if necessary and modifies affected neighbours.
      * @return True if any optimization has been made.
-     * @param fracture: A pointer to a DFNFracture object
      * @param tol: Minimum acceptable length
     */
-    bool Optimize(DFNFracture *fracture, REAL tol = 1e-4);
+    bool Optimize(REAL tolDist = 1e-4);
 
-    /// Divide the given rib and generate the subelements of material id matID
-    void RefineRib(int matID);
+    /// Check if should be refined and generate the subelements of material id matID
+    void Refine(int matID);
+
+    /// Sets material id
+    void SetMaterialId(int matID){
+        fGeoEl->SetMaterialId(matID);
+    };
+
+    /// After optimization, update neighbours through side iside
+    void UpdateNeighbours(int iside);
 };
 
 #endif /* DFNRib_h */
