@@ -24,7 +24,7 @@
 
 #include <gmsh.h>
 
-
+class DFNMesh;
 typedef TPZFMatrix<REAL> Matrix;
 
 /** 
@@ -36,32 +36,29 @@ typedef TPZFMatrix<REAL> Matrix;
 class DFNFracture
 {
 private:
-    /// Define a default tolerance
-    REAL fTolerance = 1.e-4;
-    
-    /// Map of intersected ribs
-    std::map<int64_t, DFNRib> fRibs;
-    
-    /// Map of intersected faces
-    std::map<int64_t, DFNFace> fMidFaces;
-    
-    /// Map of end-fracture faces
-    std::map<int64_t, DFNFace> fEndFaces;
+    ///	Default tolerance
+	REAL fTolerance = 1.e-3;
+	
+	/// Pointer for the complete DFN mesh
+	DFNMesh *fdfnMesh;
+	
+	/// Map of ribs affected by this fracture
+	std::map<int64_t, DFNRib> fRibs;
 
-    /// Map of elements on fracture surface
-    std::map<int64_t, TPZGeoEl *> fSurfEl;
+	/// Map of faces affected by this fracture
+	std::map<int64_t, DFNFace> fFaces;
 
-    /// Pointer for the geometric mesh
-    TPZGeoMesh *fGMesh;
+	/// A planar convex polygon that indicates an insertion region for a fracture
+	DFNFracPlane fFracplane;
+	
+	/// Map of elements on fracture surface
+	std::map<int64_t, TPZGeoEl *> fSurface;
 
-    /// A planar polygon that indicates an insertion point for a fracture
-    DFNFracPlane fFracplane;
+	/// A set of constraints to the surface mesh of the fracture
+	std::map<int64_t, TPZGeoEl *> fOutline;
 
-    /// Material id of elements at fracture surface
-    int fSurfaceMaterial = 40;
-
-    /// Material id of mesh elements cut by fracture
-    int fTransitionMaterial = 18;
+	/// Material id of elements at fracture surface
+	int fSurfaceMaterial = 40;
 
 public:
     
@@ -75,7 +72,7 @@ public:
      * of a point
      *  
      */
-    DFNFracture(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID);
+    DFNFracture(DFNFracPlane &FracPlane, DFNMesh *dfnMesh, int matID);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -83,18 +80,9 @@ public:
     /// Assignment operator
     DFNFracture &operator=(const DFNFracture &copy);
     
-    /// Associate the geometric mesh
-    void SetgeoMesh(TPZGeoMesh *gmesh){
-        fGMesh=gmesh;
-    }
-    
-    /// Access the geomesh
-    TPZGeoMesh* GetGeoMesh(){
-        return fGMesh;
-    }
     
     /// Return the corner nodes of the fracture
-    DFNFracPlane &GetPlane();
+    DFNFracPlane &FracPlane();
     
     /// Modify the default tolerance
     void SetTolerance(REAL tolerance);
@@ -122,10 +110,6 @@ private:
     void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension);
 
 public:
-    
-    /// Insert intersection elements of lower dimension in the geometric mesh.
-    void CreateSkeletonElements(int dimension, int matid);
-    
     /// Access the ribs data structure
     void AddRib(DFNRib rib);
     
@@ -145,14 +129,14 @@ public:
     DFNFace *Face(int64_t index);
     
     /// Find and split intersected faces
-    void SplitFaces(int matID);
+    void FindFaces(int matID);
     
     /// Find and split intersected ribs
-    void SplitRibs(int matID);
+    void FindRibs(int matID);
 
 
     /// Triangulates fracture plane
-    void SplitFracturePlane();
+    void MeshFractureSurface();
 
 
     /// Sets material for elements at surface of fracture

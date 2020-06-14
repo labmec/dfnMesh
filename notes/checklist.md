@@ -9,7 +9,7 @@
     - [ ] Fracture through a vertex isn't perfect yet... the overlapping of (at least 3) edges coming out of the same vertex needs fixing
   - [ ] Check if face intersection happens too close to rib 
   - [ ] Check if face intersection happens too close to vertex 
-  - [ ] Use split-case id inside FractureMesh::SplitFaces to define if we're currently in a special case and what should be done about it
+  - [ ] Use split-case id inside FractureMesh::FindFaces to define if we're currently in a special case and what should be done about it
   - [ ] Search for critical cases 
     - [ ] Fractures that are almost parallel to mesh plane 
     - [ ] Fracture that overlaps mesh plane should not divide anything, but rather incorporate mesh ribs onto its plane to define the fracture outline.
@@ -73,7 +73,7 @@
 - [x] Insert second plane
   - [x] Implement triangle splitting cases
   - [x] Set a second plane in main
-  - [x] Call splitribs and splitfaces
+  - [x] Call FindRibs and FindFaces
   - [x] Set RefPatterns
     - [x] Refpattern for ribs shouldn't be uniform
   - [x] Use PZ's data structure to specify level of element splitting

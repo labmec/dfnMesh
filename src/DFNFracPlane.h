@@ -2,7 +2,7 @@
  *  @brief     Describes a planar polygon from it's corner points.
  *  @details   
  *  @author    Pedro Lima
- *  @date      2019
+ *  @date      2019.05
  */
 
 #ifndef DFNFracPlane_h
