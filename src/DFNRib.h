@@ -125,6 +125,10 @@ public:
     /// After optimization, update neighbours through side iside
     void UpdateNeighbours(int iside);
 
+    /// Check if rib will be incorporated onto fracture and correct its material id as such.
+    /// Returns true if changes have been made
+    bool UpdateMaterial();
+
     private:
         /// Creates refinement pattern based on status vector and intersection node index
         void CreateRefPattern();

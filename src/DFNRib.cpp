@@ -161,7 +161,7 @@ bool DFNRib::Optimize(REAL tolDist){
         fStatus[2] = 0;
         UpdateNeighbours(2);            // clear origin
         UpdateNeighbours(closestnode);  // flag destination
-        // UpdateMaterial() ?
+        UpdateMaterial(); //@todo I might find this to be unnecessary
         return true;
     }
     return false;
@@ -184,7 +184,14 @@ void DFNRib::UpdateNeighbours(int iside){
 
 
 
-
+bool DFNRib::UpdateMaterial(){
+    if(fGeoEl->MaterialId() == DFNMaterial::Efracture) {return false;}
+    if(fStatus[0] && fStatus[1]){
+        fGeoEl->SetMaterialId(DFNMaterial::Efracture);
+        return true;
+    }
+    return false;
+}
 
 
 
