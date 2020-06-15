@@ -116,6 +116,8 @@ public:
     /// Access end-fracture faces' data structure
     bool AddEndFace(DFNFace &face);
 
+    bool AddFace(DFNFace &face){return AddMidFace(face);}
+    
     /// Insert new volume in data structure
     void AddVolume(DFNVolume volume);
 

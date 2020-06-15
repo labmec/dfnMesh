@@ -172,10 +172,53 @@ bool DFNRib::Optimize(REAL tolDist){
 
 
 void DFNRib::UpdateNeighbours(int iside){
-    // @todo
     // If neighbour doesn't have a DFNElement associated to it, create
     // Go through every neighbour and match the iside entry on their status vector
     // And run optimization
+
+    TPZGeoElSide gelside(fGeoEl,iside);
+    TPZGeoElSide neighbour = gelside.Neighbour();
+    TPZGeoEl *gel;
+    for(/*void*/; neighbour != gelside; neighbour = neighbour.Neighbour()){
+        gel = neighbour.Element();
+        if(gel->HasSubElement()) continue;
+        int neig_side = neighbour.Side();
+
+        switch(gel->Dimension()){
+            case 0: {continue;}
+            case 1:{
+                // check if DFNRib exists
+                DFNRib *rib_ptr = fFracture->Rib(gel->Index());
+                if(!rib_ptr){
+                    DFNRib neig_rib(gel,fFracture);
+                    fFracture->AddRib(neig_rib);
+                    rib_ptr = fFracture->Rib(gel->Index());
+                }
+                // skip if StatusVec entry already match
+                if(fStatus[iside] == rib_ptr->StatusVec()[neig_side]){continue;}
+                // else, match StatusVec entry for iside and optimize
+                rib_ptr->StatusVec()[neig_side] = fStatus[iside];
+                rib_ptr->Optimize();
+                break;
+            }
+            case 2:{
+                // check if DFNFace exists
+                DFNFace *face_ptr = fFracture->Face(gel->Index());
+                if(!face_ptr){
+                    DFNFace neig_face(gel,fFracture);
+                    fFracture->AddFace(neig_face);
+                    face_ptr = fFracture->Face(gel->Index());
+                }
+                // skip if StatusVec entry already match
+                if(fStatus[iside] == face_ptr->StatusVec()[neig_side]){continue;}
+                // else, match StatusVec entry for iside and optimize
+                face_ptr->StatusVec()[neig_side] = fStatus[iside];
+                face_ptr->Optimize();
+                break;
+            }
+            case 3: {continue;}
+        }
+    }
     return;
 }
 
