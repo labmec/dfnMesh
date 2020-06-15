@@ -124,7 +124,7 @@ public:
      * @param tolDist: Minimum acceptable distance
      * @param tolAspectRatio: Minimum acceptable aspect ratio
     */
-    bool Optimize(REAL tolDist = 1e-4, REAL tolAspectRatio = 0.2);
+    bool Optimize(REAL tolDist = 1e-4, REAL tolAspectRatio = 0.2) {return true;}
 
     /// Check if should be refined and generate the subelements of material id matID
     void Refine(int matID);

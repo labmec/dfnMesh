@@ -459,4 +459,39 @@ int DFNFace::GetSplitPattern(TPZManVector<int> &status){
 	}
 	return splitcase;
 }
-  
+
+// Naive vector comparison
+template <class T>
+bool operator!=(const class TPZManVector<T>& v1,const class TPZManVector<T>& v2){
+	int64_t size1 = v1.size();
+	int64_t size2 = v2.size();
+	if(size1 != size2) return true;
+	for(int64_t i = 0; i<size1; i++){
+		if(v1[i]!=v2[i]) return true;
+	}
+	return false;
+}
+
+bool DFNFace::UpdateStatusVec(){
+	if(fRibs.size()<1 || fRibs[0]<0) DebugStop();
+	
+	TPZGeoMesh *gmesh = fGeoEl->Mesh();
+	int nnodes = fGeoEl->NNodes();
+	int nribs = nnodes;
+	DFNRib *rib;
+	TPZGeoEl *rib_gel;
+	
+	TPZManVector<int> backup = fStatus;
+	
+	int orientation = 0;
+	for(int i=0; i<nribs; i++){
+		rib = fFracture->Rib(fRibs[i]);
+		rib_gel = gmesh->Element(fRibs[i]);
+		orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
+		fStatus[i] = rib->StatusVec()[orientation];
+		fStatus[(i+1)%nnodes] = rib->StatusVec()[(orientation+1)%2];
+		fStatus[i+nnodes] = rib->StatusVec()[2];
+	}
+
+	return backup != fStatus;
+}
