@@ -56,24 +56,20 @@ TPZManVector<REAL, 3> DFNRib::RealCoord(){
     return coord;
 }
 
-/// Divide the given rib and generate the subelements of material id matID
-void DFNRib::Refine(int matID){
-    int iel_index = this->Index();          //Element index
-    TPZGeoMesh *gmesh = fGeoEl->Mesh();
-    if(!gmesh->Element(iel_index)){     // If the element does not exist the code is going to break
-        std::cout<<"No gel associated to the Rib\n";
-        DebugStop();
-    }
-    TPZGeoEl *gel = gmesh->Element(iel_index);
-    if(matID == -1) matID = gel->MaterialId();
-    // Set refinement pattern
-    {
-        // dummy mesh
-            TPZGeoMesh refPatternMesh;
-            int refnnodes = 3;
-            // check if point should be snapped to vertex
-                TPZManVector<REAL,3> qsi(1,2);
-                gel->ComputeXInverse(fCoord,qsi,1E-5);
+
+
+
+
+// ab
+
+
+
+
+void DFNRib::CreateRefPattern(){
+        // refinement mesh
+        TPZGeoMesh refPatternMesh;
+        int refnnodes = 2+fStatus[2];
+        TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
                 fIntersectionIndex = 2;
                 if(qsi[0] < -0.95 || qsi[0] > 0.95){
@@ -82,38 +78,33 @@ void DFNRib::Refine(int matID){
                     else fIntersectionIndex = 1; 
                 }
         // set nodes
-            refPatternMesh.NodeVec().Resize(refnnodes);
-            TPZManVector<REAL,3> coord(3);
-            for(int i = 0; i<2; i++){
-                gmesh->NodeVec()[gel->NodeIndex(i)].GetCoordinates(coord);
-                refPatternMesh.NodeVec()[i].Initialize(coord,refPatternMesh);
-            }
-            if(fIntersectionIndex == 2) refPatternMesh.NodeVec()[2].Initialize(fCoord,refPatternMesh);
+        refPatternMesh.NodeVec().Resize(refnnodes);
+        TPZManVector<REAL,3> coord(3);
+        for(int i = 0; i<3; i++){
+            if(i < 2) {gmesh->NodeVec()[fGeoEl->NodeIndex(i)].GetCoordinates(coord);}
+            else      {gmesh->NodeVec()[fIntersectionIndex].GetCoordinates(coord);}
+
+            refPatternMesh.NodeVec()[i].Initialize(coord,refPatternMesh);
+        }
+        
         // insert father
-            TPZManVector<int64_t,2> cornerindices(2);
-            cornerindices[0] = 0;
-            cornerindices[1] = 1;
-            int64_t elindex = 0;
-            refPatternMesh.CreateGeoElement(EOned, cornerindices, matID, elindex);
+        TPZManVector<int64_t,2> cornerindices({0,1});
+        int64_t elindex = 0;
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        
         // insert children
-            cornerindices[0] = 0;
-            cornerindices[1] = (fIntersectionIndex == 0 ? 1 : fIntersectionIndex);
-            elindex = 1;
-            refPatternMesh.CreateGeoElement(EOned, cornerindices, matID, elindex);
-            elindex = 2;
-            if(fIntersectionIndex == 2){
-                cornerindices[0] = 2;
-                cornerindices[1] = 1;
-                refPatternMesh.CreateGeoElement(EOned, cornerindices, matID, elindex);
-            }else{
-                TPZManVector<int64_t,1> pointindex(1,fIntersectionIndex);
-                refPatternMesh.CreateGeoElement(EPoint, pointindex, matID, elindex);
-            }
-                        
+        cornerindices = {0,2};
+        elindex = 1;
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        cornerindices = {2,1};
+        elindex = 2;
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+                    
             refPatternMesh.BuildConnectivity(); 
-            // define refPattern
-            TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
-            gel->SetRefPattern(refpat);
+        // define refPattern
+        refPatternMesh.BuildConnectivity(); 
+        TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
+        fGeoEl->SetRefPattern(refpat);
     }
 
 
