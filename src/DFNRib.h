@@ -86,9 +86,12 @@ public:
      * @brief Flag if rib was found to be intersected at any side
      * @return True if any element of status vector is true
     */
-    bool IsIntersected() const{
+    inline bool IsIntersected() const{
         return (fStatus[0] || fStatus[1] || fStatus[2]);
     }
+
+    /// Check if this rib should be refined
+    inline bool NeedsRefinement() {return fStatus[2];}
 
     /// Set Status Vector (topology of intersection)
     void SetStatusVec(TPZManVector<int, 3> status){
@@ -111,8 +114,8 @@ public:
     */
     bool Optimize(REAL tolDist = 1e-4);
 
-    /// Check if should be refined and generate the subelements of material id matID
-    void Refine(int matID);
+    /// Check if should be refined and generate the subelements
+    void Refine();
 
     /// Sets material id
     void SetMaterialId(int matID){
@@ -121,6 +124,11 @@ public:
 
     /// After optimization, update neighbours through side iside
     void UpdateNeighbours(int iside);
+
+    private:
+        /// Creates refinement pattern based on status vector and intersection node index
+        void CreateRefPattern();
+
 };
 
 #endif /* DFNRib_h */

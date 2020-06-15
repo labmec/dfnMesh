@@ -144,51 +144,58 @@ void DFNRib::CreateRefPattern(){
         fGeoEl->SetRefPattern(refpat);
     }
 
+/**
+ * @brief Check geometry of intersection against a tolerance, snaps intersection 
+ * to closest side(s) if necessary and modifies affected neighbours.
+ * @return True if any optimization has been made.
+ * @param tolDist: Minimum acceptable length
+*/
+bool DFNRib::Optimize(REAL tolDist){
+    if(!this->NeedsRefinement()) return false;
 
-    // set new node in gmesh 
-    int64_t nnodes = gmesh->NNodes();
-    MElementType etype;
-    switch(fIntersectionIndex){
-        case 0:{
-            fIntersectionIndex = gel->NodeIndex(0); 
-            etype = EPoint;
-            break;}
-        case 1:{
-            fIntersectionIndex = gel->NodeIndex(1);
-            etype = EPoint;
-            break;}
-        case 2:{
-            gmesh->NodeVec().Resize(nnodes+1);
-            gmesh->NodeVec()[nnodes].Initialize(fCoord,*gmesh);
-            fIntersectionIndex = nnodes;
-            etype = EOned;
-            break;
-        }
-        default: DebugStop();
+    TPZManVector<REAL,3> coord(3,0);
+    fGeoEl->NodePtr(0)->GetCoordinates(coord);
+    REAL dist0 = Distance(fCoord,coord);
+
+    fGeoEl->NodePtr(1)->GetCoordinates(coord);
+    REAL dist1 = Distance(fCoord,coord);
+
+    int64_t closestnode = (dist0 < dist1 ? 0 : 1);
+    REAL dist = MIN(dist0,dist1);
+
+    // if(dist<tolDist){
+    if(fStatus[0] || fStatus[1] || dist<tolDist){ // this condition seems to be more robust
+        fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
+        fStatus[closestnode] = 1;
+        fStatus[2] = 0;
+        UpdateNeighbours(2);            // clear origin
+        UpdateNeighbours(closestnode);  // flag destination
+        // UpdateMaterial() ?
+        return true;
     }
+    return false;
+}
 
-    // set children
-        TPZManVector<int64_t,2> cornerindices(2);
-        TPZGeoEl *child;
-    // first child
-        cornerindices[0] = gel->NodeIndex(0);
-        cornerindices[1] = (etype == EPoint ? gel->NodeIndex(1) : fIntersectionIndex);
-        int64_t elindex = gmesh->NElements();
-        child = gmesh->CreateGeoElement(EOned, cornerindices, matID, elindex);
-        gel->SetSubElement(0,child);
-        child->SetFatherIndex(gel->Index());
-    // second child
-        if(etype == EOned){
-            cornerindices[1] = gel->NodeIndex(1);
-        }else{
-            cornerindices.Resize(1);
-        }
-        cornerindices[0] = fIntersectionIndex;
-        elindex++;
-        child = gmesh->CreateGeoElement(etype, cornerindices, matID, elindex);
-        gel->SetSubElement(1,child);
-        child->SetFatherIndex(gel->Index());
-    
+
+
+
+
+void DFNRib::UpdateNeighbours(int iside){
+    // @todo
+    // If neighbour doesn't have a DFNElement associated to it, create
+    // Go through every neighbour and match the iside entry on their status vector
+    // And run optimization
+    return;
+}
+
+
+
+
+
+
+
+
+
 }
 
 
