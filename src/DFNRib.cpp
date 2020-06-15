@@ -37,6 +37,10 @@ DFNRib &DFNRib::operator=(const DFNRib &copy){
     return *this;
 }
 
+inline REAL VectorNorm(TPZManVector<REAL,3> &vector);
+inline REAL Distance(TPZManVector<REAL,3> &vector1, TPZManVector<REAL,3> &vector2);
+
+
 /// Get real intersection coordinates
 TPZManVector<REAL, 3> DFNRib::RealCoord(){
     TPZManVector<REAL, 3> coord(3, 0);
@@ -160,13 +164,20 @@ void DFNRib::Refine(int matID){
 }
 
 
-/**
- * @brief Check geometry of intersection against a tolerance, snaps intersection 
- * to closest side(s) if necessary and modifies affected neighbours.
- * @return True if any optimization has been made.
- * @param tolDist: Minimum acceptable length
-*/
-bool DFNRib::Optimize(REAL tolDist){
-    //@todo
-    return false;
+inline REAL VectorNorm(TPZManVector<REAL,3> &vector){
+    int n = vector.NElements();
+    REAL temp = 0.0;
+    for (int i = 0; i < n; i++){
+        temp += vector[i]*vector[i];
+    }
+    return sqrt(temp);
+}
+
+inline REAL Distance(TPZManVector<REAL,3> &vector1, TPZManVector<REAL,3> &vector2){
+    int n = vector1.NElements();
+    TPZManVector<REAL,3> difference(n,0);
+    for(int i = 0; i<n;i++){
+        difference[i] = vector1[i] - vector2[i];
+    }
+    return VectorNorm(difference);
 }
