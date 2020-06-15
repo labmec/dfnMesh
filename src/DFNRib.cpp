@@ -14,6 +14,8 @@
 #include "pzintel.h"
 #include "pzcompel.h"
 #include "TPZRefPatternDataBase.h"
+#include "DFNFracture.h"
+#include <math.h>
 
 
 /// Default constructor takes a pointer to geometric element
@@ -57,6 +59,41 @@ TPZManVector<REAL, 3> DFNRib::RealCoord(){
 }
 
 
+void DFNRib::Refine(){
+    if(!this->NeedsRefinement()) return;
+    if(!fGeoEl){
+        std::cout<<"No gel associated to the Rib\n";
+        DebugStop();
+    }
+
+    // set new node in gmesh if it hasn't been set yet
+    TPZGeoMesh *gmesh = fGeoEl->Mesh();
+    if(fIntersectionIndex < 0){
+        fIntersectionIndex = gmesh->NodeVec().AllocateNewElement();
+        gmesh->NodeVec()[fIntersectionIndex].Initialize(fCoord,*gmesh);
+    }
+    
+    // Set refinement pattern
+    this->CreateRefPattern();
+
+    // set children
+        TPZManVector<int64_t,2> cornerindices(2,0);
+        TPZGeoEl *child;
+    // first child
+        cornerindices[0] = fGeoEl->NodeIndex(0);
+        cornerindices[1] = fIntersectionIndex;
+        int64_t elindex = gmesh->NElements();
+        child = gmesh->CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
+        fGeoEl->SetSubElement(0,child);
+        child->SetFatherIndex(fGeoEl->Index());
+    // second child
+        cornerindices[0] = fIntersectionIndex;
+        cornerindices[1] = fGeoEl->NodeIndex(1);
+        elindex++;
+        child = gmesh->CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
+        fGeoEl->SetSubElement(1,child);
+        child->SetFatherIndex(fGeoEl->Index());
+}
 
 
 
