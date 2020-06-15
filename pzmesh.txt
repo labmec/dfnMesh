@@ -310,7 +310,7 @@ Number of nodes    2
 Corner nodes       2
 Nodes indexes          4 13 
 Number of sides    3
-Material id        2
+Material id        3
 no father
 Subelement indexes     57 58 
 Neighbours for side   0 : 2/1 52/1 39/1 13/1 1/3 47/3 40/1 14/0 0/2 42/2 3/0 56/0 51/0 44/0 31/1 21/0 
@@ -320,7 +320,7 @@ Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 4 13 
-Linear Id 5456760 Sides 2  | -1   0   0    |  | 1   0   0    |  | 0   0   0    | 
+Linear Id 1454173104 Sides 2  | -1   0   0    |  | 1   0   0    |  | 0   0   0    | 
 
 Element index      10
 Element id         10
@@ -1343,7 +1343,7 @@ Number of nodes    2
 Corner nodes       2
 Nodes indexes          4 22 
 Number of sides    3
-Material id        18
+Material id        3
 Father index          9
 no subelements
 Neighbours for side   0 : No neighbour
@@ -1362,7 +1362,7 @@ Number of nodes    2
 Corner nodes       2
 Nodes indexes          22 13 
 Number of sides    3
-Material id        18
+Material id        3
 Father index          9
 no subelements
 Neighbours for side   0 : No neighbour

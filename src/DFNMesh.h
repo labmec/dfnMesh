@@ -17,10 +17,19 @@
 */
 class DFNMesh{
 	private:
+        // A set of fractures
 		std::list<DFNFracture *> fFractures;
-		std::map<int64_t, DFNVolume> fVolumes;
-		REAL fToleranceLength = 1e-5;
+		
+        // A set of volumes
+        std::map<int64_t, DFNVolume> fVolumes;
+		
+        // Minimum acceptable distance/length for point insertion
+        REAL fToleranceLength = 1e-5;
+
+        // Minimum acceptable angle/aspect-ratio
 		REAL fToleranceRatio = 0.2;
+
+        // Pointer to geometric mesh
 		TPZGeoMesh *fGMesh;
 
 	public:
@@ -73,7 +82,7 @@ class DFNMesh{
                   ,int transition = 2
                   ,int intact = 1);
         /**
-         * @brief Prints DFN Geometric Mesh and VTK file gets a new column for colorful refinement of 2D elements :) 
+         * @brief Prints DFN Geometric Mesh and material ids are renumbered for VTK colorful print of refinement of 2D elements :) 
          * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
          * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
         */

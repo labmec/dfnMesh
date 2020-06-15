@@ -43,10 +43,38 @@ void DFNMesh::Print(std::string pzmesh
 
 
 
-void PrintColorful(std::string pzmesh = "pzmesh.txt",std::string vtkmesh = "vtkmesh.vtk"){
-	
-	// for()
-	// TPZVTKGeoMesh::PrintGMeshVTK()
+void DFNMesh::PrintColorful(std::string pzmesh,std::string vtkmesh){
+	// mesh.txt doesn't gain much... so print it normal first
+	this->Print(pzmesh,"skip");
+	TPZGeoMesh *gmesh = this->fGMesh;
+	int64_t nels = gmesh->NElements();
+	int64_t iel;
+	TPZGeoEl *gel;
+	// shift material ids
+	for(iel = 0; iel < nels; iel++){
+		gel = gmesh->Element(iel);
+		if(!gel) continue;
+		if(gel->Dimension() != 2) continue;
+		if(gel->HasSubElement()) continue;
+		if(!gel->Father()) continue;
+		int subindex = gel->WhichSubel();
+		int matid = gel->MaterialId();
+		gel->SetMaterialId(matid+subindex);
+	}
+	// print vtk only, since txt has already been print
+	this->Print("skip",vtkmesh);
+
+	// then, restore original mat ids
+	for(iel = 0; iel < nels; iel++){
+		gel = gmesh->Element(iel);
+		if(!gel) continue;
+		if(gel->Dimension() != 2) continue;
+		if(gel->HasSubElement()) continue;
+		if(!gel->Father()) continue;
+		int subindex = gel->WhichSubel();
+		int matid = gel->MaterialId();
+		gel->SetMaterialId(matid-subindex);
+	}
 }
 
 
@@ -354,7 +382,7 @@ int64_t DFNMesh::SearchIndirectNeighbours(TPZGeoEl* gel){
 
 
 int64_t DFNMesh::FindAdjacentMacroEl(TPZGeoEl* gel){
-	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
+	int surfaceMaterial = DFNMaterial::Efracture;
     int nsides = gel->NSides();
         
 	for(int iside = nsides-2; iside >= 0; iside--){
@@ -412,7 +440,7 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 	bool gBigPlanes_Q = true; //placeholder
 	if(ifracface->Dimension()!=2) DebugStop();
 	int64_t ifracfaceindex = ifracface->Index();
-	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
+	int surfaceMaterial = DFNMaterial::Efracture;
 	TPZGeoMesh *gmesh = ifracface->Mesh();
     // get coordinates of geometric center of face
     TPZVec<REAL> faceCenter(3);
@@ -981,7 +1009,7 @@ void DFNMesh::CreateVolumes(){
     
     // gmesh->BuildConnectivity(); //@todo remove this after test
 	// search through each 2D element of the triangulated fractures surfaces to find their enclosing volume
-	int surfaceMaterial = (*fFractures.begin())->GetSurfaceMaterial();
+	int surfaceMaterial = DFNMaterial::Efracture;
 	for(int64_t iel = 0; iel < nels; iel++){
 		TPZGeoEl *gel = gmesh->Element(iel);
 		if(!gel) continue;

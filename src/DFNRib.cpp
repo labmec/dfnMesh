@@ -17,7 +17,6 @@
 #include "DFNFracture.h"
 #include <math.h>
 
-
 /// Default constructor takes a pointer to geometric element
 DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture) :
     fGeoEl(gel),
@@ -35,7 +34,6 @@ DFNRib &DFNRib::operator=(const DFNRib &copy){
     fGeoEl = copy.fGeoEl;
     fStatus = copy.fStatus;
     fCoord = copy.fCoord;
-    fIntersectionIndex = copy.fIntersectionIndex;
     return *this;
 }
 
@@ -108,12 +106,6 @@ void DFNRib::CreateRefPattern(){
         int refnnodes = 2+fStatus[2];
         TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
-                fIntersectionIndex = 2;
-                if(qsi[0] < -0.95 || qsi[0] > 0.95){
-                    refnnodes = 2;
-                    if(qsi[0] < -0.95) fIntersectionIndex = 0;
-                    else fIntersectionIndex = 1; 
-                }
         // set nodes
         refPatternMesh.NodeVec().Resize(refnnodes);
         TPZManVector<REAL,3> coord(3);
@@ -137,7 +129,6 @@ void DFNRib::CreateRefPattern(){
         elindex = 2;
         refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
                     
-            refPatternMesh.BuildConnectivity(); 
         // define refPattern
         refPatternMesh.BuildConnectivity(); 
         TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refPatternMesh);
@@ -152,7 +143,7 @@ void DFNRib::CreateRefPattern(){
 */
 bool DFNRib::Optimize(REAL tolDist){
     if(!this->NeedsRefinement()) return false;
-
+    
     TPZManVector<REAL,3> coord(3,0);
     fGeoEl->NodePtr(0)->GetCoordinates(coord);
     REAL dist0 = Distance(fCoord,coord);
@@ -196,7 +187,6 @@ void DFNRib::UpdateNeighbours(int iside){
 
 
 
-}
 
 
 inline REAL VectorNorm(TPZManVector<REAL,3> &vector){

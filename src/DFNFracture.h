@@ -21,7 +21,7 @@
 #include "DFNFace.h"
 #include "DFNVolume.h"
 #include "DFNFracPlane.h"
-
+#include "DFNMesh.h"
 #include <gmsh.h>
 
 class DFNMesh;
@@ -57,9 +57,6 @@ private:
 	/// A set of constraints to the surface mesh of the fracture
 	std::map<int64_t, TPZGeoEl *> fOutline;
 
-	/// Material id of elements at fracture surface
-	int fSurfaceMaterial = 40;
-
 public:
     
     /// Empty constructor
@@ -72,7 +69,7 @@ public:
      * of a point
      *  
      */
-    DFNFracture(DFNFracPlane &FracPlane, DFNMesh *dfnMesh, int matID);
+    DFNFracture(DFNFracPlane &FracPlane, DFNMesh *dfnMesh);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -94,7 +91,7 @@ private:
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    bool FindEndFracturePoint(DFNFace &face, TPZVec<REAL> &ipoint);
+    bool FindEndFracturePoint(DFNFace &face, TPZManVector<REAL,3> &ipoint);
     
     /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
     void SplitFractureEdge(std::list<int> &fracEdgeLoop);
@@ -128,24 +125,19 @@ public:
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);
     
-    /// Find and split intersected faces
-    void FindFaces(int matID);
-    
-    /// Find and split intersected ribs
-    void FindRibs(int matID);
+    /// Find intersected ribs
+    void FindRibs();
+    /// Set Refinement Patterns and create sub elements
+    void RefineRibs();
 
+    /// Find intersected faces
+    void FindFaces();
+    /// Set Refinement Patterns and create sub elements
+    void RefineFaces();
 
     /// Triangulates fracture plane
     void MeshFractureSurface();
 
-
-    /// Sets material for elements at surface of fracture
-    void SetSurfaceMaterial(int matID);
-    /// Get material for elements at the surface of fracture
-    int GetSurfaceMaterial(){return fSurfaceMaterial;}
-
-    /// Get material ID for elements at surface of fracture
-    int MaterialID(){return fSurfaceMaterial;}
 
 };
 

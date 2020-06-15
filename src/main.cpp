@@ -99,17 +99,14 @@ int main(int argc, char* argv[]){
 		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
 	}
 
-	int surfaceMaterial = 40;
-	int transitionMaterial = 18;
 	DFNMesh dfn(gmesh);
 	// Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
 		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
-		DFNFracture *fracture = new DFNFracture(*fracplane,&dfn,surfaceMaterial);
+		DFNFracture *fracture = new DFNFracture(*fracplane,&dfn);
 	// Find and split intersected ribs
-		fracture->FindRibs(transitionMaterial);
-		//Print result
-		dfn.Print();
+		fracture->FindRibs();
+		fracture->RefineRibs();
 	// // Find and split intersected faces
 		// fracture->FindFaces(transitionMaterial);
 	// // Mesh fracture surface
