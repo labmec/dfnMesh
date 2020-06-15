@@ -117,12 +117,12 @@ public:
     bool AddEndFace(DFNFace &face);
 
     bool AddFace(DFNFace &face){return AddMidFace(face);}
-    
+
     /// Insert new volume in data structure
     void AddVolume(DFNVolume volume);
 
     /// Pointer to rib of index 'index'
-    DFNRib *Rib(int64_t index){return &fRibs[index];}
+    DFNRib *Rib(int64_t index);
 
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);

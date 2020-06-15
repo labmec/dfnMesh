@@ -164,16 +164,19 @@ bool DFNFracture::AddEndFace(DFNFace &face){
 
 
 
+DFNRib * DFNFracture::Rib(int64_t index){
+    auto candidate = fRibs.find(index);
+    if(candidate != fRibs.end()){
+        return &candidate->second;
+    }
+    return nullptr;
+}
 DFNFace * DFNFracture::Face(int64_t index){
     auto candidate = fFaces.find(index);
     if(candidate != fFaces.end()){
         return &candidate->second;
     }
-    candidate = fFaces.find(index);
-    if(candidate != fFaces.end()){
-        return &candidate->second;
-    }
-    return NULL;
+    return nullptr;
 }
 
 
