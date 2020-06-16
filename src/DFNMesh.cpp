@@ -12,6 +12,8 @@
 
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh){
 	fGMesh = gmesh;
+	// create a copy of the mesh because materials will be reset afterwards @todo
+	this->ClearMaterials();
 	for (int i = 1; i < fGMesh->Dimension(); i++){
 		CreateSkeletonElements(i,-1);
 	}
@@ -112,7 +114,7 @@ void DFNMesh::GenerateSubMesh(){
 void DFNMesh::DeleteElementAndRibs(TPZGeoEl *face){
 	TPZGeoMesh *gmesh = face->Mesh();
 	// queue ribs
-	int nribs = face->NNodes();
+	int nribs = face->NCornerNodes();
 	// int nribs = (face->Type() == MElementType::EQuadrilateral ? 4 : 3);
 	TPZManVector<int64_t, 4> ribs(nribs,-1);
 	for(int irib = 0; irib < nribs; irib++){
@@ -796,7 +798,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			// queue all possible ribs using youngest children
 			std::set<TPZGeoEl*> candidate_ribs;
 			for(TPZGeoEl* child : children){
-				int nribs = child->NNodes();
+				int nribs = child->NCornerNodes();
 				for(int cside = nribs; cside < 2*nribs; cside++){
 					TPZGeoElSide childside(child,cside);
 					TPZGeoElSide neig = childside.Neighbour();
@@ -1275,7 +1277,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 		// queue all possible lines by checking 1D neighbours of children
 		std::set<TPZGeoEl *> candidate_ribs;
 		for(auto child : children){
-			int nribs = child->NNodes();
+			int nribs = child->NCornerNodes();
 			for(int cside = nribs; cside < 2*nribs; cside++){
 				TPZGeoElSide childside(child,cside);
 				TPZGeoElSide neig = childside.Neighbour();
@@ -1438,3 +1440,13 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
 
 
 
+void DFNMesh::ClearMaterials(){
+	for(auto el : fGMesh->ElementVec()){
+		if(!el) continue;
+		el->SetMaterialId(DFNMaterial::Eintact);
+	}
+}
+
+void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
+	// @todo
+}

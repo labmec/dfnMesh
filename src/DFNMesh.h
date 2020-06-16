@@ -153,6 +153,12 @@ class DFNMesh{
          */
 
         bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
+
+        /// Set all material ids to 1
+        void ClearMaterials();
+
+        // @todo
+        void RestoreMaterials(TPZGeoMesh *originalmesh);
 };
 
 

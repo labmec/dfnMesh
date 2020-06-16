@@ -127,7 +127,7 @@ public:
     bool Optimize(REAL tolDist = 1e-4, REAL tolAspectRatio = 0.2) {return true;}
 
     /// Check if should be refined and generate the subelements of material id matID
-    void Refine(int matID);
+    void Refine();
 
     /// After optimization, update neighbours through side iside
     void UpdateNeighbours(int iside);

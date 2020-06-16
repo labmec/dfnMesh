@@ -108,15 +108,9 @@ private:
 
 public:
     /// Access the ribs data structure
-    void AddRib(DFNRib rib);
+    void AddRib(DFNRib &rib);
     
-    /// Access mid-fracture faces' data structure
-    bool AddMidFace(DFNFace &face);
-    
-    /// Access end-fracture faces' data structure
-    bool AddEndFace(DFNFace &face);
-
-    bool AddFace(DFNFace &face){return AddMidFace(face);}
+    void AddFace(DFNFace &face);
 
     /// Insert new volume in data structure
     void AddVolume(DFNVolume volume);

@@ -387,6 +387,12 @@ void DFNFracture::RefineRibs(){
         rib->Refine();
     }
 }
+void DFNFracture::RefineFaces(){
+    for(auto fface : fFaces){
+        DFNFace *face = &fface.second;
+        face->Refine();
+    }
+}
 
 
 

@@ -52,8 +52,9 @@ DFNFace &DFNFace::operator=(const DFNFace &copy){
 
 
 /// Check if should be refined and generate the subelements of material id matID
-void DFNFace::Refine(int matid){
+void DFNFace::Refine(){
 	TPZGeoEl *face = fGeoEl;
+	int matid = fGeoEl->MaterialId();
 	TPZGeoMesh *gmesh = face->Mesh();
 	// check if face exists in mesh
    	if(!face){DebugStop();}
@@ -476,7 +477,7 @@ bool DFNFace::UpdateStatusVec(){
 	if(fRibs.size()<1 || fRibs[0]<0) DebugStop();
 	
 	TPZGeoMesh *gmesh = fGeoEl->Mesh();
-	int nnodes = fGeoEl->NNodes();
+	int nnodes = fGeoEl->NCornerNodes();
 	int nribs = nnodes;
 	DFNRib *rib;
 	TPZGeoEl *rib_gel;
@@ -486,11 +487,18 @@ bool DFNFace::UpdateStatusVec(){
 	int orientation = 0;
 	for(int i=0; i<nribs; i++){
 		rib = fFracture->Rib(fRibs[i]);
-		rib_gel = gmesh->Element(fRibs[i]);
-		orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
-		fStatus[i] = rib->StatusVec()[orientation];
-		fStatus[(i+1)%nnodes] = rib->StatusVec()[(orientation+1)%2];
-		fStatus[i+nnodes] = rib->StatusVec()[2];
+		if(rib){
+			rib_gel = gmesh->Element(fRibs[i]);
+			orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
+			fStatus[i] = rib->StatusVec()[orientation];
+			// fStatus[(i+1)%nnodes] = rib->StatusVec()[(orientation+1)%2];
+			fStatus[i+nnodes] = rib->StatusVec()[2];
+		}
+		else{
+			fStatus[i] = 0;
+			// fStatus[(i+1)%nnodes] = 0;
+			fStatus[i+nnodes] = 0;
+		}
 	}
 
 	return backup != fStatus;
