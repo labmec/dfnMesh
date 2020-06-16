@@ -503,3 +503,67 @@ bool DFNFace::UpdateStatusVec(){
 
 	return backup != fStatus;
 }
+
+
+
+
+bool DFNFace::FindInPlanePoint(){
+    // Convert TPZGeoEl into DFNFracPlane
+    TPZGeoEl *gelface = fGeoEl;
+    TPZFMatrix<REAL> corners(3,4);
+    int n;
+    // check if face is quadrilateral
+    if(gelface->Type() == MElementType::ETriangle){
+        n = 1;
+    }else{ //gelface->Type() == EQuadrilateral
+        n = 2;
+    }
+
+    gelface->NodesCoordinates(corners);
+    for(int iplane = 0; iplane < n; iplane++){
+        // divide quadrilaterals into 2 triangles in order to account for sets of points which are not coplanar
+        TPZFMatrix<REAL> subcorners(3,3,0);
+        if(n>1){
+            for(int j = 0; j<3; j++){
+                subcorners(j,0) = corners(j,2*iplane);
+                subcorners(j,1) = corners(j,2*iplane+1);
+                subcorners(j,2) = corners(j,(2*iplane+3)%4);
+            }
+        }else{
+            subcorners = corners;
+        }
+        DFNFracPlane faceplane(subcorners);
+        // Check fFracplane's ribs for intersection with faceplane
+        int nribs = fFracture->FracPlane().GetCornersX().Cols();
+        for(int irib = 0; irib < nribs; irib++){
+            TPZManVector<REAL,3> p1(3);
+            TPZManVector<REAL,3> p2(3);
+            for(int i = 0; i<3; i++){
+                p1[i] = fFracture->FracPlane().GetCornersX()(i, irib);
+                p2[i] = fFracture->FracPlane().GetCornersX()(i, (irib+1)%nribs);
+            }
+            if(faceplane.Check_rib(p1, p2, &fCoord)){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void DFNFace::UpdateMaterial(){
+	if(fGeoEl->MaterialId() == DFNMaterial::Efracture) return;
+
+	bool two_in_a_row = false;
+	int cutnodes = 0;
+	int cutedges = 0;
+	int nnodes = fGeoEl->NCornerNodes();
+	for(int i=0; i<nnodes; i++){
+		cutnodes += fStatus[i];
+		if(fStatus[i]+fStatus[(i+1)%nnodes]==2){two_in_a_row = true;}
+	}
+
+	if(cutnodes==nnodes){fGeoEl->SetMaterialId(DFNMaterial::Efracture);}
+	else if(cutnodes==2 && two_in_a_row){fGeoEl->SetMaterialId(DFNMaterial::Eintact);}
+	else {fGeoEl->SetMaterialId(DFNMaterial::Erefined);}
+	// @todo... this is incomplete. 2_nodes_in_a_row may mean intact
+}

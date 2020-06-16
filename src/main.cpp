@@ -107,8 +107,8 @@ int main(int argc, char* argv[]){
 	// Find and split intersected ribs
 		fracture->FindRibs();
 		fracture->RefineRibs();
-	// // Find and split intersected faces
-		// fracture->FindFaces(transitionMaterial);
+	// Find and split intersected faces
+		fracture->FindFaces();
 	// // Mesh fracture surface
 	// 	if(gmesh->Dimension() == 3){
 	// 		fracture->MeshFractureSurface();

@@ -92,7 +92,34 @@ public:
      * @brief Check if element should be refined
      * @return False if only one node or only two consecutive nodes have been intersected
     */
-    bool IsIntersected(){return true;}
+    bool IsIntersected(){
+        int nsides = fGeoEl->NSides();
+        for(int i=0; i<nsides; i++){
+            if(fStatus[i]) return true;
+        }
+        return false;
+    }
+
+    /**
+     * @brief Checks if face is intersected by one of the fracture edges
+     * @note A face on the fracture boundary will only have one node/edge intersected
+    */
+    bool IsOnBoundary(){
+        int n_intersections = 0;
+        int n_lowdim_sides = fGeoEl->NSides()-1;
+        for(int i=0; i<n_lowdim_sides; i++){
+            n_intersections += fStatus[i];
+            if(n_intersections > 1) return false;
+        }
+        return n_intersections == 1;
+    }
+
+    /**
+     * @brief Searches for coordinates of a possible in-plane intersection point.
+     * @note 1: Assumes user has run IsOnBoundary() and it returned true;
+     * @note 2: Won't create a node in mesh. This must be done later.
+    */
+    bool FindInPlanePoint();
     
     /// Reference to status vector
     TPZManVector<int> &StatusVec(){return fStatus;}
@@ -109,6 +136,8 @@ public:
      * @returns True if any changes have been made
     */
     bool UpdateRefMesh();
+
+    void UpdateMaterial();
 
     /**
      * @brief Returns the split pattern that should be used to split this face
