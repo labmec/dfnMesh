@@ -123,11 +123,15 @@ public:
     
     /// Find intersected ribs
     void FindRibs();
+    /// Coalesce intersected ribs
+    void OptimizeRibs(REAL tolDist);
     /// Set Refinement Patterns and create sub elements
     void RefineRibs();
 
     /// Find intersected faces
     void FindFaces();
+    /// Coalesce intersected faces
+    void OptimizeFaces(REAL tolDist = 1e-4, REAL tolAngle = 0.1);
     /// Set Refinement Patterns and create sub elements
     void RefineFaces();
 

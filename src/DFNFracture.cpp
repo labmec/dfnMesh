@@ -214,7 +214,8 @@ void DFNFracture::FindFaces(){
         if(candidate.IsOnBoundary()){
             candidate.FindInPlanePoint();
         }
-        candidate.UpdateMaterial();
+        gel->SetMaterialId(DFNMaterial::Erefined);
+        candidate.UpdateRefMesh();
         AddFace(candidate);
     }
 }
@@ -372,17 +373,39 @@ void DFNFracture::FindRibs(){
 
 
 void DFNFracture::RefineRibs(){
-    for(auto frib : fRibs){
-        DFNRib *rib = &frib.second;
+    for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
+        DFNRib* rib = &itr->second;
         rib->Refine();
     }
 }
 void DFNFracture::RefineFaces(){
-    for(auto fface : fFaces){
-        DFNFace *face = &fface.second;
+    for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
+        DFNFace *face = &itr->second;
         face->Refine();
     }
 }
+
+
+
+
+
+void DFNFracture::OptimizeRibs(REAL tolDist){
+    for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
+        DFNRib* rib = &itr->second;
+        rib->Optimize(tolDist);
+    }
+}
+void DFNFracture::OptimizeFaces(REAL tolDist, REAL tolAngle){
+    for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
+        DFNFace* face = &itr->second;
+        face->Optimize(tolDist, tolAngle);
+    }
+}
+
+
+
+
+
 
 
 

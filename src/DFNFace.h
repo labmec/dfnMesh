@@ -41,10 +41,13 @@ private:
 	DFNFracture *fFracture = nullptr;
 
 	/// Vector with indices of its ribs
-	TPZManVector<int64_t, 4> fRibs;
+	TPZManVector<int64_t, 2> fRibs;
 
     /// Refinement mesh is used to create a refinement pattern and decide how to optimize it
     TPZGeoMesh fRefMesh;
+
+    /// {ribindex, sideindex}
+    // std::pair<int64_t, int> PhilPair;
 
 public:
     /// Empty constructor
@@ -104,15 +107,7 @@ public:
      * @brief Checks if face is intersected by one of the fracture edges
      * @note A face on the fracture boundary will only have one node/edge intersected
     */
-    bool IsOnBoundary(){
-        int n_intersections = 0;
-        int n_lowdim_sides = fGeoEl->NSides()-1;
-        for(int i=0; i<n_lowdim_sides; i++){
-            n_intersections += fStatus[i];
-            if(n_intersections > 1) return false;
-        }
-        return n_intersections == 1;
-    }
+    bool IsOnBoundary();
 
     /**
      * @brief Searches for coordinates of a possible in-plane intersection point.
@@ -151,14 +146,22 @@ public:
      * to closest side(s) if necessary and modifies affected neighbours.
      * @return True if any optimization has been made.
      * @param tolDist: Minimum acceptable distance
-     * @param tolAspectRatio: Minimum acceptable aspect ratio
+     * @param tolAngle: Minimum acceptable angle (rad)
     */
-    bool Optimize(REAL tolDist = 1e-4, REAL tolAspectRatio = 0.2) {return true;}
+    bool Optimize(REAL tolDist = 1e-4, REAL tolAngle = 0.1) {return true;}
 
     /// Check if should be refined and generate the subelements of material id matID
     void Refine();
 
     /// After optimization, update neighbours through side iside
     void UpdateNeighbours(int iside);
+
+    private: 
+
+        /**
+         * @brief Determines split case and fill nodes of children and indices of the intersection points
+        */
+void FillChildrenAndNewNodes(TPZManVector<TPZManVector<int64_t,4>,6> &child, TPZManVector<TPZManVector<REAL,3>> &newnode);
+
 };
 #endif /* DFNFace_h */

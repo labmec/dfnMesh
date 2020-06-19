@@ -44,6 +44,9 @@ class DFNMesh{
 		/// Constructor
 		DFNMesh(TPZGeoMesh *gmesh);
 
+        /// Add new fracture
+        void AddFracture(DFNFracture *fracture){fFractures.push_back(fracture);}
+
 		/// Pointer to volume of index 'index'
 		DFNVolume *Volume(int64_t index){return &fVolumes[index];}
 

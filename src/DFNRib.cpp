@@ -34,6 +34,8 @@ DFNRib &DFNRib::operator=(const DFNRib &copy){
     fGeoEl = copy.fGeoEl;
     fStatus = copy.fStatus;
     fCoord = copy.fCoord;
+    fIntersectionIndex = copy.fIntersectionIndex;
+    fFracture = copy.fFracture;
     return *this;
 }
 
@@ -77,25 +79,19 @@ void DFNRib::Refine(){
     // set children
         TPZManVector<int64_t,2> cornerindices(2,0);
         TPZGeoEl *child;
-    // first child
-        cornerindices[0] = fGeoEl->NodeIndex(0);
-        cornerindices[1] = fIntersectionIndex;
         int64_t elindex = gmesh->NElements();
-        child = gmesh->CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
-        fGeoEl->SetSubElement(0,child);
-        child->SetFatherIndex(fGeoEl->Index());
-    // second child
-        cornerindices[0] = fIntersectionIndex;
-        cornerindices[1] = fGeoEl->NodeIndex(1);
-        elindex++;
-        child = gmesh->CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
-        fGeoEl->SetSubElement(1,child);
-        child->SetFatherIndex(fGeoEl->Index());
+        for(int i=0; i<2; i++){
+            cornerindices[i%2] = fGeoEl->NodeIndex(i%2);
+            cornerindices[(i+1)%2] = fIntersectionIndex;
+            child = gmesh->CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
+            fGeoEl->SetSubElement(i,child);
+            child->SetFatherIndex(fGeoEl->Index());
+            elindex++;
+        }
 }
 
 
 
-// ab
 
 
 
@@ -135,12 +131,14 @@ void DFNRib::CreateRefPattern(){
         fGeoEl->SetRefPattern(refpat);
     }
 
-/**
- * @brief Check geometry of intersection against a tolerance, snaps intersection 
- * to closest side(s) if necessary and modifies affected neighbours.
- * @return True if any optimization has been made.
- * @param tolDist: Minimum acceptable length
-*/
+
+
+
+
+
+
+
+
 bool DFNRib::Optimize(REAL tolDist){
     if(!this->NeedsRefinement()) return false;
     
@@ -159,9 +157,7 @@ bool DFNRib::Optimize(REAL tolDist){
         fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
         fStatus[closestnode] = 1;
         fStatus[2] = 0;
-        UpdateNeighbours(2);            // clear origin
-        UpdateNeighbours(closestnode);  // flag destination
-        UpdateMaterial(); //@todo I might find this to be unnecessary
+        UpdateNeighbours(closestnode);
         return true;
     }
     return false;
@@ -190,30 +186,32 @@ void DFNRib::UpdateNeighbours(int iside){
                 // check if DFNRib exists
                 DFNRib *rib_ptr = fFracture->Rib(gel->Index());
                 if(!rib_ptr){
-                    DFNRib neig_rib(gel,fFracture);
-                    fFracture->AddRib(neig_rib);
-                    rib_ptr = fFracture->Rib(gel->Index());
+                    break;
+                    // DFNRib neig_rib(gel,fFracture);
+                    // fFracture->AddRib(neig_rib);
+                    // rib_ptr = fFracture->Rib(gel->Index());
                 }
-                // skip if StatusVec entry already match
-                if(fStatus[iside] == rib_ptr->StatusVec()[neig_side]){continue;}
-                // else, match StatusVec entry for iside and optimize
-                rib_ptr->StatusVec()[neig_side] = fStatus[iside];
-                rib_ptr->Optimize();
+                // // skip if StatusVec entry already match
+                // if(fStatus[iside] == rib_ptr->StatusVec()[neig_side]){continue;}
+                // // else, match StatusVec entry for iside and optimize
+                // rib_ptr->StatusVec()[neig_side] = fStatus[iside];
+                // rib_ptr->Optimize();
+                if(rib_ptr->NeedsRefinement()) {rib_ptr->Optimize();}
                 break;
             }
             case 2:{
-                // check if DFNFace exists
-                DFNFace *face_ptr = fFracture->Face(gel->Index());
-                if(!face_ptr){
-                    DFNFace neig_face(gel,fFracture);
-                    fFracture->AddFace(neig_face);
-                    face_ptr = fFracture->Face(gel->Index());
-                }
-                // skip if StatusVec entry already match
-                if(fStatus[iside] == face_ptr->StatusVec()[neig_side]){continue;}
-                // else, match StatusVec entry for iside and optimize
-                face_ptr->StatusVec()[neig_side] = fStatus[iside];
-                face_ptr->Optimize();
+                // // check if DFNFace exists
+                // DFNFace *face_ptr = fFracture->Face(gel->Index());
+                // if(!face_ptr){
+                //     DFNFace neig_face(gel,fFracture);
+                //     fFracture->AddFace(neig_face);
+                //     face_ptr = fFracture->Face(gel->Index());
+                // }
+                // // skip if StatusVec entry already match
+                // if(fStatus[iside] == face_ptr->StatusVec()[neig_side]){continue;}
+                // // else, match StatusVec entry for iside and optimize
+                // face_ptr->StatusVec()[neig_side] = fStatus[iside];
+                // face_ptr->Optimize();
                 break;
             }
             case 3: {continue;}
@@ -226,8 +224,9 @@ void DFNRib::UpdateNeighbours(int iside){
 
 
 
-
+// Might be useful at some point... but not yet
 bool DFNRib::UpdateMaterial(){
+    DebugStop();
     if(fGeoEl->MaterialId() == DFNMaterial::Efracture) {return false;}
     if(fStatus[0] && fStatus[1]){
         fGeoEl->SetMaterialId(DFNMaterial::Efracture);

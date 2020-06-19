@@ -106,15 +106,17 @@ int main(int argc, char* argv[]){
 		DFNFracture *fracture = new DFNFracture(*fracplane,&dfn);
 	// Find and split intersected ribs
 		fracture->FindRibs();
+		fracture->OptimizeRibs(0.35);
 		fracture->RefineRibs();
 	// Find and split intersected faces
 		fracture->FindFaces();
+		fracture->RefineFaces();
 	// // Mesh fracture surface
 	// 	if(gmesh->Dimension() == 3){
 	// 		fracture->MeshFractureSurface();
 	// 	}
 	// //insert fracture
-	// 	dfn.fFractures.push_back(fracture);
+	// 	dfn.AddFracture(fracture);
 	}
 	// Mesh transition volumes
 		// dfn.CreateVolumes();
@@ -122,7 +124,7 @@ int main(int argc, char* argv[]){
 		// dfn.GenerateSubMesh();
 
 	//Print result
-		dfn.Print();
+		dfn.PrintColorful();
 
 	std::cout<<"\n\n ...the end.\n\n";
 
