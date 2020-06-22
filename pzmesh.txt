@@ -18,8 +18,8 @@ Index: 5 Node : fId = 5    Coordinates	4	2	0
 Index: 6 Node : fId = 6    Coordinates	0	4	0
 Index: 7 Node : fId = 7    Coordinates	2	4	0
 Index: 8 Node : fId = 8    Coordinates	4	4	0
-Index: 9 Node : fId = 9    Coordinates	2	1.05	0
-Index: 10 Node : fId = 10    Coordinates	4	0.430952	0
+Index: 9 Node : fId = 9    Coordinates	2	1.01	0
+Index: 10 Node : fId = 10    Coordinates	4	0.403035	0
 
 	Geometric Element Information:
 
@@ -47,7 +47,7 @@ Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 0 1 4 3 
-Quad Id 32 Sides 5  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   0.05   0    | 
+Quad Id 32 Sides 5  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   0.01   0    | 
 
 Element index      1
 Element id         1
@@ -73,7 +73,7 @@ Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 1 2 5 4 
-Quad Id 1869181696 Sides 5 7  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   -0.569048   0    |  | -1   0.05   0    | 
+Quad Id 29 Sides 5 7  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   -0.596965   0    |  | -1   0.01   0    | 
 
 Element index      2
 Element id         2
@@ -181,7 +181,7 @@ Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 4 1 
-Linear Id 97 Sides 2  | -1   0   0    |  | 1   0   0    |  | -0.05   0   0    | 
+Linear Id 97 Sides 2  | -1   0   0    |  | 1   0   0    |  | -0.01   0   0    | 
 
 Element index      7
 Element id         7
@@ -239,7 +239,7 @@ Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 2 5 
-Linear Id -184374112 Sides 2  | -1   0   0    |  | 1   0   0    |  | -0.569048   0   0    | 
+Linear Id -184374112 Sides 2  | -1   0   0    |  | 1   0   0    |  | -0.596965   0   0    | 
 
 Element index      10
 Element id         10

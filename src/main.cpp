@@ -62,7 +62,7 @@ void PrintPreamble(){
 
 }
 
-
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle);
 
 
 
@@ -88,16 +88,10 @@ int main(int argc, char* argv[]){
 	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh = nullptr;
-	switch(argc){
-		case 0:
-		case 1: gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector); 
-				break;
-		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);
-				break;
-		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);
-				break;
-		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
-	}
+	REAL toldist = 1.e-4;
+	REAL tolangle = 1.e-3; 
+	gmesh = ReadInput(argc,argv,planevector,toldist,tolangle);
+
 
 	DFNMesh dfn(gmesh);
 	// Loop over fractures and refine mesh around them
@@ -106,7 +100,7 @@ int main(int argc, char* argv[]){
 		DFNFracture *fracture = new DFNFracture(*fracplane,&dfn);
 	// Find and split intersected ribs
 		fracture->FindRibs();
-		fracture->OptimizeRibs(0.35);
+		fracture->OptimizeRibs(0.39);
 		fracture->RefineRibs();
 	// Find and split intersected faces
 		fracture->FindFaces();
@@ -134,6 +128,22 @@ int main(int argc, char* argv[]){
 
 
 
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle){
+	TPZGeoMesh* gmesh = nullptr;
+	switch(argc){
+		case 0:
+		case 1: gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector); 
+				break;
+		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);
+				break;
+		case 5: tolangle = std::stod(argv[4]);
+		case 4: toldist = std::stod(argv[3]);
+		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);
+				break;
+		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
+	}
+	return gmesh;
+}
 
 
 

@@ -93,8 +93,6 @@ private:
     /// Finds intersection point of fracture boundaries and geometric mesh faces
     bool FindEndFracturePoint(DFNFace &face, TPZManVector<REAL,3> &ipoint);
     
-    /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
-    void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 
     /**
      * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, 
@@ -135,10 +133,14 @@ public:
     /// Set Refinement Patterns and create sub elements
     void RefineFaces();
 
-    /// Triangulates fracture plane
+    /// Triangulates fracture surface from outline
     void MeshFractureSurface();
-
-
+    /// Assemble the set of constraints that outlines the fracture surface
+    void AssembleOutline();
+    /// Lists this fracture outer loop of edges
+    void GetOuterLoop(std::list<int> &outerLoop);
+    /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
+    void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 };
 
 #endif /* DFNFracture_h */

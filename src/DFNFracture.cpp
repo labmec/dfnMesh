@@ -425,7 +425,8 @@ void DFNFracture::SplitFractureEdge(std::list<int> &fracEdgeLoop){
     }
     
 	// vector of pointers to maps
-	TPZVec<std::map<REAL, int64_t>* > edgemap(nedges);
+    // @todo refactor this to tpzautopointer<map> to prevent memory leak
+	TPZManVector<std::map<REAL, int64_t>* > edgemap(nedges);
     for(int i = 0; i < nedges; i++){
         edgemap[i] = new std::map<REAL, int64_t>;
     }
