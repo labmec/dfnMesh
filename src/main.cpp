@@ -88,9 +88,9 @@ int main(int argc, char* argv[]){
 	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh = nullptr;
-	REAL toldist = 1.e-4;
-	REAL tolangle = 1.e-3; 
-	gmesh = ReadInput(argc,argv,planevector,toldist,tolangle);
+	REAL tol_dist = 1.e-4;
+	REAL tol_angle = 1.e-3; 
+	gmesh = ReadInput(argc,argv,planevector,tol_dist,tol_angle);
 
 
 	DFNMesh dfn(gmesh);
@@ -100,11 +100,12 @@ int main(int argc, char* argv[]){
 		DFNFracture *fracture = new DFNFracture(*fracplane,&dfn);
 	// Find and split intersected ribs
 		fracture->FindRibs();
-		fracture->OptimizeRibs(0.39);
+		fracture->OptimizeRibs(tol_dist);
 		fracture->RefineRibs();
 	// Find and split intersected faces
 		fracture->FindFaces();
 		fracture->RefineFaces();
+		fracture->AssembleOutline();
 	// // Mesh fracture surface
 	// 	if(gmesh->Dimension() == 3){
 	// 		fracture->MeshFractureSurface();
