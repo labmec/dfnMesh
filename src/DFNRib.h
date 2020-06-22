@@ -129,6 +129,9 @@ public:
     /// Returns true if changes have been made
     bool UpdateMaterial();
 
+    /// Forces projection (optimization) of the intersection to the closest lower dimensional side
+    void ForceProjection();
+
     private:
         /// Creates refinement pattern based on status vector and intersection node index
         void CreateRefPattern();

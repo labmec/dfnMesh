@@ -135,7 +135,10 @@ void DFNRib::CreateRefPattern(){
 
 
 
-
+void DFNRib::ForceProjection(){
+    REAL BIG_NUMBER = 1.e12;
+    this->Optimize(BIG_NUMBER);
+}
 
 
 
@@ -197,6 +200,7 @@ void DFNRib::UpdateNeighbours(int iside){
                 // rib_ptr->StatusVec()[neig_side] = fStatus[iside];
                 // rib_ptr->Optimize();
                 if(rib_ptr->NeedsRefinement()) {rib_ptr->Optimize();}
+                // if(rib_ptr->NeedsRefinement()) {rib_ptr->ForceProjection();}
                 break;
             }
             case 2:{
