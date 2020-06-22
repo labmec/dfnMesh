@@ -95,6 +95,31 @@ public:
      * @brief Check if element should be refined
      * @return False if only one node or only two consecutive nodes have been intersected
     */
+    bool NeedsRefinement(){
+        int nsides = fGeoEl->NSides();
+        if(fStatus[nsides-1]) return true;
+        int nnodes = fGeoEl->NCornerNodes();
+        int nedges = nnodes;
+        int cutedges = 0;
+        int cutnodes = 0;
+        bool consecutive_nodes = false;
+        for(int i=0; i<nedges; i++){
+            cutnodes += fStatus[i];
+            cutedges += fStatus[i+nnodes];
+            if(fStatus[i]&&fStatus[(i+1)%nnodes]){
+                // check anterior and posterior edges for intersection
+                consecutive_nodes = (fStatus[(i+nnodes)%nedges]==0)&&(fStatus[(i+1)%nedges]==0);
+                //                             anterior edge                   posterior edge
+            }
+        }
+        if(cutnodes==3) consecutive_nodes = false;
+
+        if(consecutive_nodes && cutedges<=1) return false;
+        if(cutnodes == 1 && cutedges == 0) return false;
+        return true;
+    }
+
+    /// Return true if this face is in contact at all with the fracture
     bool IsIntersected(){
         int nsides = fGeoEl->NSides();
         for(int i=0; i<nsides; i++){
