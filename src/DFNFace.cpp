@@ -41,11 +41,12 @@ DFNFace &DFNFace::operator=(const DFNFace &copy){
 
 
 
+DFNRib* DFNFace::Rib(int i){return fFracture->Rib(fRibs[i]);}
 
 
 
-
-
+//@todo I'm not sure how robust this is. I haven't considered some 
+// possibilities that may arise from fractures smaller than elements... gotta run some tests
 bool DFNFace::IsOnBoundary(){
 	int n_intersections = 0;
 	int n_lowdim_sides = fGeoEl->NSides()-1;
@@ -376,6 +377,7 @@ void DFNFace::FillChildrenAndNewNodes(
 
 /// Check if should be refined and generate the subelements of material id matID
 void DFNFace::Refine(){
+	if(!this->NeedsRefinement()) return;
 	// define refPattern
 	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(fRefMesh);
 	fGeoEl->SetRefPattern(refpat);
@@ -384,6 +386,15 @@ void DFNFace::Refine(){
 	fGeoEl->Divide(children);
 	// set father for children?
 	// create sskeleton?
+
+	// update internal node index
+	int splitcase = GetSplitPattern(fStatus);
+	switch(splitcase){
+		case 5:
+		case 6:
+		case 8:	fIntersectionIndex = children[0]->NodeIndex(0);
+		default: break;
+	}
 }
 
 

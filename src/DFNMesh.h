@@ -53,8 +53,11 @@ class DFNMesh{
         /// Pointer to geometric mesh
         TPZGeoMesh *Mesh(){return fGMesh;}
 
-		/// Insert intersection elements of lower dimension in the geometric mesh.
-    	void CreateSkeletonElements(int dimension, int matid);
+		/** 
+         * @brief Insert intersection elements of lower dimension in the geometric mesh.
+         * @note matid = -1 will use the material id of first that is found. Set it if you want to force
+         */
+    	void CreateSkeletonElements(int dimension, int matid = -1);
 		
 		/// Setup datastructure for fractured volumes (including finding fracture elements enclosed by them)
 		void CreateVolumes();

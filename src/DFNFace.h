@@ -41,7 +41,7 @@ private:
 	DFNFracture *fFracture = nullptr;
 
 	/// Vector with indices of its ribs
-	TPZManVector<int64_t, 2> fRibs;
+	TPZManVector<int64_t, 4> fRibs;
 
     /// Refinement mesh is used to create a refinement pattern and decide how to optimize it
     TPZGeoMesh fRefMesh;
@@ -65,8 +65,17 @@ public:
     /// Destructor
     ~DFNFace(){};
     
+    /// Pointer to geometric element
+    TPZGeoEl* GeoEl() const {return fGeoEl;}
+    
     /// Element index
     int64_t Index() const {return fGeoEl->Index();}
+
+    /**
+     * @brief Return pointer to i-th rib.
+     * @returns nullptr if rib isn't in Fracture's rib map
+    */
+    DFNRib *Rib(int i);
     
     /// Set index of in-plane intersection node
     void SetIntersectionIndex(int64_t index){fIntersectionIndex = index;}
@@ -80,13 +89,13 @@ public:
     }
 
     /// Get in-plane intersection coordinates
-    TPZManVector<REAL, 3> IntersectionCoord(){return fCoord;}
+    TPZManVector<REAL, 3> IntersectionCoord() const {return fCoord;}
     
     /// Set ribs of face
     void SetRibs(TPZVec<int64_t> &RibsIndices) {fRibs = RibsIndices;}
 
     /// Get ribs of face
-    TPZVec<int64_t> GetRibs() {return fRibs;}
+    TPZVec<int64_t> GetRibs() const {return fRibs;}
 
     /// Give face a pointer to which fracture is cutting it
     void SetFracture(DFNFracture *Fracture){fFracture = Fracture;}
@@ -95,7 +104,7 @@ public:
      * @brief Check if element should be refined
      * @return False if only one node or only two consecutive nodes have been intersected
     */
-    bool NeedsRefinement(){
+    bool NeedsRefinement() const{
         int nsides = fGeoEl->NSides();
         if(fStatus[nsides-1]) return true;
         int nnodes = fGeoEl->NCornerNodes();
@@ -108,7 +117,7 @@ public:
             cutedges += fStatus[i+nnodes];
             if(fStatus[i]&&fStatus[(i+1)%nnodes]){
                 // check anterior and posterior edges for intersection
-                consecutive_nodes = (fStatus[(i+nnodes)%nedges]==0)&&(fStatus[(i+1)%nedges]==0);
+                consecutive_nodes = (fStatus[i-1+nnodes]==0)&&(fStatus[(i+1)%nnodes+nnodes]==0);
                 //                             anterior edge                   posterior edge
             }
         }
@@ -120,7 +129,7 @@ public:
     }
 
     /// Return true if this face is in contact at all with the fracture
-    bool IsIntersected(){
+    bool IsIntersected() const{
         int nsides = fGeoEl->NSides();
         for(int i=0; i<nsides; i++){
             if(fStatus[i]) return true;
@@ -172,6 +181,7 @@ public:
      * @return True if any optimization has been made.
      * @param tolDist: Minimum acceptable distance
      * @param tolAngle: Minimum acceptable angle (rad)
+     * @todo
     */
     bool Optimize(REAL tolDist = 1e-4, REAL tolAngle = 0.1) {return true;}
 

@@ -818,3 +818,92 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
     }
     gmesh->BuildConnectivity();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void DFNFracture::AssembleOutline(){
+    // Build skeleton of 1D elements between new subelements
+    fdfnMesh->CreateSkeletonElements(1);
+    DFNFace *face = nullptr;
+    TPZGeoEl *face_gel = nullptr;
+
+    for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
+        face = &itr->second;
+        face_gel = face->GeoEl();
+        int n_intersection_points = 0;
+        for(int istate : face->StatusVec()){
+            n_intersection_points += istate;
+        }
+        if(n_intersection_points < 2) continue;
+
+        int nsides = face_gel->NSides();
+        int nnodes = face_gel->NCornerNodes();
+        TPZStack<int64_t> framenodes;
+        for(int i=0; i<nsides; i++){
+            if(face->StatusVec()[i]){
+                if(i<nnodes){
+                    framenodes.push_back(face_gel->NodeIndex(i));
+                }else if(i<nsides-1){
+                    framenodes.push_back(face->Rib(i-nnodes)->IntersectionIndex());
+                }else if(i == nsides-1){
+                    framenodes.push_back(face->IntersectionIndex());
+                }
+            }
+        }
+
+        // search for side of child that contains foutline element (frame_el)
+        TPZGeoEl *frame_el = nullptr;
+        int64_t frame_el_index = -1;
+        int nchildren = face_gel->NSubElements();
+        if(nchildren == 0){nchildren++;}
+        for(int ichild=0; ichild<nchildren; ichild++){
+            TPZGeoEl* child;
+            if(face_gel->HasSubElement()){
+                child = face_gel->SubElement(ichild);
+            }else{
+                child = face_gel;
+            }
+            int child_nnodes = child->NCornerNodes();
+            int ichildside = -1;
+            for(int inode=0; inode<child_nnodes; inode++){
+                if(framenodes[0]==child->NodeIndex(inode)){
+                    if(framenodes[1]==child->NodeIndex((inode+1)%child_nnodes)){
+                        ichildside = inode+child_nnodes;
+                        break;
+                    }else if(framenodes[1]==child->NodeIndex((inode+child_nnodes-1)%child_nnodes)){
+                        ichildside = (inode+child_nnodes-1)%child_nnodes + child_nnodes;
+                        break;
+                    }
+                }
+            }
+            if(ichildside < 0){continue;}
+            TPZGeoElSide gelside(child,ichildside);
+            TPZGeoElSide neig = gelside.Neighbour();
+            for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
+                if(neig.Element()->Dimension() != 1) continue;
+                frame_el = neig.Element();
+                frame_el_index = frame_el->Index();
+                break;
+            }
+            if(!frame_el) DebugStop();
+            break;
+        }
+        fOutline.insert({frame_el_index,frame_el});
+        frame_el->SetMaterialId(DFNMaterial::Efracture);
+    }
+}
