@@ -214,7 +214,7 @@ void DFNFracture::FindFaces(){
         if(candidate.IsOnBoundary()){
             candidate.FindInPlanePoint();
         }
-        gel->SetMaterialId(DFNMaterial::Erefined);
+        // gel->SetMaterialId(DFNMaterial::Erefined);
         candidate.UpdateRefMesh();
         AddFace(candidate);
     }

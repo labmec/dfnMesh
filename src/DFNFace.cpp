@@ -378,6 +378,7 @@ void DFNFace::FillChildrenAndNewNodes(
 /// Check if should be refined and generate the subelements of material id matID
 void DFNFace::Refine(){
 	if(!this->NeedsRefinement()) return;
+	fGeoEl->SetMaterialId(DFNMaterial::Erefined);
 	// define refPattern
 	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(fRefMesh);
 	fGeoEl->SetRefPattern(refpat);
