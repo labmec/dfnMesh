@@ -351,6 +351,7 @@ void DFNFracture::FindRibs(){
     TPZManVector<int64_t, 2> inode(2,0);
     for (int iel = 0; iel < Nels; iel++){
         TPZGeoEl *gel = fdfnMesh->Mesh()->Element(iel);
+        if(!gel) continue;
         //skip all elements that aren't ribs
         if (gel->Dimension() != 1){continue;}
         // skip all elements that have been cut by a previous fracture
@@ -865,45 +866,53 @@ void DFNFracture::AssembleOutline(){
                 }
             }
         }
-
-        // search for side of child that contains foutline element (frame_el)
         TPZGeoEl *frame_el = nullptr;
         int64_t frame_el_index = -1;
         int nchildren = face_gel->NSubElements();
         if(nchildren == 0){nchildren++;}
-        for(int ichild=0; ichild<nchildren; ichild++){
+        // queue all possible lines by checking 1D neighbours of children
+		std::set<TPZGeoEl *> candidate_ribs;
+		for(int ichild=0; ichild<nchildren; ichild++){
             TPZGeoEl* child;
             if(face_gel->HasSubElement()){
                 child = face_gel->SubElement(ichild);
             }else{
                 child = face_gel;
             }
-            int child_nnodes = child->NCornerNodes();
-            int ichildside = -1;
-            for(int inode=0; inode<child_nnodes; inode++){
-                if(framenodes[0]==child->NodeIndex(inode)){
-                    if(framenodes[1]==child->NodeIndex((inode+1)%child_nnodes)){
-                        ichildside = inode+child_nnodes;
-                        break;
-                    }else if(framenodes[1]==child->NodeIndex((inode+child_nnodes-1)%child_nnodes)){
-                        ichildside = (inode+child_nnodes-1)%child_nnodes + child_nnodes;
-                        break;
+			int nribs = child->NCornerNodes();
+			for(int cside = nribs; cside < 2*nribs; cside++){
+				TPZGeoElSide childside(child,cside);
+				TPZGeoElSide neig = childside.Neighbour();
+				for(/*void*/; neig != childside; neig = neig.Neighbour()){
+					if(neig.Element()->Dimension() != 1) continue;
+					candidate_ribs.insert(neig.Element());
+                    break;
+				}
+			}
+		}
+        bool enters_Q = false;
+        int nframenodes = framenodes.size();
+        int counter = 0;
+        for(auto candidate : candidate_ribs){
+            for(int inode=0; inode<nframenodes; inode++){
+                if(framenodes[inode]==candidate->NodeIndex(0)){
+                    for(int nextnode=0; nextnode<nframenodes; nextnode++){
+                        if(framenodes[nextnode]==candidate->NodeIndex(1)){
+                            enters_Q = true;
+                            break;
+                        }
                     }
                 }
+                if(enters_Q) break;
             }
-            if(ichildside < 0){continue;}
-            TPZGeoElSide gelside(child,ichildside);
-            TPZGeoElSide neig = gelside.Neighbour();
-            for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
-                if(neig.Element()->Dimension() != 1) continue;
-                frame_el = neig.Element();
-                frame_el_index = frame_el->Index();
-                break;
-            }
-            if(!frame_el) DebugStop();
-            break;
+            if(!enters_Q) continue;
+            frame_el = candidate;
+            frame_el_index = candidate->Index();
+            fOutline.insert({frame_el_index,frame_el});
+            frame_el->SetMaterialId(DFNMaterial::Efracture);
+            enters_Q = false;
+            counter++;
+            if(counter==2) break; //2 ribs is already an exception... 3 should never happen
         }
-        fOutline.insert({frame_el_index,frame_el});
-        frame_el->SetMaterialId(DFNMaterial::Efracture);
     }
 }

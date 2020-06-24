@@ -1283,8 +1283,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 				TPZGeoElSide neig = childside.Neighbour();
 				for(/*void*/; neig != childside; neig = neig.Neighbour()){
 					if(neig.Element()->Dimension() != 1) continue;
-					// @todo if(neig.Element()->MaterialId() != surfaceMaterial) continue;
-					if(neig.Element()->MaterialId() < surfaceMaterial) continue;
+					if(neig.Element()->MaterialId() != DFNMaterial::Efracture) continue;
 					candidate_ribs.insert(neig.Element());
 				}
 			}
