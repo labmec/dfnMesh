@@ -2,7 +2,7 @@
  *  @brief     Describes a planar polygon from it's corner points.
  *  @details   
  *  @author    Pedro Lima
- *  @date      2019
+ *  @date      2019.05
  */
 
 #ifndef DFNFracPlane_h
@@ -79,10 +79,10 @@ class DFNFracPlane
 	REAL ComputeArea();
 
 	/// Return true if the rib intersects the plane
-	bool Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
+	bool Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection = nullptr);
 
 	/// Return true if the rib intersects the plane
-	bool Check_rib(const TPZGeoEl *rib);
+	bool Check_rib(TPZGeoEl *rib, TPZManVector<REAL,3> *intersection = nullptr);
 
 	/// Return true if a point is above the fracture plane
    	bool Check_point_above(const TPZVec<REAL> &point) const;
@@ -91,7 +91,7 @@ class DFNFracPlane
    	bool IsPointInPlane(TPZVec<REAL> &point);
 	
 	/// Computes the intersection point with the plane
-	TPZVec<REAL> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
+	TPZManVector<REAL,3> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
    
 
 	/**

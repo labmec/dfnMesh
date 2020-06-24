@@ -21,10 +21,10 @@
 #include "DFNFace.h"
 #include "DFNVolume.h"
 #include "DFNFracPlane.h"
-
+#include "DFNMesh.h"
 #include <gmsh.h>
 
-
+class DFNMesh;
 typedef TPZFMatrix<REAL> Matrix;
 
 /** 
@@ -36,32 +36,26 @@ typedef TPZFMatrix<REAL> Matrix;
 class DFNFracture
 {
 private:
-    /// Define a default tolerance
-    REAL fTolerance = 1.e-4;
-    
-    /// Map of intersected ribs
-    std::map<int64_t, DFNRib> fRibs;
-    
-    /// Map of intersected faces
-    std::map<int64_t, DFNFace> fMidFaces;
-    
-    /// Map of end-fracture faces
-    std::map<int64_t, DFNFace> fEndFaces;
+    ///	Default tolerance
+	REAL fTolerance = 1.e-3;
+	
+	/// Pointer for the complete DFN mesh
+	DFNMesh *fdfnMesh;
+	
+	/// Map of ribs affected by this fracture
+	std::map<int64_t, DFNRib> fRibs;
 
-    /// Map of elements on fracture surface
-    std::map<int64_t, TPZGeoEl *> fSurfEl;
+	/// Map of faces affected by this fracture
+	std::map<int64_t, DFNFace> fFaces;
 
-    /// Pointer for the geometric mesh
-    TPZGeoMesh *fGMesh;
+	/// A planar convex polygon that indicates an insertion region for a fracture
+	DFNFracPlane fFracplane;
+	
+	/// Map of elements on fracture surface
+	std::map<int64_t, TPZGeoEl *> fSurface;
 
-    /// A planar polygon that indicates an insertion point for a fracture
-    DFNFracPlane fFracplane;
-
-    /// Material id of elements at fracture surface
-    int fSurfaceMaterial = 40;
-
-    /// Material id of mesh elements cut by fracture
-    int fTransitionMaterial = 18;
+	/// A set of constraints to the surface mesh of the fracture
+	std::map<int64_t, TPZGeoEl *> fOutline;
 
 public:
     
@@ -75,7 +69,7 @@ public:
      * of a point
      *  
      */
-    DFNFracture(DFNFracPlane &FracPlane, TPZGeoMesh *gmesh, int matID);
+    DFNFracture(DFNFracPlane &FracPlane, DFNMesh *dfnMesh);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -83,18 +77,9 @@ public:
     /// Assignment operator
     DFNFracture &operator=(const DFNFracture &copy);
     
-    /// Associate the geometric mesh
-    void SetgeoMesh(TPZGeoMesh *gmesh){
-        fGMesh=gmesh;
-    }
-    
-    /// Access the geomesh
-    TPZGeoMesh* GetGeoMesh(){
-        return fGMesh;
-    }
     
     /// Return the corner nodes of the fracture
-    DFNFracPlane &GetPlane();
+    DFNFracPlane &FracPlane();
     
     /// Modify the default tolerance
     void SetTolerance(REAL tolerance);
@@ -106,10 +91,8 @@ private:
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
     /// Finds intersection point of fracture boundaries and geometric mesh faces
-    bool FindEndFracturePoint(DFNFace &face, TPZVec<REAL> &ipoint);
+    bool FindEndFracturePoint(DFNFace &face, TPZManVector<REAL,3> &ipoint);
     
-    /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
-    void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 
     /**
      * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, 
@@ -122,47 +105,42 @@ private:
     void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension);
 
 public:
-    
-    /// Insert intersection elements of lower dimension in the geometric mesh.
-    void CreateSkeletonElements(int dimension, int matid);
-    
     /// Access the ribs data structure
-    void AddRib(DFNRib rib);
+    void AddRib(DFNRib &rib);
     
-    /// Access mid-fracture faces' data structure
-    bool AddMidFace(DFNFace &face);
-    
-    /// Access end-fracture faces' data structure
-    bool AddEndFace(DFNFace &face);
+    void AddFace(DFNFace &face);
 
     /// Insert new volume in data structure
     void AddVolume(DFNVolume volume);
 
     /// Pointer to rib of index 'index'
-    DFNRib *Rib(int64_t index){return &fRibs[index];}
+    DFNRib *Rib(int64_t index);
 
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);
     
-    /// Find and split intersected faces
-    void SplitFaces(int matID);
-    
-    /// Find and split intersected ribs
-    void SplitRibs(int matID);
+    /// Find intersected ribs
+    void FindRibs();
+    /// Coalesce intersected ribs
+    void OptimizeRibs(REAL tolDist);
+    /// Set Refinement Patterns and create sub elements
+    void RefineRibs();
 
+    /// Find intersected faces
+    void FindFaces();
+    /// Coalesce intersected faces
+    void OptimizeFaces(REAL tolDist = 1e-4, REAL tolAngle = 0.1);
+    /// Set Refinement Patterns and create sub elements
+    void RefineFaces();
 
-    /// Triangulates fracture plane
-    void SplitFracturePlane();
-
-
-    /// Sets material for elements at surface of fracture
-    void SetSurfaceMaterial(int matID);
-    /// Get material for elements at the surface of fracture
-    int GetSurfaceMaterial(){return fSurfaceMaterial;}
-
-    /// Get material ID for elements at surface of fracture
-    int MaterialID(){return fSurfaceMaterial;}
-
+    /// Triangulates fracture surface from outline
+    void MeshFractureSurface();
+    /// Assemble the set of constraints that outlines the fracture surface
+    void AssembleOutline();
+    /// Lists this fracture outer loop of edges
+    void GetOuterLoop(std::list<int> &outerLoop);
+    /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
+    void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 };
 
 #endif /* DFNFracture_h */

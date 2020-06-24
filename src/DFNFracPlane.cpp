@@ -184,21 +184,25 @@ bool DFNFracPlane::Check_point_above(const TPZVec<REAL> &point) const{
         }
 }
 
-/**
- * @brief Checks if a rib is cut by a fracture plane
- * @param Point vector with the euclidean coordinates
- * @param Point vector with the euclidean coordinates
- * @return True if the rib is cut by the fracture plane
- * @return False if the rib is not cut by the fracture plane
- */
+bool DFNFracPlane::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
+    if(gel->Dimension() != 1) {PZError<<"\n\n This ain't no rib \n\n"; DebugStop();}
+    // Get rib's vertices
+    TPZManVector<int64_t,2> inode(2,0);
+    gel->GetNodeIndices(inode);
+    TPZManVector<REAL,3> node0(3,0);
+    TPZManVector<REAL,3> node1(3,0);
+    gel->NodePtr(0)->GetCoordinates(node0);
+    gel->NodePtr(1)->GetCoordinates(node1);
+    return Check_rib(node0,node1,intersection);
+}
 
-bool DFNFracPlane::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
+bool DFNFracPlane::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection) {
     //check for infinite plane
     if(Check_point_above(p1) != Check_point_above(p2)){
         //Rib cut by infinite plane
         //then calculate intersection point and check if it's within plane boundaries
-        TPZManVector<REAL,3> intersection = CalculateIntersection(p1, p2);
-        return IsPointInPlane(intersection);
+        *intersection = CalculateIntersection(p1, p2);
+        return IsPointInPlane(*intersection);
     }
     else
     {
@@ -212,7 +216,7 @@ bool DFNFracPlane::Check_rib(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) {
  * @param Point below the plane (vector)
  * @return Intersecting point
  */
-TPZVec<double> DFNFracPlane::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
+TPZManVector<double, 3> DFNFracPlane::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
 {     
     TPZVec<double> Pint;
 

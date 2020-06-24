@@ -21,36 +21,34 @@
 //#include "tpanic.h"
 
 typedef TPZFMatrix<REAL> Matrix;
+class DFNFracture;
 
 /// DFNRib class describes ribs and whether it's cut by a plane. It also carries a method to split itself into two ribs at a given point.
 class DFNRib
 {
 private:
     
-    /// The index of the one dimensional element
-    int64_t fRibIndex;
+    /// pointer to its original geometric element
+	TPZGeoEl *fGeoEl;
 
-    /// Indicates whether it intersects the plane
-    bool fIsCut;
-    
-    /// Indices of the subelements
-    // TPZManVector<int64_t,2> fSubElements;
-    
-    // /// Intersection point index
-    // int64_t fIntersectionIndex = -1;
-    /// Index of geometric element EPoint at intersection
-    int64_t fIntersectionIndex = -1;
+	/// status vector describes how the sides of this element have been intersected
+	TPZManVector<int, 3> fStatus;
 
-    /// Father Element
-    int64_t fFather = -1;
+	/// Anticipated coordinates of intersection (may not be real coordinates)
+	TPZManVector<REAL, 3> fCoord;
+	
+	/// Index of intersection node
+	int64_t fIntersectionIndex = -1;
+
+    /// Pointer to the fracture
+    DFNFracture *fFracture = nullptr;
 
 public:
     /// Empty constructor
-    DFNRib();
+    DFNRib(): fGeoEl(nullptr), fStatus({0,0,0}){};
     
-    /// Rib defined by the element index, indicating whether the
-    /// intersection point is within the fracture surface
-    DFNRib(int64_t index, bool inplane);
+    /// Default constructor takes a pointer to geometric element
+    DFNRib(TPZGeoEl *gel, DFNFracture *Fracture);
     
     /// Copy constructor
     DFNRib(const DFNRib &copy);
@@ -58,33 +56,85 @@ public:
     /// Assignment operator
     DFNRib &operator=(const DFNRib &copy);
     
-    /**
-     * @brief Set the index for an element if the fracture plane is cut by this element
-     * @param Element index
-     * @param Yes or no if the element is cutting the fracture plane
-     */
-    void SetElementIndex(int64_t elindex, bool IsCut);
-    
-    /// Element index
-    int64_t ElementIndex() const;
-    
-    /// Intersects the plane or not
-    void SetIsCut(bool is) ;
-    
-    /// Intersects the plane or not
-    bool IsCut() const;
-    
-    /// Return the subelement indices
-    TPZVec<int64_t> SubElements() const;
-    
-    /// Returns intersection EPoint element index
-    int64_t IntersectionIndex() const {return fIntersectionIndex;}
+    /// Destructor
+    ~DFNRib(){};
 
-    /// Set the subelement indices
-    void SetChildren(const TPZVec<int64_t> &subels);
+    /// Element index
+    int64_t Index() const {return fGeoEl->Index();}
     
-    ///Divide the given rib and generate the subelements
-    void DivideRib(TPZGeoMesh *gmesh, TPZVec<REAL> interpoint,int matID);
+    /// Set index of intersection node
+    void SetIntersectionIndex(int64_t index){fIntersectionIndex = index;}
+    
+    /// Get index of intersection node
+    int64_t IntersectionIndex() const {return fIntersectionIndex;}
+    
+    /// Set anticipated intersection coordinates (real coordinates are defined by DFNRib::Optimize())
+    void SetIntersectionCoord(TPZManVector<REAL, 3> coord){
+        fCoord = coord;
+    }
+
+    /// Get anticipated intersection coordinates
+    TPZManVector<REAL, 3> AntCoord(){return fCoord;}
+
+    /// Get real intersection coordinates (after optimization)
+    TPZManVector<REAL, 3> RealCoord();
+
+    /// Give face a pointer to which fracture is cutting it
+    void SetFracture(DFNFracture *Fracture){fFracture = Fracture;}
+
+    /**
+     * @brief Flag if rib was found to be intersected at any side
+     * @return True if any element of status vector is true
+    */
+    inline bool IsIntersected() const{
+        return (fStatus[0] || fStatus[1] || fStatus[2]);
+    }
+
+    /// Check if this rib should be refined
+    inline bool NeedsRefinement() {return fStatus[2];}
+
+    /// Set Status Vector (topology of intersection)
+    void SetStatusVec(TPZManVector<int, 3> status){
+        if(status.size() != 3) DebugStop();
+        fStatus = status;
+    }
+    void SetStatusVec(const std::initializer_list<int>& status){
+        if(status.size() != 3) DebugStop();
+        fStatus = status;
+    }
+
+    /// Reference to status vector
+    TPZManVector<int, 3> &StatusVec(){return fStatus;}
+    
+    /**
+     * @brief Check geometry of intersection against a tolerance, snaps intersection 
+     * to closest side(s) if necessary and modifies affected neighbours.
+     * @return True if any optimization has been made.
+     * @param tol: Minimum acceptable length
+    */
+    bool Optimize(REAL tolDist = 1e-4);
+
+    /// Check if should be refined and generate the subelements
+    void Refine();
+
+    /// Sets material id
+    void SetMaterialId(int matID){
+        fGeoEl->SetMaterialId(matID);
+    };
+
+    /// After optimization, update neighbours through side iside
+    void UpdateNeighbours(int iside);
+
+    /// Check if rib will be incorporated onto fracture and correct its material id as such.
+    /// Returns true if changes have been made
+    bool UpdateMaterial();
+
+    /// Forces projection (optimization) of the intersection to the closest lower dimensional side
+    void ForceProjection();
+
+    private:
+        /// Creates refinement pattern based on status vector and intersection node index
+        void CreateRefPattern();
 
 };
 

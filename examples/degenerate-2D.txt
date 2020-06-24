@@ -1,0 +1,13 @@
+Domain
+4.0 4.0 0.0
+
+Mesh
+EQuadrilateral
+2 2 0
+
+NumberOfFractures 1
+
+Fracture 0 4
+-0.01  4.01  4.01 -0.01 
+ 1.62  0.40  0.40  1.62
+-1.00 -1.00  1.00  1.00
