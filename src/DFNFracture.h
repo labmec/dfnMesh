@@ -132,10 +132,8 @@ public:
     void MeshFractureSurface();
     /// Assemble the set of constraints that outlines the fracture surface
     void AssembleOutline();
-    /// Lists this fracture outer loop of edges
+    /// Builds and fills a list with this fracture outer loop of edges
     void GetOuterLoop(std::vector<int> &outerLoop);
-    /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
-    void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 };
 
 #endif /* DFNFracture_h */

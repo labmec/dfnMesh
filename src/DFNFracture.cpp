@@ -442,120 +442,6 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
 
 
 
-void DFNFracture::SplitFractureEdge(std::list<int> &fracEdgeLoop){ 
-    
-    // Compute fracture edges' lenghts
-    int nedges = fFracplane->GetCornersX().Cols();
-    TPZVec<REAL> edgelength(nedges,0);
-    Matrix fraccorners(3,nedges);
-    fraccorners = fFracplane->GetCornersX();
-    for(int i = 0; i < nedges; i++){
-        edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
-                              +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
-                              +pow(fraccorners(2,i)-fraccorners(2,(i+1)%nedges),2));
-    }
-    
-	// vector of pointers to maps
-    // @todo refactor this to tpzautopointer<map> to prevent memory leak
-	TPZManVector<std::map<REAL, int64_t>* > edgemap(nedges);
-    for(int i = 0; i < nedges; i++){
-        edgemap[i] = new std::map<REAL, int64_t>;
-    }
-    
-    // iterate over all endfaces and map it to the fracture-edge that cuts it
-    for (auto it = fFaces.begin(); it != fFaces.end(); it++){
-        // get intersection node index and coordinates
-        DFNFace *iface = &it->second;
-        int64_t ipointindex = iface->IntersectionIndex();
-        TPZVec<REAL> ipointcoord(3);
-        fdfnMesh->Mesh()->NodeVec()[ipointindex].GetCoordinates(ipointcoord);
-
-        // iterate over edges to check if ipoint belongs to it
-        for(int iedge = 0; iedge < nedges; iedge++){
-			//vectors from ipoint to iedge's nodes
-			TPZManVector<REAL, 3> v1(3);
-				v1[0] = fraccorners(0,iedge) - ipointcoord[0];
-				v1[1] = fraccorners(1,iedge) - ipointcoord[1];
-				v1[2] = fraccorners(2,iedge) - ipointcoord[2];
-			TPZManVector<REAL, 3> v2(3);
-				v2[0] = fraccorners(0,(iedge+1)%nedges) - ipointcoord[0];
-				v2[1] = fraccorners(1,(iedge+1)%nedges) - ipointcoord[1];
-				v2[2] = fraccorners(2,(iedge+1)%nedges) - ipointcoord[2];
-			// square of cross product
-			REAL temp = pow(v1[1]*v2[2] - v1[2]*v2[1],2);
-				temp += pow(v1[2]*v2[0] - v1[0]*v2[2],2);
-				temp += pow(v1[0]*v2[1] - v1[1]*v2[0],2);
-				temp = sqrtl(temp);
-            // check if point is in edge by calculating if it's normal distance to the edge is zero
-            REAL dist = temp/edgelength[iedge];
-			if(dist<gDFN_SmallNumber){
-				// compute local 1D coordinate (alpha)
-				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
-				REAL alpha = norm/edgelength[iedge];
-				if(alpha > 1+gDFN_SmallNumber){std::cout<<"\nProblem with alpha\n";DebugStop();}
-				// map intersection indexes from smallest alpha to biggest
-                // map <alpha, index>
-				edgemap[iedge]->insert({alpha, ipointindex});
-			}
-        }
-    }
-    
-    // GMsh does not accept zero index entities
-    const int shift = 1;
-
-    bool warning_message_Q = true;
-    //Once intersections on fracture-edges have been properly ordered and mapped by edge
-	//iterate over edges to split them
-	for (int iedge = 0; iedge < nedges; iedge++)
-	{
-		int64_t nels = fdfnMesh->Mesh()->NElements();
-		TPZManVector<int64_t,2> inodes(2);     //index of nodes to be connected
-        int icorner = iedge; //for readability
-        
-        if(edgemap[iedge]->size() == 0){
-            #ifdef PZDEBUG
-                if(warning_message_Q){
-                    std::cout<<"\n Warning: Is there an edge of a fracture that doesn't cut any element? \n\n";
-                    warning_message_Q = false;
-                }
-            #endif //PZDEBUG
-            // DebugStop();
-            inodes[0] = fFracplane->CornerIndex(icorner);
-            inodes[1] = fFracplane->CornerIndex((icorner+1)%nedges);
-            this->fSurface[nels] = fdfnMesh->Mesh()->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture+6, nels);
-            fracEdgeLoop.push_back((int) nels + shift);
-            continue;
-        }
-
-
-		// connect first end-face intersection to iedge's first node
-		auto it = edgemap[iedge]->begin();
-        inodes[0] = fFracplane->CornerIndex(icorner);
-		inodes[1] = it->second;
-		this->fSurface[nels] = fdfnMesh->Mesh()->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture+6, nels);
-        fracEdgeLoop.push_back((int) nels + shift);
-        
-        // iterate over iedge's map
-        while(++it != edgemap[iedge]->end()){
-            nels++;
-            inodes[0] = inodes[1];
-            inodes[1] = it->second;
-            this->fSurface[nels] = fdfnMesh->Mesh()->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture+6, nels);
-            fracEdgeLoop.push_back((int) nels + shift);
-        }
-
-		// connect last end-intersection to edge last node
-		nels++;
-		inodes[0] = inodes[1];
-        inodes[1] = fFracplane->CornerIndex((icorner+1)%nedges);
-		this->fSurface[nels] = fdfnMesh->Mesh()->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture+6, nels);
-        fracEdgeLoop.push_back((int) nels + shift);
-    }
-	
-fdfnMesh->Mesh()->BuildConnectivity();  
-}
-
-
 
 
 
@@ -570,8 +456,8 @@ void DFNFracture::MeshFractureSurface(){
     // GMsh does not accept zero index entities
     const int shift = 1;
     // First construct the edges of the fracture surface
-    std::list<int> fracEdgeLoop;
-    SplitFractureEdge(fracEdgeLoop);
+    std::vector<int> fracEdgeLoop;
+    GetOuterLoop(fracEdgeLoop);
 
     // initialize GMsh
     gmsh::initialize();
