@@ -134,6 +134,8 @@ public:
     void AssembleOutline();
     /// Builds and fills a list with this fracture outer loop of edges
     void GetOuterLoop(std::vector<int> &outerLoop);
+    /// Find faces that should be incorporated to fracture surface
+    void GetFacesInSurface(std::vector<TPZGeoEl*> &faces);
 };
 
 #endif /* DFNFracture_h */

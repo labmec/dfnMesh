@@ -297,11 +297,7 @@ TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh){
 }
 
 
-// TPZManVector<REAL,3> CrossProduct(TPZManVector<REAL,3> v1, TPZManVector<REAL,3> v2 ){
-// 	TPZManVector<REAL,3> cross(3,0);
-// 	cross[0] = v1[]
-// 	return cross;
-// }
+
 
 /**
  * @brief Computes area of plane
@@ -424,3 +420,16 @@ REAL DFNFracPlane::ComputeArea(){
 
 // 	return fracplaneindex;
 // }
+
+
+
+TPZManVector<REAL, 3> DFNFracPlane::GetProjectedX(TPZManVector<REAL, 3> &x){
+    TPZManVector<REAL, 3> projection;
+    REAL alpha = fAxis(0,2)*(x[0]-fCornerPoints(0,1))
+                +fAxis(1,2)*(x[1]-fCornerPoints(1,1))
+                +fAxis(2,2)*(x[2]-fCornerPoints(2,1));
+    projection[0] = x[0] - alpha*fAxis(0,2);
+    projection[1] = x[1] - alpha*fAxis(1,2);
+    projection[2] = x[2] - alpha*fAxis(2,2);
+    return projection;
+}

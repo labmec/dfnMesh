@@ -458,15 +458,52 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
 
 
 
+void DFNFracture::GetFacesInSurface(std::vector<TPZGeoEl*> &faces){
+    faces.reserve(20);
+    std::map<int64_t, int> candidates;
+    TPZGeoEl *cand_face;
+    int nedges;
+    TPZGeoEl *edge;
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    // loop through edges in outline and check their 2D neighbours
+    for(auto itr = fOutline.begin(); itr != fOutline.end(); itr++){
+        edge = itr->second;
+        TPZGeoElSide gelside(edge,2);
+        TPZGeoElSide neig = gelside.Neighbour();
+        for(/*void*/;neig!=gelside; neig = neig.Neighbour()){
+            cand_face = neig.Element();
+            if(cand_face->Dimension() != 2) continue;
+            nedges = cand_face->NCornerNodes();
+            int64_t index = cand_face->Index();
+            if(++candidates[index] < nedges) continue;
+            faces.push_back(gmesh->Element(index));
+            SetMaterialIDChildren(DFNMaterial::Efracture,cand_face);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void DFNFracture::MeshFractureSurface(){
     // GMsh does not accept zero index entities
     const int shift = 1;
     // First construct the edges of the fracture surface
-    std::vector<int> fracEdgeLoop;
-    GetOuterLoop(fracEdgeLoop);
-
+    std::vector<int> outerLoop;
+    GetOuterLoop(outerLoop);
+    std::vector<TPZGeoEl*> facesInSurface;
+    GetFacesInSurface(facesInSurface);
+    return;
     // initialize GMsh
     gmsh::initialize();
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
@@ -509,9 +546,6 @@ void DFNFracture::MeshFractureSurface(){
             }
         }
     // INSERT LINES
-        // move loop list into a vector
-        std::vector<int> edgeloopvector{std::make_move_iterator(std::begin(fracEdgeLoop)),
-                                        std::make_move_iterator(std::end(fracEdgeLoop))};
         std::vector<int> curvesInSurface;
         for(auto iter = fSurface.begin(); iter != fSurface.end(); iter++){
             int64_t iel = iter->first+shift;
@@ -522,7 +556,7 @@ void DFNFracture::MeshFractureSurface(){
 
             gmsh::model::geo::addLine(node0,node1,iel);
             gmsh::model::geo::mesh::setTransfiniteCurve(iel,2); // to reduce number of nodes created by GMsh
-            bool lineIsInEdge = (std::find(edgeloopvector.begin(),edgeloopvector.end(),iel) != edgeloopvector.end());
+            bool lineIsInEdge = (std::find(outerLoop.begin(),outerLoop.end(),iel) != outerLoop.end());
             if(lineIsInEdge == false){
                 curvesInSurface.push_back(iel);
             }
@@ -530,7 +564,7 @@ void DFNFracture::MeshFractureSurface(){
     
     // CURVE LOOP
         int surfaceIndex = 1;
-        gmsh::model::geo::addCurveLoop(edgeloopvector,surfaceIndex);
+        gmsh::model::geo::addCurveLoop(outerLoop,surfaceIndex);
 
     // SURFACE
         gmsh::model::geo::addPlaneSurface({surfaceIndex},surfaceIndex);
@@ -541,17 +575,17 @@ void DFNFracture::MeshFractureSurface(){
         gmsh::model::mesh::embed(1,curvesInSurface,2,surfaceIndex);
     // PHYSICAL GROUPS
         // physical curve
-        int nlines = curvesInSurface.size() + edgeloopvector.size();
-        if(curvesInSurface.size() > edgeloopvector.size()){
+        int nlines = curvesInSurface.size() + outerLoop.size();
+        if(curvesInSurface.size() > outerLoop.size()){
             curvesInSurface.reserve(nlines);
-            curvesInSurface.insert(curvesInSurface.end(), edgeloopvector.begin(), edgeloopvector.end() );
+            curvesInSurface.insert(curvesInSurface.end(), outerLoop.begin(), outerLoop.end() );
 
             gmsh::model::addPhysicalGroup(1,curvesInSurface,DFNMaterial::Efracture);
         }else{
-            edgeloopvector.reserve(nlines);
-            edgeloopvector.insert(edgeloopvector.end(), curvesInSurface.begin(), curvesInSurface.end() );
+            outerLoop.reserve(nlines);
+            outerLoop.insert(outerLoop.end(), curvesInSurface.begin(), curvesInSurface.end() );
 
-            gmsh::model::addPhysicalGroup(1,edgeloopvector,DFNMaterial::Efracture);
+            gmsh::model::addPhysicalGroup(1,outerLoop,DFNMaterial::Efracture);
         }
         // physical surface
         gmsh::model::addPhysicalGroup(2,{surfaceIndex},DFNMaterial::Efracture);

@@ -45,7 +45,7 @@ class DFNFracPlane
 	REAL fTolerance = 1.e-4;
 
 	/// If nodes of this plane have been added to a geometric mesh, this vector holds GeoNodes indices 
-	TPZManVector<int64_t, 5> fPointsIndex;
+	TPZManVector<int64_t> fPointsIndex;
 
   public:
 	/// Empty constructor
@@ -109,12 +109,11 @@ class DFNFracPlane
 		return fPointsIndex[i];
 	}
 
-//deprecated:
-	///@brief Creates a geometric element for this plane in pointed mesh
-	// int64_t DFNFracPlane::CreateElement(TPZGeoMesh *gmesh)
+	/**
+	 * @brief Takes a set of coordinates in 3D and returns its projection onto the plane
+	*/
+	TPZManVector<REAL, 3> GetProjectedX(TPZManVector<REAL, 3> &point);
 
-	// /// Element index
-	// int64_t ElementIndex() const {return fFracIndex;}
   private:
 	/// Initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);

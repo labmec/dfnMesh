@@ -180,4 +180,14 @@ enum DFNMaterial{
 // A small number for geometric tolerances
 static const double gDFN_SmallNumber = 1.e-3;
 
+// Set Material ID for element and its children
+static void SetMaterialIDChildren(int id, TPZGeoEl* gel){
+    gel->SetMaterialId(id);
+    if(gel->HasSubElement()){
+        int nchildren = gel->NSubElements();
+        for(int i=0; i<nchildren; i++){
+            SetMaterialIDChildren(id,gel->SubElement(i));
+        }
+    }
+}
 #endif /* DFNMesh_h */

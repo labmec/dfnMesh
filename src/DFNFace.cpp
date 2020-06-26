@@ -16,7 +16,8 @@
 //Constructor
 DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
 	fGeoEl(gel),
-	fFracture(fracture)
+	fFracture(fracture),
+	fCoord(0)
 {
 	int nsides = gel->NSides();
 	fStatus.Resize(nsides,0);

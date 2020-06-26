@@ -107,8 +107,7 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 		fracture->AssembleOutline();
 		fracplane->SetPointsInGeomesh(gmesh);
-		std::vector<int> outer_loop;
-		fracture->GetOuterLoop(outer_loop);
+		fracture->MeshFractureSurface();
 	// // Mesh fracture surface
 	// 	if(gmesh->Dimension() == 3){
 	// 		fracture->MeshFractureSurface();
