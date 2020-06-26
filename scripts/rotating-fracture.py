@@ -7,6 +7,8 @@ import math
 
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
+# where to save vtk files?
+destination = "documentation/animations/2020-06-25/"
 # ../examples/<example>
 example = "scripts/rotating-fracture.txt"
 # ../examples/<msh>
@@ -57,9 +59,10 @@ for i in range(steps):
               ,msh
               ,str(toldist)]
     subprocess.call(dfnMesh)
+    # @todo exception handler to stop loop should go in here
     rename = ["cp"
               , vtkfile+".vtk"
-              , vtkfile+"."+str(i)+".vtk"]
+              , destination+vtkfile+"."+str(i)+".vtk"]
     subprocess.call(rename)
     theta += step
 
