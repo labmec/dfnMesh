@@ -315,6 +315,8 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
     for(int i = 0; i < nedges; i++){
         edgemap[i] = new std::map<REAL, int64_t>;
     }
+    // The set of points that have already been checked
+    std::set<int64_t> checked;
 
     // iterate over all endfaces and map it to the fracture-edge that cuts it
     for (auto it = fFaces.begin(); it != fFaces.end(); it++){
@@ -324,6 +326,12 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
         TPZManVector<REAL,3> ipointcoord = iface->IntersectionCoord();
         if(ipointcoord.size()<2) continue;
         int64_t ipointindex = iface->IntersectionIndex();
+
+        // check if point was already checked
+        auto aux = checked.insert(ipointindex);
+        bool already_checked = !aux.second;
+        if(already_checked) continue;
+
         // @todo if(ipointindex == any of the fracplane.CornerIndex) continue;
         // iterate over edges to check if ipoint belongs to it
         for(int iedge = 0; iedge < nedges; iedge++){
