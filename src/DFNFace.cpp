@@ -555,13 +555,13 @@ bool DFNFace::FindInPlanePoint(){
         }
         DFNFracPlane faceplane(subcorners);
         // Check fFracplane's ribs for intersection with faceplane
-        int nribs = fFracture->FracPlane().GetCornersX().Cols();
+        int nribs = fFracture->FracPlane()->GetCornersX().Cols();
         for(int irib = 0; irib < nribs; irib++){
             TPZManVector<REAL,3> p1(3);
             TPZManVector<REAL,3> p2(3);
             for(int i = 0; i<3; i++){
-                p1[i] = fFracture->FracPlane().GetCornersX()(i, irib);
-                p2[i] = fFracture->FracPlane().GetCornersX()(i, (irib+1)%nribs);
+                p1[i] = fFracture->FracPlane()->GetCornersX()(i, irib);
+                p2[i] = fFracture->FracPlane()->GetCornersX()(i, (irib+1)%nribs);
             }
             if(faceplane.Check_rib(p1, p2, &fCoord)){
 				fStatus[fGeoEl->NSides()-1] = 1;

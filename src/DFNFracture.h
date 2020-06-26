@@ -36,8 +36,6 @@ typedef TPZFMatrix<REAL> Matrix;
 class DFNFracture
 {
 private:
-    ///	Default tolerance
-	REAL fTolerance = 1.e-3;
 	
 	/// Pointer for the complete DFN mesh
 	DFNMesh *fdfnMesh;
@@ -49,7 +47,7 @@ private:
 	std::map<int64_t, DFNFace> fFaces;
 
 	/// A planar convex polygon that indicates an insertion region for a fracture
-	DFNFracPlane fFracplane;
+	DFNFracPlane *fFracplane;
 	
 	/// Map of elements on fracture surface
 	std::map<int64_t, TPZGeoEl *> fSurface;
@@ -69,7 +67,7 @@ public:
      * of a point
      *  
      */
-    DFNFracture(DFNFracPlane &FracPlane, DFNMesh *dfnMesh);
+    DFNFracture(DFNFracPlane *FracPlane, DFNMesh *dfnMesh);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -79,11 +77,8 @@ public:
     
     
     /// Return the corner nodes of the fracture
-    DFNFracPlane &FracPlane();
+    DFNFracPlane *FracPlane();
     
-    /// Modify the default tolerance
-    void SetTolerance(REAL tolerance);
-    REAL GetTolerance() const;
     
 private:
         
@@ -138,7 +133,7 @@ public:
     /// Assemble the set of constraints that outlines the fracture surface
     void AssembleOutline();
     /// Lists this fracture outer loop of edges
-    void GetOuterLoop(std::list<int> &outerLoop);
+    void GetOuterLoop(std::vector<int> &outerLoop);
     /// Connects fracture-edge intersections and fills a list with the lines ordered as a counter-clockwise loop
     void SplitFractureEdge(std::list<int> &fracEdgeLoop);
 };

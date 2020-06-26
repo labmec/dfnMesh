@@ -177,6 +177,7 @@ enum DFNMaterial{
     // Etransition = 3
 };
 
-
+// A small number for geometric tolerances
+static const double gDFN_SmallNumber = 1.e-3;
 
 #endif /* DFNMesh_h */

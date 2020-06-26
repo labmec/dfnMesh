@@ -97,7 +97,7 @@ int main(int argc, char* argv[]){
 	// Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
 		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
-		DFNFracture *fracture = new DFNFracture(*fracplane,&dfn);
+		DFNFracture *fracture = new DFNFracture(fracplane,&dfn);
 	// Find and split intersected ribs
 		fracture->FindRibs();
 		fracture->OptimizeRibs(tol_dist);
@@ -106,6 +106,9 @@ int main(int argc, char* argv[]){
 		fracture->FindFaces();
 		fracture->RefineFaces();
 		fracture->AssembleOutline();
+		fracplane->SetPointsInGeomesh(gmesh);
+		std::vector<int> outer_loop;
+		fracture->GetOuterLoop(outer_loop);
 	// // Mesh fracture surface
 	// 	if(gmesh->Dimension() == 3){
 	// 		fracture->MeshFractureSurface();
