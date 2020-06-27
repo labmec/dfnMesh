@@ -20,5 +20,5 @@ This project is highly dependent in 2 open source libs:
 ## Cool graphics
 <p>
 <img src="./documentation/img/colored-refpatterns.png" title="Refinement patterns conforming to fracture surface" width="40%" height="40%"/>
+<img src="https://s3.us-west-2.amazonaws.com/secure.notion-static.com/e99a63e7-1b61-4334-b19a-52d0d5120413/2020-06-26_18-11-02.gif?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAT73L2G45O3KS52Y5%2F20200627%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20200627T194433Z&X-Amz-Expires=86400&X-Amz-Signature=f1dc4ec034c575a9a5f26a9774d01f4894b34f48618e0bdef218a8b65a20658c&X-Amz-SignedHeaders=host" title="Coalescing fracture that is close to nodes/edges" width="40%" height="40%"/>
 </p>
-
