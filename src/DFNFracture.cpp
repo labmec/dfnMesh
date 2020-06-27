@@ -478,6 +478,7 @@ void DFNFracture::GetFacesInSurface(std::vector<TPZGeoEl*> &faces){
             if(++candidates[index] < nedges) continue;
             faces.push_back(gmesh->Element(index));
             SetMaterialIDChildren(DFNMaterial::Efracture,cand_face);
+            fSurface.insert({index,cand_face});
         }
     }
 }
@@ -485,8 +486,22 @@ void DFNFracture::GetFacesInSurface(std::vector<TPZGeoEl*> &faces){
 
 
 
-
-
+/**
+ * @brief Get an oriented curve loop in gmsh fashion for a 2D element that has 1D neighbours for all its 1D sides
+ * @param shift: inform constant shift if you want to shift element indices (+1 is usually the case for gmsh)
+*/
+void GetCurveLoop(TPZGeoEl* el, std::vector<int> &loop, const int shift=0){
+    if(el->Dimension() != 2) DebugStop();
+    int nedges = el->NCornerNodes();
+    loop.resize(nedges,-1);
+    for(int iside=nedges; iside<2*nedges; iside++){
+        TPZGeoElSide gelside(el,iside);
+        TPZGeoElSide neig = gelside.Neighbour();
+        while(neig.Element()->Dimension() != 1){neig = neig.Neighbour();}
+        int orientation = (neig.Element()->NodeIndex(0)==el->NodeIndex(iside-nedges)?1:-1);
+        loop[iside-nedges] = orientation*(neig.Element()->Index()+shift);
+    }
+}
 
 
 
@@ -503,51 +518,34 @@ void DFNFracture::MeshFractureSurface(){
     GetOuterLoop(outerLoop);
     std::vector<TPZGeoEl*> facesInSurface;
     GetFacesInSurface(facesInSurface);
-    return;
+    
     // initialize GMsh
     gmsh::initialize();
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
     // INSERT POINTS
-        // iterate over ribs and get their ipoints
-        std::set<int64_t> pointset;
-        
-        for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
-            DFNRib *irib = &itr->second;
-            if (irib->IsIntersected() == false){continue;}
-            int64_t inode = irib->IntersectionIndex();
-            pointset.insert(inode);
-        }
-        for(auto point : pointset){
-            TPZManVector<REAL, 3> coord(3);
-            fdfnMesh->Mesh()->NodeVec()[point].GetCoordinates(coord);
+        // iterate over fOutline and get points
+    std::set<int64_t> pointset;
+    {
+        int64_t index = -1;
+        TPZManVector<REAL,3> projcoord(3,0);
+        TPZManVector<REAL,3> realcoord(3,0);
+        for(auto itr : fOutline){
+            TPZGeoEl* gel = itr.second;
+            for(int inode=0; inode<gel->NCornerNodes(); inode++){
+                index = gel->NodeIndex(inode);
+                bool newpoint = pointset.insert(index).second;
+                if(!newpoint){continue;}
+                gel->NodePtr(inode)->GetCoordinates(realcoord);
+                projcoord = fFracplane->GetProjectedX(realcoord);
+                gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],0.,index+shift);
 
-            gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,point+shift);
-
-        }
-        // iterate over endFaces and get their ipoints
-        for(auto itr = fFaces.begin(); itr != fFaces.end(); itr++){
-            DFNFace *iface = &itr->second;
-            if (iface->IsIntersected() == false){continue;}
-            int64_t inode = iface->IntersectionIndex();
-            TPZManVector<REAL, 3> coord(3);
-            fdfnMesh->Mesh()->NodeVec()[inode].GetCoordinates(coord);
-
-            gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode+shift);
-        }
-        // Corners of fracture plane
-        {
-            int ncorners = fFracplane->GetCornersX().Cols();
-            for(int i = 0; i<ncorners; i++){
-                int64_t inode = fFracplane->CornerIndex(i);
-                TPZManVector<REAL, 3> coord(3);
-                fdfnMesh->Mesh()->NodeVec()[inode].GetCoordinates(coord);
-
-                gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode+shift);
             }
         }
+    }
     // INSERT LINES
-        std::vector<int> curvesInSurface;
-        for(auto iter = fSurface.begin(); iter != fSurface.end(); iter++){
+    std::vector<int> curvesInSurface;
+    {
+        for(auto iter = fOutline.begin(); iter != fOutline.end(); iter++){
             int64_t iel = iter->first+shift;
             TPZGeoEl *gel = iter->second;
             if(gel->Dimension() != 1) continue;
@@ -556,18 +554,29 @@ void DFNFracture::MeshFractureSurface(){
 
             gmsh::model::geo::addLine(node0,node1,iel);
             gmsh::model::geo::mesh::setTransfiniteCurve(iel,2); // to reduce number of nodes created by GMsh
-            bool lineIsInEdge = (std::find(outerLoop.begin(),outerLoop.end(),iel) != outerLoop.end());
+            bool lineIsInEdge = (std::find(outerLoop.begin(),outerLoop.end(),iel-shift) != outerLoop.end());
             if(lineIsInEdge == false){
                 curvesInSurface.push_back(iel);
             }
         }
-    
-    // CURVE LOOP
-        int surfaceIndex = 1;
-        gmsh::model::geo::addCurveLoop(outerLoop,surfaceIndex);
+    }
+    // CURVE LOOPS
+        for(auto itr = outerLoop.begin(); itr != outerLoop.end(); itr++){
+            *itr += shift;
+        }
+        int surfaceIndex = 0 + shift;
+        std::vector<int> wiretags(facesInSurface.size()+1,-1);
+        wiretags[0] = gmsh::model::geo::addCurveLoop(outerLoop,surfaceIndex);
+    // Holes in surface
+        for(int iface=0;iface<facesInSurface.size();iface++){
+            TPZGeoEl* face = facesInSurface[iface];
+            std::vector<int> loop;
+            GetCurveLoop(face,loop,shift);
+            wiretags[iface+1] = gmsh::model::geo::addCurveLoop(loop);
+        }
 
-    // SURFACE
-        gmsh::model::geo::addPlaneSurface({surfaceIndex},surfaceIndex);
+    // SURFACE + HOLES
+        gmsh::model::geo::addPlaneSurface(wiretags,surfaceIndex);
     
     // lines in surface
         // @comment GMsh requires synchronize before embedding geometric entities
@@ -598,10 +607,12 @@ void DFNFracture::MeshFractureSurface(){
     // write (for testing)
         // gmsh::write("testAPI.msh");
     // import meshed plane back into PZ geoMesh
-        ImportElementsFromGMSH(fdfnMesh->Mesh(),2);
+        TPZVec<int64_t> newelements;
+        ImportElementsFromGMSH(fdfnMesh->Mesh(),2,pointset,newelements);
     // close GMsh
     gmsh::finalize();
     
+        InsertElementsInSurface(newelements);
     fdfnMesh->CreateSkeletonElements(1, DFNMaterial::Efracture);
 }
 
@@ -643,7 +654,7 @@ void DFNFracture::MeshFractureSurface(){
 
 
 
-void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
+void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<int64_t> &newelements){
     // GMsh does not accept zero index entities
     const int shift = 1;
 
@@ -651,46 +662,15 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
     // create a map <node,point>
     std::map<int,int> mapGMshToPZ;
 
-    // iterate over ribs and get intersection nodes
-    for(auto itr = fRibs.begin(); itr != fRibs.end(); itr++){
-        DFNRib *irib = &itr->second;
-        if (irib->IsIntersected() == false) continue;
-        int pznode = (int) irib->IntersectionIndex() +shift;
-
-        std::vector<size_t> node_identifiers;
+    for(int64_t pznode : oldnodes){
+		std::vector<size_t> node_identifiers;
         std::vector<double> coord;
         std::vector<double> parametricCoord;
-        gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord,0,pznode,true);
+        gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord,0,pznode+shift,true);
         int gmshnode = (int) node_identifiers[0];
-        mapGMshToPZ.insert({gmshnode,pznode});
-    }
-    // iterate over endFaces and get their ipoints
-    for(auto itr = fFaces.begin(); itr != fFaces.end(); itr++){
-        DFNFace *iface = &itr->second;
-        if (iface->IsIntersected() == false) continue;
-        int pznode = (int) iface->IntersectionIndex() +shift;
-        
-        std::vector<size_t> node_identifiers;
-        std::vector<double> coord;
-        std::vector<double> parametricCoord;
-        gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord,0,pznode,true);
-        int gmshnode = (int) node_identifiers[0];
-        mapGMshToPZ.insert({gmshnode,pznode});
-    }
-    // Corners of fracture plane
-    {
-        int ncorners = fFracplane->GetCornersX().Cols();
-        for(int i = 0; i<ncorners; i++){
-            int pznode = (int) fFracplane->CornerIndex(i) +shift;
-            
-            std::vector<size_t> node_identifiers;
-            std::vector<double> coord;
-            std::vector<double> parametricCoord;
-            gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord,0,pznode,true);
-            int gmshnode = (int) node_identifiers[0];
-            mapGMshToPZ.insert({gmshnode,pznode});
-        }
-    }
+		// insert with hint (since oldnodes is an already sorted set, these nodes will all go in the end)
+        mapGMshToPZ.insert(mapGMshToPZ.end(),{gmshnode,pznode+shift});
+	}
 
     // add new nodes into PZGeoMesh
     {
@@ -721,24 +701,11 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
         }
     }
     
-    // remember to use mapGMshToPZ to translate from GMsh node index to PZ nodeindex
-
-
-
 
     
     int64_t nels = gmesh->NElements();
     std::vector<std::pair<int, int> > dim_to_physical_groups;
-    gmsh::model::getPhysicalGroups(dim_to_physical_groups);
-   
-    std::vector<std::pair<int, int> > entities_0d;
-    std::vector<std::pair<int, int> > entities_1d;
-    std::vector<std::pair<int, int> > entities_2d;
-    std::vector<std::pair<int, int> > entities_3d;
-    gmsh::model::getEntities(entities_0d,0);
-    gmsh::model::getEntities(entities_1d,1);
-    gmsh::model::getEntities(entities_2d,2);
-    gmsh::model::getEntities(entities_3d,3);
+    gmsh::model::getPhysicalGroups(dim_to_physical_groups,dimension);
    
     /// inserting the elements
     for (auto group: dim_to_physical_groups) {
@@ -750,8 +717,9 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
        
         std::vector< int > entities;
         gmsh::model::getEntitiesForPhysicalGroup(dim, physical_identifier, entities);
-       
-        for (auto tag: entities) {
+
+		for (auto tag: entities) {
+		// std::cout<<"______________________test - tag = "<<tag;
            
             std::vector<int> group_element_types;
             std::vector<std::vector<std::size_t> > group_element_identifiers;
@@ -765,12 +733,16 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension){
                 int n_elements = group_element_identifiers[itype].size();
                 for (int iel = 0; iel < n_elements; iel++) {
                     int el_identifier = group_element_identifiers[itype][iel]-1+nels;
+					// std::cout<<"\n"<<el_identifier<<"\n";
+
                     for (int inode = 0; inode < n_nodes; inode++) {
                         // node_identifiers[inode] = group_node_identifiers[itype][iel*n_nodes+inode];
                         // Use mapGMshToPZ to translate from GMsh node index to PZ nodeindex
                         node_identifiers[inode] = mapGMshToPZ[group_node_identifiers[itype][iel*n_nodes+inode]];
                     }
                     TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
+					int64_t ntest = gmesh->NElements();
+					// std::cout<<"nelements = "<<ntest<<"\n";
                 }
             }
         }

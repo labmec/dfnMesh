@@ -95,9 +95,12 @@ private:
      * (Must be called between the pair gmsh::initialize and gmsh::finalize of 
      * the model from which elements should be read).
      * @param gmsh: Pointer to geometric mesh where elements should be inserted.
+     * @param dimension of elements to be imported
+     * @param oldnodes: a set of old nodes that don't required importing
+     * @param newelements: a vector with the indices of imported elements
      * @note If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
     */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension);
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<int64_t> &newelements);
 
 public:
     /// Access the ribs data structure
@@ -136,6 +139,23 @@ public:
     void GetOuterLoop(std::vector<int> &outerLoop);
     /// Find faces that should be incorporated to fracture surface
     void GetFacesInSurface(std::vector<TPZGeoEl*> &faces);
+
+    /**
+     * @brief Insert elements in the map of elements in surface
+    */
+    void InsertElementsInSurface(TPZVec<int64_t> &idvec){
+        for(auto id : idvec){
+            InsertElementsInSurface(fRibs.begin()->second.GeoEl()->Mesh()->Element(id));
+        }
+    }
+    void InsertElementsInSurface(TPZVec<TPZGeoEl*> &elvec){
+        for(auto el : elvec){
+            InsertElementsInSurface(el);
+        }
+    }
+    void InsertElementsInSurface(TPZGeoEl* el){
+        fSurface.insert({el->Index(),el});
+    }
 };
 
 #endif /* DFNFracture_h */

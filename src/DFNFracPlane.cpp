@@ -424,7 +424,7 @@ REAL DFNFracPlane::ComputeArea(){
 
 
 TPZManVector<REAL, 3> DFNFracPlane::GetProjectedX(TPZManVector<REAL, 3> &x){
-    TPZManVector<REAL, 3> projection;
+    TPZManVector<REAL, 3> projection(3,0);
     REAL alpha = fAxis(0,2)*(x[0]-fCornerPoints(0,1))
                 +fAxis(1,2)*(x[1]-fCornerPoints(1,1))
                 +fAxis(2,2)*(x[2]-fCornerPoints(2,1));

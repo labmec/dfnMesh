@@ -105,13 +105,12 @@ int main(int argc, char* argv[]){
 	// Find and split intersected faces
 		fracture->FindFaces();
 		fracture->RefineFaces();
-		fracture->AssembleOutline();
-		fracplane->SetPointsInGeomesh(gmesh);
-		fracture->MeshFractureSurface();
 	// // Mesh fracture surface
-	// 	if(gmesh->Dimension() == 3){
-	// 		fracture->MeshFractureSurface();
-	// 	}
+		fracture->AssembleOutline();
+		if(gmesh->Dimension() == 3){
+			fracplane->SetPointsInGeomesh(gmesh);
+			fracture->MeshFractureSurface();
+		}
 	// //insert fracture
 	// 	dfn.AddFracture(fracture);
 	}

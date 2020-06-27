@@ -47,7 +47,7 @@ void DFNMesh::Print(std::string pzmesh
 
 void DFNMesh::PrintColorful(std::string pzmesh,std::string vtkmesh){
 	// mesh.txt doesn't gain much... so print it normal first
-	this->Print(pzmesh,"skip");
+	// this->Print(pzmesh,"skip");
 	TPZGeoMesh *gmesh = this->fGMesh;
 	int64_t nels = gmesh->NElements();
 	int64_t iel;
@@ -290,12 +290,6 @@ void DFNMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set
         std::vector< int > entities;
         gmsh::model::getEntitiesForPhysicalGroup(dim, physical_identifier, entities);
 
-		#ifdef PZDEBUG
-			if(dimension == 3){
-				physical_identifier++; // to differ cut volumes from cut faces
-				//std::cout<<"\n@comment: For better graphics, volumetrical transition elements have material id shifted\n";
-			}
-		#endif
 		for (auto tag: entities) {
 		// std::cout<<"______________________test - tag = "<<tag;
            
@@ -717,16 +711,16 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 				if(nchildren > 1) planesurface_Q = 1;
 				int children_added = 0;
                 int64_t index = 0;
-				//@todo for an unfortunate quick improvisation I had ribs refined into a rib and a point when fractures pass through the node, but this will be fixed soon
-				{// @todo temporary exception
-					TPZStack<TPZGeoEl*> aux_children;
-					for(auto child : children){
-						if(child->Dimension() != 0){
-							aux_children.Push(child);
-						}else{nchildren--;}
-					}
-					children = aux_children;
-				}
+				// //@todo for an unfortunate quick improvisation I had ribs refined into a rib and a point when fractures pass through the node, but this will be fixed soon
+				// {// @todo temporary exception
+				// 	TPZStack<TPZGeoEl*> aux_children;
+				// 	for(auto child : children){
+				// 		if(child->Dimension() != 0){
+				// 			aux_children.Push(child);
+				// 		}else{nchildren--;}
+				// 	}
+				// 	children = aux_children;
+				// }
 				TPZManVector<bool> added_list(nchildren,false);
 				while(children_added < nchildren){
 					// find next child and check orientation
