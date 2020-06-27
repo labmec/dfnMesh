@@ -18,13 +18,13 @@ DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFracture::DFNFracture(DFNFracPlane *FracPlane, DFNMesh *dfnMesh){
-    fFracplane = FracPlane;
+DFNFracture::DFNFracture(DFNPolygon *Polygon, DFNMesh *dfnMesh){
+    fPolygon = Polygon;
     fdfnMesh = dfnMesh;
 
     // Set corner nodes of fracture into mesh
     if(fdfnMesh->Dimension() == 3){
-        TPZManVector<int64_t,4> nodeindices = fFracplane->SetPointsInGeomesh(fdfnMesh->Mesh());
+        TPZManVector<int64_t,4> nodeindices = fPolygon->SetPointsInGeomesh(fdfnMesh->Mesh());
     }
 }
 
@@ -38,7 +38,7 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
     fdfnMesh = copy.fdfnMesh;
     fRibs = copy.fRibs;
 	fFaces = copy.fFaces;
-    fFracplane = copy.fFracplane;
+    fPolygon = copy.fPolygon;
     return *this;
 }
 
@@ -47,8 +47,8 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
  * @return The plane corner coordinates
  */
 
-DFNFracPlane *DFNFracture::FracPlane() {
-    return fFracplane;
+DFNPolygon *DFNFracture::Polygon() {
+    return fPolygon;
 }
 
 
@@ -239,7 +239,7 @@ void DFNFracture::FindRibs(){
 
         // Check rib
         TPZManVector<REAL,3> intpoint(3,0);
-        bool resul = fFracplane->Check_rib(gel, &intpoint);
+        bool resul = fPolygon->Check_rib(gel, &intpoint);
 
         // Add rib
         if (resul == true){
@@ -298,10 +298,10 @@ void DFNFracture::OptimizeFaces(REAL tolDist, REAL tolAngle){
 void DFNFracture::GetOuterLoop(std::vector<int> &loop){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     // Compute fracture edges' lenghts
-    int nedges = fFracplane->GetCornersX().Cols();
+    int nedges = fPolygon->GetCornersX().Cols();
     TPZVec<REAL> edgelength(nedges,0);
     Matrix fraccorners(3,nedges);
-    fraccorners = fFracplane->GetCornersX();
+    fraccorners = fPolygon->GetCornersX();
     for(int i = 0; i < nedges; i++){
         edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
                               +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
@@ -332,7 +332,7 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
         bool already_checked = !aux.second;
         if(already_checked) continue;
 
-        // @todo if(ipointindex == any of the fracplane.CornerIndex) continue;
+        // @todo if(ipointindex == any of the polygon.CornerIndex) continue;
         // iterate over edges to check if ipoint belongs to it
         for(int iedge = 0; iedge < nedges; iedge++){
 			//vectors from ipoint to iedge's nodes
@@ -380,8 +380,8 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
                 }
             #endif //PZDEBUG
             // DebugStop();
-            inodes[0] = fFracplane->CornerIndex(icorner);
-            inodes[1] = fFracplane->CornerIndex((icorner+1)%nedges);
+            inodes[0] = fPolygon->CornerIndex(icorner);
+            inodes[1] = fPolygon->CornerIndex((icorner+1)%nedges);
             gmesh->CreateGeoElement(EOned, inodes, forshow, nels);
             loop.push_back((int) nels);
             continue;
@@ -390,7 +390,7 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
 
 		// connect first end-face intersection to iedge's first node
 		auto it = edgemap[iedge]->begin();
-        inodes[0] = fFracplane->CornerIndex(icorner);
+        inodes[0] = fPolygon->CornerIndex(icorner);
 		inodes[1] = it->second;
 		gmesh->CreateGeoElement(EOned, inodes, forshow, nels);
         loop.push_back((int) nels);
@@ -407,7 +407,7 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
 		// connect last end-intersection to edge last node
 		nels++;
 		inodes[0] = inodes[1];
-        inodes[1] = fFracplane->CornerIndex((icorner+1)%nedges);
+        inodes[1] = fPolygon->CornerIndex((icorner+1)%nedges);
 		gmesh->CreateGeoElement(EOned, inodes, forshow, nels);
         loop.push_back((int) nels);
     }
@@ -536,7 +536,7 @@ void DFNFracture::MeshFractureSurface(){
                 bool newpoint = pointset.insert(index).second;
                 if(!newpoint){continue;}
                 gel->NodePtr(inode)->GetCoordinates(realcoord);
-                projcoord = fFracplane->GetProjectedX(realcoord);
+                projcoord = fPolygon->GetProjectedX(realcoord);
                 gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],0.,index+shift);
 
             }

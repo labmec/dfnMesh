@@ -6,14 +6,14 @@
  */
 
 
-#include "DFNFracPlane.h"
+#include "DFNPolygon.h"
 #include <math.h>
 
 //Constructor
-DFNFracPlane::DFNFracPlane(const Matrix &CornerPoints)
+DFNPolygon::DFNPolygon(const Matrix &CornerPoints)
 {
     if( !Check_Data_Consistency(CornerPoints) )	{
-		std::cout<<"Error at DFNFracPlane: Bad input data \n";
+		std::cout<<"Error at DFNPolygon: Bad input data \n";
 		DebugStop();
 	}
 	//If data is consistent, fAxis was computed during consistency check
@@ -22,13 +22,13 @@ DFNFracPlane::DFNFracPlane(const Matrix &CornerPoints)
 }
 
 // Copy constructor
-DFNFracPlane::DFNFracPlane(const DFNFracPlane &copy){
+DFNPolygon::DFNPolygon(const DFNPolygon &copy){
     this->operator=(copy);
 }
 
 
 
- DFNFracPlane &DFNFracPlane::operator=(const DFNFracPlane &copy)
+ DFNPolygon &DFNPolygon::operator=(const DFNPolygon &copy)
  {
 	fCornerPoints = copy.GetCornersX();
 	fAxis = copy.fAxis;
@@ -44,7 +44,7 @@ DFNFracPlane::DFNFracPlane(const DFNFracPlane &copy){
  * @return True if the four points are coplanar and the data is consistent
  * @return False if the points are not coplanar or the data is not consistent
  */
-bool DFNFracPlane::Check_Data_Consistency(Matrix CornerPoints)
+bool DFNPolygon::Check_Data_Consistency(Matrix CornerPoints)
 {
 	// Checking vector consistency
 	int cols = CornerPoints.Cols();
@@ -105,7 +105,7 @@ bool DFNFracPlane::Check_Data_Consistency(Matrix CornerPoints)
  * @brief Get plane's corner points
  * @return Plane corner coordinates
  */
-Matrix DFNFracPlane::GetCornersX() const{
+Matrix DFNPolygon::GetCornersX() const{
     return fCornerPoints;
 }
 
@@ -116,7 +116,7 @@ Matrix DFNFracPlane::GetCornersX() const{
 //  * zero to N. (This condition will automatically be met for triangles, but not 
 //  * always for quadrilaterals)
 //  */
-// void DFNFracPlane::ComputeArea(){
+// void DFNPolygon::ComputeArea(){
 // 	int npoints = fCornerPoints.Cols();
 // 	switch(npoints){
 // 		case 3:{ //triangle
@@ -170,7 +170,7 @@ Matrix DFNFracPlane::GetCornersX() const{
  * @return False if the point is below the fracture plane
  */
 
-bool DFNFracPlane::Check_point_above(const TPZVec<REAL> &point) const{
+bool DFNPolygon::Check_point_above(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture plane computation
         double point_distance = (point[0] - GetCornersX()(0,1))*(axis().GetVal(0,2)) 
@@ -184,7 +184,7 @@ bool DFNFracPlane::Check_point_above(const TPZVec<REAL> &point) const{
         }
 }
 
-bool DFNFracPlane::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
+bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
     if(gel->Dimension() != 1) {PZError<<"\n\n This ain't no rib \n\n"; DebugStop();}
     // Get rib's vertices
     TPZManVector<int64_t,2> inode(2,0);
@@ -196,7 +196,7 @@ bool DFNFracPlane::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
     return Check_rib(node0,node1,intersection);
 }
 
-bool DFNFracPlane::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection) {
+bool DFNPolygon::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection) {
     //check for infinite plane
     if(Check_point_above(p1) != Check_point_above(p2)){
         //Rib cut by infinite plane
@@ -216,7 +216,7 @@ bool DFNFracPlane::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<
  * @param Point below the plane (vector)
  * @return Intersecting point
  */
-TPZManVector<double, 3> DFNFracPlane::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
+TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
 {     
     TPZVec<double> Pint;
 
@@ -249,7 +249,7 @@ TPZManVector<double, 3> DFNFracPlane::CalculateIntersection(const TPZVec<REAL> &
  * @return False if the point is out of fracture plane
  */
 
-bool DFNFracPlane::IsPointInPlane(TPZVec<REAL> &point) 
+bool DFNPolygon::IsPointInPlane(TPZVec<REAL> &point) 
 {
     int ncorners = fCornerPoints.Cols();
     REAL area = 0;
@@ -279,7 +279,7 @@ bool DFNFracPlane::IsPointInPlane(TPZVec<REAL> &point)
 }
 
 
-TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh){
+TPZManVector<int64_t,4> DFNPolygon::SetPointsInGeomesh(TPZGeoMesh *gmesh){
 	int64_t nels = gmesh->NElements();
 	int ncorners = fCornerPoints.Cols();
 	fPointsIndex.resize(ncorners);
@@ -306,7 +306,7 @@ TPZManVector<int64_t,4> DFNFracPlane::SetPointsInGeomesh(TPZGeoMesh *gmesh){
  * zero to N. (This condition will automatically be met for triangles, but not 
  * always for quadrilaterals)
  */
-REAL DFNFracPlane::ComputeArea(){
+REAL DFNPolygon::ComputeArea(){
 	int n = fCornerPoints.Cols();
 	TPZManVector<REAL,3> normal(3);
 	for(int i = 0; i<3; i++){
@@ -389,10 +389,10 @@ REAL DFNFracPlane::ComputeArea(){
 //  * @param Pointer to geometric mesh
 //  * @return Index for newly created element in gmesh
 //  */
-// int64_t DFNFracPlane::CreateElement(TPZGeoMesh *gmesh){
+// int64_t DFNPolygon::CreateElement(TPZGeoMesh *gmesh){
 // 	// number of nodes for gmesh
 // 	int nnodes =  gmesh->NNodes();
-// 	// nomber of corners for fracplane
+// 	// nomber of corners for polygon
 // 	int ncorners = fCornerPoints.Cols();
 // 	// add corner as nodes in gmesh
 // 	gmesh->NodeVec().Resize(nnodes + ncorners);
@@ -415,15 +415,15 @@ REAL DFNFracPlane::ComputeArea(){
 // 		default: DebugStop();
 // 	}
 // 	// create geometric element
-// 	int64_t fracplaneindex = gmesh->NElements();
-// 	gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, fracplaneindex);
+// 	int64_t polygonindex = gmesh->NElements();
+// 	gmesh->CreateGeoElement(elemtype, CornerIndexes, 40, polygonindex);
 
-// 	return fracplaneindex;
+// 	return polygonindex;
 // }
 
 
 
-TPZManVector<REAL, 3> DFNFracPlane::GetProjectedX(TPZManVector<REAL, 3> &x){
+TPZManVector<REAL, 3> DFNPolygon::GetProjectedX(TPZManVector<REAL, 3> &x){
     TPZManVector<REAL, 3> projection(3,0);
     REAL alpha = fAxis(0,2)*(x[0]-fCornerPoints(0,1))
                 +fAxis(1,2)*(x[1]-fCornerPoints(1,1))

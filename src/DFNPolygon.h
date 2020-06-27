@@ -5,8 +5,8 @@
  *  @date      2019.05
  */
 
-#ifndef DFNFracPlane_h
-#define DFNFracPlane_h
+#ifndef DFNPolygon_h
+#define DFNPolygon_h
 
 #include "pzfmatrix.h"
 #include "pzvec.h"
@@ -29,7 +29,7 @@ typedef TPZFMatrix<REAL> Matrix;
  *  zero to N. (This condition will automatically be met for triangles, but not 
  *  always for quadrilaterals and higher order polygons)
  */
-class DFNFracPlane
+class DFNPolygon
 {
   private:
 	/// Contains fracture corner points. Matrix 3xn (n is the number of corners)
@@ -49,16 +49,16 @@ class DFNFracPlane
 
   public:
 	/// Empty constructor
-	DFNFracPlane(){};
+	DFNPolygon(){};
 
 	/// Define plane from 3 to 4 corner points. Matrix should be 3xN (3 coordinates for each of the N corner points)
-	DFNFracPlane(const Matrix &CornerPoints);
+	DFNPolygon(const Matrix &CornerPoints);
 
 	/// Copy constructor
-	DFNFracPlane(const DFNFracPlane &copy);
+	DFNPolygon(const DFNPolygon &copy);
 
 	/// Assignment operator
-	DFNFracPlane &operator=(const DFNFracPlane &copy);
+	DFNPolygon &operator=(const DFNPolygon &copy);
 
 	/// Define corner coordinates
 	void SetPlane(Matrix &CornerPoints);
@@ -102,7 +102,7 @@ class DFNFracPlane
 	TPZManVector<int64_t,4> SetPointsInGeomesh(TPZGeoMesh *gmesh);
 
 	/**
-	 * @brief Returns index of GeoNode that was created for corner i using DFNFracPlane::SetPointsInGeomesh(gmesh, matID)
+	 * @brief Returns index of GeoNode that was created for corner i using DFNPolygon::SetPointsInGeomesh(gmesh, matID)
 	 * @param Local index of corner
 	 */
 	int64_t CornerIndex(int i) const{
@@ -120,4 +120,4 @@ class DFNFracPlane
 
 };
 
-#endif /* DFNFracPlane */
+#endif /* DFNPolygon */

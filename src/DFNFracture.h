@@ -20,7 +20,7 @@
 #include "DFNRib.h"
 #include "DFNFace.h"
 #include "DFNVolume.h"
-#include "DFNFracPlane.h"
+#include "DFNPolygon.h"
 #include "DFNMesh.h"
 #include <gmsh.h>
 
@@ -31,7 +31,7 @@ typedef TPZFMatrix<REAL> Matrix;
  *  @brief     Describes a surface mesh for a fracture and all ribs & faces that are intersected by it.
  *  @details   Intersection search is performed after creation of skeleton
  *  elements with DFNFracture::CreateSkeletonElements. Fracture plane should
- *  be a DFNFracPlane.
+ *  be a DFNPolygon.
  */
 class DFNFracture
 {
@@ -47,7 +47,7 @@ private:
 	std::map<int64_t, DFNFace> fFaces;
 
 	/// A planar convex polygon that indicates an insertion region for a fracture
-	DFNFracPlane *fFracplane;
+	DFNPolygon *fPolygon;
 	
 	/// Map of elements on fracture surface
 	std::map<int64_t, TPZGeoEl *> fSurface;
@@ -67,7 +67,7 @@ public:
      * of a point
      *  
      */
-    DFNFracture(DFNFracPlane *FracPlane, DFNMesh *dfnMesh);
+    DFNFracture(DFNPolygon *Polygon, DFNMesh *dfnMesh);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -77,7 +77,7 @@ public:
     
     
     /// Return the corner nodes of the fracture
-    DFNFracPlane *FracPlane();
+    DFNPolygon *Polygon();
     
     
 private:
