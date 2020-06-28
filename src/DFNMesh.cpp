@@ -177,6 +177,7 @@ void DFNMesh::DeleteElementAndRibs(TPZGeoEl *face){
  * @param gel: pointer to the geometric element
 */
 void DFNMesh::CropExternalElement(TPZGeoEl *gel){
+	// return; //debugging
 	TPZGeoMesh *gmesh = gel->Mesh();
 	// If an element is external to the domain, then its eldest ancestor and all the refinement tree are also external
 	TPZGeoEl *elder = gel;
@@ -378,7 +379,6 @@ int64_t DFNMesh::SearchIndirectNeighbours(TPZGeoEl* gel){
 
 
 int64_t DFNMesh::FindAdjacentMacroEl(TPZGeoEl* gel){
-	int surfaceMaterial = DFNMaterial::Efracture;
     int nsides = gel->NSides();
         
 	for(int iside = nsides-2; iside >= 0; iside--){
@@ -388,8 +388,7 @@ int64_t DFNMesh::FindAdjacentMacroEl(TPZGeoEl* gel){
 		for( ; neig != gelside; neig = neig.Neighbour()){
 			if(neig.Element()->Dimension() != 2) continue;
 			int mat = neig.Element()->MaterialId();
-			// if (mat != surfaceMaterial){
-			if (mat < surfaceMaterial){
+			if (mat != DFNMaterial::Efracture){
 				return neig.Element()->EldestAncestor()->Index();
 			}
 		}
@@ -436,7 +435,6 @@ bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 	bool gBigPlanes_Q = true; //placeholder
 	if(ifracface->Dimension()!=2) DebugStop();
 	int64_t ifracfaceindex = ifracface->Index();
-	int surfaceMaterial = DFNMaterial::Efracture;
 	TPZGeoMesh *gmesh = ifracface->Mesh();
     // get coordinates of geometric center of face
     TPZVec<REAL> faceCenter(3);
@@ -547,9 +545,6 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	// gmsh doesn't accept index zero elements
 	const int shift = 1;
 	// materials
-    int mtransition = 18;
-    int msurface = 40;
-    int mintact = 1;
 	std::ofstream outfile(filename);
 
     TPZGeoMesh *pzgmesh = this->Mesh();
@@ -592,9 +587,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             // Only 2 types of lines are needed:
 			// fracture lines
 			// i.e. lines with material id of fracture
-			// @todo if(gel->MaterialId() == msurface){
 			bool entered_Q = false;
-			if(gel->MaterialId() >= msurface){
+			if(gel->MaterialId() == DFNMaterial::Efracture){
 				outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
 				entered_Q = true;
 			}
@@ -620,18 +614,14 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             // list it according to material
 			if(!entered_Q) continue;
 			if(mesh_dim == 2){
-				if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
-				else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
+				if(gel->MaterialId() == DFNMaterial::Erefined){groupTransition.push_back(iel+shift);}
+				else if(gel->MaterialId() == DFNMaterial::Efracture){groupSurface.push_back(iel+shift);}
 				else groupIntact.push_back(iel+shift);
-				// @todo
-				// if(gel->MaterialId() == mtransition) groupTransition.push_back(iel+shift);
-				// else if (gel->MaterialId() == mtransition) groupTransition.push_back(iel+shift);
-				// else groupIntact.push_back(iel+shift);
 			}
         }
         // write physical groups
 		if(mesh_dim == 2){
-			outfile<<"\nPhysical Curve("<<msurface<<") = {";
+			outfile<<"\nPhysical Curve(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
 			for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
 				outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
 			}
@@ -657,8 +647,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			do{//pseudo do-while just so I can use break to skip code
 				if(mesh_dim==2) break;
 				if(gel->HasSubElement()) break;
-				// @todo if(gel->MaterialId() != msurface) break;
-				if(gel->MaterialId() < msurface) break;
+				// @todo if(gel->MaterialId() != DFNMaterial::Efracture) break;
+				if(gel->MaterialId() < DFNMaterial::Efracture) break;
 				TPZGeoEl *elder = gel;
 				if(gel->Father()) elder = gel->EldestAncestor();
 				int nsides = elder->NSides();
@@ -672,7 +662,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 				if(type == 1) break;
 				if(mesh_dim==2 && !gel->Father()){type = 2; break;}
 				if(gel->Father()) break;
-				// if(gel->MaterialId() == mintact) {type = 2; break;}
+				// if(gel->MaterialId() == DFNMaterial::Eintact) {type = 2; break;}
 				int nsides = gel->NSides();
 				TPZGeoElSide gelside(gel,nsides-1);
 				TPZGeoElSide neighbour = gelside.Neighbour();
@@ -752,20 +742,20 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             // surface
 			if(planesurface_Q) outfile << "Plane ";
             outfile << "Surface("<<iel+shift<<") = {"<<iel+shift<<"};\n";
-            if(gel->MaterialId() >= mtransition && gel->MaterialId() < msurface){groupTransition.push_back(iel+shift);}
-            else if(gel->MaterialId() >= msurface){groupSurface.push_back(iel+shift);}
+            if(gel->MaterialId() == DFNMaterial::Erefined){groupTransition.push_back(iel+shift);}
+            else if(gel->MaterialId() == DFNMaterial::Efracture){groupSurface.push_back(iel+shift);}
             else groupIntact.push_back(iel+shift);
         }
         // write physical groups
-        outfile<<"\nPhysical Surface("<<mtransition<<") = {";
+        outfile<<"\nPhysical Surface("<<DFNMaterial::Erefined<<") = {";
         for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
             outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
         }
-        if(mesh_dim == 3) outfile<<"\nPhysical Surface("<<msurface<<") = {";
+        if(mesh_dim == 3) outfile<<"\nPhysical Surface(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
         for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
             outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
         }
-        outfile<<"\nPhysical Surface("<<mintact<<") = {";
+        outfile<<"\nPhysical Surface("<<DFNMaterial::Eintact<<") = {";
         for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
             outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
         }
@@ -798,8 +788,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 					TPZGeoElSide neig = childside.Neighbour();
 					for(/*void*/; neig != childside; neig = neig.Neighbour()){
 						if(neig.Element()->Dimension() != 1) continue;
-						// @todo if(neig.Element()->MaterialId() != msurface) continue;
-						if(neig.Element()->MaterialId() < msurface) continue;
+						if(neig.Element()->MaterialId() != DFNMaterial::Efracture) continue;
 						candidate_ribs.insert(neig.Element());
 					}
 				}
@@ -888,24 +877,24 @@ void DFNMesh::ExportGMshCAD(std::string filename){
             }
         }
         // write physical groups
-        outfile<<"\nPhysical Volume("<<mtransition<<") = {";
+        outfile<<"\nPhysical Volume("<<DFNMaterial::Erefined<<") = {";
         for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
             outfile<<*itr+shift<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
         }
 
 		if(groupIntact.size() != 0){
-			outfile<<"\nPhysical Volume("<<mintact<<") = {";
+			outfile<<"\nPhysical Volume("<<DFNMaterial::Eintact<<") = {";
 			for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
 				outfile<<*itr+shift<<(++itr!=groupIntact.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
 			}
-    		outfile<<"\nTransfinite Volume {Physical Volume("<<mintact<<")};\n";
+    		outfile<<"\nTransfinite Volume {Physical Volume("<<DFNMaterial::Eintact<<")};\n";
 		}
     }
     
 	// outfile<<"\nTransfinite Curve {:} = 2;\n";
-    outfile<<"Transfinite Surface {Physical Surface("<<mintact<<")};\n";
-    outfile<<"Recombine Surface {Physical Surface("<<mintact<<")};\n";
-    // outfile<<"Recombine Surface {Physical Surface("<<mtransition<<")};\n";
+    outfile<<"Transfinite Surface {Physical Surface("<<DFNMaterial::Eintact<<")};\n";
+    outfile<<"Recombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};\n";
+    // outfile<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
 
 }
 
@@ -1005,13 +994,10 @@ void DFNMesh::CreateVolumes(){
     
     // gmesh->BuildConnectivity(); //@todo remove this after test
 	// search through each 2D element of the triangulated fractures surfaces to find their enclosing volume
-	int surfaceMaterial = DFNMaterial::Efracture;
 	for(int64_t iel = 0; iel < nels; iel++){
 		TPZGeoEl *gel = gmesh->Element(iel);
 		if(!gel) continue;
-		// if(gel->MaterialID() != surfaceMaterial){continue;}
-		// During development, elements at fracture surface have material id over 40
-		if(gel->MaterialId() <= surfaceMaterial) continue;
+		if(gel->MaterialId() != DFNMaterial::Efracture){continue;}
 		if(gel->Dimension() != 2) continue;
 		if(gel->HasSubElement()) continue;
 		// Find volume that encloses that element
@@ -1056,8 +1042,6 @@ void DFNMesh::CreateVolumes(){
 void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	// GMsh doesn't like zero index entities
     const int shift = 1;
-	int surfaceMaterial = 40;
-	int transitionMaterial = 18;
 
 	TPZGeoMesh *gmesh = fGMesh;
 	int mesh_dim = gmesh->Dimension();
@@ -1327,9 +1311,9 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 			gmsh::model::mesh::embed(2, facesinvolume, 3, ivol+shift);
 		}
 	// Physical groups ____________________________
-		gmsh::model::addPhysicalGroup(2,facesinvolume,surfaceMaterial);
-		gmsh::model::addPhysicalGroup(2,surfaceloop,transitionMaterial);
-		gmsh::model::addPhysicalGroup(3,shelltag,transitionMaterial);
+		gmsh::model::addPhysicalGroup(2,facesinvolume,DFNMaterial::Efracture);
+		gmsh::model::addPhysicalGroup(2,surfaceloop,DFNMaterial::Erefined);
+		gmsh::model::addPhysicalGroup(3,shelltag,DFNMaterial::Erefined);
 	
 	// synchronize before meshing
 		gmsh::model::geo::synchronize();
