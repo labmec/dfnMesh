@@ -111,12 +111,12 @@ int main(int argc, char* argv[]){
 			polygon->SetPointsInGeomesh(gmesh);
 			fracture->MeshFractureSurface();
 		}
-	// //insert fracture
-	// 	dfn.AddFracture(fracture);
+	//insert fracture
+		dfn.AddFracture(fracture);
 	}
 	// Mesh transition volumes
-		// dfn.CreateVolumes();
-		// dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+		dfn.CreateVolumes();
+		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
 
 	//Print result

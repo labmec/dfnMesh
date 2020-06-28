@@ -21192,7 +21192,11 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="16358.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="16358.ColorArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ColorByLODIndex" id="16358.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -23921,7 +23925,11 @@
       </Property>
       <Property name="SelectionCellFieldDataArrayName" id="17318.SelectionCellFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="vtkOriginalCellIds"/>
-        <Domain name="array_list" id="17318.SelectionCellFieldDataArrayName.array_list"/>
+        <Domain name="array_list" id="17318.SelectionCellFieldDataArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="SelectionPointFieldDataArrayName" id="17318.SelectionPointFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="vtkOriginalPointIds"/>
@@ -23989,7 +23997,11 @@
         <Element index="2" value=""/>
         <Element index="3" value="1"/>
         <Element index="4" value="material"/>
-        <Domain name="array_list" id="17318.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="17318.ColorArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ColorByLODIndex" id="17318.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -24046,6 +24058,9 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17318.GlyphTableIndexArray.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="GlyphType" id="17318.GlyphType" number_of_elements="1">
@@ -24317,12 +24332,18 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17318.SelectOrientationVectors.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectScaleArray" id="17318.SelectScaleArray" number_of_elements="1">
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17318.SelectScaleArray.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectionCellLabelBold" id="17318.SelectionCellLabelBold" number_of_elements="1">
@@ -25341,7 +25362,7 @@
         <Domain name="bool" id="17798.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="17798.Visibility" number_of_elements="1">
-        <Element index="0" value="0"/>
+        <Element index="0" value="1"/>
         <Domain name="bool" id="17798.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="17798.Ambient" number_of_elements="1">
@@ -25349,7 +25370,7 @@
         <Domain name="range" id="17798.Ambient.range"/>
       </Property>
       <Property name="AmbientColor" id="17798.AmbientColor" number_of_elements="3">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0.6666666666666666"/>
         <Element index="1" value="0"/>
         <Element index="2" value="0"/>
         <Domain name="range" id="17798.AmbientColor.range"/>
@@ -25398,7 +25419,11 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="17798.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="17798.ColorArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ColorByLODIndex" id="17798.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -25415,7 +25440,7 @@
         <Domain name="range" id="17798.Diffuse.range"/>
       </Property>
       <Property name="DiffuseColor" id="17798.DiffuseColor" number_of_elements="3">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0.6666666666666666"/>
         <Element index="1" value="0"/>
         <Element index="2" value="0"/>
         <Domain name="range" id="17798.DiffuseColor.range"/>
@@ -26093,7 +26118,11 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="18038.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="18038.ColorArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ColorByLODIndex" id="18038.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -31020,7 +31049,11 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="15878.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="15878.ColorArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ColorByLODIndex" id="15878.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -31666,9 +31699,9 @@
         <Domain name="range" id="16118.Ambient.range"/>
       </Property>
       <Property name="AmbientColor" id="16118.AmbientColor" number_of_elements="3">
-        <Element index="0" value="1"/>
-        <Element index="1" value="1"/>
-        <Element index="2" value="1"/>
+        <Element index="0" value="0.6666666666666666"/>
+        <Element index="1" value="0"/>
+        <Element index="2" value="0"/>
         <Domain name="range" id="16118.AmbientColor.range"/>
       </Property>
       <Property name="BackfaceAmbientColor" id="16118.BackfaceAmbientColor" number_of_elements="3">
@@ -31715,7 +31748,11 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="16118.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="16118.ColorArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ColorByLODIndex" id="16118.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -31732,9 +31769,9 @@
         <Domain name="range" id="16118.Diffuse.range"/>
       </Property>
       <Property name="DiffuseColor" id="16118.DiffuseColor" number_of_elements="3">
-        <Element index="0" value="1"/>
-        <Element index="1" value="1"/>
-        <Element index="2" value="1"/>
+        <Element index="0" value="0.6666666666666666"/>
+        <Element index="1" value="0"/>
+        <Element index="2" value="0"/>
         <Domain name="range" id="16118.DiffuseColor.range"/>
       </Property>
       <Property name="EdgeColor" id="16118.EdgeColor" number_of_elements="3">
@@ -31765,7 +31802,7 @@
         <Domain name="bool" id="16118.FlipTextures.bool"/>
       </Property>
       <Property name="GaussianRadius" id="16118.GaussianRadius" number_of_elements="1">
-        <Element index="0" value="0.04"/>
+        <Element index="0" value="2"/>
         <Domain name="range" id="16118.GaussianRadius.range"/>
       </Property>
       <Property name="GlyphTableIndexArray" id="16118.GlyphTableIndexArray" number_of_elements="1">
@@ -32198,7 +32235,7 @@
         <Domain name="array_list" id="16118.SetScaleArray.array_list"/>
       </Property>
       <Property name="ShaderPreset" id="16118.ShaderPreset" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="3"/>
         <Domain name="enum" id="16118.ShaderPreset.enum">
           <Entry value="0" text="Gaussian Blur"/>
           <Entry value="1" text="Sphere"/>
@@ -33721,9 +33758,9 @@
         <Domain name="bool" id="18051.CenterAxesVisibility.bool"/>
       </Property>
       <Property name="CenterOfRotation" id="18051.CenterOfRotation" number_of_elements="3">
-        <Element index="0" value="1.0000000298023224"/>
-        <Element index="1" value="1"/>
-        <Element index="2" value="1.0000000298023224"/>
+        <Element index="0" value="49.999999046325684"/>
+        <Element index="1" value="49.999999046325684"/>
+        <Element index="2" value="50"/>
       </Property>
       <Property name="CollectGeometryThreshold" id="18051.CollectGeometryThreshold" number_of_elements="1">
         <Element index="0" value="100"/>
@@ -34049,8 +34086,8 @@
         <Element index="0" value="2"/>
       </Property>
       <Property name="ViewSize" id="18051.ViewSize" number_of_elements="2">
-        <Element index="0" value="1058"/>
-        <Element index="1" value="655"/>
+        <Element index="0" value="1044"/>
+        <Element index="1" value="598"/>
       </Property>
       <Property name="ViewTime" id="18051.ViewTime" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -34069,43 +34106,43 @@
         <Element index="0" value="0"/>
       </Property>
       <Property name="CameraFocalPoint" id="18051.CameraFocalPoint" number_of_elements="3">
-        <Element index="0" value="1.0000000298023246"/>
-        <Element index="1" value="0.9999999999999977"/>
-        <Element index="2" value="1.0000000298023222"/>
+        <Element index="0" value="49.99999904632544"/>
+        <Element index="1" value="49.9999990463257"/>
+        <Element index="2" value="50.00000000000048"/>
       </Property>
       <Property name="CameraFocalPointInfo" id="18051.CameraFocalPointInfo" number_of_elements="3">
-        <Element index="0" value="1.0000000298023246"/>
-        <Element index="1" value="0.9999999999999977"/>
-        <Element index="2" value="1.0000000298023222"/>
+        <Element index="0" value="49.99999904632544"/>
+        <Element index="1" value="49.9999990463257"/>
+        <Element index="2" value="50.00000000000048"/>
       </Property>
       <Property name="CameraParallelScale" id="18051.CameraParallelScale" number_of_elements="1">
-        <Element index="0" value="2.911280786313192"/>
+        <Element index="0" value="109.22555463650124"/>
       </Property>
       <Property name="CameraParallelScaleInfo" id="18051.CameraParallelScaleInfo" number_of_elements="1">
-        <Element index="0" value="2.911280786313192"/>
+        <Element index="0" value="109.22555463650124"/>
       </Property>
       <Property name="CameraPosition" id="18051.CameraPosition" number_of_elements="3">
-        <Element index="0" value="0.21606584092669062"/>
-        <Element index="1" value="0.3536298200093692"/>
-        <Element index="2" value="-10.202342247597484"/>
+        <Element index="0" value="-218.97618433226222"/>
+        <Element index="1" value="322.11842908603523"/>
+        <Element index="2" value="-128.04535435152232"/>
       </Property>
       <Property name="CameraPositionInfo" id="18051.CameraPositionInfo" number_of_elements="3">
-        <Element index="0" value="0.21606584092669062"/>
-        <Element index="1" value="0.3536298200093692"/>
-        <Element index="2" value="-10.202342247597484"/>
+        <Element index="0" value="-218.97618433226222"/>
+        <Element index="1" value="322.11842908603523"/>
+        <Element index="2" value="-128.04535435152232"/>
       </Property>
       <Property name="CameraViewAngle" id="18051.CameraViewAngle" number_of_elements="1">
         <Element index="0" value="30"/>
       </Property>
       <Property name="CameraViewUp" id="18051.CameraViewUp" number_of_elements="3">
-        <Element index="0" value="-0.17642945453831527"/>
-        <Element index="1" value="-0.9818917898462478"/>
-        <Element index="2" value="0.06900116378616139"/>
+        <Element index="0" value="-0.7551331055007892"/>
+        <Element index="1" value="-0.6316871166315255"/>
+        <Element index="2" value="0.1753436045554088"/>
       </Property>
       <Property name="CameraViewUpInfo" id="18051.CameraViewUpInfo" number_of_elements="3">
-        <Element index="0" value="-0.17642945453831527"/>
-        <Element index="1" value="-0.9818917898462478"/>
-        <Element index="2" value="0.06900116378616139"/>
+        <Element index="0" value="-0.7551331055007892"/>
+        <Element index="1" value="-0.6316871166315255"/>
+        <Element index="2" value="0.1753436045554088"/>
       </Property>
       <Property name="EyeAngle" id="18051.EyeAngle" number_of_elements="1">
         <Element index="0" value="2"/>
@@ -34651,9 +34688,7 @@
           <Property source_property="TextAnnotationColor" target_id="15945" target_property="PolarAxisLabelColor" unlink_if_modified="1"/>
           <Property source_property="TextAnnotationColor" target_id="15945" target_property="PolarAxisTitleColor" unlink_if_modified="1"/>
           <Property source_property="TextAnnotationColor" target_id="15945" target_property="SecondaryRadialAxesTextColor" unlink_if_modified="1"/>
-          <Property source_property="ForegroundColor" target_id="16118" target_property="AmbientColor" unlink_if_modified="1"/>
           <Property source_property="SurfaceColor" target_id="16118" target_property="BackfaceDiffuseColor" unlink_if_modified="1"/>
-          <Property source_property="SurfaceColor" target_id="16118" target_property="DiffuseColor" unlink_if_modified="1"/>
           <Property source_property="EdgeColor" target_id="16118" target_property="EdgeColor" unlink_if_modified="1"/>
           <Property source_property="SelectionColor" target_id="16118" target_property="SelectionColor" unlink_if_modified="1"/>
           <Property source_property="ForegroundColor" target_id="16137" target_property="GridColor" unlink_if_modified="1"/>

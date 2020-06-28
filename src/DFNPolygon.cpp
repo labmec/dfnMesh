@@ -11,7 +11,7 @@
 #include "DFNMesh.h"
 
 //Constructor
-DFNPolygon::DFNPolygon(const Matrix &CornerPoints)
+DFNPolygon::DFNPolygon(const Matrix &CornerPoints) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1)
 {
     if( !Check_Data_Consistency(CornerPoints) )	{
 		std::cout<<"Error at DFNPolygon: Bad input data \n";
