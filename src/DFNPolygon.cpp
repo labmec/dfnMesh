@@ -1,5 +1,5 @@
 /*! 
- *  @brief     Describes a rectangular plane from four corner points.
+ *  @brief     Describes a rectangular polygon from four corner points.
  *  @details   
  *  @author    Pedro Lima
  *  @date      2019
@@ -8,6 +8,7 @@
 
 #include "DFNPolygon.h"
 #include <math.h>
+#include "DFNMesh.h"
 
 //Constructor
 DFNPolygon::DFNPolygon(const Matrix &CornerPoints)
@@ -30,23 +31,23 @@ DFNPolygon::DFNPolygon(const DFNPolygon &copy){
 
  DFNPolygon &DFNPolygon::operator=(const DFNPolygon &copy)
  {
-	fCornerPoints = copy.GetCornersX();
+	fCornerPoints = copy.fCornerPoints;
 	fAxis = copy.fAxis;
 	fArea = copy.area();
-	fTolerance = copy.fTolerance;
 	fPointsIndex = copy.fPointsIndex;
 	return *this;
  }
 
-/**
- * @brief Checks the consistency of the input data
- * @param Fracture plane coordinates (Matrix 3x4)
- * @return True if the four points are coplanar and the data is consistent
- * @return False if the points are not coplanar or the data is not consistent
- */
+
+
+
+
+
+
+
 bool DFNPolygon::Check_Data_Consistency(Matrix CornerPoints)
 {
-	// Checking vector consistency
+	
 	int cols = CornerPoints.Cols();
 	int rows = CornerPoints.Rows();
 	Matrix ax(3,3);
@@ -55,8 +56,8 @@ bool DFNPolygon::Check_Data_Consistency(Matrix CornerPoints)
 		std::cout<<"Check the input data";
 		DebugStop();
 	}
-	if(cols < 3 || cols > 10){//To form a plane it is needed at least 3 points but no more than 4
-		std::cout<<"Check the input data (number of corner points, four is enough)";
+	if(cols < 3){
+		std::cout<<"Check the input data (number of corner points)";
 		DebugStop();
 	}
 
@@ -82,14 +83,14 @@ bool DFNPolygon::Check_Data_Consistency(Matrix CornerPoints)
 		ax(i, 2) = ax(i, 2)/norm;
 	}
 
-	//Coplanarity verification for quadrilateral plane
+	//Coplanarity verification for quadrilateral polygon
 	if(cols == 4){
 		//scalar product between Ax2 and <P3-P1> should be zero
 		REAL ver = ax(0,2)*(CornerPoints(0,3)-CornerPoints(0,1))
 				  +ax(1,2)*(CornerPoints(1,3)-CornerPoints(1,1))
 				  +ax(2,2)*(CornerPoints(2,3)-CornerPoints(2,1));
 		//Checks if points are coplanar
-		if(std::abs(ver) > fTolerance){
+		if(std::abs(ver) > gDFN_SmallNumber){
 			std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
 			// DebugStop();
 		}
@@ -102,85 +103,33 @@ bool DFNPolygon::Check_Data_Consistency(Matrix CornerPoints)
 }
 
 /**
- * @brief Get plane's corner points
- * @return Plane corner coordinates
+ * @brief Get polygon's corner points
+ * @return polygon corner coordinates
  */
 Matrix DFNPolygon::GetCornersX() const{
     return fCornerPoints;
 }
 
-// /**
-//  * @brief Computes area of plane
-//  * @details Enumeration of corner points should follow standard PZ topology, where 
-//  * corner nodes are numbered counter-clockwise (clockwise should work as well) from
-//  * zero to N. (This condition will automatically be met for triangles, but not 
-//  * always for quadrilaterals)
-//  */
-// void DFNPolygon::ComputeArea(){
-// 	int npoints = fCornerPoints.Cols();
-// 	switch(npoints){
-// 		case 3:{ //triangle
-// 			//Area equals half the norm of the cross product between two edges
-// 			REAL temp = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
-// 				temp += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
-// 				temp += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
-						
-// 			fArea = sqrtl(temp)/2;
-// 			break;
-// 		}
-// 		case 4:{ //quadrilateral
-// 			//Area equals the sum of two triangles that fill the quadrilateral
-// 			//Compute area of first triangle
-// 			REAL temp1 = pow(fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1),2);
-// 				temp1 += pow(fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1),2);
-// 				temp1 += pow(fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1),2);
-				
-// 				temp1 = sqrtl(temp1)/2;
-			
-// 			//Define vectors that correspond to the other two edges (as opposed to Ax0 and Ax1)
-// 			TPZManVector<REAL, 3> ax3(3);
-// 					ax3[0] = fCornerPoints(0,1) - fCornerPoints(0,2);
-// 					ax3[1] = fCornerPoints(1,1) - fCornerPoints(1,2);
-// 					ax3[2] = fCornerPoints(2,1) - fCornerPoints(2,2);
-// 			TPZManVector<REAL, 3> ax4(3);
-// 					ax4[0] = fCornerPoints(0,3) - fCornerPoints(0,2);
-// 					ax4[1] = fCornerPoints(1,3) - fCornerPoints(1,2);
-// 					ax4[2] = fCornerPoints(2,3) - fCornerPoints(2,2);
-// 			//Compute area of second triangle
-// 			REAL temp2 = pow(ax3[1]*ax4[2] - ax3[2]*ax4[1],2);
-// 				temp2 += pow(ax3[2]*ax4[0] - ax3[0]*ax4[2],2);
-// 				temp2 += pow(ax3[0]*ax4[1] - ax3[1]*ax4[0],2);
-				
-// 				temp2 = sqrtl(temp2)/2;
 
-// 			fArea = temp1 + temp2;
-// 			break;
-// 		}
-// 		default:{std::cout<<"Plane is not triangle nor quadrilateral? \n";
-
-// 			DebugStop();
-// 		}
-// 	}
-// }
 
 /**
- * @brief Checks if a point is above or below the fracture plane
+ * @brief Checks if a point is above or below the fracture polygon
  * @param Point vector with the euclidean coordinates
- * @return True if the point is above the fracture plane
- * @return False if the point is below the fracture plane
+ * @return True if the point is above the fracture polygon
+ * @return False if the point is below the fracture polygon
  */
 
 bool DFNPolygon::Check_point_above(const TPZVec<REAL> &point) const{
     
-    //Point distance to the fracture plane computation
+    //Point distance to the fracture polygon computation
         double point_distance = (point[0] - GetCornersX()(0,1))*(axis().GetVal(0,2)) 
                                 +(point[1] - GetCornersX()(1,1))*(axis().GetVal(1,2)) 
                                 +(point[2] - GetCornersX()(2,1))*(axis().GetVal(2,2));
         if (point_distance>0){
-            return true;    //If the point is above de plane
+            return true;    //If the point is above de polygon
         }
         else{
-            return false;   //If the point is below de plane
+            return false;   //If the point is below de polygon
         }
 }
 
@@ -197,23 +146,23 @@ bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
 }
 
 bool DFNPolygon::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection) {
-    //check for infinite plane
+    //check for infinite polygon
     if(Check_point_above(p1) != Check_point_above(p2)){
-        //Rib cut by infinite plane
-        //then calculate intersection point and check if it's within plane boundaries
+        //Rib cut by infinite polygon
+        //then calculate intersection point and check if it's within polygon boundaries
         *intersection = CalculateIntersection(p1, p2);
-        return IsPointInPlane(*intersection);
+        return IsPointInPolygon(*intersection);
     }
     else
     {
-        return false;    //Rib is not cut by plane
+        return false;    //Rib is not cut by polygon
     }
 }
 
 /**
- * @brief Calculates the intersection point plane-rib
- * @param Point above the plane (vector)
- * @param Point below the plane (vector)
+ * @brief Calculates the intersection point polygon-rib
+ * @param Point above the polygon (vector)
+ * @param Point below the polygon (vector)
  * @return Intersecting point
  */
 TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
@@ -240,16 +189,16 @@ TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1
 }
 
 /**
- * @brief Checks if a coplanar point is within fracture plane
+ * @brief Checks if a coplanar point is within fracture polygon
  * @details Enumeration of corner points should follow standard PZ topology, where 
  * corner nodes are numbered counter-clockwise. (This condition will automatically be 
  * met for triangles, but not always for quadrilaterals)
  * @param Point vector with the euclidean coordinates
- * @return True if the point is within fracture plane
- * @return False if the point is out of fracture plane
+ * @return True if the point is within fracture polygon
+ * @return False if the point is out of fracture polygon
  */
 
-bool DFNPolygon::IsPointInPlane(TPZVec<REAL> &point) 
+bool DFNPolygon::IsPointInPolygon(TPZVec<REAL> &point) 
 {
     int ncorners = fCornerPoints.Cols();
     REAL area = 0;
@@ -273,9 +222,9 @@ bool DFNPolygon::IsPointInPlane(TPZVec<REAL> &point)
 	
     // std::cout<<" ___ ";
 
-    //If total computed area is equal to the plane's area, then
-    //point is in plane
-    return( fabs(area-fArea) < fTolerance );
+    //If total computed area is equal to the polygon's area, then
+    //point is in polygon
+    return( fabs(area-fArea) < gDFN_SmallNumber );
 }
 
 
@@ -300,84 +249,44 @@ TPZManVector<int64_t,4> DFNPolygon::SetPointsInGeomesh(TPZGeoMesh *gmesh){
 
 
 /**
- * @brief Computes area of plane
+ * @brief Computes area of polygon
  * @details Enumeration of corner points should follow standard PZ topology, where 
  * corner nodes are numbered counter-clockwise (clockwise should work as well) from
  * zero to N. (This condition will automatically be met for triangles, but not 
  * always for quadrilaterals)
  */
 REAL DFNPolygon::ComputeArea(){
-	int n = fCornerPoints.Cols();
-	TPZManVector<REAL,3> normal(3);
+	int npoints = fCornerPoints.Cols();
+    if(npoints<3) return 0;
+	
+    TPZManVector<REAL,3> normal(3);
 	for(int i = 0; i<3; i++){
 		normal[i] = fAxis(i,2);
 	}
 
-    REAL area = 0;
-    REAL an, ax, ay, az; // abs value of normal and its coords
-    int  coord;           // coord to ignore: 1=x, 2=y, 3=z
-    int  i, j, k;         // loop indices
-
-    if (n < 3) return 0;  // a degenerate polygon
-
     // select largest abs coordinate to ignore for projection
-    ax = fabs(normal[0]);    		// abs x-coord
-    ay = fabs(normal[1]);    		// abs y-coord
-    az = fabs(normal[2]);    		// abs z-coord
+    REAL abs_x = fabs(normal[0]);
+    REAL abs_y = fabs(normal[1]);
+    REAL abs_z = fabs(normal[2]);
 
-    coord = 3;                    // ignore z-coord
-    if (ax > ay) {
-        if (ax > az) coord = 1;   // ignore x-coord
+    int  ignore;           // coord to ignore: 0=x, 1=y, 2=z
+    ignore = 2;                         // ignore z-coord
+    if (abs_x > abs_y) {
+        if (abs_x > abs_z) ignore = 0;  // ignore x-coord
     }
-    else if (ay > az) coord = 2;  // ignore y-coord
+    else if (abs_y > abs_z) ignore = 1; // ignore y-coord
 
     // compute area of the 2D projection
-    switch (coord) {
-      case 1:
-        for (i=1, j=2, k=0; i<n; i++, j++, k++){
-			j = j%n;
-            area += (fCornerPoints(1,i) * (fCornerPoints(2,j) - fCornerPoints(2,k)));
-		}
-        break;
-      case 2:
-        for (i=1, j=2, k=0; i<n; i++, j++, k++){
-			j = j%n;
-            area += (fCornerPoints(2,i) * (fCornerPoints(0,j) - fCornerPoints(0,k)));
-		}
-		break;
-      case 3:
-        for (i=1, j=2, k=0; i<n; i++, j++, k++){
-			j = j%n;
-            area += (fCornerPoints(0,i) 
-					*(fCornerPoints(1,j) 
-					- fCornerPoints(1,k)));
-		}
-        break;
-    }
-    switch (coord) {    // wrap-around term
-      case 1:
-		area += (fCornerPoints(1,0) * (fCornerPoints(2,1) - fCornerPoints(2,n-1)));
-        break;
-      case 2:
-		area += (fCornerPoints(2,0) * (fCornerPoints(0,1) - fCornerPoints(0,n-1)));
-        break;
-      case 3:
-		area += (fCornerPoints(0,0) * (fCornerPoints(1,1) - fCornerPoints(1,n-1)));
-        break;
+    REAL area = 0;
+    for(int i=1; i<=npoints; i++){
+        area += (   fCornerPoints((ignore+1)%3,i%npoints)
+                    *(  fCornerPoints((ignore+2)%3,(i+1)%npoints)
+                       -fCornerPoints((ignore+2)%3,(i-1)%npoints) )      );
     }
 
     // scale to get area before projection
-    an = sqrt( ax*ax + ay*ay + az*az); // length of normal vector
-    switch (coord) {
-      case 1:
-        area *= (an / (2 * normal[0]));
-        break;
-      case 2:
-        area *= (an / (2 * normal[1]));
-        break;
-      case 3:
-        area *= (an / (2 * normal[2]));
-    }
+    REAL norm = sqrt( abs_x*abs_x + abs_y*abs_y + abs_z*abs_z); // norm of normal vector
+    area *= (norm / (2 * normal[ignore]));
 	fArea = fabs(area);
     return fArea;
 }
@@ -385,7 +294,7 @@ REAL DFNPolygon::ComputeArea(){
 
 
 // /**
-//  * @brief Creates a geometric element for this plane in pointed mesh
+//  * @brief Creates a geometric element for this polygon in pointed mesh
 //  * @param Pointer to geometric mesh
 //  * @return Index for newly created element in gmesh
 //  */

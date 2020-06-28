@@ -23,7 +23,7 @@
 typedef TPZFMatrix<REAL> Matrix;
 
 /*! 
- *  @brief     Describes a planar polygon from it's corner points.
+ *  @brief     Describes a planar convex polygon from it's corner points.
  *  @details Enumeration of corner points should follow standard PZ topology, where 
  *  corner nodes are numbered counter-clockwise (clockwise should work as well) from
  *  zero to N. (This condition will automatically be met for triangles, but not 
@@ -32,26 +32,23 @@ typedef TPZFMatrix<REAL> Matrix;
 class DFNPolygon
 {
   private:
-	/// Contains fracture corner points. Matrix 3xn (n is the number of corners)
+	/// Contains polygon corner coordinates. Matrix 3xn (n is the number of corners)
 	Matrix fCornerPoints;
 	
-	/// Axis that define fracture orientation (Ax0 from node1 to node0, Ax1 from node1 to node2 and Ax2 the normal vector). Matrix 3x3
+	/// Axis that define polygon orientation (Ax0 from node1 to node0, Ax1 from node1 to node2 and Ax2 the normal vector). Matrix 3x3
 	Matrix fAxis ;
 
-	/// Area of plane
+	/// Area of polygon
 	double fArea;
 
-	/// Define a default tolerance
-	REAL fTolerance = 1.e-4;
-
-	/// If nodes of this plane have been added to a geometric mesh, this vector holds GeoNodes indices 
+	/// If nodes of this polygon have been added to a geometric mesh, this vector holds GeoNodes indices
 	TPZManVector<int64_t> fPointsIndex;
 
   public:
 	/// Empty constructor
 	DFNPolygon(){};
 
-	/// Define plane from 3 to 4 corner points. Matrix should be 3xN (3 coordinates for each of the N corner points)
+	/// Define polygon from 3 to 4 corner points. Matrix should be 3xN (3 coordinates for each of the N corner points)
 	DFNPolygon(const Matrix &CornerPoints);
 
 	/// Copy constructor
@@ -61,7 +58,7 @@ class DFNPolygon
 	DFNPolygon &operator=(const DFNPolygon &copy);
 
 	/// Define corner coordinates
-	void SetPlane(Matrix &CornerPoints);
+	void SetCornersX(Matrix &CornerPoints);
 
 	/// axis(i, j) returns component i of axis j
 	REAL axis(int row, int col){return fAxis(row,col);}
@@ -72,25 +69,28 @@ class DFNPolygon
 	/// Return corner coordinates
 	Matrix GetCornersX() const;
 
-	/// Return area of plane
+	/// Return corner coordinates matching indices of corner nodes that have been added to GeoMesh
+	Matrix GetRealCornersX(TPZGeoMesh* gmesh) const;
+
+	/// Return area of polygon
 	double area() const { return fArea; }
 
-	/// Compute area of plane
+	/// Compute area of polygon
 	REAL ComputeArea();
 
-	/// Return true if the rib intersects the plane
+	/// Return true if the rib intersects the polygon
 	bool Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection = nullptr);
 
-	/// Return true if the rib intersects the plane
+	/// Return true if the rib intersects the polygon
 	bool Check_rib(TPZGeoEl *rib, TPZManVector<REAL,3> *intersection = nullptr);
 
-	/// Return true if a point is above the fracture plane
+	/// Return true if a point is above the polygon plane
    	bool Check_point_above(const TPZVec<REAL> &point) const;
 
-   	/// Check whether the point coordinates are within the plane
-   	bool IsPointInPlane(TPZVec<REAL> &point);
+   	/// Check whether the point coordinates are within the polygon region
+   	bool IsPointInPolygon(TPZVec<REAL> &point);
 	
-	/// Computes the intersection point with the plane
+	/// Computes the intersection point with the polygon
 	TPZManVector<REAL,3> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
    
 
@@ -110,12 +110,12 @@ class DFNPolygon
 	}
 
 	/**
-	 * @brief Takes a set of coordinates in 3D and returns its projection onto the plane
+	 * @brief Takes a set of coordinates in 3D and returns its projection onto the polygon
 	*/
 	TPZManVector<REAL, 3> GetProjectedX(TPZManVector<REAL, 3> &point);
 
   private:
-	/// Initializes the datastructure of the object
+	/// Checks consistency and initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);
 
 };
