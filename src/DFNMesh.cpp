@@ -859,35 +859,32 @@ void DFNMesh::ExportGMshCAD(std::string filename){
                 TPZManVector<int64_t,6> enclosedSurfaces(nsurfaces);
                 enclosedSurfaces = Volume(iel)->GetFacesInVolume();
 
-                // @ToDo may need PrintYoungestChildren here, depending on which elements FindEnclosingVolume is called on
-                // -------------------------------------------------------------------------------------
                 outfile << "Surface{";
                 for(int i = 0; i<nsurfaces; i++){
-                    // TPZGeoEl *surface = fGMesh->Element(enclosedSurfaces[i]);
-                    // if(surface->HasSubElement()){
-                    //     PrintYoungestChildren(surface,outfile);
-                    // }
-                    // else{
-                    //     outfile << enclosedSurfaces[i] << (i<nsurfaces-1?",":"} ");
-                    // }
                     outfile << enclosedSurfaces[i]+shift << (i<nsurfaces-1?",":"} ");
                 }
-                // -------------------------------------------------------------------------------------
                 outfile << "In Volume{"<< iel+shift <<"};\n"; /* gmsh doesn't accept zero index elements */
             }
         }
         // write physical groups
-        outfile<<"\nPhysical Volume("<<DFNMaterial::Erefined<<") = {";
+		if(groupTransition.size() != 0){
+			outfile<<"\nrefinedvol[] = {";
         for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
             outfile<<*itr+shift<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
         }
-
+		}
 		if(groupIntact.size() != 0){
-			outfile<<"\nPhysical Volume("<<DFNMaterial::Eintact<<") = {";
+			outfile<<"\nintactvol[] = {";
 			for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
 				outfile<<*itr+shift<<(++itr!=groupIntact.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
 			}
-    		outfile<<"\nTransfinite Volume {Physical Volume("<<DFNMaterial::Eintact<<")};\n";
+    		outfile<<"\nTransfinite Volume {intactvol[]};\n";
+		}
+		for(int64_t iel=0;iel<fGMesh->NElements(); iel++){
+			if(!fGMesh->Element(iel)) continue;
+			if(fGMesh->Element(iel)->Dimension() == 3){
+				outfile<<"\nPhysical Volume("<<iel+shift<<") = {"<<iel+shift<<"};";
+			}
 		}
     }
     

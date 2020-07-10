@@ -370,8 +370,10 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
 		int64_t nels = gmesh->NElements();
 		TPZManVector<int64_t,2> inodes(2);     //index of nodes to be connected
         int icorner = iedge; //for readability
-        int forshow = DFNMaterial::Efracture;
 
+		// connect first end-face intersection to iedge's first node
+        inodes[0] = fPolygon->CornerIndex(icorner);
+		auto it = edgemap[iedge]->begin();
         if(edgemap[iedge]->size() == 0){
             #ifdef PZDEBUG
                 if(warning_message_Q){
@@ -380,35 +382,19 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
                 }
             #endif //PZDEBUG
             // DebugStop();
-            inodes[0] = fPolygon->CornerIndex(icorner);
-            inodes[1] = fPolygon->CornerIndex((icorner+1)%nedges);
-            gmesh->CreateGeoElement(EOned, inodes, forshow, nels);
-            loop.push_back((int) nels);
-            continue;
         }
-
-
-		// connect first end-face intersection to iedge's first node
-		auto it = edgemap[iedge]->begin();
-        inodes[0] = fPolygon->CornerIndex(icorner);
-		inodes[1] = it->second;
-		gmesh->CreateGeoElement(EOned, inodes, forshow, nels);
-        loop.push_back((int) nels);
-        
         // iterate over iedge's map
-        while(++it != edgemap[iedge]->end()){
-            nels++;
-            inodes[0] = inodes[1];
+        while(it != edgemap[iedge]->end()){
             inodes[1] = it->second;
-            gmesh->CreateGeoElement(EOned, inodes, forshow, nels);
+            gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
             loop.push_back((int) nels);
+            inodes[0] = inodes[1];
+            it++;
         }
 
 		// connect last end-intersection to edge last node
-		nels++;
-		inodes[0] = inodes[1];
         inodes[1] = fPolygon->CornerIndex((icorner+1)%nedges);
-		gmesh->CreateGeoElement(EOned, inodes, forshow, nels);
+		gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
         loop.push_back((int) nels);
     }
 	
@@ -476,6 +462,10 @@ void DFNFracture::GetFacesInSurface(std::vector<TPZGeoEl*> &faces){
             nedges = cand_face->NCornerNodes();
             int64_t index = cand_face->Index();
             if(++candidates[index] < nedges) continue;
+            // @todo{ if 2 or more edges of cand_face belong to fracture outerloop
+                // cand_face will not enter;
+                // the matching edges should be swaped by the remaining edges of cand_face
+                // pay attention to the orientation  }
             faces.push_back(gmesh->Element(index));
             SetMaterialIDChildren(DFNMaterial::Efracture,cand_face);
             fSurface.insert({index,cand_face});
@@ -502,7 +492,6 @@ void GetCurveLoop(TPZGeoEl* el, std::vector<int> &loop, const int shift=0){
         loop[iside-nedges] = orientation*(neig.Element()->Index()+shift);
     }
 }
-
 
 
 
