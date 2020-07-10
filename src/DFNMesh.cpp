@@ -94,15 +94,22 @@ void DFNMesh::GenerateSubMesh(){
 	int dim = gmesh->Dimension();
 	if(dim != 3) return; //@todo temporary while DFNVolume isn't generalized to 2D meshes
 	
-	gmsh::initialize();
 	//Loop over list of fractured volumes
 	for (auto itr = fVolumes.begin(); itr != fVolumes.end(); itr++){
     	DFNVolume *ivolume = &itr->second;
-		// if(ivolume->ElementIndex() != 1) continue;
+		// if(ivolume->ElementIndex() == 0) continue;
 		// Use GMsh to tetrahedralize volumes
+		gmsh::logger::start();
+
     	Tetrahedralize(ivolume);
+		
+		std::vector<std::string> logvec;
+		gmsh::logger::get(logvec);
+		for(std::string str : logvec){
+			std::cout << str << std::endl;
+		}
+		gmsh::logger::stop();
 	}
-	gmsh::finalize();	
 }
 
 
@@ -869,9 +876,9 @@ void DFNMesh::ExportGMshCAD(std::string filename){
         // write physical groups
 		if(groupTransition.size() != 0){
 			outfile<<"\nrefinedvol[] = {";
-        for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-            outfile<<*itr+shift<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
-        }
+			for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
+				outfile<<*itr+shift<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
+			}
 		}
 		if(groupIntact.size() != 0){
 			outfile<<"\nintactvol[] = {";
@@ -1122,6 +1129,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	// gmsh::initialize();
 	std::string modelname = "model"+std::to_string(ivol);
 	gmsh::model::add(modelname);
+	gmsh::model::setCurrent(modelname);
 	std::string mshfilename("LOG/testAPI_volume");
 	mshfilename += std::to_string(ivol);
 	// gmsh::model::add(mshfilename);
@@ -1321,7 +1329,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	// import meshed volume back into PZ geoMesh
 		ImportElementsFromGMSH(gmesh,3,nodes);
 	gmsh::model::remove();
-	// gmsh::clear();
+	gmsh::clear();
 	// gmsh::finalize();
 }
 

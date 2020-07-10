@@ -509,7 +509,10 @@ void DFNFracture::MeshFractureSurface(){
     GetFacesInSurface(facesInSurface);
     
     // initialize GMsh
-    gmsh::initialize();
+    // gmsh::initialize();
+	std::string modelname = "modelsurface";
+	gmsh::model::add(modelname);
+    gmsh::model::setCurrent(modelname);
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
     // INSERT POINTS
         // iterate over fOutline and get points
@@ -599,9 +602,11 @@ void DFNFracture::MeshFractureSurface(){
         TPZVec<int64_t> newelements;
         ImportElementsFromGMSH(fdfnMesh->Mesh(),2,pointset,newelements);
     // close GMsh
-    gmsh::finalize();
+    gmsh::model::remove();
+	// gmsh::clear();
+    // gmsh::finalize();
     
-        InsertElementsInSurface(newelements);
+    InsertElementsInSurface(newelements);
     fdfnMesh->CreateSkeletonElements(1, DFNMaterial::Efracture);
 }
 

@@ -91,8 +91,8 @@ int main(int argc, char* argv[]){
 	REAL tol_dist = 1.e-4;
 	REAL tol_angle = 1.e-3; 
 	gmesh = ReadInput(argc,argv,planevector,tol_dist,tol_angle);
-
-
+	gmsh::initialize();
+	
 	DFNMesh dfn(gmesh);
 	// Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
@@ -117,13 +117,14 @@ int main(int argc, char* argv[]){
 	// Mesh transition volumes
 		dfn.CreateVolumes();
 		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
-		// dfn.GenerateSubMesh();
+		dfn.GenerateSubMesh();
 
 	//Print result
 		dfn.PrintColorful();
 
 	std::cout<<"\n\n ...the end.\n\n";
 
+	gmsh::finalize();
 	return 0;
 }
 

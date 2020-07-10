@@ -135,6 +135,8 @@ public:
     void MeshFractureSurface();
     /// Assemble the set of constraints that outlines the fracture surface
     void AssembleOutline();
+    /// Assemble subpolygons (as ordered line loops of 1D members of the Outline)
+    void GetSubPolygons();
     /// Builds and fills a list with this fracture outer loop of edges
     void GetOuterLoop(std::vector<int> &outerLoop);
     /// Find faces that should be incorporated to fracture surface
