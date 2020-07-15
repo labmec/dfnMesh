@@ -243,6 +243,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			newnode[1] = fCoord;
 
 			child[0].Resize(3);
+			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
 				child[0][0] = nodeB;
 				child[0][1] = nodeA;
 				child[0][2] = (i+1)%4;
@@ -266,6 +267,7 @@ void DFNFace::FillChildrenAndNewNodes(
 		case 6:
 		// case 7 == case 4
 		case 8:{ // case 8 == case 6
+			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
 			// In-plane itersection node
 			child.resize(4);
 			newnode.resize(1);
@@ -395,6 +397,7 @@ void DFNFace::Refine(){
 		case 5:
 		case 6:
 		case 8:	fIntersectionIndex = children[0]->NodeIndex(0);
+		// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
 		default: break;
 	}
 }
@@ -481,8 +484,8 @@ int DFNFace::GetSplitPattern(TPZManVector<int> &status){
 }
 
 // Naive vector comparison
-template <class T>
-bool operator!=(const class TPZManVector<T>& v1,const class TPZManVector<T>& v2){
+template <class T, int NumExtAlloc1, int NumExtAlloc2>
+bool operator!=(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2){
 	int64_t size1 = v1.size();
 	int64_t size2 = v2.size();
 	if(size1 != size2) return true;
@@ -508,7 +511,7 @@ bool DFNFace::UpdateStatusVec(){
 	DFNRib *rib;
 	TPZGeoEl *rib_gel;
 	
-	TPZManVector<int> backup = fStatus;
+	TPZManVector<int> old_fStatus = fStatus;
 	Zero(fStatus);
 
 	int orientation = 0;
@@ -523,7 +526,7 @@ bool DFNFace::UpdateStatusVec(){
 		}
 	}
 
-	return backup != fStatus;
+	return old_fStatus != fStatus;
 }
 
 
