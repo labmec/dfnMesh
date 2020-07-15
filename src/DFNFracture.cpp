@@ -13,6 +13,8 @@
 #include "TPZRefPatternDataBase.h"
 #include "TPZGeoMeshBuilder.h"
 
+// const float _2PI = 6.2831853071795865;
+
 // Empty Constructor
 DFNFracture::DFNFracture(){
 }
@@ -608,6 +610,116 @@ void DFNFracture::MeshFractureSurface(){
     
     InsertElementsInSurface(newelements);
     fdfnMesh->CreateSkeletonElements(1, DFNMaterial::Efracture);
+}
+
+
+
+
+
+
+namespace DFN{
+	const float _2PI = 6.2831853071795865;
+    template<typename Ttype>
+    float DotProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
+        int size1 = vec1.size();
+        int size2 = vec2.size();
+        if(size1 != size2){throw std::bad_exception();}
+        float dot = 0.;
+        for(int j=0; j<size1; j++){
+            dot += vec1[j]*vec2[j];
+        }
+        return dot;
+    }
+
+    template<typename Ttype>
+    float Norm_f(TPZManVector<Ttype, 3> &vec){
+        float norm = 0.;
+        for(int j=0, size=vec.size(); j<size; j++){
+            norm += vec[j]*vec[j];
+        }
+        return std::sqrt(norm);
+    }
+
+    template<typename Ttype>
+    TPZManVector<Ttype,3> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
+        if(vec1.size() != 3){throw std::bad_exception();}
+        if(vec2.size() != 3){throw std::bad_exception();}
+
+        TPZManVector<REAL,3> result(3,0.);
+        result[0] = vec1[1]*vec2[2] - vec1[2]*vec2[1];
+        result[1] = vec1[2]*vec2[0] - vec1[0]*vec2[2];
+        result[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
+        return result;
+    }
+    template <class T, int NumExtAlloc1, int NumExtAlloc2>
+    TPZManVector<T,3> operator-(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2){
+        int64_t size1 = v1.size();
+        int64_t size2 = v2.size();
+        if(size1 != size2) throw std::bad_exception();
+        TPZManVector<T,3> result(size1);
+        for(int64_t i = 0; i<size1; i++){
+            result[i] = v1[i] - v2[i];
+        }
+        return result;
+    }
+
+
+    /**
+     * @brief Returns the oriented dihedral angle between gel and neighbour
+     * @note:1 Make sure neighbour is an actual neighbour, otherwise this method will spit nonsense
+     * @note:2 Returned angle is in interval [0, 2pi)
+     * @param sideorientation decides if method returns angle or 2*pi-angle, as a right-handed axis orientation
+    */
+    float DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1){
+        // Consistency checks
+        if(gelside.Element()->Dimension() != 2)     DebugStop();
+        if(gelside.Dimension() != 1)                DebugStop();
+        if(neighbour.Element()->Dimension() !=2)    DebugStop();
+        if(neighbour.Dimension() != 1)              DebugStop();
+        if(!gelside.NeighbourExists(neighbour))     DebugStop();
+
+        TPZGeoEl* gel = gelside.Element();
+        TPZGeoMesh* gmesh = gel->Mesh();
+        const int side = gelside.Side();
+        TPZManVector<double,3> sharednode0(3,0);
+        TPZManVector<double,3> sharednode1(3,0);
+        gmesh->NodeVec()[gelside.SideNodeIndex(0)].GetCoordinates(sharednode0);
+        gmesh->NodeVec()[gelside.SideNodeIndex(1)].GetCoordinates(sharednode1);
+
+        TPZManVector<REAL,3> oppositenode_gel(3,0);
+        TPZManVector<REAL,3> oppositenode_neig(3,0);
+        gel->Node((gelside.Side()+2)%gel->NNodes()).GetCoordinates(oppositenode_gel);
+        neighbour.Element()->Node((neighbour.Side()+2)%neighbour.Element()->NNodes()).GetCoordinates(oppositenode_neig);
+        TPZManVector<REAL,3> tangentvec_gel = oppositenode_gel - sharednode0;
+        TPZManVector<REAL,3> tangentvec_neig = oppositenode_neig - sharednode0;
+        TPZManVector<REAL,3> tangentvec_edge(3);
+        switch(sideorientation){
+            case -1:{tangentvec_edge = sharednode1 - sharednode0; break;}
+            case  1:{tangentvec_edge = sharednode0 - sharednode1; break;}
+            default: DebugStop();
+        }
+
+        TPZManVector<REAL,3> normalvec_gel = CrossProduct_f(tangentvec_gel,tangentvec_edge);
+        TPZManVector<REAL,3> normalvec_neig = CrossProduct_f(tangentvec_neig,tangentvec_edge);;
+        TPZManVector<REAL,3> aux = CrossProduct_f(normalvec_neig,normalvec_gel);
+        float x = Norm_f(tangentvec_edge)*DotProduct_f(normalvec_neig,normalvec_gel);
+        float y = DotProduct_f(tangentvec_edge,aux);
+        float angle = atan2f32(y,x);
+
+        return (angle >= 0? angle : angle + _2PI);
+    }
+
+}
+
+
+
+
+
+
+
+
+void DFNFracture::GetSubPolygons(){
+    
 }
 
 
