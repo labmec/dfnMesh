@@ -321,6 +321,8 @@ void DFNMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set
                         node_identifiers[inode] = mapGMshToPZ[group_node_identifiers[itype][iel*n_nodes+inode]];
                     }
                     TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
+                    // int matid = DFNMaterial::Erefined;
+					// TPZGeoMeshBuilder::InsertElement(gmesh, matid, el_type, el_identifier, node_identifiers);
 					int64_t ntest = gmesh->NElements();
 					// std::cout<<"nelements = "<<ntest<<"\n";
                 }
