@@ -114,6 +114,13 @@ class DFNPolygon
 	*/
 	TPZManVector<REAL, 3> GetProjectedX(TPZManVector<REAL, 3> &point);
 
+	void GetNormal(TPZManVector<REAL,3>& normal_vec){
+		normal_vec.resize(3);
+		normal_vec[0] = fAxis(0,2);
+		normal_vec[1] = fAxis(1,2);
+		normal_vec[2] = fAxis(2,2);
+	}
+
   private:
 	/// Checks consistency and initializes the datastructure of the object
 	bool Check_Data_Consistency(Matrix CornerPoints);
