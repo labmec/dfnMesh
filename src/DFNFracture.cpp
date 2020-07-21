@@ -633,6 +633,21 @@ namespace DFN{
         return (angle >= 0? angle : angle + _2PI);
     }
 
+    /**
+     * @brief Get a vector from node 0 to node 1 of a 1D side
+    */
+    void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector){
+        if(gelside.Dimension() != 1) DebugStop();
+        int node0 = gelside.SideNodeLocIndex(0);
+        int node1 = gelside.SideNodeLocIndex(1);
+
+        TPZManVector<REAL,3> coord0(3,0);
+        TPZManVector<REAL,3> coord1(3,0);
+        gelside.Element()->Node(node0).GetCoordinates(coord0);
+        gelside.Element()->Node(node1).GetCoordinates(coord1);
+
+        vector = coord1 - coord0;
+}
 }
 
 
