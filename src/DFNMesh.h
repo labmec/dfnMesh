@@ -110,6 +110,35 @@ class DFNMesh{
 
         int Dimension(){return fGMesh->Dimension();}
 
+
+
+
+
+
+        //@todo: Talk to Phil about this pattern... I'm not sure if this is what he had in mind
+        //Maps how many polyhedra this face is part of (at most 2)
+        std::map<int64_t,int> FaceTracker;
+        void InitializeFaceTracker(){
+            if(this->Dimension()<3) return;
+            if(this->FaceTracker.size() > 0){std::cout<<"\n\nTried to initialize an already initialized structure\n\n"; return;}
+            TPZGeoEl* gel = nullptr;
+            int64_t nels = this->Mesh()->NElements();
+            for(int64_t iel=0; iel<nels; iel++){
+                gel = fGMesh->Element(iel);
+                if(!gel) continue;
+                if(gel->Dimension() != 2) continue;
+                int n3Dneighbours = 0;
+                TPZGeoElSide gelside(gel,gel->NSides()-1);
+                TPZGeoElSide neig = gelside.Neighbour();
+                while(neig!=gelside){
+                    if(neig.Element()->Dimension()==3)   n3Dneighbours++;
+                    neig = neig.Neighbour();
+                }
+                if(n3Dneighbours > 2) DebugStop(); // A face cannot be shared by more than 2 volumes in 3D
+                FaceTracker[iel] = n3Dneighbours;
+            }
+        }
+
 	private:
 		// /**
     	//  *  @brief Navigate children tree to access most extreme branches

@@ -94,6 +94,7 @@ int main(int argc, char* argv[]){
 	gmsh::initialize();
 	
 	DFNMesh dfn(gmesh);
+	dfn.InitializeFaceTracker();
 	// Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
 		DFNPolygon *polygon = new DFNPolygon(planevector[iplane]);
@@ -107,6 +108,7 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 	// // Mesh fracture surface
 		fracture->AssembleOutline();
+		fracture->GetSubPolygons();
 		if(gmesh->Dimension() == 3){
 			polygon->SetPointsInGeomesh(gmesh);
 			fracture->MeshFractureSurface();
@@ -115,9 +117,9 @@ int main(int argc, char* argv[]){
 		dfn.AddFracture(fracture);
 	}
 	// Mesh transition volumes
-		dfn.CreateVolumes();
-		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
-		dfn.GenerateSubMesh();
+		// dfn.CreateVolumes();
+		// dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+		// dfn.GenerateSubMesh();
 
 	//Print result
 		dfn.PrintColorful();
