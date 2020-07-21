@@ -191,12 +191,18 @@ public:
     /// After optimization, update neighbours through side iside
     void UpdateNeighbours(int iside);
 
+    /**
+     * @brief If intersection of fracture with this face results in a 1D element, get its index.
+     * @return Index of 1D element, -1 if non existant or if line has not been created yet
+     */ 
+    int64_t LineInFace();
+
     private: 
 
-        /**
-         * @brief Determines split case and fill nodes of children and indices of the intersection points
-        */
-void FillChildrenAndNewNodes(TPZManVector<TPZManVector<int64_t,4>,6> &child, TPZManVector<TPZManVector<REAL,3>> &newnode);
+    /**
+     * @brief Determines split case and fill nodes of children and indices of the intersection points
+    */
+    void FillChildrenAndNewNodes(TPZManVector<TPZManVector<int64_t,4>,6> &child, TPZManVector<TPZManVector<REAL,3>> &newnode);
 
 };
 #endif /* DFNFace_h */

@@ -593,3 +593,68 @@ void DFNFace::UpdateMaterial(){
 	else {fGeoEl->SetMaterialId(DFNMaterial::Erefined);}
 	// @todo... this is incomplete. 2_nodes_in_a_row may mean intact
 }
+
+int64_t DFNFace::LineInFace(){
+	if(!fGeoEl->HasSubElement()) return -1;
+	int nsides = fGeoEl->NSides();
+	int nintersections=0;
+	TPZStack<int> sides;
+	for(int i=0; i<nsides; i++){
+		if(fStatus[i]) sides.push_back(i);
+		nintersections += fStatus[i];
+	}
+	if(nintersections < 2) return -1;
+	if(nintersections > 2) DebugStop(); // @todo.. as of 16/july/2020 we're still decided on this not happening. So I'll have to come back here if we change our minds
+
+	int nnodes = fGeoEl->NCornerNodes();
+	TPZStack<int64_t> framenodes;
+	for(int i=0; i<nsides; i++){
+		if(fStatus[i]){
+			if(i<nnodes){
+				framenodes.push_back(fGeoEl->NodeIndex(i));
+			}else if(i<nsides-1){
+				framenodes.push_back(this->Rib(i-nnodes)->IntersectionIndex());
+			}else if(i == nsides-1){
+				framenodes.push_back(this->IntersectionIndex());
+			}
+		}
+	}
+	int nchildren = fGeoEl->NSubElements();
+	if(nchildren == 0){nchildren++;}
+	// queue all possible lines by checking 1D neighbours of children
+	std::set<TPZGeoEl *> candidate_ribs;
+	for(int ichild=0; ichild<nchildren; ichild++){
+		TPZGeoEl* child;
+		if(fGeoEl->HasSubElement()){
+			child = fGeoEl->SubElement(ichild);
+		}else{
+			child = fGeoEl;
+		}
+		int nribs = child->NCornerNodes();
+		for(int cside = nribs; cside < 2*nribs; cside++){
+			TPZGeoElSide childside(child,cside);
+			TPZGeoElSide neig = childside.Neighbour();
+			for(/*void*/; neig != childside; neig = neig.Neighbour()){
+				if(neig.Element()->Dimension() != 1) continue;
+				candidate_ribs.insert(neig.Element());
+				break;
+			}
+		}
+	}
+	if(candidate_ribs.size() == 0) return -1;
+	if(candidate_ribs.size() == 1) return (*candidate_ribs.begin())->Index();
+	int nframenodes = framenodes.size();
+	for(auto candidate : candidate_ribs){
+		for(int inode=0; inode<nframenodes; inode++){
+			if(framenodes[inode]==candidate->NodeIndex(0)){
+				for(int nextnode=0; nextnode<nframenodes; nextnode++){
+					if(framenodes[nextnode]==candidate->NodeIndex(1)){
+						return candidate->Index();
+					}
+				}
+			}
+		}
+	}
+	DebugStop();
+	return -1;
+}
