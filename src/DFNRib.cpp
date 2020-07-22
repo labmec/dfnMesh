@@ -171,9 +171,6 @@ bool DFNRib::Optimize(REAL tolDist){
 
 
 void DFNRib::UpdateNeighbours(int iside){
-    // If neighbour doesn't have a DFNElement associated to it, create
-    // Go through every neighbour and match the iside entry on their status vector
-    // And run optimization
 
     TPZGeoElSide gelside(fGeoEl,iside);
     TPZGeoElSide neighbour = gelside.Neighbour();
@@ -199,8 +196,8 @@ void DFNRib::UpdateNeighbours(int iside){
                 // // else, match StatusVec entry for iside and optimize
                 // rib_ptr->StatusVec()[neig_side] = fStatus[iside];
                 // rib_ptr->Optimize();
-                if(rib_ptr->NeedsRefinement()) {rib_ptr->Optimize();}
-                // if(rib_ptr->NeedsRefinement()) {rib_ptr->ForceProjection();}
+                // if(rib_ptr->NeedsRefinement()) {rib_ptr->Optimize();}
+                if(rib_ptr->NeedsRefinement()) {rib_ptr->ForceProjection();}
                 break;
             }
             case 2:{

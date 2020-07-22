@@ -59,6 +59,7 @@ void DFNMesh::PrintColorful(std::string pzmesh,std::string vtkmesh){
 		if(gel->Dimension() != 2) continue;
 		if(gel->HasSubElement()) continue;
 		if(!gel->Father()) continue;
+		if(gel->MaterialId() == DFNMaterial::Efracture) continue;
 		int subindex = gel->WhichSubel();
 		int matid = gel->MaterialId();
 		gel->SetMaterialId(matid+subindex);
@@ -438,7 +439,7 @@ void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue
 bool DFN::IsInterface(TPZGeoEl* gel){
 	// gel can only be an interface if it is (d-1)-dimensional
 	if(gel->Dimension() != gel->Mesh()->Dimension()-1) {return false;}
-
+ 
 	TPZGeoEl* elder = nullptr;
 	if(gel->Father()){elder = gel->EldestAncestor();}
 	else{elder = gel;}
@@ -450,7 +451,7 @@ bool DFN::IsInterface(TPZGeoEl* gel){
 		// if(neig.Element()->Dimension() == 3) {return true;}
 		if(!neig.Element()->Father()) {return true;}
 	}
-
+ 
 	return false;
 }
 

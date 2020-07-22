@@ -426,6 +426,7 @@ void GetCurveLoop(TPZGeoEl* el, std::vector<int> &loop, const int shift=0){
 
 
 void DFNFracture::MeshFractureSurface(){
+    fdfnMesh->Mesh()->BuildConnectivity();
     // GMsh does not accept zero index entities
     const int shift = 1;
     // First construct the edges of the fracture surface
