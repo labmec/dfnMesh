@@ -96,9 +96,11 @@ int main(int argc, char* argv[]){
 	DFNMesh dfn(gmesh);
 	dfn.InitializeFaceTracker();
 	// Loop over fractures and refine mesh around them
+	DFNPolygon *polygon = nullptr;
+	DFNFracture *fracture = nullptr;
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
-		DFNPolygon *polygon = new DFNPolygon(planevector[iplane]);
-		DFNFracture *fracture = new DFNFracture(polygon,&dfn);
+		polygon = new DFNPolygon(planevector[iplane]);
+		fracture = new DFNFracture(polygon,&dfn);
 	// Find and split intersected ribs
 		fracture->FindRibs();
 		fracture->OptimizeRibs(tol_dist);
@@ -108,7 +110,7 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 	// // Mesh fracture surface
 		fracture->AssembleOutline();
-		fracture->GetSubPolygons();
+		// fracture->GetSubPolygons();
 		if(gmesh->Dimension() == 3){
 			polygon->SetPointsInGeomesh(gmesh);
 			fracture->MeshFractureSurface();
@@ -117,11 +119,12 @@ int main(int argc, char* argv[]){
 		dfn.AddFracture(fracture);
 	}
 	// Mesh transition volumes
-		// dfn.CreateVolumes();
+		dfn.CreateVolumes();
 		// dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
 
 	//Print result
+		polygon->InsertGeoEl(gmesh);
 		dfn.PrintColorful();
 
 	std::cout<<"\n\n ...the end.\n\n";

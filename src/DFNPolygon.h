@@ -57,6 +57,9 @@ class DFNPolygon
 	/// Assignment operator
 	DFNPolygon &operator=(const DFNPolygon &copy);
 
+	/// Return number of corners of polygon
+	int NCornerNodes(){return fCornerPoints.Cols();}
+
 	/// Define corner coordinates
 	void SetCornersX(Matrix &CornerPoints);
 
@@ -114,12 +117,21 @@ class DFNPolygon
 	*/
 	TPZManVector<REAL, 3> GetProjectedX(TPZManVector<REAL, 3> &point);
 
+	/// Fill a 3D vector with the components of the normal direction of this polygon
 	void GetNormal(TPZManVector<REAL,3>& normal_vec){
 		normal_vec.resize(3);
 		normal_vec[0] = fAxis(0,2);
 		normal_vec[1] = fAxis(1,2);
 		normal_vec[2] = fAxis(2,2);
 	}
+
+	/**
+	 * @brief Inserts a geometric element + nodes for this polygon.
+	 * @note 1. It only works for triangles and quadrilaterals
+	 * @note 2. I'm leaving this here for graphical debugging. Not for the actual flow of the code
+	 * @param nodes: Optional pointer to vector of existing nodes
+	*/
+	TPZGeoEl* InsertGeoEl(TPZGeoMesh* gmesh, int matid = 100, TPZVec<int64_t>* nodes = nullptr);
 
   private:
 	/// Checks consistency and initializes the datastructure of the object

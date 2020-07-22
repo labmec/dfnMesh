@@ -342,3 +342,29 @@ TPZManVector<REAL, 3> DFNPolygon::GetProjectedX(TPZManVector<REAL, 3> &x){
     projection[2] = x[2] - alpha*fAxis(2,2);
     return projection;
 }
+
+
+
+TPZGeoEl* DFNPolygon::InsertGeoEl(TPZGeoMesh* gmesh, int matid, TPZVec<int64_t>* nodes){
+    int nnodes = this->NCornerNodes();
+    if(nnodes > 4) return nullptr; //pz only supports triangles and quadrilaterals as 2D topologies
+
+    MElementType eltype = (nnodes == 4? EQuadrilateral : ETriangle);
+    int64_t elindex = -1;
+    TPZManVector<int64_t> newnodes(nnodes,-1);
+    if(nodes){
+        if(nodes->size() != nnodes) DebugStop();
+    }else{
+        for(int inode=0; inode<nnodes; inode++){
+            int64_t nodeindex = gmesh->NodeVec().AllocateNewElement();
+            newnodes[inode] = nodeindex;
+            TPZManVector<REAL, 3> coord(3,0);
+            coord[0] = fCornerPoints(0,inode);
+            coord[1] = fCornerPoints(1,inode);
+            coord[2] = fCornerPoints(2,inode);
+            gmesh->NodeVec()[nodeindex].Initialize(coord,*gmesh);
+        }
+        nodes = &newnodes;
+    }
+    return gmesh->CreateGeoElement(eltype,*nodes,matid,elindex);
+}
