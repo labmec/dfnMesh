@@ -197,6 +197,13 @@ class DFNMesh{
 };
 
 
+namespace DFN{
+    /**
+     * @brief Tests if a 2D element is an interface or boundary for 3D coarse elements in the context of DFN meshing
+    */
+    bool IsInterface(TPZGeoEl* gel);
+}
+
 
 enum DFNMaterial{
     Eintact = 1, 

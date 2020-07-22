@@ -394,11 +394,13 @@ int64_t DFNMesh::FindAdjacentMacroEl(TPZGeoEl* gel){
 		TPZGeoElSide gelside(gel, iside);
 		if(gelside.Dimension() < 1) break;
 		TPZGeoElSide neig = gelside.Neighbour();
-		for( ; neig != gelside; neig = neig.Neighbour()){
+		for(/*void*/; neig != gelside; neig = neig.Neighbour()){
 			if(neig.Element()->Dimension() != 2) continue;
-			int mat = neig.Element()->MaterialId();
-			if (mat != DFNMaterial::Efracture){
-				return neig.Element()->EldestAncestor()->Index();
+			if (DFN::IsInterface(neig.Element())){
+				if(neig.Element()->Father())
+					{return neig.Element()->EldestAncestor()->Index();}
+				else
+					{return neig.Element()->Index();}
 			}
 		}
 	}
@@ -433,7 +435,24 @@ void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue
 
 
 
+bool DFN::IsInterface(TPZGeoEl* gel){
+	// gel can only be an interface if it is (d-1)-dimensional
+	if(gel->Dimension() != gel->Mesh()->Dimension()-1) {return false;}
 
+	TPZGeoEl* elder = nullptr;
+	if(gel->Father()){elder = gel->EldestAncestor();}
+	else{elder = gel;}
+ 
+	// Return true if eldest ancestor has an orphan neighbour through side nsides-1
+	TPZGeoElSide gelside(elder,elder->NSides()-1);
+	TPZGeoElSide neig = gelside.Neighbour();
+	for(/*void*/; neig != gelside; neig = neig.Neighbour()){
+		// if(neig.Element()->Dimension() == 3) {return true;}
+		if(!neig.Element()->Father()) {return true;}
+	}
+
+	return false;
+}
 
 
 
@@ -443,6 +462,7 @@ void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue
 bool DFNMesh::FindEnclosingVolume(TPZGeoEl *ifracface){
 	bool gBigPlanes_Q = true; //placeholder
 	if(ifracface->Dimension()!=2) DebugStop();
+	if(DFN::IsInterface(ifracface)) return false;
 	int64_t ifracfaceindex = ifracface->Index();
 	TPZGeoMesh *gmesh = ifracface->Mesh();
     // get coordinates of geometric center of face

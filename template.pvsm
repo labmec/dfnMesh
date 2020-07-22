@@ -21192,11 +21192,7 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="16358.ColorArrayName.array_list">
-          <String text="Dimension"/>
-          <String text="elIndex"/>
-          <String text="material"/>
-        </Domain>
+        <Domain name="array_list" id="16358.ColorArrayName.array_list"/>
       </Property>
       <Property name="ColorByLODIndex" id="16358.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -24654,7 +24650,7 @@
         <Domain name="bool" id="17558.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="17558.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="17558.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="17558.Ambient" number_of_elements="1">
@@ -25351,7 +25347,11 @@
       </Property>
       <Property name="SelectionCellFieldDataArrayName" id="17798.SelectionCellFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="Dimension"/>
-        <Domain name="array_list" id="17798.SelectionCellFieldDataArrayName.array_list"/>
+        <Domain name="array_list" id="17798.SelectionCellFieldDataArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="SelectionPointFieldDataArrayName" id="17798.SelectionPointFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="vtkOriginalPointIds"/>
@@ -25362,7 +25362,7 @@
         <Domain name="bool" id="17798.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="17798.Visibility" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0"/>
         <Domain name="bool" id="17798.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="17798.Ambient" number_of_elements="1">
@@ -25480,6 +25480,9 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17798.GlyphTableIndexArray.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="GlyphType" id="17798.GlyphType" number_of_elements="1">
@@ -25749,12 +25752,18 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17798.SelectOrientationVectors.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectScaleArray" id="17798.SelectScaleArray" number_of_elements="1">
         <Element index="0" value="None"/>
         <Domain name="array_list" id="17798.SelectScaleArray.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectionCellLabelBold" id="17798.SelectionCellLabelBold" number_of_elements="1">
@@ -26118,11 +26127,7 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="18038.ColorArrayName.array_list">
-          <String text="Dimension"/>
-          <String text="elIndex"/>
-          <String text="material"/>
-        </Domain>
+        <Domain name="array_list" id="18038.ColorArrayName.array_list"/>
       </Property>
       <Property name="ColorByLODIndex" id="18038.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -28879,7 +28884,11 @@
       </Property>
       <Property name="SelectionCellFieldDataArrayName" id="15158.SelectionCellFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="Dimension"/>
-        <Domain name="array_list" id="15158.SelectionCellFieldDataArrayName.array_list"/>
+        <Domain name="array_list" id="15158.SelectionCellFieldDataArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="SelectionPointFieldDataArrayName" id="15158.SelectionPointFieldDataArrayName" number_of_elements="1">
         <Element index="0" value="vtkOriginalPointIds"/>
@@ -28947,7 +28956,11 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="15158.ColorArrayName.array_list"/>
+        <Domain name="array_list" id="15158.ColorArrayName.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ColorByLODIndex" id="15158.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -29004,6 +29017,9 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="15158.GlyphTableIndexArray.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="GlyphType" id="15158.GlyphType" number_of_elements="1">
@@ -29273,12 +29289,18 @@
         <Element index="0" value="None"/>
         <Domain name="array_list" id="15158.SelectOrientationVectors.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectScaleArray" id="15158.SelectScaleArray" number_of_elements="1">
         <Element index="0" value="None"/>
         <Domain name="array_list" id="15158.SelectScaleArray.array_list">
           <String text="None"/>
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
         </Domain>
       </Property>
       <Property name="SelectionCellLabelBold" id="15158.SelectionCellLabelBold" number_of_elements="1">
@@ -30955,7 +30977,7 @@
         </Domain>
       </Property>
       <Property name="Representation" id="15878.Representation" number_of_elements="1">
-        <Element index="0" value="Surface"/>
+        <Element index="0" value="Wireframe"/>
         <Domain name="list" id="15878.Representation.list">
           <String text="3D Glyphs"/>
           <String text="Feature Edges"/>
@@ -30992,7 +31014,7 @@
         <Domain name="bool" id="15878.SelectionVisibility.bool"/>
       </Property>
       <Property name="Visibility" id="15878.Visibility" number_of_elements="1">
-        <Element index="0" value="0"/>
+        <Element index="0" value="1"/>
         <Domain name="bool" id="15878.Visibility.bool"/>
       </Property>
       <Property name="Ambient" id="15878.Ambient" number_of_elements="1">
@@ -31000,9 +31022,9 @@
         <Domain name="range" id="15878.Ambient.range"/>
       </Property>
       <Property name="AmbientColor" id="15878.AmbientColor" number_of_elements="3">
-        <Element index="0" value="1"/>
-        <Element index="1" value="1"/>
-        <Element index="2" value="1"/>
+        <Element index="0" value="0"/>
+        <Element index="1" value="0"/>
+        <Element index="2" value="0"/>
         <Domain name="range" id="15878.AmbientColor.range"/>
       </Property>
       <Property name="BackfaceAmbientColor" id="15878.BackfaceAmbientColor" number_of_elements="3">
@@ -31070,15 +31092,15 @@
         <Domain name="range" id="15878.Diffuse.range"/>
       </Property>
       <Property name="DiffuseColor" id="15878.DiffuseColor" number_of_elements="3">
-        <Element index="0" value="1"/>
-        <Element index="1" value="1"/>
-        <Element index="2" value="1"/>
+        <Element index="0" value="0"/>
+        <Element index="1" value="0"/>
+        <Element index="2" value="0"/>
         <Domain name="range" id="15878.DiffuseColor.range"/>
       </Property>
       <Property name="EdgeColor" id="15878.EdgeColor" number_of_elements="3">
         <Element index="0" value="0"/>
         <Element index="1" value="0"/>
-        <Element index="2" value="0.5"/>
+        <Element index="2" value="0"/>
         <Domain name="range" id="15878.EdgeColor.range"/>
       </Property>
       <Property name="Emissive" id="15878.Emissive" number_of_elements="1">
@@ -31225,7 +31247,7 @@
         <Domain name="range" id="15878.OcclusionStrength.range"/>
       </Property>
       <Property name="Opacity" id="15878.Opacity" number_of_elements="1">
-        <Element index="0" value="1"/>
+        <Element index="0" value="0.4"/>
         <Domain name="range" id="15878.Opacity.range"/>
       </Property>
       <Property name="OpacityArray" id="15878.OpacityArray" number_of_elements="5">
@@ -31748,11 +31770,7 @@
         <Element index="2" value=""/>
         <Element index="3" value=""/>
         <Element index="4" value=""/>
-        <Domain name="array_list" id="16118.ColorArrayName.array_list">
-          <String text="Dimension"/>
-          <String text="elIndex"/>
-          <String text="material"/>
-        </Domain>
+        <Domain name="array_list" id="16118.ColorArrayName.array_list"/>
       </Property>
       <Property name="ColorByLODIndex" id="16118.ColorByLODIndex" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -33299,39 +33317,6 @@
         <Domain name="bool" id="14230.UseContinuousCellRange.bool"/>
       </Property>
     </Proxy>
-    <Proxy group="filters" type="Threshold" id="15668" servers="1">
-      <Property name="AllScalars" id="15668.AllScalars" number_of_elements="1">
-        <Element index="0" value="1"/>
-        <Domain name="bool" id="15668.AllScalars.bool"/>
-      </Property>
-      <Property name="Input" id="15668.Input" number_of_elements="1">
-        <Proxy value="15428" output_port="0"/>
-        <Domain name="groups" id="15668.Input.groups"/>
-        <Domain name="input_array" id="15668.Input.input_array"/>
-        <Domain name="input_type" id="15668.Input.input_type"/>
-      </Property>
-      <Property name="Invert" id="15668.Invert" number_of_elements="1">
-        <Element index="0" value="0"/>
-        <Domain name="bool" id="15668.Invert.bool"/>
-      </Property>
-      <Property name="SelectInputScalars" id="15668.SelectInputScalars" number_of_elements="5">
-        <Element index="0" value=""/>
-        <Element index="1" value=""/>
-        <Element index="2" value=""/>
-        <Element index="3" value="1"/>
-        <Element index="4" value="material"/>
-        <Domain name="array_list" id="15668.SelectInputScalars.array_list"/>
-      </Property>
-      <Property name="ThresholdBetween" id="15668.ThresholdBetween" number_of_elements="2">
-        <Element index="0" value="2"/>
-        <Element index="1" value="2"/>
-        <Domain name="range" id="15668.ThresholdBetween.range"/>
-      </Property>
-      <Property name="UseContinuousCellRange" id="15668.UseContinuousCellRange" number_of_elements="1">
-        <Element index="0" value="0"/>
-        <Domain name="bool" id="15668.UseContinuousCellRange.bool"/>
-      </Property>
-    </Proxy>
     <Proxy group="filters" type="Threshold" id="16868" servers="1">
       <Property name="AllScalars" id="16868.AllScalars" number_of_elements="1">
         <Element index="0" value="1"/>
@@ -33390,7 +33375,11 @@
         <Element index="2" value=""/>
         <Element index="3" value="1"/>
         <Element index="4" value="material"/>
-        <Domain name="array_list" id="17588.SelectInputScalars.array_list"/>
+        <Domain name="array_list" id="17588.SelectInputScalars.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ThresholdBetween" id="17588.ThresholdBetween" number_of_elements="2">
         <Element index="0" value="2"/>
@@ -33400,6 +33389,39 @@
       <Property name="UseContinuousCellRange" id="17588.UseContinuousCellRange" number_of_elements="1">
         <Element index="0" value="0"/>
         <Domain name="bool" id="17588.UseContinuousCellRange.bool"/>
+      </Property>
+    </Proxy>
+    <Proxy group="filters" type="Threshold" id="15668" servers="1">
+      <Property name="AllScalars" id="15668.AllScalars" number_of_elements="1">
+        <Element index="0" value="1"/>
+        <Domain name="bool" id="15668.AllScalars.bool"/>
+      </Property>
+      <Property name="Input" id="15668.Input" number_of_elements="1">
+        <Proxy value="15428" output_port="0"/>
+        <Domain name="groups" id="15668.Input.groups"/>
+        <Domain name="input_array" id="15668.Input.input_array"/>
+        <Domain name="input_type" id="15668.Input.input_type"/>
+      </Property>
+      <Property name="Invert" id="15668.Invert" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15668.Invert.bool"/>
+      </Property>
+      <Property name="SelectInputScalars" id="15668.SelectInputScalars" number_of_elements="5">
+        <Element index="0" value=""/>
+        <Element index="1" value=""/>
+        <Element index="2" value=""/>
+        <Element index="3" value="1"/>
+        <Element index="4" value="material"/>
+        <Domain name="array_list" id="15668.SelectInputScalars.array_list"/>
+      </Property>
+      <Property name="ThresholdBetween" id="15668.ThresholdBetween" number_of_elements="2">
+        <Element index="0" value="100"/>
+        <Element index="1" value="100"/>
+        <Domain name="range" id="15668.ThresholdBetween.range"/>
+      </Property>
+      <Property name="UseContinuousCellRange" id="15668.UseContinuousCellRange" number_of_elements="1">
+        <Element index="0" value="0"/>
+        <Domain name="bool" id="15668.UseContinuousCellRange.bool"/>
       </Property>
     </Proxy>
     <Proxy group="filters" type="Threshold" id="17108" servers="1">
@@ -33460,7 +33482,11 @@
         <Element index="2" value=""/>
         <Element index="3" value="1"/>
         <Element index="4" value="material"/>
-        <Domain name="array_list" id="17828.SelectInputScalars.array_list"/>
+        <Domain name="array_list" id="17828.SelectInputScalars.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ThresholdBetween" id="17828.ThresholdBetween" number_of_elements="2">
         <Element index="0" value="3"/>
@@ -33493,7 +33519,11 @@
         <Element index="2" value=""/>
         <Element index="3" value="1"/>
         <Element index="4" value="material"/>
-        <Domain name="array_list" id="16148.SelectInputScalars.array_list"/>
+        <Domain name="array_list" id="16148.SelectInputScalars.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ThresholdBetween" id="16148.ThresholdBetween" number_of_elements="2">
         <Element index="0" value="1"/>
@@ -33563,7 +33593,11 @@
         <Element index="2" value=""/>
         <Element index="3" value="1"/>
         <Element index="4" value="material"/>
-        <Domain name="array_list" id="15908.SelectInputScalars.array_list"/>
+        <Domain name="array_list" id="15908.SelectInputScalars.array_list">
+          <String text="Dimension"/>
+          <String text="elIndex"/>
+          <String text="material"/>
+        </Domain>
       </Property>
       <Property name="ThresholdBetween" id="15908.ThresholdBetween" number_of_elements="2">
         <Element index="0" value="2"/>
@@ -33671,9 +33705,9 @@
         <Domain name="range" id="18051.BackLightWarmth.range"/>
       </Property>
       <Property name="Background" id="18051.Background" number_of_elements="3">
-        <Element index="0" value="0.32"/>
-        <Element index="1" value="0.34"/>
-        <Element index="2" value="0.43"/>
+        <Element index="0" value="0.3333333333333333"/>
+        <Element index="1" value="0.3333333333333333"/>
+        <Element index="2" value="0.4980392156862745"/>
         <Domain name="range" id="18051.Background.range"/>
       </Property>
       <Property name="Background2" id="18051.Background2" number_of_elements="3">
@@ -33758,9 +33792,9 @@
         <Domain name="bool" id="18051.CenterAxesVisibility.bool"/>
       </Property>
       <Property name="CenterOfRotation" id="18051.CenterOfRotation" number_of_elements="3">
-        <Element index="0" value="49.999999046325684"/>
-        <Element index="1" value="49.999999046325684"/>
-        <Element index="2" value="50"/>
+        <Element index="0" value="2"/>
+        <Element index="1" value="3"/>
+        <Element index="2" value="2"/>
       </Property>
       <Property name="CollectGeometryThreshold" id="18051.CollectGeometryThreshold" number_of_elements="1">
         <Element index="0" value="100"/>
@@ -34086,8 +34120,8 @@
         <Element index="0" value="2"/>
       </Property>
       <Property name="ViewSize" id="18051.ViewSize" number_of_elements="2">
-        <Element index="0" value="1044"/>
-        <Element index="1" value="598"/>
+        <Element index="0" value="985"/>
+        <Element index="1" value="566"/>
       </Property>
       <Property name="ViewTime" id="18051.ViewTime" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -34106,43 +34140,43 @@
         <Element index="0" value="0"/>
       </Property>
       <Property name="CameraFocalPoint" id="18051.CameraFocalPoint" number_of_elements="3">
-        <Element index="0" value="49.99999904632544"/>
-        <Element index="1" value="49.9999990463257"/>
-        <Element index="2" value="50.00000000000048"/>
+        <Element index="0" value="1.9999999999999638"/>
+        <Element index="1" value="3.0000000000000195"/>
+        <Element index="2" value="2.0000000000000435"/>
       </Property>
       <Property name="CameraFocalPointInfo" id="18051.CameraFocalPointInfo" number_of_elements="3">
-        <Element index="0" value="49.99999904632544"/>
-        <Element index="1" value="49.9999990463257"/>
-        <Element index="2" value="50.00000000000048"/>
+        <Element index="0" value="1.9999999999999638"/>
+        <Element index="1" value="3.0000000000000195"/>
+        <Element index="2" value="2.0000000000000435"/>
       </Property>
       <Property name="CameraParallelScale" id="18051.CameraParallelScale" number_of_elements="1">
-        <Element index="0" value="109.22555463650124"/>
+        <Element index="0" value="5.196152422706632"/>
       </Property>
       <Property name="CameraParallelScaleInfo" id="18051.CameraParallelScaleInfo" number_of_elements="1">
-        <Element index="0" value="109.22555463650124"/>
+        <Element index="0" value="5.196152422706632"/>
       </Property>
       <Property name="CameraPosition" id="18051.CameraPosition" number_of_elements="3">
-        <Element index="0" value="-218.97618433226222"/>
-        <Element index="1" value="322.11842908603523"/>
-        <Element index="2" value="-128.04535435152232"/>
+        <Element index="0" value="17.55977598966896"/>
+        <Element index="1" value="3.772227326341823"/>
+        <Element index="2" value="-10.663274589305402"/>
       </Property>
       <Property name="CameraPositionInfo" id="18051.CameraPositionInfo" number_of_elements="3">
-        <Element index="0" value="-218.97618433226222"/>
-        <Element index="1" value="322.11842908603523"/>
-        <Element index="2" value="-128.04535435152232"/>
+        <Element index="0" value="17.55977598966896"/>
+        <Element index="1" value="3.772227326341823"/>
+        <Element index="2" value="-10.663274589305402"/>
       </Property>
       <Property name="CameraViewAngle" id="18051.CameraViewAngle" number_of_elements="1">
         <Element index="0" value="30"/>
       </Property>
       <Property name="CameraViewUp" id="18051.CameraViewUp" number_of_elements="3">
-        <Element index="0" value="-0.7551331055007892"/>
-        <Element index="1" value="-0.6316871166315255"/>
-        <Element index="2" value="0.1753436045554088"/>
+        <Element index="0" value="0.6243326203357318"/>
+        <Element index="1" value="0.1076656528331432"/>
+        <Element index="2" value="0.7737033581319989"/>
       </Property>
       <Property name="CameraViewUpInfo" id="18051.CameraViewUpInfo" number_of_elements="3">
-        <Element index="0" value="-0.7551331055007892"/>
-        <Element index="1" value="-0.6316871166315255"/>
-        <Element index="2" value="0.1753436045554088"/>
+        <Element index="0" value="0.6243326203357318"/>
+        <Element index="1" value="0.1076656528331432"/>
+        <Element index="2" value="0.7737033581319989"/>
       </Property>
       <Property name="EyeAngle" id="18051.EyeAngle" number_of_elements="1">
         <Element index="0" value="2"/>
@@ -34510,9 +34544,9 @@
       <Item id="16628" name="3D--------" logname="Threshold1"/>
       <Item id="14708" name="Coarse Mesh" logname="Threshold1"/>
       <Item id="14230" name="ElementRange"/>
-      <Item id="15668" name="Fractures" logname="Threshold1"/>
       <Item id="16868" name="IntactFaces" logname="Threshold1"/>
       <Item id="17588" name="Outline" logname="Threshold1"/>
+      <Item id="15668" name="Polygons" logname="Threshold1"/>
       <Item id="17108" name="Refinements" logname="Threshold1"/>
       <Item id="17828" name="Ribs cut" logname="Threshold1"/>
       <Item id="16148" name="Ribs intact" logname="Threshold1"/>
@@ -34672,10 +34706,7 @@
           <Property source_property="TextAnnotationColor" target_id="15705" target_property="PolarAxisLabelColor" unlink_if_modified="1"/>
           <Property source_property="TextAnnotationColor" target_id="15705" target_property="PolarAxisTitleColor" unlink_if_modified="1"/>
           <Property source_property="TextAnnotationColor" target_id="15705" target_property="SecondaryRadialAxesTextColor" unlink_if_modified="1"/>
-          <Property source_property="ForegroundColor" target_id="15878" target_property="AmbientColor" unlink_if_modified="1"/>
           <Property source_property="SurfaceColor" target_id="15878" target_property="BackfaceDiffuseColor" unlink_if_modified="1"/>
-          <Property source_property="SurfaceColor" target_id="15878" target_property="DiffuseColor" unlink_if_modified="1"/>
-          <Property source_property="EdgeColor" target_id="15878" target_property="EdgeColor" unlink_if_modified="1"/>
           <Property source_property="SelectionColor" target_id="15878" target_property="SelectionColor" unlink_if_modified="1"/>
           <Property source_property="ForegroundColor" target_id="15897" target_property="GridColor" unlink_if_modified="1"/>
           <Property source_property="TextAnnotationColor" target_id="15897" target_property="XLabelColor" unlink_if_modified="1"/>
