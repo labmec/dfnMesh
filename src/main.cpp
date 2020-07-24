@@ -110,7 +110,7 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 	// // Mesh fracture surface
 		fracture->AssembleOutline();
-		// fracture->GetSubPolygons();
+		fracture->GetSubPolygons();
 		if(gmesh->Dimension() == 3){
 			polygon->SetPointsInGeomesh(gmesh);
 			fracture->MeshFractureSurface();

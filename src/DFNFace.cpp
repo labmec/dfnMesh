@@ -72,22 +72,14 @@ bool DFNFace::IsOnBoundary(){
 
 
 bool DFNFace::UpdateRefMesh(){
-	TPZManVector<TPZManVector<int64_t,4>,6> child; 
-	TPZManVector<TPZManVector<REAL,3>> newnode;
+	if(!this->NeedsRefinement()) return false;
+	TPZManVector<TPZManVector<int64_t,4>,6> child(0); 
+	TPZManVector<TPZManVector<REAL,3>> newnode(0);
 	FillChildrenAndNewNodes(child,newnode);
 	int ncornersfather = fGeoEl->NCornerNodes();
 	int nchildren = child.size();
 	TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
-	// // Maps geometric mesh index to refinement mesh index
-	// std::map<int64_t, int64_t> gmesh_to_rmesh;
-	// TPZManVector<int64_t,4> node;
-	// fGeoEl->GetNodeIndices(node);
-	// for(int i = 0; i<ncornersfather; i++) {gmesh_to_rmesh.insert({node[i], i});}
-	
-	// // @todo: test if this is still necessary. When we use fGeoEl->Divide()
-	// if(newnode.size() >= 1){gmesh_to_rmesh.insert({ncornersfather,ncornersfather});}
-	// if(newnode.size() >= 2){gmesh_to_rmesh.insert({ncornersfather+1,ncornersfather+1});}
 	
 	// Number of nodes for refinement pattern
 	int refNNodes = ncornersfather + newnode.size();
@@ -136,6 +128,7 @@ void DFNFace::FillChildrenAndNewNodes(
 	TPZManVector<TPZManVector<int64_t,4>,6> &child, 
 	TPZManVector<TPZManVector<REAL,3>> &newnode)
 {
+	if(!this->NeedsRefinement()) return;
 	int splitcase = GetSplitPattern(fStatus);
 	int nodeA = fGeoEl->NCornerNodes();
 	int nodeB = fGeoEl->NCornerNodes()+1;
@@ -423,6 +416,7 @@ void DFNFace::Refine(){
  * @return Integer that indicates which split pattern to use. (check documentation)
  */
 int DFNFace::GetSplitPattern(TPZManVector<int> &status){
+	if(!this->NeedsRefinement()) return 0;
     // Count number of ribs and nodes cut
     int ribscut = 0;
 	int nodescut = 0;
