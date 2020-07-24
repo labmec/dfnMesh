@@ -762,7 +762,7 @@ void DFNFracture::GetSubPolygons(){
                         else if(edge_rib->GeoEl()->NodeIndex(1)==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
                         else if(edge_rib->IntersectionIndex()  ==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
                         else orientation = -1;
-                    }
+                    }else{orientation=1;}
                     break;
                 }
                 current_line = orientation*current_line;
