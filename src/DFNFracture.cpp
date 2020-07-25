@@ -688,6 +688,8 @@ void DFNFracture::GetSubPolygons(){
         bool DirectionFailed = false;
         while(nloops < npolyhedra){
             // TPZAutoPointer<std::vector<int>> subpolygon = new std::vector<int>;
+            // int debugsize = subpolygons_map.size();
+            // std::printf("#%i ---------\n",debugsize);
             std::vector<int>* subpolygon = new std::vector<int>;
 
             // Find next side based in decided direction
@@ -771,8 +773,11 @@ void DFNFracture::GetSubPolygons(){
 
             if(!DirectionFailed){
                 nloops++;
+                direction = (direction+1)%2;
                 // subpolygons_map.insert({subpolygons_map.size(),subpolygon});
-                subpolygons_map[subpolygons_map.size()] = subpolygon;
+                if(subpolygon->size() >= 3){ // exception for fractures incorporating an edge of a volume
+                    subpolygons_map[subpolygons_map.size()] = subpolygon;
+                } 
             }
         }
     }

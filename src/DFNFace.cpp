@@ -589,7 +589,7 @@ void DFNFace::UpdateMaterial(){
 }
 
 int64_t DFNFace::LineInFace(){
-	if(!fGeoEl->HasSubElement()) return -1;
+	// if(!fGeoEl->HasSubElement()) return -1;
 	int nsides = fGeoEl->NSides();
 	int nintersections=0;
 	TPZStack<int> sides;

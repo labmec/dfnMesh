@@ -9,6 +9,7 @@
 	#include "TPZRefPatternDataBase.h"
 	#include "TPZGmshReader.h"
 	#include "pzlog.h"
+	#include "TPZTimer.h"
 	
 	#include <stdio.h>
 	#include <math.h>
@@ -85,6 +86,8 @@ int main(int argc, char* argv[]){
 	#ifdef LOG4CXX
     	InitializePZLOG();
 	#endif
+	TPZTimer time("DFNMesh");
+	time.start();
 	PrintPreamble();
 	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh = nullptr;
@@ -122,12 +125,13 @@ int main(int argc, char* argv[]){
 		dfn.CreateVolumes();
 		// dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
-
+	time.stop();
+	std::cout<<"\n\n"<<time;
 	//Print result
 		polygon->InsertGeoEl(gmesh);
 		dfn.PrintColorful();
 
-	std::cout<<"\n\n ...the end.\n\n";
+	std::cout<<"\n ...the end.\n\n";
 
 	gmsh::finalize();
 	return 0;
