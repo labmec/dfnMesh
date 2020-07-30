@@ -277,11 +277,11 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
 				temp = sqrtl(temp);
             // check if point is in edge by calculating if it's normal distance to the edge is zero
             REAL dist = temp/edgelength[iedge];
-			if(dist<gDFN_SmallNumber){
+			if(dist<DFN::gSmallNumber){
 				// compute local 1D coordinate (alpha)
 				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
 				REAL alpha = norm/edgelength[iedge];
-				if(alpha > 1+gDFN_SmallNumber){std::cout<<"\nMisattribution of point to edge\n";DebugStop();}
+				if(alpha > 1+DFN::gSmallNumber){std::cout<<"\nMisattribution of point to edge\n";DebugStop();}
 				// map intersection indexes from smallest alpha to biggest
                 // map <alpha, index>
 				edgemap[iedge]->insert({alpha, ipointindex});
@@ -542,119 +542,6 @@ void DFNFracture::MeshFractureSurface(){
 
 
 
-namespace DFN{
-	const float _2PI = 6.2831853071795865;
-    template<typename Ttype>
-    float DotProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
-        int size1 = vec1.size();
-        int size2 = vec2.size();
-        if(size1 != size2){throw std::bad_exception();}
-        float dot = 0.;
-        for(int j=0; j<size1; j++){
-            dot += vec1[j]*vec2[j];
-        }
-        return dot;
-    }
-
-    template<typename Ttype>
-    float Norm_f(TPZManVector<Ttype, 3> &vec){
-        float norm = 0.;
-        for(int j=0, size=vec.size(); j<size; j++){
-            norm += vec[j]*vec[j];
-        }
-        return std::sqrt(norm);
-    }
-
-    template<typename Ttype>
-    TPZManVector<Ttype,3> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
-        if(vec1.size() != 3){throw std::bad_exception();}
-        if(vec2.size() != 3){throw std::bad_exception();}
-
-        TPZManVector<REAL,3> result(3,0.);
-        result[0] = vec1[1]*vec2[2] - vec1[2]*vec2[1];
-        result[1] = vec1[2]*vec2[0] - vec1[0]*vec2[2];
-        result[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
-        return result;
-    }
-    template <class T, int NumExtAlloc1, int NumExtAlloc2>
-    TPZManVector<T,3> operator-(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2){
-        int64_t size1 = v1.size();
-        int64_t size2 = v2.size();
-        if(size1 != size2) throw std::bad_exception();
-        TPZManVector<T,3> result(size1);
-        for(int64_t i = 0; i<size1; i++){
-            result[i] = v1[i] - v2[i];
-        }
-        return result;
-    }
-
-
-    /**
-     * @brief Returns the oriented dihedral angle between gel and neighbour
-     * @note:1 Make sure neighbour is an actual neighbour, otherwise this method will spit nonsense
-     * @note:2 Returned angle is in interval [0, 2pi)
-     * @param sideorientation decides if method returns angle or 2*pi-angle, as a right-handed axis orientation
-    */
-    float DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1){
-        // Consistency checks
-        if(gelside.Element()->Dimension() != 2)     DebugStop();
-        if(gelside.Dimension() != 1)                DebugStop();
-        if(neighbour.Element()->Dimension() !=2)    DebugStop();
-        if(neighbour.Dimension() != 1)              DebugStop();
-        if(!gelside.NeighbourExists(neighbour))     DebugStop();
-
-        TPZGeoEl* gel = gelside.Element();
-        TPZGeoMesh* gmesh = gel->Mesh();
-        const int side = gelside.Side();
-        TPZManVector<double,3> sharednode0(3,0);
-        TPZManVector<double,3> sharednode1(3,0);
-        gmesh->NodeVec()[gelside.SideNodeIndex(0)].GetCoordinates(sharednode0);
-        gmesh->NodeVec()[gelside.SideNodeIndex(1)].GetCoordinates(sharednode1);
-
-        TPZManVector<REAL,3> oppositenode_gel(3,0);
-        TPZManVector<REAL,3> oppositenode_neig(3,0);
-        gel->Node((gelside.Side()+2)%gel->NNodes()).GetCoordinates(oppositenode_gel);
-        neighbour.Element()->Node((neighbour.Side()+2)%neighbour.Element()->NNodes()).GetCoordinates(oppositenode_neig);
-        TPZManVector<REAL,3> tangentvec_gel = oppositenode_gel - sharednode0;
-        TPZManVector<REAL,3> tangentvec_neig = oppositenode_neig - sharednode0;
-        TPZManVector<REAL,3> tangentvec_edge(3);
-        switch(sideorientation){
-            case -1:{tangentvec_edge = sharednode1 - sharednode0; break;}
-            case  1:{tangentvec_edge = sharednode0 - sharednode1; break;}
-            default: DebugStop();
-        }
-
-        TPZManVector<REAL,3> normalvec_gel = CrossProduct_f(tangentvec_gel,tangentvec_edge);
-        TPZManVector<REAL,3> normalvec_neig = CrossProduct_f(tangentvec_neig,tangentvec_edge);;
-        TPZManVector<REAL,3> aux = CrossProduct_f(normalvec_neig,normalvec_gel);
-        float x = Norm_f(tangentvec_edge)*DotProduct_f(normalvec_neig,normalvec_gel);
-        float y = DotProduct_f(tangentvec_edge,aux);
-        float angle = atan2f32(y,x);
-
-        return (angle >= 0? angle : angle + _2PI);
-    }
-
-    /**
-     * @brief Get a vector from node 0 to node 1 of a 1D side
-    */
-    void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector){
-        if(gelside.Dimension() != 1) DebugStop();
-        int node0 = gelside.SideNodeLocIndex(0);
-        int node1 = gelside.SideNodeLocIndex(1);
-
-        TPZManVector<REAL,3> coord0(3,0);
-        TPZManVector<REAL,3> coord1(3,0);
-        gelside.Element()->Node(node0).GetCoordinates(coord0);
-        gelside.Element()->Node(node1).GetCoordinates(coord1);
-
-        vector = coord1 - coord0;
-    }
-}
-
-
-
-
-
 
 
 
@@ -706,17 +593,18 @@ void DFNFracture::GetSubPolygons(){
 
             // Follow direction by getting the next neighbour with the smallest dihedral angle to close the subpolygon
             TPZGeoEl* current_face = initial_face->GeoEl();
-            do{
+            do{ //while(current_face != initial_face->GeoEl());
                 float angle = DFN::_2PI;
                 if(current_line != -1){
                     (*subpolygon).push_back(current_line);
-                    std::cout<<current_line<<std::endl;
+                    // std::cout<<current_line<<std::endl;
                     if(current_line > 0)    LineTracker[abs(current_line)].first = 1;
                     else                    LineTracker[abs(current_line)].second = 1;
                 }
                 TPZGeoElSide gelside(current_face,nextside);
                 TPZGeoElSide neig = gelside.Neighbour();
                 // Check if gelside's side orientation agree's with fracture normal vector
+                // @todo there's a better way to do this. One that doesn't depend on the fracture polygon. Do it similar to GetPolyhedra. The orientation of the in-side is the same of the out-side.
                 TPZManVector<REAL,3> gelside_vec(3,0);
                 DFN::GetSideVector(gelside,gelside_vec);
                 int sideorientation;
@@ -737,7 +625,7 @@ void DFNFracture::GetSubPolygons(){
                         current_side = neig.Side();
                     }
                 }
-                if(angle > M_PIf32+gDFN_SmallNumber){
+                if(angle > M_PIf32+DFN::gSmallNumber){
                     if(npolyhedra == 1 && !DirectionFailed) {
                         // Might be an unluckly bad oriented line in initial_face. So try going the other way before DebugStop.
                         DirectionFailed = true;
@@ -784,13 +672,13 @@ void DFNFracture::GetSubPolygons(){
     int i_polyg = 0;
     for(auto iterator=subpolygons_map.begin(); iterator!=subpolygons_map.end(); iterator++){
         std::vector<int> &polygonloop = *iterator->second;
-        std::cout<<"\n\nSubPolygon #"<<i_polyg<<"\n";
+        // std::cout<<"\n\nSubPolygon #"<<i_polyg<<"\n";
         int size = polygonloop.size();
         for(int iline=0; iline<size; iline++){
             if(polygonloop[iline] > 0){
                 std::cout<<" ";
             }
-            std::cout<<"\n"<<polygonloop[iline];
+            // std::cout<<polygonloop[iline]<<"\n";
         }
         i_polyg++;
     }
