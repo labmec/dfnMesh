@@ -90,7 +90,7 @@ bool DFNPolygon::Check_Data_Consistency(Matrix CornerPoints)
 				  +ax(1,2)*(CornerPoints(1,3)-CornerPoints(1,1))
 				  +ax(2,2)*(CornerPoints(2,3)-CornerPoints(2,1));
 		//Checks if points are coplanar
-		if(std::abs(ver) > gDFN_SmallNumber){
+		if(std::abs(ver) > DFN::gSmallNumber){
 			std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
 			// DebugStop();
 		}
@@ -224,7 +224,7 @@ bool DFNPolygon::IsPointInPolygon(TPZVec<REAL> &point)
 
     //If total computed area is equal to the polygon's area, then
     //point is in polygon
-    return( fabs(area-fArea) < gDFN_SmallNumber );
+    return( fabs(area-fArea) < DFN::gSmallNumber );
 }
 
 

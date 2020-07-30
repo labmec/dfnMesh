@@ -111,7 +111,8 @@ int main(int argc, char* argv[]){
 	// Find and split intersected faces
 		fracture->FindFaces();
 		fracture->RefineFaces();
-	// // Mesh fracture surface
+		dfn.GetPolyhedra();
+	// Mesh fracture surface
 		fracture->AssembleOutline();
 		fracture->GetSubPolygons();
 		if(gmesh->Dimension() == 3){
