@@ -43,12 +43,16 @@ class DFNPolygon
 
 	/// If nodes of this polygon have been added to a geometric mesh, this vector holds GeoNodes indices
 	TPZManVector<int64_t> fPointsIndex;
+    
+    /// compute the direction of the axes based on the first three nodes
+    void ComputeAxis();
 
   public:
 	/// Empty constructor
 	DFNPolygon(){};
 
 	/// Define polygon from 3 to 4 corner points. Matrix should be 3xN (3 coordinates for each of the N corner points)
+    // the first 3 points cannot be colinear
 	DFNPolygon(const Matrix &CornerPoints);
 
 	/// Copy constructor
@@ -102,7 +106,7 @@ class DFNPolygon
 	 * @param Pointer to geometric mesh
 	 * @return Vector with nodes indices in gmesh
 	 */
-	TPZManVector<int64_t,4> SetPointsInGeomesh(TPZGeoMesh *gmesh);
+	const TPZVec<int64_t> &SetPointsInGeomesh(TPZGeoMesh *gmesh);
 
 	/**
 	 * @brief Returns index of GeoNode that was created for corner i using DFNPolygon::SetPointsInGeomesh(gmesh, matID)
@@ -135,7 +139,7 @@ class DFNPolygon
 
   private:
 	/// Checks consistency and initializes the datastructure of the object
-	bool Check_Data_Consistency(Matrix CornerPoints);
+	bool Check_Data_Consistency() const;
 
 };
 

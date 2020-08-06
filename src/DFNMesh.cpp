@@ -1533,7 +1533,7 @@ void DFNMesh::GetPolyhedra(){
 									polyhedron->end(),
 									next_face.Element()->Index()
 								) != polyhedron->end()) {continue;}
-					if(angle > M_PIf32+DFN::gSmallNumber){
+					if(angle > M_PI+DFN::gSmallNumber){
 						convexPolyh = false;
 					}
 					int next_orientation = (DFN::OrientationMatch(gelside,next_face)?-1:1)*orientation;

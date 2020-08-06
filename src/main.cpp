@@ -89,6 +89,8 @@ int main(int argc, char* argv[]){
 	TPZTimer time("DFNMesh");
 	time.start();
 	PrintPreamble();
+    /// this data structure defines the fractures which will cut the mesh
+    // each matrix is dimension (3xn) where n is the number of vertices
 	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh = nullptr;
 	REAL tol_dist = 1.e-4;
@@ -96,14 +98,24 @@ int main(int argc, char* argv[]){
 	gmesh = ReadInput(argc,argv,planevector,tol_dist,tol_angle);
 	gmsh::initialize();
 	
+    /// this constructor will add a skeleton mesh to the geometric mesh with matid = -1
 	DFNMesh dfn(gmesh);
+    /// this will initialize a strange data structure allowing for each dim-1 element to know how many volumes are
+    // connected
 	dfn.InitializeFaceTracker();
 	// Loop over fractures and refine mesh around them
 	DFNPolygon *polygon = nullptr;
 	DFNFracture *fracture = nullptr;
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
+        // a polygon represents a set of points in a plane
+        // @TODO : wouldnt it be wiser to pass the geometric mesh so that the complete
+        // data structure can be initialized?
 		polygon = new DFNPolygon(planevector[iplane]);
+        
+        // Initialize the basic data of fracture
 		fracture = new DFNFracture(polygon,&dfn);
+        
+        // @TODO shouldn't these methods be called in the constructor??
 	// Find and split intersected ribs
 		fracture->FindRibs();
 		fracture->OptimizeRibs(tol_dist);
@@ -116,6 +128,7 @@ int main(int argc, char* argv[]){
 		fracture->AssembleOutline();
 		fracture->GetSubPolygons();
 		if(gmesh->Dimension() == 3){
+            // @TODO this will duplicate the corner nodes???
 			polygon->SetPointsInGeomesh(gmesh);
 			fracture->MeshFractureSurface();
 		}

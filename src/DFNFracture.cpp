@@ -41,6 +41,7 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
     fRibs = copy.fRibs;
 	fFaces = copy.fFaces;
     fPolygon = copy.fPolygon;
+    // @TODO COPY ALL VARIABLES!!!!
     return *this;
 }
 
@@ -165,13 +166,15 @@ void DFNFracture::FindRibs(){
 
         // Check rib
         TPZManVector<REAL,3> intpoint(3,0);
-        bool resul = fPolygon->Check_rib(gel, &intpoint);
+        // @TODO as a rule I prefer to pass a structure by reference
+        bool result = fPolygon->Check_rib(gel, &intpoint);
 
         // Add rib
-        if (resul == true){
+        if (result == true){
             DFNRib rib(gel, this);
             rib.StatusVec()[2] = 1; //StatusVec = {0,0,1}
             rib.SetIntersectionCoord(intpoint);
+            // @TODO : I dont understand this logic!!! please comment
             if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
             AddRib(rib);
         }
@@ -625,7 +628,7 @@ void DFNFracture::GetSubPolygons(){
                         current_side = neig.Side();
                     }
                 }
-                if(angle > M_PIf32+DFN::gSmallNumber){
+                if(angle > M_PI+DFN::gSmallNumber){
                     if(npolyhedra == 1 && !DirectionFailed) {
                         // Might be an unluckly bad oriented line in initial_face. So try going the other way before DebugStop.
                         DirectionFailed = true;

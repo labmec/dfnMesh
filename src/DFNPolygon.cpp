@@ -11,14 +11,16 @@
 #include "DFNMesh.h"
 
 //Constructor
-DFNPolygon::DFNPolygon(const Matrix &CornerPoints) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1)
+// @TODO fAxis is not initialized
+DFNPolygon::DFNPolygon(const Matrix &CornerPoints) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1), fAxis(3,3,0.)
 {
-    if( !Check_Data_Consistency(CornerPoints) )	{
+    //If data is consistent, fAxis was computed during consistency check
+    fCornerPoints = CornerPoints;
+    ComputeAxis();
+    if( !Check_Data_Consistency() )	{
 		std::cout<<"Error at DFNPolygon: Bad input data \n";
 		DebugStop();
 	}
-	//If data is consistent, fAxis was computed during consistency check
-	fCornerPoints = CornerPoints;
 	ComputeArea();
 }
 
@@ -38,66 +40,71 @@ DFNPolygon::DFNPolygon(const DFNPolygon &copy){
 	return *this;
  }
 
+void DFNPolygon::ComputeAxis()
+{
+    int cols = fCornerPoints.Cols();
+    int rows = fCornerPoints.Rows();
+    
+    if(rows != 3){    //Should be 3 (x y z)
+        std::cout<<"Check the input data";
+        DebugStop();
+    }
+    if(cols < 3){
+        std::cout<<"Check the input data (number of corner points)";
+        DebugStop();
+    }
+
+    //Ax0 without normalization
+    fAxis(0,0) = fCornerPoints(0,0) - fCornerPoints(0,1);
+    fAxis(1,0) = fCornerPoints(1,0) - fCornerPoints(1,1);
+    fAxis(2,0) = fCornerPoints(2,0) - fCornerPoints(2,1);
+
+    //Ax1 without normalization
+    fAxis(0,1) = fCornerPoints(0,2) - fCornerPoints(0,1);
+    fAxis(1,1) = fCornerPoints(1,2) - fCornerPoints(1,1);
+    fAxis(2,1) = fCornerPoints(2,2) - fCornerPoints(2,1);
+
+    //Ax2 computation
+    fAxis(0,2) = fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1);
+    fAxis(1,2) = fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1);
+    fAxis(2,2) = fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1);
+    
+    //Ax2 normalization
+    REAL norm = sqrt(fAxis(0,2)*fAxis(0,2)+fAxis(1,2)*fAxis(1,2)+fAxis(2,2)*fAxis(2,2));
+    
+    if(norm < 1.e-8) DebugStop();
+    
+    for (int i = 0; i < 3; i++) // i< axis number (x y z)
+    {
+        fAxis(i, 2) = fAxis(i, 2)/norm;
+    }
+
+}
 
 
 
 
 
 
-
-bool DFNPolygon::Check_Data_Consistency(Matrix CornerPoints)
+bool DFNPolygon::Check_Data_Consistency() const
 {
 	
-	int cols = CornerPoints.Cols();
-	int rows = CornerPoints.Rows();
-	Matrix ax(3,3);
-	
-	if(rows != 3){    //Should be 3 (x y z)
-		std::cout<<"Check the input data";
-		DebugStop();
-	}
-	if(cols < 3){
-		std::cout<<"Check the input data (number of corner points)";
-		DebugStop();
-	}
-
-	//Ax0 without normalization
-	ax(0,0) = CornerPoints(0,0) - CornerPoints(0,1);
-	ax(1,0) = CornerPoints(1,0) - CornerPoints(1,1);
-	ax(2,0) = CornerPoints(2,0) - CornerPoints(2,1);
-
-	//Ax1 without normalization
-	ax(0,1) = CornerPoints(0,2) - CornerPoints(0,1);
-	ax(1,1) = CornerPoints(1,2) - CornerPoints(1,1);
-	ax(2,1) = CornerPoints(2,2) - CornerPoints(2,1);
-
-	//Ax2 computation
-	ax(0,2) = ax(1,0)*ax(2,1) - ax(2,0)*ax(1,1);
-	ax(1,2) = ax(2,0)*ax(0,1) - ax(0,0)*ax(2,1);
-	ax(2,2) = ax(0,0)*ax(1,1) - ax(1,0)*ax(0,1);
-	
-	//Ax2 normalization
-	REAL norm = sqrt(ax(0,2)*ax(0,2)+ax(1,2)*ax(1,2)+ax(2,2)*ax(2,2));
-	for (int i = 0; i < 3; i++) // i< axis number (x y z)
-	{ 
-		ax(i, 2) = ax(i, 2)/norm;
-	}
-
+    int cols = fCornerPoints.Cols();
 	//Coplanarity verification for quadrilateral polygon
-	if(cols == 4){
-		//scalar product between Ax2 and <P3-P1> should be zero
-		REAL ver = ax(0,2)*(CornerPoints(0,3)-CornerPoints(0,1))
-				  +ax(1,2)*(CornerPoints(1,3)-CornerPoints(1,1))
-				  +ax(2,2)*(CornerPoints(2,3)-CornerPoints(2,1));
-		//Checks if points are coplanar
-		if(std::abs(ver) > DFN::gSmallNumber){
-			std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
-			// DebugStop();
-		}
+	if(cols >= 4){
+        for(int ic = 3; ic<cols; ic++)
+        {
+            //scalar product between Ax2 and <P3-P1> should be zero
+            REAL ver = fAxis.GetVal(0,2)*(fCornerPoints.g(0,ic)-fCornerPoints.g(0,1))
+                      +fAxis.GetVal(1,2)*(fCornerPoints.g(1,ic)-fCornerPoints.g(1,1))
+                      +fAxis.g(2,2)*(fCornerPoints.g(2,ic)-fCornerPoints.g(2,1));
+            //Checks if points are coplanar
+            if(std::abs(ver) > DFN::gSmallNumber){
+                std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
+                // DebugStop();
+            }
+        }
 	}
-
-	// After checking the consistency the axis can be set
-	fAxis = ax; // Set those in here to avoid re-computation in the constructor
 
 	return true;
 }
@@ -147,6 +154,7 @@ bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
 
 bool DFNPolygon::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection) {
     //check for infinite polygon
+    // @TODO what is an infinite polygon??
     if(Check_point_above(p1) != Check_point_above(p2)){
         //Rib cut by infinite polygon
         //then calculate intersection point and check if it's within polygon boundaries
@@ -228,7 +236,7 @@ bool DFNPolygon::IsPointInPolygon(TPZVec<REAL> &point)
 }
 
 
-TPZManVector<int64_t,4> DFNPolygon::SetPointsInGeomesh(TPZGeoMesh *gmesh){
+const TPZVec<int64_t> &DFNPolygon::SetPointsInGeomesh(TPZGeoMesh *gmesh){
 	int64_t nels = gmesh->NElements();
 	int ncorners = fCornerPoints.Cols();
 	fPointsIndex.resize(ncorners);

@@ -32,6 +32,7 @@ typedef TPZFMatrix<REAL> Matrix;
  *  @details   Intersection search is performed after creation of skeleton
  *  elements with DFNFracture::CreateSkeletonElements. Fracture plane should
  *  be a DFNPolygon.
+ *  // @TODO This class is not implementing a destructor (yet)
  */
 class DFNFracture
 {
@@ -47,6 +48,7 @@ private:
 	std::map<int64_t, DFNFace> fFaces;
 
 	/// A planar convex polygon that indicates an insertion region for a fracture
+    // @TODO why are we pointing to a polygon? Who is the owner of the pointer?
 	DFNPolygon *fPolygon;
 	
 	/// Map of elements on fracture surface
