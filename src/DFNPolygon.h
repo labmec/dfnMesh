@@ -50,8 +50,10 @@ class DFNPolygon
   public:
 	/// Empty constructor
 	DFNPolygon(){};
+	/// Empty destructor
+	~DFNPolygon(){};
 
-	/// Define polygon from 3 to 4 corner points. Matrix should be 3xN (3 coordinates for each of the N corner points)
+	/// Default constructor. Matrix should be 3xN (3 coordinates for each of the N corner points)
     // the first 3 points cannot be colinear
 	DFNPolygon(const Matrix &CornerPoints);
 
@@ -86,10 +88,10 @@ class DFNPolygon
 	REAL ComputeArea();
 
 	/// Return true if the rib intersects the polygon
-	bool Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection = nullptr);
+	bool Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> &intersection);
 
 	/// Return true if the rib intersects the polygon
-	bool Check_rib(TPZGeoEl *rib, TPZManVector<REAL,3> *intersection = nullptr);
+	bool Check_rib(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection);
 
 	/// Return true if a point is above the polygon plane
    	bool Check_point_above(const TPZVec<REAL> &point) const;

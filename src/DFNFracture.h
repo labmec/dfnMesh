@@ -30,9 +30,8 @@ typedef TPZFMatrix<REAL> Matrix;
 /** 
  *  @brief     Describes a surface mesh for a fracture and all ribs & faces that are intersected by it.
  *  @details   Intersection search is performed after creation of skeleton
- *  elements with DFNFracture::CreateSkeletonElements. Fracture plane should
+ *  elements with DFNMesh::CreateSkeletonElements. Fracture plane should
  *  be a DFNPolygon.
- *  // @TODO This class is not implementing a destructor (yet)
  */
 class DFNFracture
 {
@@ -48,8 +47,7 @@ private:
 	std::map<int64_t, DFNFace> fFaces;
 
 	/// A planar convex polygon that indicates an insertion region for a fracture
-    // @TODO why are we pointing to a polygon? Who is the owner of the pointer?
-	DFNPolygon *fPolygon;
+	DFNPolygon fPolygon;
 	
 	/// Map of elements on fracture surface
 	std::map<int64_t, TPZGeoEl *> fSurface;
@@ -61,15 +59,14 @@ public:
     
     /// Empty constructor
     DFNFracture();
+
+    ///Destructor
+    ~DFNFracture(){};
     
     /**
-     * Define the fracture plane from 3 to 4 points
-     * Points should be coplanar
-     * The matrix should be dimension 3xN, each column defining the coordinates
-     * of a point
-     *  
+     * @brief Constructor from a DFNPolygon
      */
-    DFNFracture(DFNPolygon *Polygon, DFNMesh *dfnMesh);
+    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -79,7 +76,7 @@ public:
     
     
     /// Return the corner nodes of the fracture
-    DFNPolygon *Polygon();
+    DFNPolygon &Polygon();
     
     
 private:
@@ -98,7 +95,7 @@ private:
      * the model from which elements should be read).
      * @param gmsh: Pointer to geometric mesh where elements should be inserted.
      * @param dimension of elements to be imported
-     * @param oldnodes: a set of old nodes that don't required importing
+     * @param oldnodes: a set of old nodes that don't require importing
      * @param newelements: a vector with the indices of imported elements
      * @note If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
     */

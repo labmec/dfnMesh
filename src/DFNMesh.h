@@ -43,6 +43,9 @@ public:
     
     /// Constructor
     DFNMesh(TPZGeoMesh *gmesh);
+
+    /// Destructor
+    ~DFNMesh(){};
     
     /// Add new fracture
     void AddFracture(DFNFracture *fracture){fFractures.push_back(fracture);}
@@ -52,6 +55,9 @@ public:
     
     /// Pointer to geometric mesh
     TPZGeoMesh *Mesh(){return fGMesh;}
+
+    /// Return reference to list of fractures
+    std::list<DFNFracture *>& FractureList(){return fFractures;}
     
     /** 
      * @brief Insert intersection elements of lower dimension in the geometric mesh.
@@ -84,8 +90,8 @@ public:
      */
     void Print(std::string pzmesh = "pzmesh.txt"
                ,std::string vtkmesh = "vtkmesh.vtk"
-               ,int fracture = 3
-               ,int transition = 2
+               ,int fracture = 2
+               ,int transition = 3
                ,int intact = 1);
     /**
      * @brief Prints DFN Geometric Mesh and material ids are renumbered for VTK colorful print of refinement of 2D elements :) 
@@ -115,7 +121,7 @@ public:
     
     
     
-    //@todo: Talk to Phil about this pattern... I'm not sure if this is what he had in mind
+    //@todo: Talk to Phil about this FaceTracker usage... I'm not sure if this is what he had in mind
     
     //Maps how many polyhedra this face is part of (at most 2)
     std::map<int64_t,int> FaceTracker;

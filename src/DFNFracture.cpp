@@ -20,13 +20,14 @@ DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFracture::DFNFracture(DFNPolygon *Polygon, DFNMesh *dfnMesh){
-    fPolygon = Polygon;
+DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh)
+    :fPolygon(Polygon)
+{
     fdfnMesh = dfnMesh;
-
     // Set corner nodes of fracture into mesh
+    // @todo I'll remove this after surface meshing is updated to use the SubPolygons
     if(fdfnMesh->Dimension() == 3){
-        TPZManVector<int64_t,4> nodeindices = fPolygon->SetPointsInGeomesh(fdfnMesh->Mesh());
+        TPZManVector<int64_t,4> nodeindices = fPolygon.SetPointsInGeomesh(fdfnMesh->Mesh());
     }
 }
 
@@ -41,7 +42,8 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
     fRibs = copy.fRibs;
 	fFaces = copy.fFaces;
     fPolygon = copy.fPolygon;
-    // @TODO COPY ALL VARIABLES!!!!
+    fSurface = copy.fSurface;
+    fOutline = copy.fOutline;
     return *this;
 }
 
@@ -50,7 +52,7 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
  * @return The plane corner coordinates
  */
 
-DFNPolygon *DFNFracture::Polygon() {
+DFNPolygon &DFNFracture::Polygon() {
     return fPolygon;
 }
 
@@ -166,15 +168,14 @@ void DFNFracture::FindRibs(){
 
         // Check rib
         TPZManVector<REAL,3> intpoint(3,0);
-        // @TODO as a rule I prefer to pass a structure by reference
-        bool result = fPolygon->Check_rib(gel, &intpoint);
+        bool result = fPolygon.Check_rib(gel, intpoint);
 
         // Add rib
         if (result == true){
             DFNRib rib(gel, this);
             rib.StatusVec()[2] = 1; //StatusVec = {0,0,1}
             rib.SetIntersectionCoord(intpoint);
-            // @TODO : I dont understand this logic!!! please comment
+            // if this 1D element is not part of a previous fracture, change its material to Erefined
             if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
             AddRib(rib);
         }
@@ -227,10 +228,10 @@ void DFNFracture::OptimizeFaces(REAL tolDist, REAL tolAngle){
 void DFNFracture::GetOuterLoop(std::vector<int> &loop){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     // Compute fracture edges' lenghts
-    int nedges = fPolygon->GetCornersX().Cols();
+    int nedges = fPolygon.GetCornersX().Cols();
     TPZVec<REAL> edgelength(nedges,0);
     Matrix fraccorners(3,nedges);
-    fraccorners = fPolygon->GetCornersX();
+    fraccorners = fPolygon.GetCornersX();
     for(int i = 0; i < nedges; i++){
         edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
                               +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
@@ -301,7 +302,7 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
         int icorner = iedge; //for readability
 
 		// connect first end-face intersection to iedge's first node
-        inodes[0] = fPolygon->CornerIndex(icorner);
+        inodes[0] = fPolygon.CornerIndex(icorner);
 		auto it = edgemap[iedge]->begin();
         if(edgemap[iedge]->size() == 0){
             #ifdef PZDEBUG
@@ -322,7 +323,7 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
         }
 
 		// connect last end-intersection to edge last node
-        inodes[1] = fPolygon->CornerIndex((icorner+1)%nedges);
+        inodes[1] = fPolygon.CornerIndex((icorner+1)%nedges);
 		gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
         loop.push_back((int) nels);
     }
@@ -458,7 +459,7 @@ void DFNFracture::MeshFractureSurface(){
                 bool newpoint = pointset.insert(index).second;
                 if(!newpoint){continue;}
                 gel->NodePtr(inode)->GetCoordinates(realcoord);
-                projcoord = fPolygon->GetProjectedX(realcoord);
+                projcoord = fPolygon.GetProjectedX(realcoord);
                 gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],0.,index+shift);
 
             }
@@ -560,7 +561,7 @@ void DFNFracture::GetSubPolygons(){
         LineTracker[line] = {0,0};
     }
     TPZManVector<REAL,3> frac_normal(3,0);
-    fPolygon->GetNormal(frac_normal);
+    fPolygon.GetNormal(frac_normal);
     for(auto iterator=fFaces.begin(); iterator!=fFaces.end(); iterator++){
         DFNFace* initial_face = &iterator->second;
         //Check if face intersection is an actual line or has been coalesced down to a point
@@ -607,7 +608,7 @@ void DFNFracture::GetSubPolygons(){
                 TPZGeoElSide gelside(current_face,nextside);
                 TPZGeoElSide neig = gelside.Neighbour();
                 // Check if gelside's side orientation agree's with fracture normal vector
-                // @todo there's a better way to do this. One that doesn't depend on the fracture polygon. Do it similar to GetPolyhedra. The orientation of the in-side is the same of the out-side.
+                // @todo there's a better way to do this. One that doesn't depend on the fracture polygon. I've done it in GetPolyhedra, so just adapt it here. The orientation of the in-side is the same of the out-side.
                 TPZManVector<REAL,3> gelside_vec(3,0);
                 DFN::GetSideVector(gelside,gelside_vec);
                 int sideorientation;

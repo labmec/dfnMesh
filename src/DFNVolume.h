@@ -42,6 +42,8 @@ class DFNVolume
   public:
     /// Empty constructor
     DFNVolume();
+    /// Empty destructor
+    ~DFNVolume(){};
     
     /// Constructor
     DFNVolume(int64_t index, bool iscut);

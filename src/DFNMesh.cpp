@@ -15,7 +15,7 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh){
 	// create a copy of the mesh because materials will be reset afterwards @todo
 	this->ClearMaterials();
 	for (int i = 1; i < fGMesh->Dimension(); i++){
-		CreateSkeletonElements(i,-1);
+		CreateSkeletonElements(i,1);
 	}
 	
 }
@@ -677,8 +677,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 			do{//pseudo do-while just so I can use break to skip code
 				if(mesh_dim==2) break;
 				if(gel->HasSubElement()) break;
-				// @todo if(gel->MaterialId() != DFNMaterial::Efracture) break;
-				if(gel->MaterialId() < DFNMaterial::Efracture) break;
+				if(gel->MaterialId() != DFNMaterial::Efracture) break;
+				// if(gel->MaterialId() < DFNMaterial::Efracture) break;
 				TPZGeoEl *elder = gel;
 				if(gel->Father()) elder = gel->EldestAncestor();
 				int nsides = elder->NSides();

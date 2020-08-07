@@ -51,7 +51,7 @@ private:
 
 public:
     /// Empty constructor
-    DFNFace() : fGeoEl(nullptr), fStatus(9,0){};
+    DFNFace() : fGeoEl(nullptr), fStatus(9,0), fRibs(0), fCoord(0){};
     
     /// Default constructor takes a pointer to geometric element and a fracture
     DFNFace(TPZGeoEl *gel, DFNFracture *fracture);

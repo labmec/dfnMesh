@@ -11,8 +11,7 @@
 #include "DFNMesh.h"
 
 //Constructor
-// @TODO fAxis is not initialized
-DFNPolygon::DFNPolygon(const Matrix &CornerPoints) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1), fAxis(3,3,0.)
+DFNPolygon::DFNPolygon(const Matrix &CornerPoints) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1.), fAxis(3,3,0.)
 {
     //If data is consistent, fAxis was computed during consistency check
     fCornerPoints = CornerPoints;
@@ -133,14 +132,14 @@ bool DFNPolygon::Check_point_above(const TPZVec<REAL> &point) const{
                                 +(point[1] - GetCornersX()(1,1))*(axis().GetVal(1,2)) 
                                 +(point[2] - GetCornersX()(2,1))*(axis().GetVal(2,2));
         if (point_distance>0){
-            return true;    //If the point is above de polygon
+            return true;    //If the point is above the polygon
         }
         else{
-            return false;   //If the point is below de polygon
+            return false;   //If the point is below the polygon
         }
 }
 
-bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
+bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
     if(gel->Dimension() != 1) {PZError<<"\n\n This ain't no rib \n\n"; DebugStop();}
     // Get rib's vertices
     TPZManVector<int64_t,2> inode(2,0);
@@ -152,14 +151,13 @@ bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> *intersection){
     return Check_rib(node0,node1,intersection);
 }
 
-bool DFNPolygon::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> *intersection) {
-    //check for infinite polygon
-    // @TODO what is an infinite polygon??
+bool DFNPolygon::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> &intersection) {
+    //check for infinite plane
     if(Check_point_above(p1) != Check_point_above(p2)){
-        //Rib cut by infinite polygon
+        //Rib cut by infinite plane
         //then calculate intersection point and check if it's within polygon boundaries
-        *intersection = CalculateIntersection(p1, p2);
-        return IsPointInPolygon(*intersection);
+        intersection = CalculateIntersection(p1, p2);
+        return IsPointInPolygon(intersection);
     }
     else
     {

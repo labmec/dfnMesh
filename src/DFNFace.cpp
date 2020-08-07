@@ -21,6 +21,8 @@ DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
 {
 	int nsides = gel->NSides();
 	fStatus.Resize(nsides,0);
+	int nedges = gel->NCornerNodes();
+	fRibs.Resize(nedges,-1);
 }
 
 /// Copy constructor
@@ -553,15 +555,15 @@ bool DFNFace::FindInPlanePoint(){
         }
         DFNPolygon faceplane(subcorners);
         // Check fPolygon's ribs for intersection with faceplane
-        int nribs = fFracture->Polygon()->GetCornersX().Cols();
+        int nribs = fFracture->Polygon().GetCornersX().Cols();
         for(int irib = 0; irib < nribs; irib++){
             TPZManVector<REAL,3> p1(3);
             TPZManVector<REAL,3> p2(3);
             for(int i = 0; i<3; i++){
-                p1[i] = fFracture->Polygon()->GetCornersX()(i, irib);
-                p2[i] = fFracture->Polygon()->GetCornersX()(i, (irib+1)%nribs);
+                p1[i] = fFracture->Polygon().GetCornersX()(i, irib);
+                p2[i] = fFracture->Polygon().GetCornersX()(i, (irib+1)%nribs);
             }
-            if(faceplane.Check_rib(p1, p2, &fCoord)){
+            if(faceplane.Check_rib(p1, p2, fCoord)){
 				fStatus[fGeoEl->NSides()-1] = 1;
                 return true;
             }

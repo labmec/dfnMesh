@@ -98,24 +98,25 @@ int main(int argc, char* argv[]){
 	gmesh = ReadInput(argc,argv,planevector,tol_dist,tol_angle);
 	gmsh::initialize();
 	
-    /// this constructor will add a skeleton mesh to the geometric mesh with matid = -1
+    /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh);
     /// this will initialize a strange data structure allowing for each dim-1 element to know how many volumes are
     // connected
 	dfn.InitializeFaceTracker();
 	// Loop over fractures and refine mesh around them
-	DFNPolygon *polygon = nullptr;
 	DFNFracture *fracture = nullptr;
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
         // a polygon represents a set of points in a plane
         // @TODO : wouldnt it be wiser to pass the geometric mesh so that the complete
         // data structure can be initialized?
-		polygon = new DFNPolygon(planevector[iplane]);
+		DFNPolygon polygon(planevector[iplane]);
         
         // Initialize the basic data of fracture
 		fracture = new DFNFracture(polygon,&dfn);
         
         // @TODO shouldn't these methods be called in the constructor??
+		// @reply they're here temporarily for debug fase. We'll move them wherever's more intuitive in the end.
+
 	// Find and split intersected ribs
 		fracture->FindRibs();
 		fracture->OptimizeRibs(tol_dist);
@@ -126,10 +127,8 @@ int main(int argc, char* argv[]){
 		dfn.GetPolyhedra();
 	// Mesh fracture surface
 		fracture->AssembleOutline();
-		fracture->GetSubPolygons();
+		// fracture->GetSubPolygons();
 		if(gmesh->Dimension() == 3){
-            // @TODO this will duplicate the corner nodes???
-			polygon->SetPointsInGeomesh(gmesh);
 			fracture->MeshFractureSurface();
 		}
 	//insert fracture
@@ -141,8 +140,10 @@ int main(int argc, char* argv[]){
 		// dfn.GenerateSubMesh();
 	time.stop();
 	std::cout<<"\n\n"<<time;
-	//Print result
-		polygon->InsertGeoEl(gmesh);
+	//Print graphics
+		for(auto frac : dfn.FractureList()){
+			frac->Polygon().InsertGeoEl(gmesh);
+		}
 		dfn.PrintColorful();
 
 	std::cout<<"\n ...the end.\n\n";
