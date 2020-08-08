@@ -9,7 +9,7 @@
 #include "TPZGeoMeshBuilder.h"
 
 
-
+// @TODO why are the class variables not initialized
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh){
 	fGMesh = gmesh;
 	// create a copy of the mesh because materials will be reset afterwards @todo
@@ -1457,17 +1457,30 @@ void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
 	DebugStop();
 }
 
+/**
+ * @brief Assembles mesh's polyhedral volumes as lists of the faces that outline them
+ * @TODO which data structures are being initialized here?
+ */
+// this is crazely complex and does not correspond to my idea of identifying polyhedra
+// first find faces neighbour of skeleton elements in an order given by the rotation angle
+// then, each pair of successive faces will belong to the same polyhedron
+// this should be used to build the polyhedrons (fast)
 
 void DFNMesh::GetPolyhedra(){
+    // @TODO what does this do? create the skeleton mesh?
 	UpdateFaceTracker();
 	TPZGeoEl* initial_face = nullptr;
+    // @TODO what is the meaning of these data structures???
+    // Guessing : for each polyhedra, a vector of face indexes
 	TPZStack<TPZAutoPointer<std::vector<int>>> polyhedra_vec;
+    // Guessing : for each 2d skeleton element the left and right polyhedral index
 	TPZVec<std::pair<int,int>> polyface_vec(fGMesh->NElements(),{-1,-1});
 	int polyh_counter = 0;
 	for(TPZGeoEl* el : fGMesh->ElementVec()){
 		if(!el) continue;
 		if(el->Dimension() != 2) continue;
 		if(el->HasSubElement()) continue;
+        // we loop over faces (I guess you assume that all 2d elements are skeleton)
 
 		initial_face = el;
 		// number of polyhedra that have to be found for this face

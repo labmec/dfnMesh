@@ -72,6 +72,8 @@ void DFNFracture::AddFace(DFNFace &face){
 }
 void DFNFracture::AddRib(DFNRib &rib){
     int index= rib.Index();
+    // @TODO why isnt there a check if the rib is already included in
+    // fRibs data structure?
     fRibs.emplace(index,rib);
 }
 
@@ -114,19 +116,36 @@ void DFNFracture::FindFaces(){
             TPZGeoElSide neig = gelside.Neighbour();
             for(/*void*/;neig != gelside; neig = neig.Neighbour()){
                 if(neig.Element()->Dimension() != 1) continue;
+                // @TODO shouldn't you check on the material id? It has to be a skeleton matid
                 rib_index[iedge] = neig.Element()->Index();
             }
         }
+        // @TODO verify if a rib_index == -1. DebugStop...
 
+        // @TODO I dont get it!! A DFNFace object should be created only if it has
+        // intersected ribs. Where did you verify this?
+        
         // build face
+        // @TODO using "candidate" variable name in many places makes reading the code
+        // confusing...
         DFNFace candidate(gel,this);
+        // @TODO why not include the rib_index in the constructor?
         candidate.SetRibs(rib_index);
+        // @TODO awfull!! I HATE STATUS VECTORS
         candidate.UpdateStatusVec();
+        // @TODO THE STATUS VECTOR DOESNT CUT IT!!
+        // A valid check would be if there a neighbour skeleton that has a corresponding
+        // DFNRib object
         if(!candidate.IsIntersected()) continue;
+        // @TODO Premature, we will check on boundaries later!!
+        // what needs to be done is creating DFNRib objects for faces that have only
+        // one rib (this means one of its 1D sides are outside the polygon)
         if(candidate.IsOnBoundary()){
             candidate.FindInPlanePoint();
         }
         // gel->SetMaterialId(DFNMaterial::Erefined);
+        // this method will divide the corresponding geometric face element
+        // @TODO where do we check for small angle intersections?
         candidate.UpdateRefMesh();
         AddFace(candidate);
     }
@@ -156,6 +175,9 @@ void DFNFracture::FindFaces(){
 
 void DFNFracture::FindRibs(){
     //search gmesh for intersected ribs
+    // @TODO It would be more efficient to classify the geometric nodes as
+    // being above and below the polygon. Then deciding which ribs are to be
+    // divided would be a boolean operation
     int64_t Nels = fdfnMesh->Mesh()->NElements();
     TPZManVector<int64_t, 2> inode(2,0);
     for (int iel = 0; iel < Nels; iel++){
@@ -176,6 +198,9 @@ void DFNFracture::FindRibs(){
             rib.StatusVec()[2] = 1; //StatusVec = {0,0,1}
             rib.SetIntersectionCoord(intpoint);
             // if this 1D element is not part of a previous fracture, change its material to Erefined
+            // @TODO I understand that the material id of the skeleton elements is (-1)
+            // hardcoded (?) Therefore the only 1d elements would be the ones with
+            // material id (-1)?
             if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
             AddRib(rib);
         }
@@ -185,8 +210,8 @@ void DFNFracture::FindRibs(){
 
 void DFNFracture::RefineRibs(){
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
-        DFNRib* rib = &itr->second;
-        rib->Refine();
+        DFNRib &rib = itr->second;
+        rib.Refine();
     }
 }
 void DFNFracture::RefineFaces(){

@@ -74,6 +74,8 @@ void DFNRib::Refine(){
     }
     
     // Set refinement pattern
+    // @TODO discuss with your advisor if this is really necessary
+    // where is the refinement pattern used?
     this->CreateRefPattern();
 
     // set children
@@ -143,6 +145,7 @@ void DFNRib::ForceProjection(){
 
 
 bool DFNRib::Optimize(REAL tolDist){
+    // @TODO explain this logic
     if(!this->NeedsRefinement()) return false;
     
     TPZManVector<REAL,3> coord(3,0);
@@ -156,7 +159,11 @@ bool DFNRib::Optimize(REAL tolDist){
     REAL dist = MIN(dist0,dist1);
 
     // if(dist<tolDist){
-    if(fStatus[0] || fStatus[1] || dist<tolDist){ // this condition seems to be more robust
+    // I HAVE NO IDEA WHAT FSTATUS STANDS FOR. I DISLIKE THIS DATA
+    // STRUCTURE VERY MUCH!!!
+    if(fStatus[0] || fStatus[1] || dist<tolDist){
+        // @TODO what does this comment mean???
+        // this condition seems to be more robust
         fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
         fStatus[closestnode] = 1;
         fStatus[2] = 0;

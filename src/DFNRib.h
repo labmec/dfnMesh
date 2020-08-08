@@ -32,12 +32,18 @@ private:
 	TPZGeoEl *fGeoEl;
 
 	/// status vector describes how the sides of this element have been intersected
+    // @TODO for a mere human reader, the word "describes" does not explain
+    // this data structure (I suggest to just delete it... ;-)
 	TPZManVector<int, 3> fStatus;
 
 	/// Anticipated coordinates of intersection (may not be real coordinates)
+    // @TODO for a mere human reader (not superman) the statement "may not be real
+    // coordinates" is a worrysome statement
+    // @TODO change the name to fIntersectionPoint (for instance)
 	TPZManVector<REAL, 3> fCoord;
 	
 	/// Index of intersection node
+    // @TODO does that mean the index of a node in the geometric mesh?
 	int64_t fIntersectionIndex = -1;
 
     /// Pointer to the fracture
@@ -59,7 +65,7 @@ public:
     /// Destructor
     ~DFNRib(){};
 
-    /// Element index
+    /// Index of the associated geometric element
     int64_t Index() const {return fGeoEl->Index();}
 
     /// Element pointer
@@ -88,16 +94,20 @@ public:
     /**
      * @brief Flag if rib was found to be intersected at any side
      * @return True if any element of status vector is true
+     * @TODO GET RID OF FSTATUS!! Maybe status can be substituted by an enum?
+     *  I dont understand how a rib can have no intersection? An object rib is created to manage
+     *  the intersection!
     */
     inline bool IsIntersected() const{
         return (fStatus[0] || fStatus[1] || fStatus[2]);
     }
 
     /// Check if this rib should be refined
-    inline bool NeedsRefinement() {return fStatus[2];}
+    // @TODO BEST DOCUMENTATION EVER!!!
+    inline bool NeedsRefinement() const {return fStatus[2];}
 
     /// Set Status Vector (topology of intersection)
-    void SetStatusVec(TPZManVector<int, 3> status){
+    void SetStatusVec(const TPZVec<int> &status){
         if(status.size() != 3) DebugStop();
         fStatus = status;
     }
@@ -107,7 +117,7 @@ public:
     }
 
     /// Reference to status vector
-    TPZManVector<int, 3> &StatusVec(){return fStatus;}
+    const TPZVec<int> &StatusVec() const {return fStatus;}
     
     /**
      * @brief Check geometry of intersection against a tolerance, snaps intersection 
@@ -115,6 +125,11 @@ public:
      * @return True if any optimization has been made.
      * @param tol: Minimum acceptable length
     */
+    // @TODO Suggestion : change the name to SnapIfNecessary or
+    // something else. It is not an optimization
+    // Maybe split in two methods : NeedsSnap and projectnode
+    // then ForceProjection does not need to use "gambiarra" with
+    // bignumber
     bool Optimize(REAL tolDist = 1e-4);
 
     /// Check if should be refined and generate the subelements
@@ -126,6 +141,8 @@ public:
     };
 
     /// After optimization, update neighbours through side iside
+    // @TODO BEST COMMENT EVER = Just kidding, the comment doesnt
+    // explain anything...
     void UpdateNeighbours(int iside);
 
     /// Check if rib will be incorporated onto fracture and correct its material id as such.
@@ -133,6 +150,7 @@ public:
     bool UpdateMaterial();
 
     /// Forces projection (optimization) of the intersection to the closest lower dimensional side
+    // @TODO does it call force projection recursively?
     void ForceProjection();
 
     private:

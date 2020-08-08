@@ -18,6 +18,8 @@
 class DFNFracture;
 
 /// DFNFace class describes a plane and how it's cut by a fracture. It also carries a method to split itself into smaller sub faces.
+// @TODO I dont understand the meaning of Face based on this description>
+// It represents the intersection of the fracture polygon with a given volume?
 class DFNFace
 {
     
@@ -32,6 +34,8 @@ private:
 	TPZManVector<int> fStatus;
 
 	/// Anticipated coordinates of in-plane intersection node (may not be real coordinates)
+    // @TODO how does a "face" have an intersection node?
+    // what is the meaning of "real coordinate"?
 	TPZManVector<REAL, 3> fCoord;
 	
 	/// Index of in-plane intersection node
@@ -40,12 +44,15 @@ private:
 	/// Pointer to a fracture mesh
 	DFNFracture *fFracture = nullptr;
 
-	/// Vector with indices of its ribs
+	/// Vector with indices of indices of the geometric elements corresponding to the ribs
+    // @TODO I suggest storing pointers to dfnribs data structures
+    // because all accesses involve a binary search
 	TPZManVector<int64_t, 4> fRibs;
 
     /// Refinement mesh is used to create a refinement pattern and decide how to optimize it
     TPZGeoMesh fRefMesh;
 
+    // @TODO insert a pair indicating the left/right polyhedron index
     /// {ribindex, sideindex}
     // std::pair<int64_t, int> PhilPair;
 
@@ -140,6 +147,7 @@ public:
     /**
      * @brief Checks if face is intersected by one of the fracture edges
      * @note A face on the fracture boundary will only have one node/edge intersected
+     * @TODO Change the name? I associate boundary with boundary of the domain IntersectsFractureBoundary?
     */
     bool IsOnBoundary();
 
@@ -147,11 +155,12 @@ public:
      * @brief Searches for coordinates of a possible in-plane intersection point.
      * @note 1: Assumes user has run IsOnBoundary() and it returned true;
      * @note 2: Won't create a node in mesh. This must be done later.
+     * @TODO this could be done later
     */
     bool FindInPlanePoint();
     
     /// Reference to status vector
-    TPZManVector<int> &StatusVec(){return fStatus;}
+    const TPZVec<int> &StatusVec(){return fStatus;}
     
     /**
      * @brief Create/update face status vector from ribs' status vectors
@@ -163,6 +172,7 @@ public:
      * @brief Uses status vector, in-plane point coordinates and geometric element topology
      * to create/update the refinement mesh that describes how this face will be refined
      * @returns True if any changes have been made
+     * @TODO as there will be no inplane point, this can be considerably simplified
     */
     bool UpdateRefMesh();
 
@@ -172,6 +182,7 @@ public:
      * @brief Returns the split pattern that should be used to split this face
      * @param Status vector that indicates which sides are cut
      * @return Integer that indicates which split pattern to use. (check documentation)
+     * @TODO I believe this can be simplified if only the ribs are divided!! Please update the code
      */
     int GetSplitPattern(TPZManVector<int> &status);
 

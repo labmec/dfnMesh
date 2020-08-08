@@ -44,6 +44,7 @@ public:
     /// Constructor
     DFNMesh(TPZGeoMesh *gmesh);
 
+    // @TODO where is the empty constructor, copy constructor, operator=?
     /// Destructor
     ~DFNMesh(){};
     
@@ -122,9 +123,13 @@ public:
     
     
     //@todo: Talk to Phil about this FaceTracker usage... I'm not sure if this is what he had in mind
+    // @phil If you dont know what its for, then it is useless
     
     //Maps how many polyhedra this face is part of (at most 2)
+    // @TODO Since when a class variable does not begin with "f"?
     std::map<int64_t,int> FaceTracker;
+    // @TODO why are these method inline?
+    // @TODO documentation of this method??
     void InitializeFaceTracker(){
         if(this->Dimension()<3) return;
         if(this->FaceTracker.size() > 0){std::cout<<"\n\n"<<__PRETTY_FUNCTION__<<"\nTried to initialize an already initialized structure\n\n"; return;}
@@ -145,6 +150,7 @@ public:
             FaceTracker[iel] = n3Dneighbours;
         }
     }
+    // @TODO No idea what this means
     void UpdateFaceTracker(){
         for(TPZGeoEl* el : fGMesh->ElementVec()){
             if(!el) continue;
@@ -239,7 +245,8 @@ namespace DFN{
 bool IsInterface(TPZGeoEl* gel);
 }
 
-
+// @TODO there should be lengthy explanation here documenting the why and how
+// of these material ids
 enum DFNMaterial{
     Eintact = 1, 
     Efracture = 2, 

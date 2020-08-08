@@ -82,6 +82,9 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &p
 //-------------------------------------------------------------------------------------------------
 using namespace std;
 
+// @TODO I didn't find the method that build the list of faces around a rib??
+// where do you check for convexity of polyhedra?
+// strangely I didnt find the code I should evaluate in the first place ;-)
 int main(int argc, char* argv[]){
 	#ifdef LOG4CXX
     	InitializePZLOG();
@@ -119,11 +122,21 @@ int main(int argc, char* argv[]){
 
 	// Find and split intersected ribs
 		fracture->FindRibs();
+        // @TODO explain what is going on here
+        // change the name of this method
 		fracture->OptimizeRibs(tol_dist);
+        // @TODO I believe this is premature!!!
+        // faces with small intersection angles may force further snapping
 		fracture->RefineRibs();
-	// Find and split intersected faces
+	// Build the DFNFace objects and split intersected faces if necessary
+        // @TODO I dont get it! if FindFaces already refines the face, why do we
+        // need to call RefineFaces?
+        // there should be a clear separation between FindFaces and RefineFaces
+        // between both there should be a check whether there are no small angle
+        // intersections
 		fracture->FindFaces();
 		fracture->RefineFaces();
+        // @TODO what is this for??
 		dfn.GetPolyhedra();
 	// Mesh fracture surface
 		fracture->AssembleOutline();

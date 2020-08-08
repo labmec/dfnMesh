@@ -508,7 +508,7 @@ bool DFNFace::UpdateStatusVec(){
 	TPZGeoEl *rib_gel;
 	
 	TPZManVector<int> old_fStatus = fStatus;
-	Zero(fStatus);
+    fStatus.Fill(0);
 
 	int orientation = 0;
 	for(int i=0; i<nribs; i++){
@@ -516,6 +516,8 @@ bool DFNFace::UpdateStatusVec(){
 		if(rib){
 			rib_gel = gmesh->Element(fRibs[i]);
 			orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
+            // @TODO I DISLIKE STATUS VECTORS VERY MUCH - VERY MUCH!!!!
+            // we can conceive possibilities that break this code
 			fStatus[i] = MAX(fStatus[i],rib->StatusVec()[orientation]);
 			fStatus[(i+1)%nnodes] = MAX(fStatus[(i+1)%nnodes],rib->StatusVec()[(orientation+1)%2]);
 			fStatus[i+nnodes] = rib->StatusVec()[2];

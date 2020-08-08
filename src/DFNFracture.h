@@ -41,18 +41,23 @@ private:
 	DFNMesh *fdfnMesh;
 	
 	/// Map of ribs affected by this fracture
+    // @TODO what is the value of the first key?
 	std::map<int64_t, DFNRib> fRibs;
 
 	/// Map of faces affected by this fracture
+    // @TODO what is the value of the first key?
 	std::map<int64_t, DFNFace> fFaces;
 
-	/// A planar convex polygon that indicates an insertion region for a fracture
+	/// A planar convex polygon that defines the outline of the fracture
 	DFNPolygon fPolygon;
 	
 	/// Map of elements on fracture surface
+    // @TODO what is the value of the first key?
 	std::map<int64_t, TPZGeoEl *> fSurface;
 
 	/// A set of constraints to the surface mesh of the fracture
+    // @TODO I have no idea what constraint means? I see a map of geometric elements
+    // @TODO what is the value of the first key?
 	std::map<int64_t, TPZGeoEl *> fOutline;
 
 public:
@@ -110,16 +115,21 @@ public:
     /// Insert new volume in data structure
     void AddVolume(DFNVolume volume);
 
-    /// Pointer to rib of index 'index'
+    /// Pointer to rib corresponding to geometric element with index
+    // return NULL if the geometric element is not intersected
     DFNRib *Rib(int64_t index);
 
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);
     
-    /// Find intersected ribs
+    /// Find intersected ribs, create DFNRib objects
     void FindRibs();
+    
+    /// verify proximity of rib intersection node
     /// Coalesce intersected ribs
+    // @TODO change the name of this method
     void OptimizeRibs(REAL tolDist);
+    
     /// Set Refinement Patterns and create sub elements
     void RefineRibs();
 
