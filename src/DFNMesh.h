@@ -24,13 +24,15 @@ private:
     std::map<int64_t, DFNVolume> fVolumes;
     
     // Minimum acceptable distance/length for point insertion
-    REAL fToleranceLength = 1e-5;
+    REAL fTolDist = 1e-5;
     
-    // Minimum acceptable angle/aspect-ratio
-    REAL fToleranceRatio = 0.2;
-    
+    // Minimum acceptable angle
+    REAL fTolAngle = 0.2;
+    REAL fTolAngle_cos = 0.98006657784; //cos(0.2)
+
     // Pointer to geometric mesh
     TPZGeoMesh *fGMesh;
+
     
 public:
     // // Local enumeration of material indices
@@ -42,12 +44,17 @@ public:
     // const int MatRefined = 3;
     
     /// Constructor
-    DFNMesh(TPZGeoMesh *gmesh);
+    DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = 1e-5, REAL tolerableAngle = 0.2);
 
-    // @TODO where is the empty constructor, copy constructor, operator=?
+    /// Empty constructor
+    DFNMesh(): fGMesh(nullptr){fTolAngle_cos = std::cos(fTolAngle);}
     /// Destructor
     ~DFNMesh(){};
-    
+    /// Copy constructor
+    DFNMesh(const DFNMesh &copy);
+    /// Assignment operator
+    DFNMesh &operator=(const DFNMesh &copy);
+
     /// Add new fracture
     void AddFracture(DFNFracture *fracture){fFractures.push_back(fracture);}
     
@@ -56,6 +63,20 @@ public:
     
     /// Pointer to geometric mesh
     TPZGeoMesh *Mesh(){return fGMesh;}
+
+    /// Set tolerances
+    void SetTolerances(REAL tolerableLength, REAL tolerableAngle){
+        fTolDist = tolerableLength;
+        fTolAngle = tolerableAngle;
+        fTolAngle_cos = std::cos(tolerableAngle);
+    }
+
+    /// Get minimal tolerable length
+    const REAL TolDist(){return fTolDist;}
+    /// Get minimal tolerable angle (rad)
+    const REAL TolAngle(){return fTolAngle;}
+    /// Get cosine of minimal tolerable angle
+    const REAL TolAngle_cos(){return fTolAngle_cos;}
 
     /// Return reference to list of fractures
     std::list<DFNFracture *>& FractureList(){return fFractures;}
@@ -389,13 +410,37 @@ static void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector){
 }
 
 /**
- * @brief Check if side that connects 2 neighbours has the same orientation in each element
+ * @brief Check if the side that connects 2 neighbours has the same orientation in each element
  * @note currently exclusive to 1D sides
  */
 static bool OrientationMatch(TPZGeoElSide &neig1, TPZGeoElSide &neig2){
     if(neig1.Dimension() != 1) DebugStop();
     if(!neig1.NeighbourExists(neig2)) DebugStop();
     return (neig1.SideNodeIndex(0) == neig2.SideNodeIndex(0));
+}
+
+/**
+ * @brief Computes the cossine of the angle at a corner of a 2D element
+*/
+static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
+	int ncorners = gel->NCornerNodes();
+	if(corner >= ncorners) DebugStop();
+
+	int nsides = gel->NSides();
+
+	TPZManVector<REAL,3> point_corner(3);
+	TPZManVector<REAL,3> point_anterior(3);
+	TPZManVector<REAL,3> point_posterior(3);
+
+	gel->Node(corner).GetCoordinates(point_corner);
+	gel->Node((corner+1)%ncorners).GetCoordinates(point_posterior);
+	gel->Node((corner-1+ncorners)%ncorners).GetCoordinates(point_anterior);
+
+	TPZManVector<REAL,3> vec1 = point_posterior - point_corner;
+	TPZManVector<REAL,3> vec2 = point_anterior  - point_corner;
+
+	REAL cosine = DotProduct_f(vec1,vec2)/(Norm_f(vec1)*Norm_f(vec2));
+	return cosine;
 }
 }
 

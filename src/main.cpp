@@ -103,6 +103,7 @@ int main(int argc, char* argv[]){
 	
     /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh);
+	dfn.SetTolerances(tol_dist,tol_angle);
     /// this will initialize a strange data structure allowing for each dim-1 element to know how many volumes are
     // connected
 	dfn.InitializeFaceTracker();
@@ -124,10 +125,7 @@ int main(int argc, char* argv[]){
 		fracture->FindRibs();
         // @TODO explain what is going on here
         // change the name of this method
-		fracture->OptimizeRibs(tol_dist);
-        // @TODO I believe this is premature!!!
-        // faces with small intersection angles may force further snapping
-		fracture->RefineRibs();
+		fracture->SnapIntersections_ribs(tol_dist);
 	// Build the DFNFace objects and split intersected faces if necessary
         // @TODO I dont get it! if FindFaces already refines the face, why do we
         // need to call RefineFaces?
@@ -135,9 +133,11 @@ int main(int argc, char* argv[]){
         // between both there should be a check whether there are no small angle
         // intersections
 		fracture->FindFaces();
+		fracture->SnapIntersections_faces(tol_dist,tol_angle);
+		fracture->RefineRibs();
 		fracture->RefineFaces();
         // @TODO what is this for??
-		dfn.GetPolyhedra();
+		// dfn.GetPolyhedra();
 	// Mesh fracture surface
 		fracture->AssembleOutline();
 		// fracture->GetSubPolygons();

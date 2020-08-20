@@ -10,8 +10,12 @@
 
 
 // @TODO why are the class variables not initialized
-DFNMesh::DFNMesh(TPZGeoMesh *gmesh){
+DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 	fGMesh = gmesh;
+    fTolDist = tolDist;
+    fTolAngle = tolAngle;
+    fTolAngle_cos = std::cos(tolAngle);
+
 	// create a copy of the mesh because materials will be reset afterwards @todo
 	this->ClearMaterials();
 	for (int i = 1; i < fGMesh->Dimension(); i++){
@@ -20,6 +24,22 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh){
 	
 }
 
+
+/// Copy constructor
+DFNMesh::DFNMesh(const DFNMesh &copy){
+    this->operator=(copy);
+}
+
+/// Assignment operator
+DFNMesh &DFNMesh::operator=(const DFNMesh &copy){
+    fFractures = copy.fFractures;
+    fVolumes = copy.fVolumes;
+    fTolDist = copy.fTolDist;
+    fTolAngle = copy.fTolAngle;
+    fTolAngle_cos = copy.fTolAngle_cos;
+    fGMesh = copy.fGMesh;
+    return *this;
+}
 
 void DFNMesh::Print(std::string pzmesh
                     ,std::string vtkmesh

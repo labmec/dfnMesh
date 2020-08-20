@@ -83,6 +83,7 @@ public:
     /// Return the corner nodes of the fracture
     DFNPolygon &Polygon();
     
+    DFNMesh* dfnMesh() const{return fdfnMesh;}
     
 private:
         
@@ -128,7 +129,7 @@ public:
     /// verify proximity of rib intersection node
     /// Coalesce intersected ribs
     // @TODO change the name of this method
-    void OptimizeRibs(REAL tolDist);
+    void SnapIntersections_ribs(REAL tolDist);
     
     /// Set Refinement Patterns and create sub elements
     void RefineRibs();
@@ -136,7 +137,7 @@ public:
     /// Find intersected faces
     void FindFaces();
     /// Coalesce intersected faces
-    void OptimizeFaces(REAL tolDist = 1e-4, REAL tolAngle = 0.1);
+    void SnapIntersections_faces(REAL tolDist = 1e-4, REAL tolAngle = 0.1);
     /// Set Refinement Patterns and create sub elements
     void RefineFaces();
 

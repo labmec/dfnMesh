@@ -128,7 +128,7 @@ public:
     // @TODO Suggestion : change the name to SnapIfNecessary or
     // something else. It is not an optimization
     // Maybe split in two methods : NeedsSnap and projectnode
-    // then ForceProjection does not need to use "gambiarra" with
+    // then SnapIntersection_force does not need to use "gambiarra" with
     // bignumber
     bool Optimize(REAL tolDist = 1e-4);
 
@@ -151,7 +151,7 @@ public:
 
     /// Forces projection (optimization) of the intersection to the closest lower dimensional side
     // @TODO does it call force projection recursively?
-    void ForceProjection();
+    void SnapIntersection_force();
 
     private:
         /// Creates refinement pattern based on status vector and intersection node index

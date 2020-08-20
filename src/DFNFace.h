@@ -47,7 +47,7 @@ private:
 	/// Vector with indices of indices of the geometric elements corresponding to the ribs
     // @TODO I suggest storing pointers to dfnribs data structures
     // because all accesses involve a binary search
-	TPZManVector<int64_t, 4> fRibs;
+	TPZManVector<DFNRib*, 4> fRibs;
 
     /// Refinement mesh is used to create a refinement pattern and decide how to optimize it
     TPZGeoMesh fRefMesh;
@@ -99,10 +99,10 @@ public:
     TPZManVector<REAL, 3> IntersectionCoord() const {return fCoord;}
     
     /// Set ribs of face
-    void SetRibs(TPZVec<int64_t> &RibsIndices) {fRibs = RibsIndices;}
+    void SetRibs(TPZVec<DFNRib*> &RibVec) {fRibs = RibVec;}
 
     /// Get ribs of face
-    TPZVec<int64_t> GetRibs() const {return fRibs;}
+    TPZVec<DFNRib*> GetRibs() const {return fRibs;}
 
     /// Give face a pointer to which fracture is cutting it
     void SetFracture(DFNFracture *Fracture){fFracture = Fracture;}
@@ -191,10 +191,26 @@ public:
      * to closest side(s) if necessary and modifies affected neighbours.
      * @return True if any optimization has been made.
      * @param tolDist: Minimum acceptable distance
-     * @param tolAngle: Minimum acceptable angle (rad)
+     * @param tolAngle_cos: Cosine of minimum acceptable angle
      * @todo
     */
-    bool Optimize(REAL tolDist = 1e-4, REAL tolAngle = 0.1) {return true;}
+    bool SnapIntersection_try(REAL tolDist = 1e-4, REAL tolAngle_cos = 0.9);
+
+    /**
+     * @brief Force snap intersection nodes down to closest nodes
+    */
+    bool SnapIntersection_force();
+
+    /**
+     * @brief Check geometry of intersection against tolerances, to test if intersections should be snapped
+     * @return False if no tolerance is violated or if intersections have already been snapped.
+     * @param tolDist: Minimum acceptable distance
+     * @param tolAngle_cos: Cosine of minimum acceptable angle
+    */
+    bool NeedsSnap(REAL tolDist = 1e-4, REAL tolAngle_cos = 0.9);
+
+    /// Return false if all intersections have already been snapped
+    bool CanBeSnapped();
 
     /// Check if should be refined and generate the subelements of material id matID
     void Refine();

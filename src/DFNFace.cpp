@@ -22,7 +22,7 @@ DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
 	int nsides = gel->NSides();
 	fStatus.Resize(nsides,0);
 	int nedges = gel->NCornerNodes();
-	fRibs.Resize(nedges,-1);
+	fRibs.Resize(nedges,nullptr);
 }
 
 /// Copy constructor
@@ -44,7 +44,7 @@ DFNFace &DFNFace::operator=(const DFNFace &copy){
 
 
 
-DFNRib* DFNFace::Rib(int i){return fFracture->Rib(fRibs[i]);}
+DFNRib* DFNFace::Rib(int i){return fRibs[i];}
 
 
 
@@ -58,8 +58,8 @@ bool DFNFace::IsOnBoundary(){
 		if(n_intersections > 1) return false;
 	}
 	n_intersections = 0;
-	for(int64_t irib : fRibs){
-		DFNRib* rib = fFracture->Rib(irib);
+	for(int irib=0; irib < fRibs.size(); irib++){
+		DFNRib* rib = fRibs[irib];
 		if(!rib) continue;
 		for(int i=0; i<3; i++){
 			n_intersections += rib->StatusVec()[i];
@@ -87,6 +87,7 @@ bool DFNFace::UpdateRefMesh(){
 	int refNNodes = ncornersfather + newnode.size();
 
 	// insert nodes
+	fRefMesh.CleanUp();
 	fRefMesh.NodeVec().Resize(refNNodes);
 	int i;
 	for(i=0; i<ncornersfather; i++){
@@ -145,10 +146,10 @@ void DFNFace::FillChildrenAndNewNodes(
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			DFNRib *ribA = fFracture->Rib(fRibs[i]);
+			DFNRib *ribA = fRibs[i];
 			newnode[0] = ribA->AntCoord();
 			// Intersection node at rib opposite to rib i
-			DFNRib *ribB = fFracture->Rib(fRibs[i+2]);
+			DFNRib *ribB = fRibs[i+2];
 			newnode[1] = ribB->AntCoord();
 			
 			child[0].Resize(4);
@@ -168,10 +169,10 @@ void DFNFace::FillChildrenAndNewNodes(
 			int i = 0;
 			while(fStatus[i+4]==false || fStatus[(i+3)%4+4]==false){i++;}
 			// Intersection node at rib clockwise adjacent to rib i
-			DFNRib *ribA = fFracture->Rib(fRibs[(i+3)%4]);
+			DFNRib *ribA = fRibs[(i+3)%4];
 			newnode[0] = ribA->AntCoord();
 			// Intersection node at rib i
-			DFNRib *ribB = fFracture->Rib(fRibs[i]);
+			DFNRib *ribB = fRibs[i];
 			newnode[1] = ribB->AntCoord();
 
 			child[0].Resize(3);
@@ -210,7 +211,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			int i = 0;
 			while(fStatus[i+4]==false) i++;
 			// Intersection node at rib i
-			DFNRib *ribA = fFracture->Rib(fRibs[i]);
+			DFNRib *ribA = fRibs[i];
 			newnode[0] = ribA->AntCoord();
 
 			child[0].resize(3);
@@ -232,7 +233,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			int i = 0;
 			while(fStatus[i+4]==false){i++;}
 			// Intersection node at rib i
-			DFNRib *ribA = fFracture->Rib(fRibs[i]);
+			DFNRib *ribA = fRibs[i];
 			newnode[0] = ribA->AntCoord();
 			// In-plane itersection node
 			newnode[1] = fCoord;
@@ -284,10 +285,10 @@ void DFNFace::FillChildrenAndNewNodes(
 			int i = 0;
 			while(fStatus[i+3]==false || fStatus[(i+2)%3+3]==false){i++;}
 			// Intersection node at rib right before (counter-clockwise) to rib i
-			DFNRib *ribA = fFracture->Rib(fRibs[(i+2)%3]);
+			DFNRib *ribA = fRibs[(i+2)%3];
 			newnode[0] = ribA->AntCoord();
 			// Intersection node at rib opposite to rib i
-			DFNRib *ribB = fFracture->Rib(fRibs[i]);
+			DFNRib *ribB = fRibs[i];
 			newnode[1] = ribB->AntCoord();
 			
 			child[0].Resize(3);
@@ -307,7 +308,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			int i=0;
 			while(fStatus[i+3] == false) i++;
 			// Intersection node at rib i
-			DFNRib *ribA = fFracture->Rib(fRibs[i]);
+			DFNRib *ribA = fRibs[i];
 			newnode[0] = ribA->AntCoord(); 
 
 			child[0].resize(3);
@@ -325,7 +326,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			int i = 0;
 			while(fStatus[i+3]==false){i++;}
 			// Intersection node at rib i
-			DFNRib *ribA = fFracture->Rib(fRibs[i]);
+			DFNRib *ribA = fRibs[i];
 			newnode[0] = ribA->AntCoord();
 			// In-plane itersection node
 			newnode[1] = fCoord;
@@ -499,7 +500,7 @@ void Zero(TPZManVector<T,NumExtAlloc> &vec){
 
 
 bool DFNFace::UpdateStatusVec(){
-	if(fRibs.size()<1 || fRibs[0]<0) DebugStop();
+	if(fRibs.size()<1) DebugStop();
 	
 	TPZGeoMesh *gmesh = fGeoEl->Mesh();
 	int nnodes = fGeoEl->NCornerNodes();
@@ -512,9 +513,9 @@ bool DFNFace::UpdateStatusVec(){
 
 	int orientation = 0;
 	for(int i=0; i<nribs; i++){
-		rib = fFracture->Rib(fRibs[i]);
+		rib = fRibs[i];
 		if(rib){
-			rib_gel = gmesh->Element(fRibs[i]);
+			rib_gel = fRibs[i]->GeoEl();
 			orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
             // @TODO I DISLIKE STATUS VECTORS VERY MUCH - VERY MUCH!!!!
             // we can conceive possibilities that break this code
@@ -655,4 +656,79 @@ int64_t DFNFace::LineInFace(){
 	}
 	DebugStop();
 	return -1;
+}
+
+
+bool DFNFace::CanBeSnapped(){
+	const int ncorners = fGeoEl->NCornerNodes();
+	const int nsides = fGeoEl->NSides();
+	for(int iside = ncorners; iside<nsides; iside++){
+		if(fStatus[iside]) break;
+		if(iside==nsides-1) return false;
+	}
+	return true;
+}
+
+
+
+bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
+	if(!this->NeedsRefinement()) {return false;}
+	int nels = fRefMesh.NElements();
+	if(nels < 1) {PZError<<"\n\n"<<__PRETTY_FUNCTION__<<"\nSnap face refinements requires a proper refinement mesh to describe the refinement\n";DebugStop();}
+	if(tolAngle_cos > 1 + DFN::gSmallNumber || tolAngle_cos < -1 - DFN::gSmallNumber) {
+		PZError << "\n\n Tolerable angle cosine doesn't seem to be a cosine value.\n"; DebugStop();
+	}
+
+	// If intersections have already been snapped to corners, there's nothing else to snap
+	if(!this->CanBeSnapped()) return false;
+
+	// Check if any angle violates the tolerable angle
+	for(int iel=1; iel <nels; iel++){
+		TPZGeoEl* gel = fRefMesh.Element(iel);
+		int ncorners = gel->NCornerNodes();
+		for(int icorner=0; icorner < ncorners; icorner++){
+			REAL corner_cosine = DFN::CornerAngle_cos(gel,icorner);
+			if(corner_cosine > tolAngle_cos) return true;
+		}
+	}
+	return false;
+}
+
+
+bool DFNFace::SnapIntersection_try(REAL tolDist, REAL tolAngle_cos){
+	if(this->NeedsSnap(tolDist, tolAngle_cos)) 
+		return this->SnapIntersection_force();
+	else
+		return false;
+}
+
+bool DFNFace::SnapIntersection_force(){
+	int nribs = fGeoEl->NSides(1);
+	for(int irib=0; irib<nribs; irib++){
+		DFNRib* rib = fRibs[irib];
+		if(!rib) continue;
+		rib->SnapIntersection_force();
+		UpdateNeighbours(irib+nribs);
+	}
+	UpdateStatusVec();
+	UpdateRefMesh();
+	return true;
+}
+
+void DFNFace::UpdateNeighbours(int iside){
+	TPZGeoElSide gelside(fGeoEl, iside);
+	TPZGeoElSide neig = gelside.Neighbour();
+	DFNFace* neig_face = nullptr;
+	for(/*void*/;neig!=gelside; neig = neig.Neighbour()){
+		if(neig.Element()->Dimension() != 2) continue;
+		//@todo skeletonMesh material would enter here
+		neig_face = fFracture->Face(neig.Element()->Index());
+		if(!neig_face) continue;
+		if(!neig_face->UpdateStatusVec()) continue;
+		neig_face->UpdateRefMesh();
+		REAL tolDist = fFracture->dfnMesh()->TolDist();
+		REAL tolAngle_cos = fFracture->dfnMesh()->TolAngle_cos();
+		neig_face->SnapIntersection_try(tolDist,tolAngle_cos);
+		// neig_face->SnapIntersection_force();
+	}
 }

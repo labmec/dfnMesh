@@ -137,7 +137,7 @@ void DFNRib::CreateRefPattern(){
 
 
 
-void DFNRib::ForceProjection(){
+void DFNRib::SnapIntersection_force(){
     REAL BIG_NUMBER = 1.e12;
     this->Optimize(BIG_NUMBER);
 }
@@ -204,22 +204,15 @@ void DFNRib::UpdateNeighbours(int iside){
                 // rib_ptr->StatusVec()[neig_side] = fStatus[iside];
                 // rib_ptr->Optimize();
                 // if(rib_ptr->NeedsRefinement()) {rib_ptr->Optimize();}
-                if(rib_ptr->NeedsRefinement()) {rib_ptr->ForceProjection();}
+                if(rib_ptr->NeedsRefinement()) {rib_ptr->SnapIntersection_force();}
                 break;
             }
             case 2:{
-                // // check if DFNFace exists
-                // DFNFace *face_ptr = fFracture->Face(gel->Index());
-                // if(!face_ptr){
-                //     DFNFace neig_face(gel,fFracture);
-                //     fFracture->AddFace(neig_face);
-                //     face_ptr = fFracture->Face(gel->Index());
-                // }
-                // // skip if StatusVec entry already match
-                // if(fStatus[iside] == face_ptr->StatusVec()[neig_side]){continue;}
-                // // else, match StatusVec entry for iside and optimize
-                // face_ptr->StatusVec()[neig_side] = fStatus[iside];
-                // face_ptr->Optimize();
+                // check if DFNFace exists
+                DFNFace *neig_face = fFracture->Face(gel->Index());
+                if(!neig_face) break;
+                if(!neig_face->UpdateStatusVec()) break;
+		        neig_face->UpdateRefMesh();
                 break;
             }
             case 3: {continue;}

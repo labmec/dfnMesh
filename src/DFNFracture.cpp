@@ -111,6 +111,8 @@ void DFNFracture::FindFaces(){
  
         // gather ribs
         TPZManVector<int64_t,4>  rib_index(nedges,-1);
+        TPZManVector<DFNRib*,4> rib_vec(nedges,nullptr);
+        bool is_intersected = false;
         for(int iedge = 0; iedge < nedges; iedge++){
             TPZGeoElSide gelside(gel,iedge+nnodes);
             TPZGeoElSide neig = gelside.Neighbour();
@@ -119,35 +121,29 @@ void DFNFracture::FindFaces(){
                 // @TODO shouldn't you check on the material id? It has to be a skeleton matid
                 rib_index[iedge] = neig.Element()->Index();
             }
+            if(rib_index[iedge] == -1) DebugStop();
+            rib_vec[iedge] = Rib(rib_index[iedge]);
+            if(rib_vec[iedge]) is_intersected = true;
         }
-        // @TODO verify if a rib_index == -1. DebugStop...
-
-        // @TODO I dont get it!! A DFNFace object should be created only if it has
-        // intersected ribs. Where did you verify this?
+        if(!is_intersected) continue;
         
         // build face
-        // @TODO using "candidate" variable name in many places makes reading the code
-        // confusing...
-        DFNFace candidate(gel,this);
+        DFNFace face(gel,this);
         // @TODO why not include the rib_index in the constructor?
-        candidate.SetRibs(rib_index);
-        // @TODO awfull!! I HATE STATUS VECTORS
-        candidate.UpdateStatusVec();
-        // @TODO THE STATUS VECTOR DOESNT CUT IT!!
-        // A valid check would be if there a neighbour skeleton that has a corresponding
-        // DFNRib object
-        if(!candidate.IsIntersected()) continue;
+        face.SetRibs(rib_vec);
+        face.UpdateStatusVec();
+        // if(!face.IsIntersected()) continue;
         // @TODO Premature, we will check on boundaries later!!
         // what needs to be done is creating DFNRib objects for faces that have only
         // one rib (this means one of its 1D sides are outside the polygon)
-        if(candidate.IsOnBoundary()){
-            candidate.FindInPlanePoint();
+        if(face.IsOnBoundary()){
+            face.FindInPlanePoint();
         }
         // gel->SetMaterialId(DFNMaterial::Erefined);
         // this method will divide the corresponding geometric face element
         // @TODO where do we check for small angle intersections?
-        candidate.UpdateRefMesh();
-        AddFace(candidate);
+        face.UpdateRefMesh();
+        AddFace(face);
     }
 }
 
@@ -225,16 +221,17 @@ void DFNFracture::RefineFaces(){
 
 
 
-void DFNFracture::OptimizeRibs(REAL tolDist){
+void DFNFracture::SnapIntersections_ribs(REAL tolDist){
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
         DFNRib* rib = &itr->second;
         rib->Optimize(tolDist);
     }
 }
-void DFNFracture::OptimizeFaces(REAL tolDist, REAL tolAngle){
+void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
+    tolAngle = std::cos(tolAngle);
     for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
         DFNFace* face = &itr->second;
-        face->Optimize(tolDist, tolAngle);
+        face->SnapIntersection_try(tolDist, tolAngle);
     }
 }
 
