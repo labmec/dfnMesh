@@ -5,4 +5,5 @@
 /debug
 /doc
 LOG
-documentation/animations/*
+# documentation/animations/*
+# documentation/animations/*/*.py

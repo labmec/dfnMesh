@@ -58,7 +58,7 @@ iPointsDisplay.SetRepresentationType('Point Gaussian')
 iPointsDisplay.ShaderPreset = 'Plain circle'
 iPointsDisplay.AmbientColor = [1.0, 0.0, 0.0]
 iPointsDisplay.DiffuseColor = [1.0, 0.0, 0.0]
-iPointsDisplay.GaussianRadius = 0.1
+iPointsDisplay.GaussianRadius = 0.03
 
 # FRACTURE OUTLINE
 outline = Threshold(Input=dim1Dfull)
@@ -165,7 +165,7 @@ RenameSource('2D', dim2Dfull)
 # FRACTURES FULL
 Fractures = Threshold(Input=dim2Dfull)
 Fractures.Scalars = ['CELLS', 'material']
-Fractures.ThresholdRange = [2.0, 2.0]
+Fractures.ThresholdRange = [100.0, 100.0]
 RenameSource('Fractures', Fractures)
 FracturesDisplay = Show(Fractures, renderView1,'UnstructuredGridRepresentation')
 FracturesDisplay.SetRepresentationType('Surface With Edges')
