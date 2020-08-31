@@ -90,7 +90,6 @@ int main(int argc, char* argv[]){
     	InitializePZLOG();
 	#endif
 	TPZTimer time("DFNMesh");
-	time.start();
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
     // each matrix is dimension (3xn) where n is the number of vertices
@@ -102,11 +101,13 @@ int main(int argc, char* argv[]){
 	gmsh::initialize();
 	
     /// Constructor of DFNMesh initializes the skeleton mesh
+	time.start();
 	DFNMesh dfn(gmesh);
 	dfn.SetTolerances(tol_dist,tol_angle);
     /// this will initialize a strange data structure allowing for each dim-1 element to know how many volumes are
     // connected
 	dfn.InitializeFaceTracker();
+	dfn.SortFacesAroundEdges();
 	// Loop over fractures and refine mesh around them
 	DFNFracture *fracture = nullptr;
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
@@ -146,10 +147,10 @@ int main(int argc, char* argv[]){
 		}
 	//insert fracture
 		dfn.AddFracture(fracture);
+		dfn.CreateVolumes();
 	}
 	// Mesh transition volumes
-		dfn.CreateVolumes();
-		// dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
 	time.stop();
 	std::cout<<"\n\n"<<time;

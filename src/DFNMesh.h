@@ -28,12 +28,14 @@ private:
     
     // Minimum acceptable angle
     REAL fTolAngle = 0.2;
-    REAL fTolAngle_cos = 0.98006657784; //cos(0.2)
+    REAL fTolAngle_cos = 0.98006657784; // == cos(0.2)
 
     // Pointer to geometric mesh
     TPZGeoMesh *fGMesh;
 
-    
+    // TPZChunkVector<TPZAutoPointer<TPZVec<int64_t>>,10> fSortedFaces;
+    TPZVec<TPZVec<int64_t>*> fSortedFaces;
+
 public:
     // // Local enumeration of material indices
     // enum class Ematerial {intact = 1, fracture = 2, surface = 2, refined = 3, transition = 3};
@@ -200,7 +202,14 @@ public:
      * @brief Assembles mesh's polyhedral volumes as lists of the faces that outline them
      */
     void GetPolyhedra();
-    
+    void GetPolyhedra2();
+
+    /**
+     * @brief Sort faces around each 1D element of the mesh
+     * @note Fills SortedFaces data
+    */
+    void SortFacesAroundEdges();
+
 private:
     // /**
     //  *  @brief Navigate children tree to access most extreme branches
@@ -355,11 +364,15 @@ TPZManVector<T,3> operator-(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumE
  * @param sideorientation decides if method returns angle or 2*pi-angle, as a right-handed axis orientation
  */
 static float DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1){
+
     // Consistency checks
     if(gelside.Element()->Dimension() != 2)     DebugStop();
     if(gelside.Dimension() != 1)                DebugStop();
     if(neighbour.Element()->Dimension() !=2)    DebugStop();
     if(neighbour.Dimension() != 1)              DebugStop();
+
+    if(gelside == neighbour) return 0.;
+
     if(!gelside.NeighbourExists(neighbour))     DebugStop();
     
     TPZGeoEl* gel = gelside.Element();

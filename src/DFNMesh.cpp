@@ -22,6 +22,7 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 		CreateSkeletonElements(i,1);
 	}
 	
+	fSortedFaces.Resize(fGMesh->ElementVec().NElements()+fGMesh->ElementVec().NFreeElements());
 }
 
 
@@ -938,9 +939,9 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 		}
     }
     
-	// outfile<<"\nTransfinite Curve {:} = 2;\n";
-    outfile<<"Transfinite Surface {Physical Surface("<<DFNMaterial::Eintact<<")};\n";
-    outfile<<"Recombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};\n";
+	// outfile<<"\nTransfinite Curve {:} = 2;";
+    outfile<<"\nTransfinite Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
+    outfile<<"\nRecombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
     // outfile<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
 
 }
@@ -1182,7 +1183,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	for(int64_t inode : nodes){
 		TPZManVector<REAL,3> coord(3);
 		gmesh->NodeVec()[inode].GetCoordinates(coord);
-		gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode+shift);
+		gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.666,inode+shift);
 	}
 	// std::cout<<"\n\n\n";
 	// Insert lines ____________________________________
@@ -1595,5 +1596,53 @@ void DFNMesh::GetPolyhedra(){
 			std::cout<<std::endl<<(*polyh)[i];
 		}
 		counter++;
+	}
+}
+
+
+
+
+
+void DFNMesh::GetPolyhedra2(){
+
+}
+
+
+
+
+void DFNMesh::SortFacesAroundEdges(){
+	fSortedFaces.Resize(fGMesh->ElementVec().NElements()+fGMesh->ElementVec().NFreeElements());
+
+	// Loop over 1D elements
+	for(TPZGeoEl* gel : fGMesh->ElementVec()){
+		if(!gel) continue;
+		if(gel->Dimension() != 1) continue;
+		// if(gel->HasSubElement()) continue;
+		//@todo filter for skeleton mesh material in here
+		// TPZAutoPointer<TPZVec<int64_t>> facevec = new TPZVec<int64_t>;
+		TPZVec<int64_t>* facevec = new TPZVec<int64_t>;
+		std::map<REAL,TPZGeoEl*> facemap;
+
+		TPZGeoElSide gelside(gel,2);
+		TPZGeoElSide neig = gelside.Neighbour();
+		TPZGeoElSide firstface;
+		for(/*void*/; neig != gelside; neig = neig.Neighbour()){
+			if(neig.Element()->Dimension() != 2) continue;
+			if(facemap.size() == 0) {firstface = neig;}
+			REAL angle = DFN::DihedralAngle(firstface,neig,1);
+			facemap.insert({angle,neig.Element()});
+		}
+		(*facevec).Resize(facemap.size());
+		int j = 0;
+		std::cout<<"\n Edge # "<<gel->Index();
+		for(auto iterator : facemap){
+			TPZGeoEl* jface = iterator.second;
+			(*facevec)[j] = jface->Index();
+			j++;
+			std::cout<<"\n"<<jface->Index();
+		}
+		std::cout<<"\n";
+		if((*facevec).size() > 0)
+			fSortedFaces[gel->Index()] = facevec;
 	}
 }
