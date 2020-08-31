@@ -1,6 +1,6 @@
-# @brief Runs DFNMesh with a mooving fracture in 3D which causes some 2D elements to be incorporated into the fracture
+# @brief Example number 2 for cilamce2020 paper
 # @author github/PedroLima92
-# @date june 2020
+# @date august 2020
 
 import subprocess
 import math
@@ -8,11 +8,12 @@ import math
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
 # where to save vtk files?
-destination = "documentation/animations/2020-06-27/"
+destination = "documentation/animations/cilamce/ex1/"
 # ../examples/<example>
-example = destination+"sweep-cubes.txt"
+example = destination+"cilamce1.txt"
 # ../examples/<msh>
 msh = "no-msh-file"
+
 
 preamble = (
 """Domain
@@ -24,22 +25,22 @@ EQuadrilateral
 
 NumberOfFractures 1
 
-Fracture 0 4"""
+"""
 )
-x = "\n-1.00  5.00  5.00 -1.00"
+x = "\nFracture 0 4\n-1.00  5.00  5.00 -1.00"
 z = "\n-1.00 -1.00  5.00  5.00"
 
 toldist = 0.8
 step = 0.07
 # steps = 0
-y0 = 1.85
+starty0 = 1.85
 yfinal = 5.0
-steps = int((yfinal-y0)/step)
+steps = int((yfinal-starty0)/step)
 steps += 1
 
+# for i in range(steps):
 for i in range(17,18):
-# for i in range(50,steps):
-    y0 += step
+    y0 = starty0 + i*step
     f = open(example,"w+")
     f.write(preamble)
     f.write(x)
