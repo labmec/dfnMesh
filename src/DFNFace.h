@@ -79,7 +79,7 @@ public:
     int64_t Index() const {return fGeoEl->Index();}
 
     /**
-     * @brief Return pointer to i-th rib.
+     * @brief Return pointer to i-th DFNrib.
      * @returns nullptr if rib isn't in Fracture's rib map
     */
     DFNRib *Rib(int i);

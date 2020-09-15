@@ -11,6 +11,99 @@
 #include "DFNVolume.h"
 #include <gmsh.h>
 
+    // A 2D element sorted around an edge (a rolodex card)
+    struct TRolodexCard{
+        int64_t fgelindex;
+        REAL fangle_to_reference;
+        // int forientation; //1 or -1
+
+        /// empty constructor and destructor
+        TRolodexCard(int64_t id=-1):fgelindex(-1),fangle_to_reference(0.0){};
+        ~TRolodexCard(){};
+        /// copy constructor and attribution operator
+        TRolodexCard& operator=(const TRolodexCard& copy){
+            fangle_to_reference = copy.fangle_to_reference;
+            fgelindex = copy.fgelindex;
+        }
+        TRolodexCard(const TRolodexCard& copy){
+            this->operator=(copy);
+        }
+        /// less than operator
+        bool operator<(const TRolodexCard& other){
+            return fgelindex < other.fgelindex;
+        }
+        bool operator==(const TRolodexCard& other){
+            return fgelindex == other.fgelindex;
+        }
+    };
+    /// A set of 2D elements around an edge, sorted by an angle to a reference
+    // The reference is the first card = fcards.begin()
+    struct TRolodex{
+        std::vector<TRolodexCard> fcards;
+        int64_t fedgeindex;
+
+        /// default constructor and destructor
+        TRolodex(): fedgeindex(-1){fcards.resize(0);};
+        ~TRolodex(){};
+        /// copy constructor and attribution operator
+        TRolodex& operator=(const TRolodex& copy){
+            fcards = copy.fcards;
+            fedgeindex = copy.fedgeindex;
+        }
+        TRolodex(const TRolodex& copy){
+            this->operator=(copy);
+        }
+        /**
+         * @brief Get the next face forward or backwards according to direction and fill the angle between faces
+         * @param current_index = index of current element
+         * @param angle to be filled with angle between current and next face
+         * @param direction 1 or -1
+        */
+        // TRolodexCard& NextFace(int64_t current_index, REAL& angle, int direction=1){
+        //     return fcards[0];
+        // }
+        TRolodexCard& NextFace(int64_t current_index, REAL& angle, int direction=1){
+            TRolodexCard current_card;
+            current_card.fgelindex = current_index;
+            int ncards = fcards.size();
+            auto it = std::find(fcards.begin(),
+                                fcards.end(),
+                                current_card);
+            if(it == fcards.end()) DebugStop();
+            int jcard = it - fcards.begin();
+            
+            if(direction == 1){
+                return fcards[(jcard+1)%ncards];
+            }
+            if(direction == -1){
+                return fcards[(jcard-1+ncards)%ncards];
+            }
+            DebugStop();
+        }
+
+        /**
+         * @brief Get a reference to a card using an index
+         * @param index of the geometric element of that card
+         * @param position to fill with the position where this card appears in the card vector
+         * @note This methods involve a search (std::find) through a vector
+        */
+        TRolodexCard& Card(int64_t index, int & position){
+            TRolodexCard dummycard;
+            dummycard
+            auto it = std::find(fcards.begin(),
+                                fcards.end(),
+                                index);
+            if(it == fcards.end()) DebugStop();
+            position = it - fcards.begin();
+            TRolodexCard& ref = *it;
+            return ref;
+        }
+    };
+
+
+
+
+
 
 /**
  * @brief Describes a fractured MHM geomesh
@@ -33,8 +126,19 @@ private:
     // Pointer to geometric mesh
     TPZGeoMesh *fGMesh;
 
-    // TPZChunkVector<TPZAutoPointer<TPZVec<int64_t>>,10> fSortedFaces;
-    TPZVec<TPZVec<int64_t>*> fSortedFaces;
+
+    
+    
+    /// For each edge, a vector of sorted faces around that edge
+    TPZVec<TRolodex> fSortedFaces;
+
+
+    /** 
+     * For each 2D skeleton element the left and right polyhedral index
+     * - fPolyh_per_2D_el[i][0] is the index of the polyhedron on the positive side of element of index i
+     * - fPolyh_per_2D_el[i][1] is the index of the polyhedron on the negative side of element of index i
+    */
+	TPZVec<std::array<int,2>> fPolyh_per_2D_el;
 
 public:
     // // Local enumeration of material indices
@@ -361,7 +465,9 @@ TPZManVector<T,3> operator-(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumE
  * @brief Returns the oriented dihedral angle between gel and neighbour
  * @note:1 Make sure neighbour is an actual neighbour, otherwise this method will spit nonsense
  * @note:2 Returned angle is in interval [0, 2pi)
- * @param sideorientation decides if method returns angle or 2*pi-angle, as a right-handed axis orientation
+ * @param sideorientation decides if method returns angle or 2*pi-angle, as a right-handed axis 
+ * orientation, with the right thumb place over the shared 1D side, and considering the first element node distribution.
+ * If thumb orientation matches the orientation of gelside, use 1, else, use -1.
  */
 static float DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1){
 
@@ -372,6 +478,12 @@ static float DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int s
     if(neighbour.Dimension() != 1)              DebugStop();
 
     if(gelside == neighbour) return 0.;
+    // {
+    //     switch(sideorientation){
+    //         case  1: return 0.;
+    //         case -1: return DFN::_2PI;
+    //     }
+    // }
 
     if(!gelside.NeighbourExists(neighbour))     DebugStop();
     
@@ -455,6 +567,22 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
 	REAL cosine = DotProduct_f(vec1,vec2)/(Norm_f(vec1)*Norm_f(vec2));
 	return cosine;
 }
+
+    /**
+     * @brief Get a pointer to an element that is superposed in a lower dimensional side of a geometric element
+     * @return nullptr if there is no element in that side
+    */
+    static TPZGeoEl* GetSkeletonNeighbour(TPZGeoEl* gel, int side){
+        if(gel->SideDimension(side) == gel->Dimension()) return nullptr;
+        TPZGeoElSide gelside(gel,side);
+        TPZGeoElSide neig;
+        for(neig = gelside.Neighbour(); neig!=gelside; neig=neig.Neighbour()){
+            if(neig.Element()->Dimension() == gel->SideDimension(side)){
+                return neig.Element();
+            }
+        }
+        return nullptr;
+    }
 }
 
 #endif /* DFNMesh_h */

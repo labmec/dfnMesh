@@ -22,7 +22,8 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 		CreateSkeletonElements(i,1);
 	}
 	
-	fSortedFaces.Resize(fGMesh->ElementVec().NElements()+fGMesh->ElementVec().NFreeElements());
+	fSortedFaces.Resize(fGMesh->NElements());
+	fPolyh_per_2D_el.Resize(fGMesh->NElements(),{-1,-1});
 }
 
 
@@ -1183,7 +1184,7 @@ void DFNMesh::Tetrahedralize(DFNVolume *volume){
 	for(int64_t inode : nodes){
 		TPZManVector<REAL,3> coord(3);
 		gmesh->NodeVec()[inode].GetCoordinates(coord);
-		gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.666,inode+shift);
+		gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],0.,inode+shift);
 	}
 	// std::cout<<"\n\n\n";
 	// Insert lines ____________________________________
@@ -1604,14 +1605,109 @@ void DFNMesh::GetPolyhedra(){
 
 
 void DFNMesh::GetPolyhedra2(){
+	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
+	this->SortFacesAroundEdges();
+	fPolyh_per_2D_el.Resize(fGMesh->NElements(),{-1,-1});
+	TPZGeoEl* initial_face = nullptr;
+    // For each polyhedra, a vector of face indexes 
+	// this will probably only be used for debug. We can decide after this method is finished
+	TPZStack<TPZAutoPointer<std::vector<int>>> polyhedra_vec;
+	int polyh_counter = 0;
 
+	// loop over 2D skeleton elements
+	for(TPZGeoEl* el : fGMesh->ElementVec()){
+		if(!el) continue;
+		if(el->Dimension() != 2) continue;
+		if(el->HasSubElement()) continue;
+		//@todo filter skeleton + fracture material IDs
+
+		initial_face = el;
+		// number of polyhedra that have to be found for this face
+		const int npolyh_total = 2;
+
+		// flank defines if we're looking for a polyhedron on the positive or the negative side of the face
+		int initial_face_flank = (fPolyh_per_2D_el[el->Index()][0] >= 0 ? -1 : 1);
+		// number of polyhedra found on either flank of this face
+		int npolyh_found = int(fPolyh_per_2D_el[el->Index()][0] >= 0) + int(fPolyh_per_2D_el[el->Index()][1] >= 0);
+
+		while(npolyh_found < npolyh_total){
+
+			// a vector of faces that enclose a polyhedron
+			std::vector<int>* polyhedron = new std::vector<int>;
+			// a set of faces whose neighbours have already been queued and added to the polyhedron (to avoid rechecking)
+			std::set<int64_t> verified;
+			// queue of 2D skeleton elements that have been added to the polyhedron and whose neighbours must be checked to complete the polyhedron
+			std::list<int64_t> face_queue;
+			polyhedron->push_back(initial_face->Index());
+			if(initial_face_flank > 0)
+				{fPolyh_per_2D_el[initial_face->Index()][0] = polyh_counter;}
+			else
+				{fPolyh_per_2D_el[initial_face->Index()][1] = polyh_counter;}
+			
+			face_queue.push_back(initial_face->Index());
+			// Just a flag
+			bool convexPolyh = true;
+			bool newface = true;
+			// std::cout<<"\n\nPolyhedron #"<<polyh_counter;
+			// run down the queue of neighbours to search for faces that share a polyhedron until the queue is over
+			// for(int current_index : *polyhedron){
+			for(int64_t current_index : face_queue){
+				// try to insert in verified, if it's not inserted than neighbours of this element have already been queued and we can move down the queue 
+				newface = verified.insert(current_index).second;
+				if(!newface) continue;
+
+				TPZGeoEl* current_face = fGMesh->Element(current_index);
+				int nedges = current_face->NSides(1);
+				// orientation defines if current polyhedron is on the positive or negative flank of current 2D element of the queue
+				int orientation = (fPolyh_per_2D_el[current_index][0]==polyh_counter ? 1:-1);
+				// Loop over each edge of the current 2D_el to insert neighbours onto the polyhedron. 
+				for(int iside=nedges; iside<current_face->NSides()-1; iside++){
+					TPZGeoEl* edge = DFN::GetSkeletonNeighbour(current_face,iside);
+					TPZGeoElSide edgeside(edge,2);
+					TPZGeoElSide gelside(current_face,iside);
+					int direction = orientation*DFN::OrientationMatch(edgeside,gelside);
+					REAL angle = 0.0;
+					TRolodexCard nextcard = fSortedFaces[edge->Index()].NextFace(current_index,angle,direction);
+					
+
+					if(!newface) continue;
+
+					if(angle > M_PI+DFN::gSmallNumber){
+						convexPolyh = false;
+					}
+					polyhedron->push_back(nextcard.fgelindex);
+					// std::cout<<std::endl<< direction*current_index;
+					if(direction > 0)
+						{fPolyh_per_2D_el[nextcard.fgelindex][0] = polyh_counter;}
+					else
+						{fPolyh_per_2D_el[nextcard.fgelindex][1] = polyh_counter;}
+
+					face_queue.push_back(nextcard.fgelindex);
+				}//for each edge
+			}//for each face in queue
+			polyhedra_vec.push_back(polyhedron);
+			polyh_counter++;
+			npolyh_found++;
+			initial_face_flank *= -1;
+			// if(!convexPolyh) MeshPolyhedron(polyhedron);
+		}//while(npolyh_found < npolyh_total)
+	}//for(TPZGeoEl* el : fGMesh->ElementVec())
+	int counter = 0;
+	for(auto polyh : polyhedra_vec){
+		std::cout<<"\n\nPolyhedron #"<<counter;
+		int nfaces = (*polyh).size();
+		for(int i=0; i<nfaces; i++){
+			std::cout<<std::endl<<(*polyh)[i];
+		}
+		counter++;
+	}
 }
 
 
 
 
 void DFNMesh::SortFacesAroundEdges(){
-	fSortedFaces.Resize(fGMesh->ElementVec().NElements()+fGMesh->ElementVec().NFreeElements());
+	fSortedFaces.Resize(fGMesh->ElementVec().NElements());
 
 	// Loop over 1D elements
 	for(TPZGeoEl* gel : fGMesh->ElementVec()){
@@ -1619,30 +1715,32 @@ void DFNMesh::SortFacesAroundEdges(){
 		if(gel->Dimension() != 1) continue;
 		// if(gel->HasSubElement()) continue;
 		//@todo filter for skeleton mesh material in here
-		// TPZAutoPointer<TPZVec<int64_t>> facevec = new TPZVec<int64_t>;
-		TPZVec<int64_t>* facevec = new TPZVec<int64_t>;
+		// TPZAutoPointer<std::vector<int64_t>> facevec = new std::vector<int64_t>;
+		std::vector<int64_t>* facevec = new std::vector<int64_t>;
 		std::map<REAL,TPZGeoEl*> facemap;
 
-		TPZGeoElSide gelside(gel,2);
-		TPZGeoElSide neig = gelside.Neighbour();
-		TPZGeoElSide firstface;
-		for(/*void*/; neig != gelside; neig = neig.Neighbour()){
+		TPZGeoElSide edgeside(gel,2);
+		TPZGeoElSide neig = edgeside.Neighbour();
+		TPZGeoElSide reference_el;
+		int reference_orientation;
+		for(/*void*/; neig != edgeside; neig = neig.Neighbour()){
 			if(neig.Element()->Dimension() != 2) continue;
-			if(facemap.size() == 0) {firstface = neig;}
-			REAL angle = DFN::DihedralAngle(firstface,neig,1);
+			if(facemap.size() == 0) {
+				reference_el = neig;
+				reference_orientation = (DFN::OrientationMatch(reference_el,edgeside)?1:-1);
+			}
+			REAL angle = DFN::DihedralAngle(reference_el,neig,reference_orientation);
 			facemap.insert({angle,neig.Element()});
 		}
-		(*facevec).Resize(facemap.size());
 		int j = 0;
 		std::cout<<"\n Edge # "<<gel->Index();
+		fSortedFaces[gel->Index()].fcards.resize(facemap.size());
 		for(auto iterator : facemap){
 			TPZGeoEl* jface = iterator.second;
-			(*facevec)[j] = jface->Index();
+			fSortedFaces[gel->Index()].fcards[j].fgelindex = jface->Index();
 			j++;
 			std::cout<<"\n"<<jface->Index();
 		}
 		std::cout<<"\n";
-		if((*facevec).size() > 0)
-			fSortedFaces[gel->Index()] = facevec;
 	}
 }
