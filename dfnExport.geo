@@ -20,8 +20,8 @@ Point(18) = {-1,-0.424365,1};
 Point(19) = {1,-0.0690355,0.0690355};
 Point(20) = {1,-0.0690355,-1};
 Point(21) = {1,-0.0690355,1};
-Point(22) = {-0.395259,-0.316924,0.684774};
-Point(23) = {0.604741,-0.139259,-0.43037};
+Point(22) = {0.720617,-0.118672,-0.544296};
+Point(23) = {-0.395259,-0.316924,0.684774};
 
 
 // LINES DEFINITION 
@@ -62,20 +62,20 @@ Line(94) = {15,16};
 Line(95) = {18,13};
 Line(96) = {17,16};
 Line(97) = {17,18};
-Line(98) = {19,20};
 Line(99) = {16,19};
 Line(100) = {20,15};
 Line(101) = {19,17};
 Line(102) = {19,21};
 Line(103) = {21,17};
-Line(132) = {20,23};
-Line(133) = {23,19};
-Line(134) = {18,22};
-Line(135) = {22,13};
-Line(136) = {16,22};
-Line(137) = {22,17};
-Line(138) = {23,16};
-Line(139) = {15,23};
+Line(134) = {15,22};
+Line(135) = {22,20};
+Line(136) = {18,23};
+Line(137) = {23,13};
+Line(138) = {16,23};
+Line(139) = {23,17};
+Line(140) = {19,22};
+Line(141) = {22,16};
+Line(145) = {3,22};
 
 
 // FACES DEFINITION 
@@ -116,32 +116,32 @@ Curve Loop(42) = {25,23,-22};
 Surface(42) = {42};
 Curve Loop(43) = {52,53,25,60,61};
 Plane Surface(43) = {43};
-Curve Loop(108) = {-98,-133,-132};
+Curve Loop(108) = {-100,-135,-134};
 Surface(108) = {108};
-Curve Loop(109) = {95,-135,-134};
+Curve Loop(109) = {95,-137,-136};
 Surface(109) = {109};
-Curve Loop(110) = {-96,-137,-136};
+Curve Loop(110) = {-96,-139,-138};
 Surface(110) = {110};
-Curve Loop(111) = {-99,-138,133};
+Curve Loop(111) = {-99,-141,-140};
 Surface(111) = {111};
-Curve Loop(112) = {-100,132,-139};
-Surface(112) = {112};
-Curve Loop(123) = {93,-91,94};
-Surface(123) = {123};
-Curve Loop(124) = {-93,136,135};
+Curve Loop(124) = {-91,94,93};
 Surface(124) = {124};
-Curve Loop(125) = {-94,139,138};
+Curve Loop(125) = {-93,138,137};
 Surface(125) = {125};
-Curve Loop(127) = {97,134,137};
-Surface(127) = {127};
-Curve Loop(130) = {-90,-92,91};
-Surface(130) = {130};
-Curve Loop(131) = {103,-101,102};
-Surface(131) = {131};
+Curve Loop(126) = {-94,134,141};
+Surface(126) = {126};
+Curve Loop(128) = {97,136,139};
+Surface(128) = {128};
+Curve Loop(129) = {59,145,135};
+Surface(129) = {129};
+Curve Loop(132) = {-90,-92,91};
+Surface(132) = {132};
+Curve Loop(133) = {-101,102,103};
+Surface(133) = {133};
 
 Physical Surface(3) = {26,27,29,31,32,33,34,35,36,37,38,39,41,43};
 
-Physical Surface("Fractures",2) = {108,109,110,111,112,123,124,125,127,130,131};
+Physical Surface("Fractures",2) = {108,109,110,111,124,125,126,128,129,132,133};
 
 Physical Surface(1) = {28,30,40,42};
 
@@ -156,11 +156,11 @@ Curve{94} In Surface{32};
 Curve{95} In Surface{33};
 Curve{96} In Surface{34};
 Curve{97} In Surface{35};
-Curve{98} In Surface{36};
-Curve{99} In Surface{37};
-Curve{100} In Surface{38};
-Curve{101} In Surface{39};
-Curve{102} In Surface{41};
+Curve{ In Surface{36};
+Curve{ In Surface{37};
+Curve{ In Surface{38};
+Curve{ In Surface{39};
+Curve{ In Surface{41};
 Curve{103} In Surface{43};
 
 
@@ -168,22 +168,22 @@ Curve{103} In Surface{43};
 
 Surface Loop(1) = {29,28,27,26};
 Volume(1) = {1};
-Surface{130} In Volume{1};
+Surface{132} In Volume{1};
 Surface Loop(2) = {27,32,31,30};
 Volume(2) = {2};
-Surface{123} In Volume{2};
+Surface{124} In Volume{2};
 Surface Loop(3) = {31,35,34,33};
 Volume(3) = {3};
-Surface{109,110,124,127} In Volume{3};
+Surface{109,110,125,128} In Volume{3};
 Surface Loop(4) = {32,38,37,36};
 Volume(4) = {4};
-Surface{108,111,112,125} In Volume{4};
+Surface{108,111,126,129} In Volume{4};
 Surface Loop(5) = {34,40,39,37};
 Volume(5) = {5};
 Surface{In Volume{5};
 Surface Loop(6) = {43,39,42,41};
 Volume(6) = {6};
-Surface{131} In Volume{6};
+Surface{133} In Volume{6};
 
 refinedvol[] = {1,2,3,4,5,6};
 

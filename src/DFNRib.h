@@ -31,19 +31,14 @@ private:
     /// pointer to its original geometric element
 	TPZGeoEl *fGeoEl;
 
-	/// status vector describes how the sides of this element have been intersected
-    // @TODO for a mere human reader, the word "describes" does not explain
-    // this data structure (I suggest to just delete it... ;-)
-	TPZManVector<int, 3> fStatus;
+	/// Contains the side of this element that has been intersected
+	int fStatus = -1;
 
-	/// Anticipated coordinates of intersection (may not be real coordinates)
-    // @TODO for a mere human reader (not superman) the statement "may not be real
-    // coordinates" is a worrysome statement
-    // @TODO change the name to fIntersectionPoint (for instance)
+    /// Anticipated coordinates of an intersection point initialy found for this DFNRib and a DFNPolygon. 
+    /// The point may be moved afterwards during DFNRib::SnapIntersection()
 	TPZManVector<REAL, 3> fCoord;
 	
-	/// Index of intersection node
-    // @TODO does that mean the index of a node in the geometric mesh?
+	/// Index of intersection node if any correspond to it in the geometric mesh
 	int64_t fIntersectionIndex = -1;
 
     /// Pointer to the fracture
@@ -51,10 +46,10 @@ private:
 
 public:
     /// Empty constructor
-    DFNRib(): fGeoEl(nullptr), fStatus({0,0,0}){};
+    DFNRib(): fGeoEl(nullptr), fStatus(-1){fCoord.resize(0);};
     
     /// Default constructor takes a pointer to geometric element
-    DFNRib(TPZGeoEl *gel, DFNFracture *Fracture);
+    DFNRib(TPZGeoEl *gel, DFNFracture *Fracture, int status = -1);
     
     /// Copy constructor
     DFNRib(const DFNRib &copy);
@@ -77,7 +72,7 @@ public:
     /// Get index of intersection node
     int64_t IntersectionIndex() const {return fIntersectionIndex;}
     
-    /// Set anticipated intersection coordinates (real coordinates are defined by DFNRib::Optimize())
+    /// Set anticipated intersection coordinates (real coordinates are defined after DFNRib::SnapIntersection_try())
     void SetIntersectionCoord(TPZManVector<REAL, 3> coord){
         fCoord = coord;
     }
@@ -85,7 +80,7 @@ public:
     /// Get anticipated intersection coordinates
     TPZManVector<REAL, 3> AntCoord(){return fCoord;}
 
-    /// Get real intersection coordinates (after optimization)
+    /// Get real intersection coordinates (after SnapIntersection)
     TPZManVector<REAL, 3> RealCoord();
 
     /// Give face a pointer to which fracture is cutting it
@@ -93,44 +88,22 @@ public:
 
     /**
      * @brief Flag if rib was found to be intersected at any side
-     * @return True if any element of status vector is true
-     * @TODO GET RID OF FSTATUS!! Maybe status can be substituted by an enum?
-     *  I dont understand how a rib can have no intersection? An object rib is created to manage
-     *  the intersection!
     */
     inline bool IsIntersected() const{
-        return (fStatus[0] || fStatus[1] || fStatus[2]);
+        return fStatus != -1;
     }
 
     /// Check if this rib should be refined
-    // @TODO BEST DOCUMENTATION EVER!!!
-    inline bool NeedsRefinement() const {return fStatus[2];}
+    inline bool NeedsRefinement() const {return (fStatus == 2);}
 
-    /// Set Status Vector (topology of intersection)
-    void SetStatusVec(const TPZVec<int> &status){
-        if(status.size() != 3) DebugStop();
-        fStatus = status;
-    }
-    void SetStatusVec(const std::initializer_list<int>& status){
-        if(status.size() != 3) DebugStop();
+    /// Set Status (the side where intersection happens)
+    void SetStatus(const int status){
+        if(status < 0 || status > 2) DebugStop();
         fStatus = status;
     }
 
-    /// Reference to status vector
-    const TPZVec<int> &StatusVec() const {return fStatus;}
-    
-    /**
-     * @brief Check geometry of intersection against a tolerance, snaps intersection 
-     * to closest side(s) if necessary and modifies affected neighbours.
-     * @return True if any optimization has been made.
-     * @param tol: Minimum acceptable length
-    */
-    // @TODO Suggestion : change the name to SnapIfNecessary or
-    // something else. It is not an optimization
-    // Maybe split in two methods : NeedsSnap and projectnode
-    // then SnapIntersection_force does not need to use "gambiarra" with
-    // bignumber
-    bool Optimize(REAL tolDist = 1e-4);
+    /// Get side of this rib that has been intersected
+    const int Status() const {return fStatus;}
 
     /// Check if should be refined and generate the subelements
     void Refine();
@@ -140,18 +113,30 @@ public:
         fGeoEl->SetMaterialId(matID);
     };
 
-    /// After optimization, update neighbours through side iside
-    // @TODO BEST COMMENT EVER = Just kidding, the comment doesnt
-    // explain anything...
+    /// After intersection snap, recursively snap intersections at neighbours through side iside
     void UpdateNeighbours(int iside);
 
     /// Check if rib will be incorporated onto fracture and correct its material id as such.
     /// Returns true if changes have been made
     bool UpdateMaterial();
+    
+    /**
+     * @brief Check geometry of intersection against a tolerance, snaps intersection 
+     * to closest side(s) if necessary and recursevily modifies affected neighbours.
+     * @return True if any snap happened.
+     * @param tolDist: Minimum acceptable length
+    */
+    bool SnapIntersection_try(REAL tolDist = 1e-4);
 
-    /// Forces projection (optimization) of the intersection to the closest lower dimensional side
-    // @TODO does it call force projection recursively?
+    /// Forces projection (snap) of the intersection node to the closest lower dimensional side (nothing happens if insersection is already at zero dim side)
     void SnapIntersection_force();
+
+    /**
+     * @brief Check geometry of intersection against tolerance, to test if intersection should be snapped
+     * @return False if no tolerance is violated or if intersection has already been snapped.
+     * @param tolDist: Minimum acceptable distance
+    */
+    bool NeedsSnap(int64_t& closestnode, REAL tolDist = 1e-4);
 
     private:
         /// Creates refinement pattern based on status vector and intersection node index

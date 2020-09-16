@@ -62,7 +62,7 @@ bool DFNFace::IsOnBoundary(){
 		DFNRib* rib = fRibs[irib];
 		if(!rib) continue;
 		for(int i=0; i<3; i++){
-			n_intersections += rib->StatusVec()[i];
+			n_intersections++;
 			if(n_intersections > 1) return false;
 		}
 	}
@@ -504,7 +504,7 @@ bool DFNFace::UpdateStatusVec(){
 	
 	TPZGeoMesh *gmesh = fGeoEl->Mesh();
 	int nnodes = fGeoEl->NCornerNodes();
-	int nribs = nnodes;
+	int nribs = fGeoEl->NSides(1);
 	DFNRib *rib;
 	TPZGeoEl *rib_gel;
 	
@@ -517,11 +517,11 @@ bool DFNFace::UpdateStatusVec(){
 		if(rib){
 			rib_gel = fRibs[i]->GeoEl();
 			orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
-            // @TODO I DISLIKE STATUS VECTORS VERY MUCH - VERY MUCH!!!!
-            // we can conceive possibilities that break this code
-			fStatus[i] = MAX(fStatus[i],rib->StatusVec()[orientation]);
-			fStatus[(i+1)%nnodes] = MAX(fStatus[(i+1)%nnodes],rib->StatusVec()[(orientation+1)%2]);
-			fStatus[i+nnodes] = rib->StatusVec()[2];
+			fStatus[i] = fStatus[i] ||
+						 rib_gel->NodeIndex(orientation)==rib->Status();
+			fStatus[(i+1)%nnodes] = fStatus[(i+1)%nnodes] ||
+									rib_gel->NodeIndex((orientation+1)%2)==rib->Status();
+			fStatus[i+nnodes] = rib->Status()==2;
 		}
 	}
 

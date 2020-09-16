@@ -18,11 +18,12 @@
 #include <math.h>
 
 /// Default constructor takes a pointer to geometric element
-DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture) :
+DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture, int status) :
     fGeoEl(gel),
+    fStatus(status),
     fFracture(Fracture),
-    fStatus({0,0,0})
-{};
+    fIntersectionIndex(-1)
+{fCoord.resize(0);};
 
 // Copy constructor
 DFNRib::DFNRib(const DFNRib &copy){
@@ -48,12 +49,10 @@ TPZManVector<REAL, 3> DFNRib::RealCoord(){
     TPZManVector<REAL, 3> coord(3, 0);
     TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
-    if(fStatus[2] && fIntersectionIndex >= 0){
-        gmesh->NodeVec()[fIntersectionIndex].GetCoordinates(coord);
-    }
-    else if(fStatus[2]){coord = fCoord;}
-    else if(fStatus[0]){fGeoEl->NodePtr(0)->GetCoordinates(coord);}
-    else if(fStatus[1]){fGeoEl->NodePtr(1)->GetCoordinates(coord);}
+    if(fStatus == 2 && fIntersectionIndex < 0)
+        {coord = this->fCoord;}
+    else
+        {gmesh->NodeVec()[fIntersectionIndex].GetCoordinates(coord);}
     
     return coord;
 }
@@ -101,7 +100,7 @@ void DFNRib::Refine(){
 void DFNRib::CreateRefPattern(){
         // refinement mesh
         TPZGeoMesh refPatternMesh;
-        int refnnodes = 2+fStatus[2];
+        int refnnodes = fGeoEl->NCornerNodes() + this->NeedsRefinement();
         TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
         // set nodes
@@ -139,13 +138,25 @@ void DFNRib::CreateRefPattern(){
 
 void DFNRib::SnapIntersection_force(){
     REAL BIG_NUMBER = 1.e12;
-    this->Optimize(BIG_NUMBER);
+    this->SnapIntersection_try(BIG_NUMBER);
 }
 
 
 
-bool DFNRib::Optimize(REAL tolDist){
-    // @TODO explain this logic
+bool DFNRib::SnapIntersection_try(REAL tolDist){
+    // If there's an intersection at the 1D side of this DFNRib, check if 
+    // that intersection violates the tolerable distance and, if necessary, snap it down to a lower-dimensional side
+    int64_t closestnode = -1;
+    if(this->NeedsSnap(closestnode,tolDist)){
+        fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
+        fStatus = closestnode;
+        UpdateNeighbours(closestnode);
+        return true;
+    }
+    return false;
+}
+
+bool DFNRib::NeedsSnap(int64_t& closestnode, REAL tolDist){
     if(!this->NeedsRefinement()) return false;
     
     TPZManVector<REAL,3> coord(3,0);
@@ -155,25 +166,14 @@ bool DFNRib::Optimize(REAL tolDist){
     fGeoEl->NodePtr(1)->GetCoordinates(coord);
     REAL dist1 = Distance(fCoord,coord);
 
-    int64_t closestnode = (dist0 < dist1 ? 0 : 1);
+    closestnode = (dist0 < dist1 ? 0 : 1);
     REAL dist = MIN(dist0,dist1);
 
-    // if(dist<tolDist){
-    // I HAVE NO IDEA WHAT FSTATUS STANDS FOR. I DISLIKE THIS DATA
-    // STRUCTURE VERY MUCH!!!
-    if(fStatus[0] || fStatus[1] || dist<tolDist){
-        // @TODO what does this comment mean???
-        // this condition seems to be more robust
-        fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
-        fStatus[closestnode] = 1;
-        fStatus[2] = 0;
-        UpdateNeighbours(closestnode);
+    if(dist<tolDist)
         return true;
-    }
-    return false;
+    else 
+        return false;
 }
-
-
 
 
 
@@ -202,8 +202,8 @@ void DFNRib::UpdateNeighbours(int iside){
                 // if(fStatus[iside] == rib_ptr->StatusVec()[neig_side]){continue;}
                 // // else, match StatusVec entry for iside and optimize
                 // rib_ptr->StatusVec()[neig_side] = fStatus[iside];
-                // rib_ptr->Optimize();
-                // if(rib_ptr->NeedsRefinement()) {rib_ptr->Optimize();}
+                // rib_ptr->SnapIntersection_try();
+                // if(rib_ptr->NeedsRefinement()) {rib_ptr->SnapIntersection_try();}
                 if(rib_ptr->NeedsRefinement()) {rib_ptr->SnapIntersection_force();}
                 break;
             }
@@ -225,16 +225,16 @@ void DFNRib::UpdateNeighbours(int iside){
 
 
 
-// Might be useful at some point... but not yet
-bool DFNRib::UpdateMaterial(){
-    DebugStop();
-    if(fGeoEl->MaterialId() == DFNMaterial::Efracture) {return false;}
-    if(fStatus[0] && fStatus[1]){
-        fGeoEl->SetMaterialId(DFNMaterial::Efracture);
-        return true;
-    }
-    return false;
-}
+// // Might be useful at some point... but not yet
+// bool DFNRib::UpdateMaterial(){
+//     DebugStop();
+//     if(fGeoEl->MaterialId() == DFNMaterial::Efracture) {return false;}
+//     if(fStatus[0] && fStatus[1]){
+//         fGeoEl->SetMaterialId(DFNMaterial::Efracture);
+//         return true;
+//     }
+//     return false;
+// }
 
 
 

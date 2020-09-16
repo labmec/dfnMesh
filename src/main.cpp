@@ -115,25 +115,14 @@ int main(int argc, char* argv[]){
         // Initialize the basic data of fracture
 		fracture = new DFNFracture(polygon,&dfn);
         
-        // @TODO shouldn't these methods be called in the constructor??
-		// @reply they're here temporarily for debug fase. We'll move them wherever's more intuitive in the end.
-
 	// Find and split intersected ribs
 		fracture->FindRibs();
-        // @TODO explain what is going on here
-        // change the name of this method
 		fracture->SnapIntersections_ribs(tol_dist);
 	// Build the DFNFace objects and split intersected faces if necessary
-        // @TODO I dont get it! if FindFaces already refines the face, why do we
-        // need to call RefineFaces?
-        // there should be a clear separation between FindFaces and RefineFaces
-        // between both there should be a check whether there are no small angle
-        // intersections
 		fracture->FindFaces();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 		fracture->RefineRibs();
 		fracture->RefineFaces();
-        // @TODO what is this for??
 	// Mesh fracture surface
 		fracture->AssembleOutline();
 		// fracture->GetSubPolygons();
@@ -143,7 +132,7 @@ int main(int argc, char* argv[]){
 	//insert fracture
 		dfn.AddFracture(fracture);
 		dfn.CreateVolumes();
-		dfn.GetPolyhedra2();
+		dfn.GetPolyhedra2(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
 	}
 	// Mesh transition volumes
 		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes

@@ -33,9 +33,8 @@ private:
      */
 	TPZManVector<int> fStatus;
 
-	/// Anticipated coordinates of in-plane intersection node (may not be real coordinates)
-    // @TODO how does a "face" have an intersection node?
-    // what is the meaning of "real coordinate"?
+	/// Anticipated coordinates of an in-plane intersection node (if any has beeen found)
+    /// This vector is only filled if this face intersects the limits of the fracture polygon
 	TPZManVector<REAL, 3> fCoord;
 	
 	/// Index of in-plane intersection node
@@ -44,17 +43,11 @@ private:
 	/// Pointer to a fracture mesh
 	DFNFracture *fFracture = nullptr;
 
-	/// Vector with indices of indices of the geometric elements corresponding to the ribs
-    // @TODO I suggest storing pointers to dfnribs data structures
-    // because all accesses involve a binary search
+	/// Vector with pointers to respective DFNRibs (if there's not a rib at that edge, it'll contain a nullptr)
 	TPZManVector<DFNRib*, 4> fRibs;
 
     /// Refinement mesh is used to create a refinement pattern and decide how to optimize it
     TPZGeoMesh fRefMesh;
-
-    // @TODO insert a pair indicating the left/right polyhedron index
-    /// {ribindex, sideindex}
-    // std::pair<int64_t, int> PhilPair;
 
 public:
     /// Empty constructor
@@ -90,7 +83,7 @@ public:
     /// Get index of in-plane intersection node
     int64_t IntersectionIndex() const {return fIntersectionIndex;}
     
-    /// Set anticipated in-plane intersection coordinates (real coordinates are defined by DFNRib::Optimize())
+    /// Set anticipated in-plane intersection coordinates (real coordinates are defined by DFNRib::SnapIntersection_try())
     void SetIntersectionCoord(TPZManVector<REAL, 3> coord){
         fCoord = coord;
     }

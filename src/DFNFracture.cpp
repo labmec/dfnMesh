@@ -190,8 +190,7 @@ void DFNFracture::FindRibs(){
 
         // Add rib
         if (result == true){
-            DFNRib rib(gel, this);
-            rib.StatusVec()[2] = 1; //StatusVec = {0,0,1}
+            DFNRib rib(gel, this,2);
             rib.SetIntersectionCoord(intpoint);
             // if this 1D element is not part of a previous fracture, change its material to Erefined
             // @TODO I understand that the material id of the skeleton elements is (-1)
@@ -224,7 +223,7 @@ void DFNFracture::RefineFaces(){
 void DFNFracture::SnapIntersections_ribs(REAL tolDist){
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
         DFNRib* rib = &itr->second;
-        rib->Optimize(tolDist);
+        rib->SnapIntersection_try(tolDist);
     }
 }
 void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){

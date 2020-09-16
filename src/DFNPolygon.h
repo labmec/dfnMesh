@@ -43,9 +43,6 @@ class DFNPolygon
 
 	/// If nodes of this polygon have been added to a geometric mesh, this vector holds GeoNodes indices
 	TPZManVector<int64_t> fPointsIndex;
-    
-    /// compute the direction of the axes based on the first three nodes
-    void ComputeAxis();
 
   public:
 	/// Empty constructor
@@ -65,6 +62,9 @@ class DFNPolygon
 
 	/// Return number of corners of polygon
 	int NCornerNodes(){return fCornerPoints.Cols();}
+    
+    /// compute the direction of the axes based on the first three nodes
+    void ComputeAxis();
 
 	/// Define corner coordinates
 	void SetCornersX(Matrix &CornerPoints);
