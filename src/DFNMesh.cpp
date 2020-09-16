@@ -1605,15 +1605,17 @@ void DFNMesh::GetPolyhedra(){
 
 
 void DFNMesh::GetPolyhedra2(){
+	std::cout<<"\n\n Print rolodexes:\n\n";
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
 	fPolyh_per_2D_el.Resize(fGMesh->NElements(),{-1,-1});
 	TPZGeoEl* initial_face = nullptr;
     // For each polyhedra, a vector of face indexes 
-	// this will probably only be used for debug. We can decide after this method is finished
+	// @todo this will probably only be used for debug. We can decide after this method is finished
 	TPZStack<TPZAutoPointer<std::vector<int>>> polyhedra_vec;
 	int polyh_counter = 0;
 
+	std::cout<<"\n\n Print polyhedra:\n\n";
 	// loop over 2D skeleton elements
 	for(TPZGeoEl* el : fGMesh->ElementVec()){
 		if(!el) continue;
@@ -1634,7 +1636,7 @@ void DFNMesh::GetPolyhedra2(){
 
 			// a vector of faces that enclose a polyhedron
 			std::vector<int>* polyhedron = new std::vector<int>;
-			// a set of faces whose neighbours have already been queued and added to the polyhedron (to avoid rechecking)
+			// a set of faces whose neighbours have already been queued and added to the polyhedron (to avoid double-checking)
 			std::set<int64_t> verified;
 			// queue of 2D skeleton elements that have been added to the polyhedron and whose neighbours must be checked to complete the polyhedron
 			std::list<int64_t> face_queue;
@@ -1650,8 +1652,8 @@ void DFNMesh::GetPolyhedra2(){
 			bool newface = true;
 			// std::cout<<"\n\nPolyhedron #"<<polyh_counter;
 			// run down the queue of neighbours to search for faces that share a polyhedron until the queue is over
-			// for(int current_index : *polyhedron){
 			for(int64_t current_index : face_queue){
+			// for(int current_index : *polyhedron){ //@todo this would read much better. Test if it works
 				// try to insert in verified, if it's not inserted than neighbours of this element have already been queued and we can move down the queue 
 				newface = verified.insert(current_index).second;
 				if(!newface) continue;
@@ -1659,25 +1661,27 @@ void DFNMesh::GetPolyhedra2(){
 				TPZGeoEl* current_face = fGMesh->Element(current_index);
 				int nedges = current_face->NSides(1);
 				// orientation defines if current polyhedron is on the positive or negative flank of current 2D element of the queue
-				int orientation = (fPolyh_per_2D_el[current_index][0]==polyh_counter ? 1:-1);
-				// Loop over each edge of the current 2D_el to insert neighbours onto the polyhedron. 
+				int currentface_flank = (fPolyh_per_2D_el[current_index][0]==polyh_counter ? 1:-1);
+				// Loop over each edge of the current 2D_el to insert neighbours into the polyhedron. 
 				for(int iside=nedges; iside<current_face->NSides()-1; iside++){
 					TPZGeoEl* edge = DFN::GetSkeletonNeighbour(current_face,iside);
 					TPZGeoElSide edgeside(edge,2);
 					TPZGeoElSide gelside(current_face,iside);
-					int direction = orientation*DFN::OrientationMatch(edgeside,gelside);
+					int direction = currentface_flank * (DFN::OrientationMatch(edgeside,gelside)? 1:-1);
 					REAL angle = 0.0;
-					TRolodexCard nextcard = fSortedFaces[edge->Index()].NextFace(current_index,angle,direction);
-					
-
+					TRolodexCard& nextcard = fSortedFaces[edge->Index()].NextFace(current_index,angle,direction);
+					newface = std::find(polyhedron->begin(), polyhedron->end(), nextcard.fgelindex) == polyhedron->end();
 					if(!newface) continue;
 
 					if(angle > M_PI+DFN::gSmallNumber){
 						convexPolyh = false;
 					}
 					polyhedron->push_back(nextcard.fgelindex);
+					TPZGeoEl* nextcard_geoel = fGMesh->Element(nextcard.fgelindex);
 					// std::cout<<std::endl<< direction*current_index;
-					if(direction > 0)
+					TPZGeoElSide nextcardSide(nextcard_geoel,nextcard.fSide);
+					int nextcard_flank = -currentface_flank* (DFN::OrientationMatch(gelside,nextcardSide)? 1:-1);
+					if(nextcard_flank > 0)
 						{fPolyh_per_2D_el[nextcard.fgelindex][0] = polyh_counter;}
 					else
 						{fPolyh_per_2D_el[nextcard.fgelindex][1] = polyh_counter;}
@@ -1689,7 +1693,7 @@ void DFNMesh::GetPolyhedra2(){
 			polyh_counter++;
 			npolyh_found++;
 			initial_face_flank *= -1;
-			// if(!convexPolyh) MeshPolyhedron(polyhedron);
+			// if(!convexPolyh) MeshPolyhedron(polyhedron); //@todo
 		}//while(npolyh_found < npolyh_total)
 	}//for(TPZGeoEl* el : fGMesh->ElementVec())
 	int counter = 0;
@@ -1713,11 +1717,11 @@ void DFNMesh::SortFacesAroundEdges(){
 	for(TPZGeoEl* gel : fGMesh->ElementVec()){
 		if(!gel) continue;
 		if(gel->Dimension() != 1) continue;
-		// if(gel->HasSubElement()) continue;
+		if(gel->HasSubElement()) continue;
 		//@todo filter for skeleton mesh material in here
 		// TPZAutoPointer<std::vector<int64_t>> facevec = new std::vector<int64_t>;
 		std::vector<int64_t>* facevec = new std::vector<int64_t>;
-		std::map<REAL,TPZGeoEl*> facemap;
+		std::map<REAL,TPZGeoElSide> facemap;
 
 		TPZGeoElSide edgeside(gel,2);
 		TPZGeoElSide neig = edgeside.Neighbour();
@@ -1725,21 +1729,24 @@ void DFNMesh::SortFacesAroundEdges(){
 		int reference_orientation;
 		for(/*void*/; neig != edgeside; neig = neig.Neighbour()){
 			if(neig.Element()->Dimension() != 2) continue;
+			if(neig.Element()->HasSubElement()) continue;
 			if(facemap.size() == 0) {
 				reference_el = neig;
 				reference_orientation = (DFN::OrientationMatch(reference_el,edgeside)?1:-1);
 			}
 			REAL angle = DFN::DihedralAngle(reference_el,neig,reference_orientation);
-			facemap.insert({angle,neig.Element()});
+			facemap.insert({angle,neig});
 		}
 		int j = 0;
 		std::cout<<"\n Edge # "<<gel->Index();
 		fSortedFaces[gel->Index()].fcards.resize(facemap.size());
 		for(auto iterator : facemap){
-			TPZGeoEl* jface = iterator.second;
+			TPZGeoEl* jface = iterator.second.Element();
 			fSortedFaces[gel->Index()].fcards[j].fgelindex = jface->Index();
+			fSortedFaces[gel->Index()].fcards[j].fangle_to_reference = iterator.first;
+			fSortedFaces[gel->Index()].fcards[j].fSide = iterator.second.Side();
 			j++;
-			std::cout<<"\n"<<jface->Index();
+			std::cout<<"\n"<<jface->Index()<<"\t"<< iterator.first;
 		}
 		std::cout<<"\n";
 	}
