@@ -65,6 +65,9 @@ public:
     /// Destructor
     ~DFNFace(){};
     
+    /// Print the data structure
+    void Print(std::ostream &out) const;
+    
     /// Pointer to geometric element
     TPZGeoEl* GeoEl() const {return fGeoEl;}
     

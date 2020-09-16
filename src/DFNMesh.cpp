@@ -8,6 +8,11 @@
 #include "TPZVTKGeoMesh.h"
 #include "TPZGeoMeshBuilder.h"
 
+#include "pzlog.h"
+
+#ifdef LOG4CXX
+static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif
 
 // @TODO why are the class variables not initialized
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
@@ -1033,6 +1038,7 @@ void DFNMesh::CreateVolumes(){
 			}
 			if(neighbour == gelside) continue;
 			TPZGeoEl *sideface = neighbour.Element();
+            // @phil I dont understand the logic of this. Please insert documentation
 			if(sideface->HasSubElement()){
                 DFNVolume volume(iel,true);
                 fVolumes.insert({iel,volume});

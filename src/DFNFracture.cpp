@@ -13,6 +13,9 @@
 #include "TPZRefPatternDataBase.h"
 #include "TPZGeoMeshBuilder.h"
 
+#ifdef LOG4CXX
+static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
+#endif
 // const float _2PI = 6.2831853071795865;
 
 // Empty Constructor
@@ -68,7 +71,17 @@ DFNPolygon &DFNFracture::Polygon() {
 
 void DFNFracture::AddFace(DFNFace &face){
     int index= face.Index();
-    fFaces.emplace(index,face);
+    auto res = fFaces.emplace(index,face);
+#ifdef LOG4CXX
+    if(logger->isDebugEnabled())
+    {
+        std::stringstream sout;
+        sout << "Adding face\n";
+        res.first->second.Print(sout);
+        LOGPZ_DEBUG(logger,sout.str())
+    }
+#endif
+    if(res.second == false) DebugStop();
 }
 void DFNFracture::AddRib(DFNRib &rib){
     int index= rib.Index();

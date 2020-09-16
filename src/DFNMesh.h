@@ -11,7 +11,7 @@
 #include "DFNFracture.h"
 #include "DFNVolume.h"
 #include <gmsh.h>
-
+#include <array>
 
 /**
  * @brief Describes a fractured MHM geomesh

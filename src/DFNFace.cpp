@@ -732,3 +732,10 @@ void DFNFace::UpdateNeighbours(int iside){
 		// neig_face->SnapIntersection_force();
 	}
 }
+
+/// Print the data structure
+void DFNFace::Print(std::ostream &out) const
+{
+    DebugStop();
+}
+
