@@ -953,3 +953,31 @@ void DFNFracture::AssembleOutline(){
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+void DFNFracture::Print(std::ostream & out) const
+{
+    fPolygon.Print(out);
+	out << "\n\nDFNRibs:__________\n";
+    for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
+        const DFNRib *rib = &itr->second;
+        rib->Print(out);
+    }
+	out << "\n\nDFNFaces:_________\n";
+    for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
+        const DFNFace *face = &itr->second;
+        face->Print(out);
+    }
+
+    // todo
+    // Surface elements
+    // SubPolygons
+}

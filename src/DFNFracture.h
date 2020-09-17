@@ -168,6 +168,9 @@ public:
     void InsertElementsInSurface(TPZGeoEl* el){
         fSurface.insert({el->Index(),el});
     }
+
+    /** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout) const;
 };
 
 #endif /* DFNFracture_h */

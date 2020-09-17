@@ -61,7 +61,7 @@ class DFNPolygon
 	DFNPolygon &operator=(const DFNPolygon &copy);
 
 	/// Return number of corners of polygon
-	int NCornerNodes(){return fCornerPoints.Cols();}
+	int NCornerNodes() const{return fCornerPoints.Cols();}
     
     /// compute the direction of the axes based on the first three nodes
     void ComputeAxis();
@@ -138,6 +138,9 @@ class DFNPolygon
 	 * @param nodes: Optional pointer to vector of existing nodes
 	*/
 	TPZGeoEl* InsertGeoEl(TPZGeoMesh* gmesh, int matid = 100, TPZVec<int64_t>* nodes = nullptr);
+
+	/** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout) const;
 
   private:
 	/// Checks consistency and initializes the datastructure of the object

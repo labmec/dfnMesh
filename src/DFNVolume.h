@@ -74,5 +74,8 @@ class DFNVolume
 
     /// Get 2D elements enclosed by volume
     TPZVec<int64_t> GetFacesInVolume(){return fEnclosedFaces;}
+
+    /** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout) const;
 };
 #endif /* DFNVolume_h */

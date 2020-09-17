@@ -418,7 +418,7 @@ void DFNFace::Refine(){
  * @param Status vector (boolean) that indicates which ribs and/or nodes are cut
  * @return Integer that indicates which split pattern to use. (check documentation)
  */
-int DFNFace::GetSplitPattern(TPZManVector<int> &status){
+int DFNFace::GetSplitPattern(const TPZManVector<int> &status) const{
 	if(!this->NeedsRefinement()) return 0;
     // Count number of ribs and nodes cut
     int ribscut = 0;
@@ -734,8 +734,25 @@ void DFNFace::UpdateNeighbours(int iside){
 }
 
 /// Print the data structure
-void DFNFace::Print(std::ostream &out) const
+void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 {
-    DebugStop();
+    out<<"\nGeometric Element # "<<fGeoEl->Index()<<"\n";
+	out<<"Ribs:\n";
+	for(auto rib : fRibs){
+		out<<"\t";
+		if(!rib) out<<"null";
+		else out<<rib->Index();
+		out<<"\n";
+	}
+
+	out<<"Status Vector : {"<< fStatus<<"}";
+	out<<"\nSplit Case: " << GetSplitPattern(fStatus)<<"\n";
+	if(print_refmesh){
+		out<<"\n\n";
+		out<<"\nStart of Refinement Mesh:_________________________________\n";
+		fRefMesh.Print(out);
+		out<<"\nEnd  of  Refinement Mesh:_________________________________\n";
+		out<<"\n\n";
+	}
 }
 

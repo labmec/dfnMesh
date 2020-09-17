@@ -114,6 +114,7 @@ int main(int argc, char* argv[]){
         
         // Initialize the basic data of fracture
 		fracture = new DFNFracture(polygon,&dfn);
+		dfn.AddFracture(fracture);
         
 	// Find and split intersected ribs
 		fracture->FindRibs();
@@ -122,6 +123,7 @@ int main(int argc, char* argv[]){
 		fracture->FindFaces();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 		fracture->RefineRibs();
+
 		fracture->RefineFaces();
 	// Mesh fracture surface
 		fracture->AssembleOutline();
@@ -129,10 +131,11 @@ int main(int argc, char* argv[]){
 		if(gmesh->Dimension() == 3){
 			fracture->MeshFractureSurface();
 		}
-	//insert fracture
-		dfn.AddFracture(fracture);
+
 		dfn.CreateVolumes();
 		dfn.GetPolyhedra2(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
+		std::ofstream logtest("LOG/dfnlog.txt");
+		dfn.Print(logtest);
 	}
 	// Mesh transition volumes
 		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
@@ -143,7 +146,7 @@ int main(int argc, char* argv[]){
 		for(auto frac : dfn.FractureList()){
 			frac->Polygon().InsertGeoEl(gmesh);
 		}
-		dfn.PrintColorful();
+		dfn.PrintVTKColorful();
 
 	std::cout<<"\n ...the end.\n\n";
 

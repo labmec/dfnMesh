@@ -65,8 +65,8 @@ public:
     /// Destructor
     ~DFNFace(){};
     
-    /// Print the data structure
-    void Print(std::ostream &out) const;
+    /** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout, bool print_refmesh = false) const;
     
     /// Pointer to geometric element
     TPZGeoEl* GeoEl() const {return fGeoEl;}
@@ -180,7 +180,7 @@ public:
      * @return Integer that indicates which split pattern to use. (check documentation)
      * @TODO I believe this can be simplified if only the ribs are divided!! Please update the code
      */
-    int GetSplitPattern(TPZManVector<int> &status);
+    int GetSplitPattern(const TPZManVector<int> &status) const;
 
     /**
      * @brief Check geometry of intersection against a tolerance, snaps intersection 

@@ -222,6 +222,10 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
         bool operator==(const TRolodexCard& other){
             return fgelindex == other.fgelindex;
         }
+        /** @brief Print method for logging */
+        void Print(std::ostream& out = std::cout) const{
+            out <<" "<< fgelindex<< " | "<< fSide << " | " << fangle_to_reference << "\n";
+        }
     };
     /// A set of 2D elements around an edge, sorted by an angle to a reference
     // The reference is the first card = fcards.begin()
@@ -277,6 +281,15 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
             if(it == fcards.end()) DebugStop();
             position = it - fcards.begin();
             return *it;
+        }
+
+        /** @brief Print method for logging */
+        void Print(std::ostream& out = std::cout) const{
+            out << "\n\nRolodex around edge # "<< fedgeindex<<"\n";
+            out << "gel index | side index | angle\n";
+            for(auto& card : fcards){
+                card.Print(out);
+            }
         }
     };
 

@@ -48,7 +48,7 @@ DFNMesh &DFNMesh::operator=(const DFNMesh &copy){
     return *this;
 }
 
-void DFNMesh::Print(std::string pzmesh
+void DFNMesh::PrintVTK(std::string pzmesh
                     ,std::string vtkmesh
                     ,int fracture
                     ,int transition
@@ -72,9 +72,9 @@ void DFNMesh::Print(std::string pzmesh
 
 
 
-void DFNMesh::PrintColorful(std::string pzmesh,std::string vtkmesh){
+void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 	// mesh.txt doesn't gain much... so print it normal first
-	// this->Print(pzmesh,"skip");
+	// this->PrintResult(pzmesh,"skip");
 	TPZGeoMesh *gmesh = this->fGMesh;
 	int64_t nels = gmesh->NElements();
 	int64_t iel;
@@ -92,7 +92,7 @@ void DFNMesh::PrintColorful(std::string pzmesh,std::string vtkmesh){
 		gel->SetMaterialId(matid+subindex);
 	}
 	// print vtk only, since txt has already been print
-	this->Print("skip",vtkmesh);
+	this->PrintVTK("skip",vtkmesh);
 
 	// then, restore original mat ids
 	for(iel = 0; iel < nels; iel++){
@@ -1745,6 +1745,7 @@ void DFNMesh::SortFacesAroundEdges(){
 		}
 		int j = 0;
 		std::cout<<"\n Edge # "<<gel->Index();
+		fSortedFaces[gel->Index()].fedgeindex = gel->Index();
 		fSortedFaces[gel->Index()].fcards.resize(facemap.size());
 		for(auto iterator : facemap){
 			TPZGeoEl* jface = iterator.second.Element();
@@ -1756,4 +1757,54 @@ void DFNMesh::SortFacesAroundEdges(){
 		}
 		std::cout<<"\n";
 	}
+}
+
+void DFNMesh::Print(std::ostream & out) const
+{
+	out << "\n\t DFN MESH INFORMATION:\n\n";
+	out << "\n\t\t GEOMETRIC TPZGeoMesh INFORMATIONS:\n\n";
+	out << "TITLE-> " << fGMesh->Name() << "\n\n";
+	out << "Number of nodes               = " << fGMesh->NodeVec().NElements() << "\n";
+	out << "Number of elements            = " << fGMesh->ElementVec().NElements()-fGMesh->ElementVec().NFreeElements() << "\n";
+	out << "Number of free elements       = " << fGMesh->ElementVec().NFreeElements() << "\n\n";
+
+	out << "Number of fractures           = " << fFractures.size() << "\n";
+	out << "Number of DFNVolumes          = " << fVolumes.size() << "\n";
+	out << "Tolerable distance            = " << fTolDist << "\n";
+	out << "Tolerable angle            	  = " << fTolAngle << "\n";
+	out << "Tolerable cos(angle)          = " << fTolAngle_cos << "\n";
+	
+	out << "\n\tFRACTURES INFO:\n";
+
+	int ifrac = -1;
+	for(auto frac : fFractures){
+		out << "\n Fracture #" << ++ifrac << "\n";
+		frac->Print(out);
+	}
+
+	out << "\n\nROLODEXES:_____________\n";
+	for(TPZGeoEl* edge : fGMesh->ElementVec()){
+		if(!edge) continue;
+		if(edge->Dimension() != 1) continue;
+		if(edge->HasSubElement()) continue;
+		
+		fSortedFaces[edge->Index()].Print(out);
+	}
+
+	out <<"\n\nPOLYHEDRA BY FACE:_________________\n";
+	{
+		std::stringstream auxstream;
+		auxstream << std::setw(5);
+		for(TPZGeoEl* gel : fGMesh->ElementVec()){
+			if(!gel) continue;
+			if(gel->Dimension() != 2) continue;
+			if(gel->HasSubElement()) continue;
+			
+			out << "\nFace # " << gel->Index() << " :\t "; 
+			out << fPolyh_per_2D_el[gel->Index()][0] << " | ";
+			out << fPolyh_per_2D_el[gel->Index()][1];
+		}
+		// out << auxstream;
+	}
+
 }

@@ -374,3 +374,18 @@ TPZGeoEl* DFNPolygon::InsertGeoEl(TPZGeoMesh* gmesh, int matid, TPZVec<int64_t>*
     }
     return gmesh->CreateGeoElement(eltype,*nodes,matid,elindex);
 }
+
+
+void DFNPolygon::Print(std::ostream & out) const
+{
+	out << "\nDFNPolygon:\n";
+	out << "Number of corners             = " << NCornerNodes() << "\n";
+	out << "Area                          = " << fArea << "\n";
+	out << "Corner coordinates:\n";
+    fCornerPoints.Print(out);
+	out << "Axes:\n";
+    fAxis.Print(out);
+	out << "\nGeoNode indices:\n\t\t";
+    out << fPointsIndex;
+    out << std::endl;
+}

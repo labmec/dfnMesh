@@ -117,6 +117,10 @@ public:
      * @todo refine intact volumes and maybe we could pass a target measure for subelements size as parameter
      */
     void GenerateSubMesh();
+
+    /** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout) const;
+
     /**
      * @brief Prints DFN Geometric Mesh. 
      * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
@@ -124,7 +128,7 @@ public:
      * @param MaterialIDs...
      * @todo this method is unfinished
      */
-    void Print(std::string pzmesh = "pzmesh.txt"
+    void PrintVTK(std::string pzmesh = "pzmesh.txt"
                ,std::string vtkmesh = "vtkmesh.vtk"
                ,int fracture = 2
                ,int transition = 3
@@ -134,7 +138,7 @@ public:
      * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
      * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
      */
-    void PrintColorful(std::string pzmesh = "pzmesh.txt"
+    void PrintVTKColorful(std::string pzmesh = "pzmesh.txt"
                        ,std::string vtkmesh = "vtkmesh.vtk");
     
     /**
@@ -221,6 +225,7 @@ public:
      * @note Fills SortedFaces data
     */
     void SortFacesAroundEdges();
+
 
 private:
     // /**

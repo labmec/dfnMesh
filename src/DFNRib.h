@@ -138,6 +138,9 @@ public:
     */
     bool NeedsSnap(int64_t& closestnode, REAL tolDist = 1e-4);
 
+    /** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout) const;
+
     private:
         /// Creates refinement pattern based on status vector and intersection node index
         void CreateRefPattern();
