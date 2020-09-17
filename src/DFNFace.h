@@ -30,6 +30,7 @@ private:
 	/** A status vector describes the topology of the intersection
      *  each vector entry corresponds to a side, which may contain 
      *  an intersection node with the fracture
+     * @TODO phil : what is the meaning if the status vector is entirely ZERO
      */
 	TPZManVector<int> fStatus;
 

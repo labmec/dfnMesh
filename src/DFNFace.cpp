@@ -78,6 +78,20 @@ bool DFNFace::UpdateRefMesh(){
 	TPZManVector<TPZManVector<int64_t,4>,6> child(0); 
 	TPZManVector<TPZManVector<REAL,3>> newnode(0);
 	FillChildrenAndNewNodes(child,newnode);
+    
+#ifdef PZDEBUG
+    {
+        for(int in=0; in<newnode.size(); in++)
+        {
+            if(newnode[in].size() != 3)
+            {
+                DebugStop();
+            }
+        }
+    }
+#endif
+    
+    
 	int ncornersfather = fGeoEl->NCornerNodes();
 	int nchildren = child.size();
 	TPZGeoMesh *gmesh = fGeoEl->Mesh();
@@ -127,6 +141,7 @@ bool DFNFace::UpdateRefMesh(){
 	fRefMesh.BuildConnectivity(); 
 }
 
+// @TODO phil Sua temosia de não querer adequar os padroes de refinemento eh impressionante!!
 void DFNFace::FillChildrenAndNewNodes(
 	TPZManVector<TPZManVector<int64_t,4>,6> &child, 
 	TPZManVector<TPZManVector<REAL,3>> &newnode)
@@ -432,6 +447,8 @@ int DFNFace::GetSplitPattern(const TPZManVector<int> &status) const{
 
 	// Get split case
     // Check documentation for consult on what each splitcase means
+    
+    // @TODO phil : where is the documentation
 	int splitcase;
 	if (n == 4){ //quadrilateral
 		switch(ribscut){
@@ -511,6 +528,8 @@ bool DFNFace::UpdateStatusVec(){
 	TPZManVector<int> old_fStatus = fStatus;
     fStatus.Fill(0);
 
+    // @TODO phil : codigo incomprehensivel sem documentacao
+    // MOVIMENTO CONTRA STATUS VECTOR!!!!
 	int orientation = 0;
 	for(int i=0; i<nribs; i++){
 		rib = fRibs[i];

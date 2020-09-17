@@ -235,6 +235,14 @@ void DFNFracture::RefineRibs(){
 void DFNFracture::RefineFaces(){
     for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
         DFNFace *face = &itr->second;
+#ifdef LOG4CXX
+        if(logger->isDebugEnabled())
+        {
+            std::stringstream sout;
+            face->Print(sout,true);
+            LOGPZ_DEBUG(logger, sout.str())
+        }
+#endif
         face->Refine();
     }
 }

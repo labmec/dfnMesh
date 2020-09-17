@@ -121,13 +121,17 @@ int main(int argc, char* argv[]){
         
 	// Find and split intersected ribs
 		fracture->FindRibs();
+        
+        
 		fracture->SnapIntersections_ribs(tol_dist);
 	// Build the DFNFace objects and split intersected faces if necessary
 		fracture->FindFaces();
+        fracture->Face(82)->Print(std::cout,true);
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 		fracture->RefineRibs();
 
 #ifdef LOG4CXX
+        if(logger->isDebugEnabled())
         {
             std::stringstream sout;
             fracture->Print(sout);
