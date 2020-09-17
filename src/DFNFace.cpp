@@ -736,7 +736,7 @@ void DFNFace::UpdateNeighbours(int iside){
 /// Print the data structure
 void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 {
-    out<<"\nGeometric Element # "<<fGeoEl->Index()<<"\n";
+    out<<"Geometric Element # "<<fGeoEl->Index()<<"\n";
 	out<<"Ribs:\n";
 	for(auto rib : fRibs){
 		out<<"\t";

@@ -261,7 +261,7 @@ inline REAL Distance(TPZManVector<REAL,3> &vector1, TPZManVector<REAL,3> &vector
 
 void DFNRib::Print(std::ostream &out) const
 {
-    out<<"\nGeometric Element # "<<fGeoEl->Index();
+    out<<"Geometric Element # "<<fGeoEl->Index();
 	out<<"\nSide intersected:"<<fStatus;
 	out<<"\nIntersection Coord : "<< fCoord;
 	out<<"\nIntersection Node index: " << fIntersectionIndex << "\n";

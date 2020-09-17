@@ -77,7 +77,7 @@ void DFNFracture::AddFace(DFNFace &face){
     {
         std::stringstream sout;
         sout << "Adding face\n";
-        res.first->second.Print(sout);
+        res.first->second.Print(sout,true);
         LOGPZ_DEBUG(logger,sout.str())
     }
 #endif
@@ -87,7 +87,17 @@ void DFNFracture::AddRib(DFNRib &rib){
     int index= rib.Index();
     // @TODO why isnt there a check if the rib is already included in
     // fRibs data structure?
-    fRibs.emplace(index,rib);
+    auto res = fRibs.emplace(index,rib);
+    if(res.second == false) DebugStop();
+    #ifdef LOG4CXX
+    if(logger->isDebugEnabled())
+    {
+        std::stringstream sout;
+        sout << "Adding rib\n";
+        res.first->second.Print(sout);
+        LOGPZ_DEBUG(logger,sout.str())
+    }
+    #endif
 }
 
 

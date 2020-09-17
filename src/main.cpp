@@ -86,9 +86,9 @@ using namespace std;
 // where do you check for convexity of polyhedra?
 // strangely I didnt find the code I should evaluate in the first place ;-)
 int main(int argc, char* argv[]){
-	#ifdef LOG4CXX
-    	InitializePZLOG();
-	#endif
+#ifdef LOG4CXX
+    InitializePZLOG();
+#endif
 	TPZTimer time("DFNMesh");
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
