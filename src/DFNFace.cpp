@@ -736,7 +736,7 @@ void DFNFace::UpdateNeighbours(int iside){
 /// Print the data structure
 void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 {
-    out<<"Geometric Element # "<<fGeoEl->Index()<<"\n";
+    out<<"Face GeoEl index # "<<fGeoEl->Index()<<"\n";
 	out<<"Ribs:\n";
 	for(auto rib : fRibs){
 		out<<"\t";
@@ -747,6 +747,12 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 
 	out<<"Status Vector : {"<< fStatus<<"}";
 	out<<"\nSplit Case: " << GetSplitPattern(fStatus)<<"\n";
+	out<<"\nCorner Nodes:\n";
+	for(int i=0; i<fGeoEl->NCornerNodes(); i++){
+		out<<"\t"<<i<<": index: "<<fGeoEl->NodeIndex(i)<<" "; 
+		fGeoEl->Node(i).Print(out);
+	}
+
 	if(print_refmesh){
 		out<<"\n\n";
 		out<<"\nStart of Refinement Mesh:_________________________________\n";

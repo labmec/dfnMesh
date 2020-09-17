@@ -1,3 +1,16 @@
+print
+coord nos ribs
+rib children
+coord nos faces
+face children
+
+
+
+
+
+
+
+
 # Ongoing
 
 - [ ] HANDLING ELEMENTS WITH BAD ASPECT RATIO
