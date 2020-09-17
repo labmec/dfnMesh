@@ -243,52 +243,54 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[2][2] = i;
 			break;}
 		case 5:{
-			child.resize(5);
-			newnode.resize(2);
-			int i = 0;
-			while(fStatus[i+4]==false){i++;}
-			// Intersection node at rib i
-			DFNRib *ribA = fRibs[i];
-			newnode[0] = ribA->AntCoord();
-			// In-plane itersection node
-			newnode[1] = fCoord;
+			DebugStop();
+			// child.resize(5);
+			// newnode.resize(2);
+			// int i = 0;
+			// while(fStatus[i+4]==false){i++;}
+			// // Intersection node at rib i
+			// DFNRib *ribA = fRibs[i];
+			// newnode[0] = ribA->AntCoord();
+			// // In-plane itersection node
+			// newnode[1] = fCoord;
 
-			child[0].Resize(3);
-			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
-				child[0][0] = nodeB;
-				child[0][1] = nodeA;
-				child[0][2] = (i+1)%4;
-			child[1].resize(3);
-				child[1][0] = nodeB;
-				child[1][1] = (i+1)%4;
-				child[1][2] = (i+2)%4;
-			child[2].resize(3);
-				child[2][0] = nodeB;
-				child[2][1] = (i+2)%4;
-				child[2][2] = (i+3)%4;
-			child[3].resize(3);
-				child[3][0] = nodeB;
-				child[3][1] = (i+3)%4;
-				child[3][2] = i;
-			child[4].resize(3);
-				child[4][0] = nodeB;
-				child[4][1] = i;
-				child[4][2] = nodeA;
+			// child[0].Resize(3);
+			// // @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
+			// 	child[0][0] = nodeB;
+			// 	child[0][1] = nodeA;
+			// 	child[0][2] = (i+1)%4;
+			// child[1].resize(3);
+			// 	child[1][0] = nodeB;
+			// 	child[1][1] = (i+1)%4;
+			// 	child[1][2] = (i+2)%4;
+			// child[2].resize(3);
+			// 	child[2][0] = nodeB;
+			// 	child[2][1] = (i+2)%4;
+			// 	child[2][2] = (i+3)%4;
+			// child[3].resize(3);
+			// 	child[3][0] = nodeB;
+			// 	child[3][1] = (i+3)%4;
+			// 	child[3][2] = i;
+			// child[4].resize(3);
+			// 	child[4][0] = nodeB;
+			// 	child[4][1] = i;
+			// 	child[4][2] = nodeA;
 			break;}
 		case 6:
 		// case 7 == case 4
 		case 8:{ // case 8 == case 6
+			DebugStop();
 			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
 			// In-plane itersection node
-			child.resize(4);
-			newnode.resize(1);
-			newnode[0] = fCoord;
-			for(int i=0; i<4; i++) {
-				child[i].resize(3);
-				child[i][0] = nodeA;
-				child[i][1] = i;
-				child[i][2] = (i+1)%4;
-			}
+			// child.resize(4);
+			// newnode.resize(1);
+			// newnode[0] = fCoord;
+			// for(int i=0; i<4; i++) {
+			// 	child[i].resize(3);
+			// 	child[i][0] = nodeA;
+			// 	child[i][1] = i;
+			// 	child[i][2] = (i+1)%4;
+			// }
 			break;}
 		case 9:{
 			// @ToDo
@@ -336,47 +338,50 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][2] = i;
 			break;}
 		case 12:{
-			child.resize(4);
-			newnode.resize(2);
-			int i = 0;
-			while(fStatus[i+3]==false){i++;}
-			// Intersection node at rib i
-			DFNRib *ribA = fRibs[i];
-			newnode[0] = ribA->AntCoord();
-			// In-plane itersection node
-			newnode[1] = fCoord;
+			DebugStop();
+			// child.resize(4);
+			// newnode.resize(2);
+			// int i = 0;
+			// while(fStatus[i+3]==false){i++;}
+			// // Intersection node at rib i
+			// DFNRib *ribA = fRibs[i];
+			// newnode[0] = ribA->AntCoord();
+			// // In-plane itersection node
+			// newnode[1] = fCoord;
 
-			child[0].Resize(3);
-				child[0][0] = nodeB;
-				child[0][1] = nodeA;
-				child[0][2] = (i+1)%3;
-			child[1].resize(3);
-				child[1][0] = nodeB;
-				child[1][1] = (i+1)%3;
-				child[1][2] = (i+2)%3;
-			child[2].resize(3);
-				child[2][0] = nodeB;
-				child[2][1] = (i+2)%3;
-				child[2][2] = i;
-			child[3].resize(3);
-				child[3][0] = nodeB;
-				child[3][1] = i;
-				child[3][2] = nodeA;
+			// child[0].Resize(3);
+			// 	child[0][0] = nodeB;
+			// 	child[0][1] = nodeA;
+			// 	child[0][2] = (i+1)%3;
+			// child[1].resize(3);
+			// 	child[1][0] = nodeB;
+			// 	child[1][1] = (i+1)%3;
+			// 	child[1][2] = (i+2)%3;
+			// child[2].resize(3);
+			// 	child[2][0] = nodeB;
+			// 	child[2][1] = (i+2)%3;
+			// 	child[2][2] = i;
+			// child[3].resize(3);
+			// 	child[3][0] = nodeB;
+			// 	child[3][1] = i;
+			// 	child[3][2] = nodeA;
 			break;}
 		case 13: // case 13 == case 15
 		// case 14 == case 11
 		case 15:{
+			DebugStop();
 			// In-plane itersection node
-			child.resize(3);
-			newnode.resize(1);
-			for(int i=0; i<3; i++) {
-				child[i].resize(3);
-				child[i][0] = nodeA;
-				child[i][1] = i;
-				child[i][2] = (i+1)%3;
-			}
+			// child.resize(3);
+			// newnode.resize(1);
+			// for(int i=0; i<3; i++) {
+			// 	child[i].resize(3);
+			// 	child[i][0] = nodeA;
+			// 	child[i][1] = i;
+			// 	child[i][2] = (i+1)%3;
+			// }
 			break;}
 		case 16:{
+			DebugStop();
 			// @ToDo
 			break;}
 		default: DebugStop();
