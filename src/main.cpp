@@ -152,7 +152,7 @@ int main(int argc, char* argv[]){
 		dfn.Print(logtest);
 	}
 	// Mesh transition volumes
-		dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+    dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
 	time.stop();
 	std::cout<<"\n\n"<<time;

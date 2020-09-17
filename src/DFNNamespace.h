@@ -240,6 +240,7 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
         TRolodex& operator=(const TRolodex& copy){
             fcards = copy.fcards;
             fedgeindex = copy.fedgeindex;
+            return *this;
         }
         TRolodex(const TRolodex& copy){
             this->operator=(copy);

@@ -1724,9 +1724,6 @@ void DFNMesh::SortFacesAroundEdges(){
 		if(!gel) continue;
 		if(gel->Dimension() != 1) continue;
 		if(gel->HasSubElement()) continue;
-		//@todo filter for skeleton mesh material in here
-		// TPZAutoPointer<std::vector<int64_t>> facevec = new std::vector<int64_t>;
-		std::vector<int64_t>* facevec = new std::vector<int64_t>;
 		std::map<REAL,TPZGeoElSide> facemap;
 
 		TPZGeoElSide edgeside(gel,2);
