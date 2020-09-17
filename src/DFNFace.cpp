@@ -515,12 +515,13 @@ bool DFNFace::UpdateStatusVec(){
 	for(int i=0; i<nribs; i++){
 		rib = fRibs[i];
 		if(rib){
+			// todo: this is ugly, but works. I'll come back and clean it after this commit
 			rib_gel = fRibs[i]->GeoEl();
 			orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
-			fStatus[i] = fStatus[i] ||
-						 rib_gel->NodeIndex(orientation)==rib->Status();
-			fStatus[(i+1)%nnodes] = fStatus[(i+1)%nnodes] ||
-									rib_gel->NodeIndex((orientation+1)%2)==rib->Status();
+			fStatus[i] = (fStatus[i] ||
+						 (orientation==rib->Status()));
+			fStatus[(i+1)%nnodes] = (fStatus[(i+1)%nnodes] ||
+									((orientation+1)%2==rib->Status()));
 			fStatus[i+nnodes] = rib->Status()==2;
 		}
 	}
