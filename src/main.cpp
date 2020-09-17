@@ -66,6 +66,9 @@ void PrintPreamble(){
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle);
 
 
+#ifdef LOG4CXX
+static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
+#endif
 
 
 
@@ -124,6 +127,13 @@ int main(int argc, char* argv[]){
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 		fracture->RefineRibs();
 
+#ifdef LOG4CXX
+        {
+            std::stringstream sout;
+            fracture->Print(sout);
+            LOGPZ_DEBUG(logger,sout.str())
+        }
+#endif
 		fracture->RefineFaces();
 	// Mesh fracture surface
 		fracture->AssembleOutline();
