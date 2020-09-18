@@ -1641,7 +1641,7 @@ void DFNMesh::GetPolyhedra2(){
 		while(npolyh_found < npolyh_total){
 
 			// a vector of faces that enclose a polyhedron
-			std::vector<int>* polyhedron = new std::vector<int>;
+			TPZAutoPointer<std::vector<int>> polyhedron = new std::vector<int>;
 			// a set of faces whose neighbours have already been queued and added to the polyhedron (to avoid double-checking)
 			std::set<int64_t> verified;
 			// queue of 2D skeleton elements that have been added to the polyhedron and whose neighbours must be checked to complete the polyhedron

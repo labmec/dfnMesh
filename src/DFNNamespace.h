@@ -198,10 +198,14 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
 
     // A 2D element sorted around an edge (a rolodex card)
     struct TRolodexCard{
+        /// index of the geometric 2d element/side represented by this card
         int64_t fgelindex;
         int fSide;
+        /// angle measured around the one dimensional rib
         REAL fangle_to_reference;
-        // int forientation; //1 or -1
+        /// integer indicating whether the card with next higher angle is in the direction of the
+        // normal to the face or contrary
+        int forientation = 0; //1 or -1
 
         /// empty constructor and destructor
         TRolodexCard(int64_t id=-1, REAL angle=0.0, int side=0):fgelindex(id),fangle_to_reference(angle), fSide(side){};
@@ -211,6 +215,8 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
             fangle_to_reference = copy.fangle_to_reference;
             fgelindex = copy.fgelindex;
             fSide = copy.fSide;
+            forientation = copy.forientation;
+            return *this;
         }
         TRolodexCard(const TRolodexCard& copy){
             this->operator=(copy);
@@ -231,6 +237,7 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
     // The reference is the first card = fcards.begin()
     struct TRolodex{
         std::vector<TRolodexCard> fcards;
+        /// index of the one dimensional geometric index
         int64_t fedgeindex;
 
         /// default constructor and destructor
