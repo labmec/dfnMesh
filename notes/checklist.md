@@ -1,8 +1,4 @@
-print
-coord nos ribs
-rib children
-coord nos faces
-face children
+verify volume of polyhedra meshed by gmsh and debugStop if not match
 
 
 

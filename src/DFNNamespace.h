@@ -199,16 +199,19 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
     // A 2D element sorted around an edge (a rolodex card)
     struct TRolodexCard{
         /// index of the geometric 2d element/side represented by this card
-        int64_t fgelindex;
-        int fSide;
+        int64_t fgelindex = -1;
+        int fSide = -1;
         /// angle measured around the one dimensional rib
-        REAL fangle_to_reference;
+        REAL fangle_to_reference = 0.0;
         /// integer indicating whether the card with next higher angle is in the direction of the
         // normal to the face or contrary
         int forientation = 0; //1 or -1
+        /// position of this card in its rolodex
+        int fposition = -1;
 
         /// empty constructor and destructor
-        TRolodexCard(int64_t id=-1, REAL angle=0.0, int side=0):fgelindex(id),fangle_to_reference(angle), fSide(side){};
+        TRolodexCard(int64_t id=-1, REAL angle=0.0, int side=0)
+                :fgelindex(id),fangle_to_reference(angle), fSide(side){};
         ~TRolodexCard(){};
         /// copy constructor and attribution operator
         TRolodexCard& operator=(const TRolodexCard& copy){
@@ -216,6 +219,7 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
             fgelindex = copy.fgelindex;
             fSide = copy.fSide;
             forientation = copy.forientation;
+            fposition = copy.fposition;
             return *this;
         }
         TRolodexCard(const TRolodexCard& copy){
@@ -230,9 +234,30 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
         }
         /** @brief Print method for logging */
         void Print(std::ostream& out = std::cout) const{
-            out <<" "<< fgelindex<< " | "<< fSide << " | " << fangle_to_reference << "\n";
+            switch(forientation){
+                case +1: out<<"  (+)  ";break;
+                case -1: out<<"  (-)  ";break;
+                default: out<<"   "<<forientation<<"   ";
+            }
+            out<<" | ";
+            // out << std::setw(9) << std::right << forientation*fgelindex << " | ";
+            out << std::setw(9) << std::right << fgelindex           << " | ";
+            out << std::setw(4) << std::right << fSide               << " | ";
+            out                 << std::left  << fangle_to_reference << "\n";
         }
     };
+
+
+
+
+
+
+
+
+
+
+
+
     /// A set of 2D elements around an edge, sorted by an angle to a reference
     // The reference is the first card = fcards.begin()
     struct TRolodex{
@@ -258,7 +283,7 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
          * @param angle to be filled with angle between current and next face
          * @param direction 1 or -1
         */
-        TRolodexCard& NextFace(int64_t current_index, REAL& angle, int direction=1){
+        TRolodexCard& NextCard(int64_t current_index, REAL& angle, int direction=1){
             int jcard; //position where current card appears in the card vector
             TRolodexCard& current_card = Card(current_index,jcard);
             int ncards = fcards.size();
@@ -279,7 +304,7 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
          * @brief Get a reference to a card using an index
          * @param index of the geometric element of that card
          * @param position to fill with the position where this card appears in the card vector
-         * @note This methods involve a search (std::find) through a vector
+         * @note This method involves a search (std::find) through a vector
         */
         TRolodexCard& Card(int64_t index, int & position){
             TRolodexCard dummycard(index,0.0); // just to use std::find
@@ -294,7 +319,7 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
         /** @brief Print method for logging */
         void Print(std::ostream& out = std::cout) const{
             out << "\n\nRolodex around edge # "<< fedgeindex<<"\n";
-            out << "gel index | side index | angle\n";
+            out << "orient. | gel index | side | angle\n";
             for(auto& card : fcards){
                 card.Print(out);
             }

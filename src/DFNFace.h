@@ -160,7 +160,7 @@ public:
     const TPZVec<int> &StatusVec(){return fStatus;}
     
     /**
-     * @brief Create/update face status vector from ribs' status vectors
+     * @brief Create/update face status vector from ribs' status
      * @returns True if any changes have been made
      */
     bool UpdateStatusVec();

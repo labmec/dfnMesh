@@ -120,6 +120,8 @@ public:
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
+    void PrintRolodexes(std::ostream& out = std::cout) const;
+    void PrintPolyhedra(std::ostream& out = std::cout) const;
 
     /**
      * @brief Prints DFN Geometric Mesh. 
@@ -219,6 +221,8 @@ public:
      */
     void GetPolyhedra2();
     void GetPolyhedra();
+    void AppendNeighboursToPolyhedron(TPZGeoEl* current_face, std::vector<int>& polyhedron, const int polyh_index, bool& convexPolyh);
+
 
     /**
      * @brief Sort faces around each 1D element of the mesh

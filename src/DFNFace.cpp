@@ -524,30 +524,21 @@ void Zero(TPZManVector<T,NumExtAlloc> &vec){
 bool DFNFace::UpdateStatusVec(){
 	if(fRibs.size()<1) DebugStop();
 	
-	TPZGeoMesh *gmesh = fGeoEl->Mesh();
 	int nnodes = fGeoEl->NCornerNodes();
 	int nribs = fGeoEl->NSides(1);
 	DFNRib *rib;
-	TPZGeoEl *rib_gel;
 	
 	TPZManVector<int> old_fStatus = fStatus;
     fStatus.Fill(0);
 
-    // @TODO phil : codigo incomprehensivel sem documentacao
-    // MOVIMENTO CONTRA STATUS VECTOR!!!!
 	int orientation = 0;
+	// loop through ribs and match their intersection into DFNFace::fStatus
 	for(int i=0; i<nribs; i++){
 		rib = fRibs[i];
-		if(rib){
-			// todo: this is ugly, but works. I'll come back and clean it after this commit
-			rib_gel = fRibs[i]->GeoEl();
-			orientation = (rib_gel->NodeIndex(0) == fGeoEl->NodeIndex(i)) ? 0 : 1;
-			fStatus[i] = (fStatus[i] ||
-						 (orientation==rib->Status()));
-			fStatus[(i+1)%nnodes] = (fStatus[(i+1)%nnodes] ||
-									((orientation+1)%2==rib->Status()));
-			fStatus[i+nnodes] = rib->Status()==2;
-		}
+		if(!rib) continue;
+		orientation = (rib->GeoEl()->NodeIndex(0) == fGeoEl->NodeIndex(i) ? 0 : 1);
+		if(rib->Status() == 2){fStatus[i+nnodes] = 1;}
+		else{fStatus[(i+orientation)%nnodes] = 1;}
 	}
 
 	return old_fStatus != fStatus;
@@ -761,17 +752,17 @@ void DFNFace::UpdateNeighbours(int iside){
 /// Print the data structure
 void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 {
-    out<<"Face GeoEl index # "<<fGeoEl->Index()<<"\n";
-	out<<"Ribs:\n";
+    out<<"\nFace GeoEl index # "<<fGeoEl->Index();
+	out<<"\nIntersected ribs:\n";
 	for(auto rib : fRibs){
 		out<<"\t";
-		if(!rib) out<<"null";
+		if(!rib) out<<"---";
 		else out<<rib->Index();
 		out<<"\n";
 	}
 
 	out<<"Status Vector : {"<< fStatus<<"}";
-	out<<"\nSplit Case: " << GetSplitPattern(fStatus)<<"\n";
+	out<<"\nSplit Case: " << GetSplitPattern(fStatus);
 	out<<"\nCorner Nodes:\n";
 	for(int i=0; i<fGeoEl->NCornerNodes(); i++){
 		out<<"\t"<<i<<": index: "<<fGeoEl->NodeIndex(i)<<" "; 
@@ -780,10 +771,10 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 
 	if(print_refmesh){
 		out<<"\n\n";
-		out<<"\nStart of Refinement Mesh:_________________________________\n";
+		out<<"\nStart of Refinement Mesh:_________________________________\n\n";
 		fRefMesh.Print(out);
-		out<<"\nEnd  of  Refinement Mesh:_________________________________\n";
-		out<<"\n\n";
+		out<<"\nEnd  of  Refinement Mesh:_________________________________\n\n";
 	}
+	out<<"\n";
 }
 
