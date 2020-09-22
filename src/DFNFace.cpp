@@ -537,8 +537,14 @@ bool DFNFace::UpdateStatusVec(){
 		rib = fRibs[i];
 		if(!rib) continue;
 		orientation = (rib->GeoEl()->NodeIndex(0) == fGeoEl->NodeIndex(i) ? 0 : 1);
-		if(rib->Status() == 2){fStatus[i+nnodes] = 1;}
-		else{fStatus[(i+orientation)%nnodes] = 1;}
+		// if(rib->Status() == 2){fStatus[i+nnodes] = 1;}
+		// else{fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1;}
+		switch(rib->Status()){
+			case 2: fStatus[i+nnodes] = 1; break;
+			case 1: 
+			case 0: fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1; break;
+			default: DebugStop();
+		}
 	}
 
 	return old_fStatus != fStatus;
