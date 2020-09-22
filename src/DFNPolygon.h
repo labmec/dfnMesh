@@ -44,6 +44,9 @@ class DFNPolygon
 	/// If nodes of this polygon have been added to a geometric mesh, this vector holds GeoNodes indices
 	TPZManVector<int64_t> fPointsIndex;
 
+    /// Tracks which nodes are above this Polygon
+    TPZVec<bool> fNodesAbove;
+	
   public:
 	/// Empty constructor
 	DFNPolygon(){};
@@ -86,6 +89,9 @@ class DFNPolygon
 
 	/// Compute area of polygon
 	REAL ComputeArea();
+ 
+    /// Sort nodes as above or below this polygon
+    void FindNodesAbove(TPZGeoMesh* gmesh);
 
 	/// Return true if the rib intersects the polygon
 	bool Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> &intersection);

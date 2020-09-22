@@ -32,6 +32,7 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh)
     if(fdfnMesh->Dimension() == 3){
         TPZManVector<int64_t,4> nodeindices = fPolygon.SetPointsInGeomesh(fdfnMesh->Mesh());
     }
+    // fPolygon.FindNodesAbove(fdfnMesh->Mesh());
 }
 
 // Copy constructor
@@ -85,9 +86,8 @@ void DFNFracture::AddFace(DFNFace &face){
 }
 void DFNFracture::AddRib(DFNRib &rib){
     int index= rib.Index();
-    // @TODO why isnt there a check if the rib is already included in
-    // fRibs data structure?
     auto res = fRibs.emplace(index,rib);
+    // Check if the rib is already included
     if(res.second == false) DebugStop();
     #ifdef LOG4CXX
     if(logger->isDebugEnabled())
@@ -601,144 +601,144 @@ void DFNFracture::MeshFractureSurface(){
 
 
 
-void DFNFracture::GetSubPolygons(){
-    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    std::map<int, TPZAutoPointer<std::vector<int>>> subpolygons_map; // @todo maybe change this to a vector of autopointers...
-    // initialize a data structure to track which subpolygons have included which lines
-    std::map<int64_t, std::pair<int,int>> LineTracker;
-    for(auto iterator=fFaces.begin(); iterator!=fFaces.end(); iterator++){
-        DFNFace* face = &iterator->second;
-        int64_t line = face->LineInFace();
-        if(line == -1) continue;
-        LineTracker[line] = {0,0};
-    }
-    TPZManVector<REAL,3> frac_normal(3,0);
-    fPolygon.GetNormal(frac_normal);
-    for(auto iterator=fFaces.begin(); iterator!=fFaces.end(); iterator++){
-        DFNFace* initial_face = &iterator->second;
-        //Check if face intersection is an actual line or has been coalesced down to a point
-        int64_t firstline = initial_face->LineInFace();
-        int current_line = firstline;
-        if(firstline == -1) continue;
-        //Check if the line in face has already been attributed to all its possible subpolygons
-        std::pair<int,int>* tracker = &LineTracker[firstline];
-        int nloops = int(tracker->first>0) + int(tracker->second>0);
-        if(nloops == 2) continue;
-        int npolyhedra = this->fdfnMesh->FaceTracker[initial_face->Index()];
-        // Decide a direction to follow
-        int direction = (tracker->first>0?0:1);
-        // Track if a direction was tried but failed
-        bool DirectionFailed = false;
-        while(nloops < npolyhedra){
-            // TPZAutoPointer<std::vector<int>> subpolygon = new std::vector<int>;
-            // int debugsize = subpolygons_map.size();
-            // std::printf("#%i ---------\n",debugsize);
-            std::vector<int>* subpolygon = new std::vector<int>;
+// void DFNFracture::GetSubPolygons(){
+//     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+//     std::map<int, TPZAutoPointer<std::vector<int>>> subpolygons_map; // @todo maybe change this to a vector of autopointers...
+//     // initialize a data structure to track which subpolygons have included which lines
+//     std::map<int64_t, std::pair<int,int>> LineTracker;
+//     for(auto iterator=fFaces.begin(); iterator!=fFaces.end(); iterator++){
+//         DFNFace* face = &iterator->second;
+//         int64_t line = face->LineInFace();
+//         if(line == -1) continue;
+//         LineTracker[line] = {0,0};
+//     }
+//     TPZManVector<REAL,3> frac_normal(3,0);
+//     fPolygon.GetNormal(frac_normal);
+//     for(auto iterator=fFaces.begin(); iterator!=fFaces.end(); iterator++){
+//         DFNFace* initial_face = &iterator->second;
+//         //Check if face intersection is an actual line or has been coalesced down to a point
+//         int64_t firstline = initial_face->LineInFace();
+//         int current_line = firstline;
+//         if(firstline == -1) continue;
+//         //Check if the line in face has already been attributed to all its possible subpolygons
+//         std::pair<int,int>* tracker = &LineTracker[firstline];
+//         int nloops = int(tracker->first>0) + int(tracker->second>0);
+//         if(nloops == 2) continue;
+//         int npolyhedra = this->fdfnMesh->FaceTracker[initial_face->Index()];
+//         // Decide a direction to follow
+//         int direction = (tracker->first>0?0:1);
+//         // Track if a direction was tried but failed
+//         bool DirectionFailed = false;
+//         while(nloops < npolyhedra){
+//             // TPZAutoPointer<std::vector<int>> subpolygon = new std::vector<int>;
+//             // int debugsize = subpolygons_map.size();
+//             // std::printf("#%i ---------\n",debugsize);
+//             std::vector<int>* subpolygon = new std::vector<int>;
 
-            // Find next side based in decided direction
-            int nedges = initial_face->GeoEl()->NCornerNodes();
-            int edge;
-            for(edge = 0; edge<nedges; edge++){
-                DFNRib* edgerib = initial_face->Rib(edge);
-                if(!edgerib) continue;
-                if(edgerib->GeoEl()->NodeIndex(0)==gmesh->Element(firstline)->NodeIndex(direction)) break;
-                if(edgerib->GeoEl()->NodeIndex(1)==gmesh->Element(firstline)->NodeIndex(direction)) break;
-                if(edgerib->IntersectionIndex()  ==gmesh->Element(firstline)->NodeIndex(direction)) break;
-            }
-            int nextside = edge + initial_face->GeoEl()->NCornerNodes();
+//             // Find next side based in decided direction
+//             int nedges = initial_face->GeoEl()->NCornerNodes();
+//             int edge;
+//             for(edge = 0; edge<nedges; edge++){
+//                 DFNRib* edgerib = initial_face->Rib(edge);
+//                 if(!edgerib) continue;
+//                 if(edgerib->GeoEl()->NodeIndex(0)==gmesh->Element(firstline)->NodeIndex(direction)) break;
+//                 if(edgerib->GeoEl()->NodeIndex(1)==gmesh->Element(firstline)->NodeIndex(direction)) break;
+//                 if(edgerib->IntersectionIndex()  ==gmesh->Element(firstline)->NodeIndex(direction)) break;
+//             }
+//             int nextside = edge + initial_face->GeoEl()->NCornerNodes();
 
-            // Follow direction by getting the next neighbour with the smallest dihedral angle to close the subpolygon
-            TPZGeoEl* current_face = initial_face->GeoEl();
-            do{ //while(current_face != initial_face->GeoEl());
-                float angle = DFN::_2PI;
-                if(current_line != -1){
-                    (*subpolygon).push_back(current_line);
-                    // std::cout<<current_line<<std::endl;
-                    if(current_line > 0)    LineTracker[abs(current_line)].first = 1;
-                    else                    LineTracker[abs(current_line)].second = 1;
-                }
-                TPZGeoElSide gelside(current_face,nextside);
-                TPZGeoElSide neig = gelside.Neighbour();
-                // Check if gelside's side orientation agree's with fracture normal vector
-                // @todo there's a better way to do this. One that doesn't depend on the fracture polygon. I've done it in GetPolyhedra, so just adapt it here. The orientation of the in-side is the same of the out-side.
-                TPZManVector<REAL,3> gelside_vec(3,0);
-                DFN::GetSideVector(gelside,gelside_vec);
-                int sideorientation;
-                if(DFN::DotProduct_f(gelside_vec,frac_normal)>0.){
-                    sideorientation = -1;}
-                else{
-                    sideorientation = 1;
-                }
-                TPZGeoEl* next_face;
-                int current_side = -1;
-                for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
-                    if(neig.Element()->Dimension() != 2) continue;
-                    if(!Face(neig.Element()->Index())) continue;
-                    float temp_angle = DFN::DihedralAngle(gelside,neig,sideorientation);
-                    if(temp_angle < angle){
-                        angle = temp_angle;
-                        next_face = neig.Element();
-                        current_side = neig.Side();
-                    }
-                }
-                if(angle > M_PI+DFN::gSmallNumber){
-                    if(npolyhedra == 1 && !DirectionFailed) {
-                        // Might be an unluckly bad oriented line in initial_face. So try going the other way before DebugStop.
-                        DirectionFailed = true;
-                        direction = (direction+1)%2;
-                        current_line = -firstline;
-                        delete &*subpolygon;
-                        break;
-                    }
-                    PZError << "\nNon-convex regions shouldn't exist at this point\n" << __PRETTY_FUNCTION__ << std::endl;
-                    DebugStop();
-                }
-                DirectionFailed = false;
-                // Get line in face, its orientation and next side
-                DFNFace* next_dfnface = Face(next_face->Index());
-                current_line = next_dfnface->LineInFace();
-                int orientation=0;
-                for(int iedge=0; iedge < next_face->NCornerNodes(); iedge++){
-                    if(iedge + next_face->NCornerNodes() == current_side) continue;
-                    DFNRib* edge_rib = next_dfnface->Rib(iedge);
-                    if(!edge_rib) continue;
-                    nextside = iedge + next_face->NCornerNodes();
-                    if(current_line != -1){
-                        if(edge_rib->GeoEl()->NodeIndex(0)     ==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
-                        else if(edge_rib->GeoEl()->NodeIndex(1)==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
-                        else if(edge_rib->IntersectionIndex()  ==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
-                        else orientation = -1;
-                    }else{orientation=1;}
-                    break;
-                }
-                current_line = orientation*current_line;
-                current_face = next_face;
-            }while(current_face != initial_face->GeoEl());
+//             // Follow direction by getting the next neighbour with the smallest dihedral angle to close the subpolygon
+//             TPZGeoEl* current_face = initial_face->GeoEl();
+//             do{ //while(current_face != initial_face->GeoEl());
+//                 float angle = DFN::_2PI;
+//                 if(current_line != -1){
+//                     (*subpolygon).push_back(current_line);
+//                     // std::cout<<current_line<<std::endl;
+//                     if(current_line > 0)    LineTracker[abs(current_line)].first = 1;
+//                     else                    LineTracker[abs(current_line)].second = 1;
+//                 }
+//                 TPZGeoElSide gelside(current_face,nextside);
+//                 TPZGeoElSide neig = gelside.Neighbour();
+//                 // Check if gelside's side orientation agree's with fracture normal vector
+//                 // @todo there's a better way to do this. One that doesn't depend on the fracture polygon. I've done it in GetPolyhedra, so just adapt it here. The orientation of the in-side is the same of the out-side.
+//                 TPZManVector<REAL,3> gelside_vec(3,0);
+//                 DFN::GetSideVector(gelside,gelside_vec);
+//                 int sideorientation;
+//                 if(DFN::DotProduct_f(gelside_vec,frac_normal)>0.){
+//                     sideorientation = -1;}
+//                 else{
+//                     sideorientation = 1;
+//                 }
+//                 TPZGeoEl* next_face;
+//                 int current_side = -1;
+//                 for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
+//                     if(neig.Element()->Dimension() != 2) continue;
+//                     if(!Face(neig.Element()->Index())) continue;
+//                     float temp_angle = DFN::DihedralAngle(gelside,neig,sideorientation);
+//                     if(temp_angle < angle){
+//                         angle = temp_angle;
+//                         next_face = neig.Element();
+//                         current_side = neig.Side();
+//                     }
+//                 }
+//                 if(angle > M_PI+DFN::gSmallNumber){
+//                     if(npolyhedra == 1 && !DirectionFailed) {
+//                         // Might be an unluckly bad oriented line in initial_face. So try going the other way before DebugStop.
+//                         DirectionFailed = true;
+//                         direction = (direction+1)%2;
+//                         current_line = -firstline;
+//                         delete &*subpolygon;
+//                         break;
+//                     }
+//                     PZError << "\nNon-convex regions shouldn't exist at this point\n" << __PRETTY_FUNCTION__ << std::endl;
+//                     DebugStop();
+//                 }
+//                 DirectionFailed = false;
+//                 // Get line in face, its orientation and next side
+//                 DFNFace* next_dfnface = Face(next_face->Index());
+//                 current_line = next_dfnface->LineInFace();
+//                 int orientation=0;
+//                 for(int iedge=0; iedge < next_face->NCornerNodes(); iedge++){
+//                     if(iedge + next_face->NCornerNodes() == current_side) continue;
+//                     DFNRib* edge_rib = next_dfnface->Rib(iedge);
+//                     if(!edge_rib) continue;
+//                     nextside = iedge + next_face->NCornerNodes();
+//                     if(current_line != -1){
+//                         if(edge_rib->GeoEl()->NodeIndex(0)     ==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
+//                         else if(edge_rib->GeoEl()->NodeIndex(1)==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
+//                         else if(edge_rib->IntersectionIndex()  ==gmesh->Element(current_line)->NodeIndex(1)) orientation = 1;
+//                         else orientation = -1;
+//                     }else{orientation=1;}
+//                     break;
+//                 }
+//                 current_line = orientation*current_line;
+//                 current_face = next_face;
+//             }while(current_face != initial_face->GeoEl());
 
-            if(!DirectionFailed){
-                nloops++;
-                direction = (direction+1)%2;
-                // subpolygons_map.insert({subpolygons_map.size(),subpolygon});
-                if(subpolygon->size() >= 3){ // exception for fractures incorporating an edge of a volume
-                    subpolygons_map[subpolygons_map.size()] = subpolygon;
-                } 
-            }
-        }
-    }
-    int i_polyg = 0;
-    for(auto iterator=subpolygons_map.begin(); iterator!=subpolygons_map.end(); iterator++){
-        std::vector<int> &polygonloop = *iterator->second;
-        // std::cout<<"\n\nSubPolygon #"<<i_polyg<<"\n";
-        int size = polygonloop.size();
-        for(int iline=0; iline<size; iline++){
-            if(polygonloop[iline] > 0){
-                std::cout<<" ";
-            }
-            // std::cout<<polygonloop[iline]<<"\n";
-        }
-        i_polyg++;
-    }
-}
+//             if(!DirectionFailed){
+//                 nloops++;
+//                 direction = (direction+1)%2;
+//                 // subpolygons_map.insert({subpolygons_map.size(),subpolygon});
+//                 if(subpolygon->size() >= 3){ // exception for fractures incorporating an edge of a volume
+//                     subpolygons_map[subpolygons_map.size()] = subpolygon;
+//                 } 
+//             }
+//         }
+//     }
+//     int i_polyg = 0;
+//     for(auto iterator=subpolygons_map.begin(); iterator!=subpolygons_map.end(); iterator++){
+//         std::vector<int> &polygonloop = *iterator->second;
+//         // std::cout<<"\n\nSubPolygon #"<<i_polyg<<"\n";
+//         int size = polygonloop.size();
+//         for(int iline=0; iline<size; iline++){
+//             if(polygonloop[iline] > 0){
+//                 std::cout<<" ";
+//             }
+//             // std::cout<<polygonloop[iline]<<"\n";
+//         }
+//         i_polyg++;
+//     }
+// }
 
 
 

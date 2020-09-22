@@ -284,9 +284,9 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
          * @param direction 1 or -1
         */
         TRolodexCard& NextCard(int64_t current_index, REAL& angle, int direction=1){
-            int jcard; //position where current card appears in the card vector
-            TRolodexCard& current_card = Card(current_index,jcard);
+            TRolodexCard& current_card = Card(current_index);
             int ncards = fcards.size();
+            int jcard = current_card.fposition; //position where current card appears in the card vector
             
             int64_t next_id = -1;
             switch(direction){

@@ -85,9 +85,6 @@ static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
 //-------------------------------------------------------------------------------------------------
 using namespace std;
 
-// @TODO I didn't find the method that build the list of faces around a rib??
-// where do you check for convexity of polyhedra?
-// strangely I didnt find the code I should evaluate in the first place ;-)
 int main(int argc, char* argv[]){
 #ifdef LOG4CXX
     InitializePZLOG();
@@ -146,7 +143,8 @@ int main(int argc, char* argv[]){
 		}
 
 		dfn.CreateVolumes();
-		dfn.GetPolyhedra2(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
+		// dfn.GetPolyhedra2(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
+		dfn.BuildPolyhedra();
 		std::ofstream logtest("LOG/dfnlog.txt");
 		dfn.Print(logtest);
 	}
@@ -172,16 +170,13 @@ int main(int argc, char* argv[]){
 
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle){
 	TPZGeoMesh* gmesh = nullptr;
+	std::string default_example("examples/two-hex-and-a-frac.txt");
 	switch(argc){
-		case 0:
-		case 1: gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector); 
-				break;
-		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);
-				break;
 		case 5: tolangle = std::stod(argv[4]);
 		case 4: toldist = std::stod(argv[3]);
-		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);
-				break;
+		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);break;
+		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);break;
+		case 1: gmesh = ReadExampleFromFile(default_example,planevector);break;
 		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
 	}
 	return gmesh;

@@ -389,3 +389,17 @@ void DFNPolygon::Print(std::ostream & out) const
     out << fPointsIndex;
     out << std::endl;
 }
+
+
+
+void DFNPolygon::FindNodesAbove(TPZGeoMesh* gmesh){
+    fNodesAbove.Resize(gmesh->NNodes(),false);
+    TPZManVector<REAL,3> coord(3,0.0);
+    int nnodes = gmesh->NNodes();
+    for(int i=0; i<nnodes; i++){
+        TPZGeoNode& node = gmesh->NodeVec()[i];
+        if(node.Id() < 0) continue;
+        node.GetCoordinates(coord);
+        fNodesAbove[i] = Check_point_above(coord);
+    }
+}

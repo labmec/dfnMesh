@@ -38,8 +38,8 @@ class DFNFracture
 private:
 	
 	/// Pointer for the complete DFN mesh
-	DFNMesh *fdfnMesh;
-	
+	DFNMesh *fdfnMesh = nullptr;
+
 	/// Map of ribs affected by this fracture
     // @TODO what is the value of the first key?
 	std::map<int64_t, DFNRib> fRibs;
@@ -108,7 +108,7 @@ private:
     void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<int64_t> &newelements);
 
 public:
-    /// Access the ribs data structure
+   /// Access the ribs data structure
     void AddRib(DFNRib &rib);
     
     void AddFace(DFNFace &face);

@@ -163,67 +163,17 @@ public:
     
     
     
-    //@todo: Talk to Phil about this FaceTracker usage... I'm not sure if this is what he had in mind
-    // @phil If you dont know what its for, then it is useless
-    
-    //Maps how many polyhedra this face is part of (at most 2)
-    // @TODO Since when a class variable does not begin with "f"?
-    std::map<int64_t,int> FaceTracker;
-    // @TODO why are these method inline?
-    // @TODO documentation of this method??
-    void InitializeFaceTracker(){
-        if(this->Dimension()<3) return;
-        if(this->FaceTracker.size() > 0){std::cout<<"\n\n"<<__PRETTY_FUNCTION__<<"\nTried to initialize an already initialized structure\n\n"; return;}
-        TPZGeoEl* gel = nullptr;
-        int64_t nels = this->Mesh()->NElements();
-        for(int64_t iel=0; iel<nels; iel++){
-            gel = fGMesh->Element(iel);
-            if(!gel) continue;
-            if(gel->Dimension() != 2) continue;
-            int n3Dneighbours = 0;
-            TPZGeoElSide gelside(gel,gel->NSides()-1);
-            TPZGeoElSide neig = gelside.Neighbour();
-            while(neig!=gelside){
-                if(neig.Element()->Dimension()==3)   n3Dneighbours++;
-                neig = neig.Neighbour();
-            }
-            if(n3Dneighbours > 2) DebugStop(); // A face cannot be shared by more than 2 volumes in 3D
-            FaceTracker[iel] = n3Dneighbours;
-        }
-    }
-    // @TODO No idea what this means
-    void UpdateFaceTracker(){
-        for(TPZGeoEl* el : fGMesh->ElementVec()){
-            if(!el) continue;
-            if(el->Dimension() != 2) continue;
-            TPZGeoEl* elder = nullptr;
-            if(el->Father()){
-                elder = el->EldestAncestor();
-            }else{
-                elder = el;
-            }
-            auto end = FaceTracker.end();
-            auto eldertrack = FaceTracker.find(elder->Index());
-            if( eldertrack == end){
-                FaceTracker[el->Index()] = 2; //fracture surface element
-            }else{
-                FaceTracker[el->Index()] = eldertrack->second; //child inherits father npolyh
-            }
-        }
-    }
-    
-    
-    
-    
     
     /**
      * @brief Assembles mesh's polyhedral volumes as lists of the faces that outline them
      */
     void GetPolyhedra2();
-    void GetPolyhedra();
+    void BuildPolyhedra();
     void AppendNeighboursToPolyhedron(TPZGeoEl* current_face, std::vector<int>& polyhedron, const int polyh_index, bool& convexPolyh);
-    void BuildVolume(std::pair<int64_t,int> initial_face_orient);
+    void BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<int64_t,20>& polyhedron);
     TPZManVector<int64_t,4> GetEdgeIndices(int64_t face_index);
+    void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
+    int GetPolyhedralIndex(std::pair<int64_t,int> face_orient);
 
     /**
      * @brief Sort faces around each 1D element of the mesh
