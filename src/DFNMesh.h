@@ -222,7 +222,8 @@ public:
     void GetPolyhedra2();
     void GetPolyhedra();
     void AppendNeighboursToPolyhedron(TPZGeoEl* current_face, std::vector<int>& polyhedron, const int polyh_index, bool& convexPolyh);
-
+    void BuildVolume(std::pair<int64_t,int> initial_face_orient);
+    TPZManVector<int64_t,4> GetEdgeIndices(int64_t face_index);
 
     /**
      * @brief Sort faces around each 1D element of the mesh

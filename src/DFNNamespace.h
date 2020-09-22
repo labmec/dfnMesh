@@ -299,6 +299,29 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
             if(angle < 0.) {angle = angle + DFN::_2PI;}
             return next_card;
         }
+        /**
+         * @brief Get the next face forward or backwards according to direction and fill the angle between faces
+         * @param current_index = index of current element
+         * @param angle to be filled with angle between current and next face
+         * @param direction 1 or -1
+        */
+        // TRolodexCard& NextCard(int64_t current_index, REAL& angle, int direction=1){
+        std::pair<TRolodexCard,int> FacingCard(std::pair<TRolodexCard,int> input){
+            int jcard = input.first.fposition;
+            int ncards = fcards.size();
+            int facing_id = -1;
+            int direction = input.second*input.first.forientation;
+            switch(direction){
+                case  1: facing_id = (jcard+1)%ncards;        break;
+                case -1: facing_id = (jcard-1+ncards)%ncards; break;
+                default: DebugStop();
+            }
+             
+            std::pair<TRolodexCard,int> output;
+            output.first = fcards[facing_id];
+            output.second = -direction*output.first.forientation;
+            return output;
+        }
 
         /**
          * @brief Get a reference to a card using an index
@@ -306,13 +329,12 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
          * @param position to fill with the position where this card appears in the card vector
          * @note This method involves a search (std::find) through a vector
         */
-        TRolodexCard& Card(int64_t index, int & position){
+        TRolodexCard& Card(int64_t index){
             TRolodexCard dummycard(index,0.0); // just to use std::find
             auto it = std::find(fcards.begin(),
                                 fcards.end(),
                                 dummycard);
             if(it == fcards.end()) DebugStop();
-            position = it - fcards.begin();
             return *it;
         }
 
