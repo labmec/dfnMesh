@@ -1485,15 +1485,48 @@ void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
 	DebugStop();
 }
 
+template<int Talloc>
+bool DFNMesh::IsConvexPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
+	for(auto iface_orient : polyhedron){
+		if(iface_orient.first < 0) DebugStop();
+		if(iface_orient.second == 0) DebugStop();
+		// Edges occupying the one dimensional sides
+		TPZManVector<int64_t,4> edges = GetEdgeIndices(iface_orient.first);
+		// Neighbour cards through the edges
+		TPZManVector<TRolodexCard,4> cards(edges.size());
+		// List the neighbour cards
+		for(int i=0; i<edges.size(); i++){
+			int64_t iedge = edges[i];
+			TRolodex& rolodex = fSortedFaces[iedge];
+			cards[i] = rolodex.Card(iface_orient.first);
+		}
+
+		// Determine orientation of neighbour cards
+		TPZManVector<std::pair<TRolodexCard, int>,4> facingcards(edges.size());
+		for(int i=0; i<edges.size(); i++){
+			int64_t iedge = edges[i];
+			TRolodex& rolodex = fSortedFaces[iedge];
+			std::pair<TRolodexCard, int> current_card = {cards[i],iface_orient.second};
+			facingcards[i] = rolodex.FacingCard(current_card);
+
+
+			REAL angle = iface_orient.second*current_card.first.forientation*(facingcards[i].first.fangle_to_reference - current_card.first.fangle_to_reference);
+			if(angle < 0.) {angle = angle +DFN::_2PI;}
+			if(angle > M_PI+DFN::gSmallNumber){ return false; }
+			
+		}
+	}
+	return true;
+}
 
 void DFNMesh::BuildPolyhedra(){
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
 	fPolyh_per_2D_el.Resize(fGMesh->NElements(),{-1,-1});
 	int polyh_counter = 0;
-
+	
 	std::cout<<"\n\n Print polyhedra:\n\n";
-	TPZStack<int64_t,20> polyhedron;
+	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
 	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
 		if(!initial_face) continue;
@@ -1505,12 +1538,15 @@ void DFNMesh::BuildPolyhedra(){
 		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
 			// if the first has been found, continue to the next
 			if(fPolyh_per_2D_el[initial_id][ipolyh_local] != -1) continue;
+			polyhedron.Fill({-1,0});
 			polyhedron.clear();
-			polyhedron.push_back(initial_id);
 			int orientation = ipolyh_local?-1:1;
 			std::pair<int64_t,int> initial_face_orientation = {initial_id,orientation};
+			polyhedron.push_back({initial_id,orientation});
 			SetPolyhedralIndex(initial_face_orientation,polyh_counter);
 			BuildVolume(initial_face_orientation,polyhedron);
+			bool convex = IsConvexPolyhedron(polyhedron);
+			polyhedron.Print(std::cout);
 			polyh_counter++;
 		}
 	}
@@ -1550,8 +1586,8 @@ int DFNMesh::GetPolyhedralIndex(std::pair<int64_t,int> face_orient){
 	return polyh_index;
 }
 
-
-void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<int64_t,20>& polyhedron){
+template<int Talloc>
+void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
 	int polyh_index = GetPolyhedralIndex(initial_face_orient);
 	if(polyh_index == -1) DebugStop();
 	// Edges occupying the one dimensional sides
@@ -1573,6 +1609,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<i
 		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
 		facingcards[i] = rolodex.FacingCard(current_card);
 	}
+	// queue neighbour cards to verify
 	std::list<std::pair<int64_t, int>> to_verify;
 	for(int i=0; i<edges.size(); i++){
 		int64_t iedge = edges[i];
@@ -1581,12 +1618,12 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<i
 		if(nextface_polyindex == -1) {
 			to_verify.push_back(faceorient);
 			SetPolyhedralIndex(faceorient,polyh_index);
-			polyhedron.push_back(faceorient.first);
+			polyhedron.push_back(faceorient);
 		}else if(nextface_polyindex != polyh_index){
 			DebugStop();
 		}
 	}
-
+	// recursevily verify cards that have been queued 
 	for(auto orientedface : to_verify){
 		BuildVolume(orientedface,polyhedron);
 	}

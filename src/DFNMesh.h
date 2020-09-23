@@ -170,10 +170,14 @@ public:
     void GetPolyhedra2();
     void BuildPolyhedra();
     void AppendNeighboursToPolyhedron(TPZGeoEl* current_face, std::vector<int>& polyhedron, const int polyh_index, bool& convexPolyh);
-    void BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<int64_t,20>& polyhedron);
     TPZManVector<int64_t,4> GetEdgeIndices(int64_t face_index);
     void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
     int GetPolyhedralIndex(std::pair<int64_t,int> face_orient);
+
+    template<int Talloc>
+    bool IsConvexPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    template<int Talloc>
+    void BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
 
     /**
      * @brief Sort faces around each 1D element of the mesh
