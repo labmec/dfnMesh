@@ -144,13 +144,13 @@ int main(int argc, char* argv[]){
 
 		dfn.CreateVolumes();
 		// dfn.GetPolyhedra2(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
-		dfn.BuildPolyhedra();
-		std::ofstream logtest("LOG/dfnlog.txt");
-		dfn.Print(logtest);
+		// dfn.BuildPolyhedra();
+		// std::ofstream logtest("LOG/dfnlog.txt");
+		// dfn.Print(logtest);
 	}
 	// Mesh transition volumes
     dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
-		// dfn.GenerateSubMesh();
+	dfn.GenerateSubMesh();
 	time.stop();
 	std::cout<<"\n\n"<<time;
 	//Print graphics
