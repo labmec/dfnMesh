@@ -177,7 +177,7 @@ public:
     template<int Talloc>
     bool IsConvexPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
     template<int Talloc>
-    void BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
 
     /**
      * @brief Sort faces around each 1D element of the mesh

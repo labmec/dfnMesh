@@ -306,7 +306,7 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
          * @param direction 1 or -1
         */
         // TRolodexCard& NextCard(int64_t current_index, REAL& angle, int direction=1){
-        std::pair<TRolodexCard,int> FacingCard(std::pair<TRolodexCard,int> input){
+        std::pair<TRolodexCard,int> FacingCard(std::pair<TRolodexCard,int> input, REAL& angle){
             int jcard = input.first.fposition;
             int ncards = fcards.size();
             int facing_id = -1;
@@ -320,6 +320,11 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
             std::pair<TRolodexCard,int> output;
             output.first = fcards[facing_id];
             output.second = -direction*output.first.forientation;
+            angle = output.second*input.first.forientation*(output.first.fangle_to_reference - input.first.fangle_to_reference);
+            // angle = -input.second
+                    // *output.first.forientation
+                    //     *(output.first.fangle_to_reference - input.first.fangle_to_reference);
+            if(angle < 0.) {angle = angle + DFN::_2PI;}
             return output;
         }
 

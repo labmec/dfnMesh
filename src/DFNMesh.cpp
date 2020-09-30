@@ -1504,14 +1504,17 @@ bool DFNMesh::IsConvexPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhe
 		// Determine orientation of neighbour cards
 		TPZManVector<std::pair<TRolodexCard, int>,4> facingcards(edges.size());
 		for(int i=0; i<edges.size(); i++){
+			REAL angle_debug = 0.0;
 			int64_t iedge = edges[i];
 			TRolodex& rolodex = fSortedFaces[iedge];
 			std::pair<TRolodexCard, int> current_card = {cards[i],iface_orient.second};
-			facingcards[i] = rolodex.FacingCard(current_card);
+			facingcards[i] = rolodex.FacingCard(current_card,angle_debug);
 
 
 			REAL angle = iface_orient.second*current_card.first.forientation*(facingcards[i].first.fangle_to_reference - current_card.first.fangle_to_reference);
 			if(angle < 0.) {angle = angle +DFN::_2PI;}
+			REAL test = std::abs(angle - angle_debug);
+			if( test > 1e-5) DebugStop();
 			if(angle > M_PI+DFN::gSmallNumber){ return false; }
 			
 		}
@@ -1544,7 +1547,8 @@ void DFNMesh::BuildPolyhedra(){
 			std::pair<int64_t,int> initial_face_orientation = {initial_id,orientation};
 			polyhedron.push_back({initial_id,orientation});
 			SetPolyhedralIndex(initial_face_orientation,polyh_counter);
-			BuildVolume(initial_face_orientation,polyhedron);
+			bool IsConvex = true;
+			BuildVolume(initial_face_orientation,IsConvex,polyhedron);
 			bool convex = IsConvexPolyhedron(polyhedron);
 			polyhedron.Print(std::cout);
 			polyh_counter++;
@@ -1587,7 +1591,7 @@ int DFNMesh::GetPolyhedralIndex(std::pair<int64_t,int> face_orient){
 }
 
 template<int Talloc>
-void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
+void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
 	int polyh_index = GetPolyhedralIndex(initial_face_orient);
 	if(polyh_index == -1) DebugStop();
 	// Edges occupying the one dimensional sides
@@ -1607,7 +1611,9 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<s
 		int64_t iedge = edges[i];
 		TRolodex& rolodex = fSortedFaces[iedge];
 		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
-		facingcards[i] = rolodex.FacingCard(current_card);
+		REAL angle = 0.0;
+		facingcards[i] = rolodex.FacingCard(current_card,angle);
+		if(angle > M_PI+DFN::gSmallNumber){ IsConvex = false; }
 	}
 	// queue neighbour cards to verify
 	std::list<std::pair<int64_t, int>> to_verify;
@@ -1625,7 +1631,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, TPZStack<s
 	}
 	// recursevily verify cards that have been queued 
 	for(auto orientedface : to_verify){
-		BuildVolume(orientedface,polyhedron);
+		BuildVolume(orientedface,IsConvex,polyhedron);
 	}
 	
 }
