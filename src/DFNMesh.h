@@ -10,9 +10,9 @@
 #include "DFNNamespace.h"
 #include "DFNFracture.h"
 #include "DFNVolume.h"
+#include "DFNRolodex.h"
 #include <gmsh.h>
 #include <array>
-
 /**
  * @brief Describes a fractured MHM geomesh
  */
@@ -165,34 +165,36 @@ public:
     
     
     /**
-     * @brief Assembles mesh's polyhedral volumes as lists of the faces that outline them
-     */
-    void GetPolyhedra2();
-    void BuildPolyhedra();
-    void AppendNeighboursToPolyhedron(TPZGeoEl* current_face, std::vector<int>& polyhedron, const int polyh_index, bool& convexPolyh);
-    TPZManVector<int64_t,4> GetEdgeIndices(int64_t face_index);
-    void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
-    int GetPolyhedralIndex(std::pair<int64_t,int> face_orient);
-
-    template<int Talloc>
-    bool IsConvexPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
-    template<int Talloc>
-    void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
-
-    /**
      * @brief Sort faces around each 1D element of the mesh
      * @note Fills SortedFaces data
     */
     void SortFacesAroundEdges();
-
+    /**
+     * @brief Assembles mesh's polyhedral volumes as lists of the faces that outline them, and fills DFNMesh::fPolyh_by_2D_el
+     */
+    void BuildPolyhedra();
+    /**
+     * @brief Identify and match polyh-index of neighbour faces that enclose the same polyhedron
+     * @param initial_face_orient Index of geoEl of current face paired with orientation {index,orientation}
+     * @param IsConvex Method will flag this as false if a dihedral angle is found to be bigger than 180 degrees (non-convex polyhedron)
+     * @param polyhedron: A stack to list every face (and corresponding orientation) that share this polyhedron 
+     * @note This method is called by DFNMesh::BuildPolyhedra to assemble all polyhedral volumes in the mesh
+    */
+    template<int Talloc>
+    void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    /// return a vector of indices for edges occupying 1D sides of a face
+    TPZManVector<int64_t,4> GetEdgeIndices(int64_t face_index);
+    /// set a polyhedral index for a face in the structure fPolyh_per_2D_el
+    void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
+    /// get the polyhedral index for a face from the structure fPolyh_per_2D_el
+    int GetPolyhedralIndex(std::pair<int64_t,int> face_orient);
+    /**
+     * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
+    */
+    template<int Talloc>
+    void MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
 
 private:
-    // /**
-    //  *  @brief Navigate children tree to access most extreme branches
-    //  *  @param gel: Pointer to geometric element of ancestor
-    //  *  @param outfile: ofstream in which to write accessed data
-    //  */
-    // void PrintYoungestChildren(TPZGeoEl *gel, std::ofstream &outfile);
     
     /**
      * @brief Navigate through neighbours of first level, than second level, and so on, until an element of a specific material id is found
