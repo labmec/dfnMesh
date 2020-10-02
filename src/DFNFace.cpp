@@ -73,8 +73,8 @@ bool DFNFace::IsOnBoundary(){
 
 
 
-bool DFNFace::UpdateRefMesh(){
-	if(!this->NeedsRefinement()) return false;
+void DFNFace::UpdateRefMesh(){
+	if(!this->NeedsRefinement()) return;
 	TPZManVector<TPZManVector<int64_t,4>,6> child(0); 
 	TPZManVector<TPZManVector<REAL,3>> newnode(0);
 	FillChildrenAndNewNodes(child,newnode);

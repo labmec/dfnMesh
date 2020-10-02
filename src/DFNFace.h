@@ -171,7 +171,7 @@ public:
      * @returns True if any changes have been made
      * @TODO as there will be no inplane point, this can be considerably simplified
     */
-    bool UpdateRefMesh();
+    void UpdateRefMesh();
 
     void UpdateMaterial();
 

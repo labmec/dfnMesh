@@ -143,8 +143,7 @@ int main(int argc, char* argv[]){
 		}
 
 		dfn.CreateVolumes();
-		// dfn.GetPolyhedra2(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
-		dfn.BuildPolyhedra();
+		dfn.BuildPolyhedra(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
 		std::ofstream logtest("LOG/dfnlog.txt");
 		dfn.Print(logtest);
 	}
