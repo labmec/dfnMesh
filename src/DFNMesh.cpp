@@ -1654,7 +1654,98 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 
 template<int Talloc>
 void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
-	DebugStop();
+	// GMsh doesn't like zero index entities
+    const int shift = 1;
+
+	// copy faces of polyhedron into an std::vector for gmsh
+	std::vector<int> surfaceloop;
+	int nfaces = polyhedron.size();
+	surfaceloop.resize(nfaces);
+	for(int i=0; i<nfaces; i++){
+		surfaceloop[i] = polyhedron[i].first;
+	}
+
+	// List all lines
+	std::set<int64_t> lines;
+	// List edges from volume shell
+	for(int iface = 0; iface < nfaces; iface++){
+		TPZManVector<int64_t,4> face_lines = GetEdgeIndices(surfaceloop[iface]);
+		for(auto iline : face_lines){
+			lines.insert(iline);
+		}
+	}
+
+	// List nodes
+	std::set<int64_t> nodes;
+	for(int64_t line : lines){
+		TPZGeoEl *gel = fGMesh->Element(line);
+		nodes.insert(gel->NodeIndex(0));
+		nodes.insert(gel->NodeIndex(1));
+	}
+
+	// gmsh::initialize();
+	std::string modelname = "model_polyh";
+	gmsh::model::add(modelname);
+	gmsh::model::setCurrent(modelname);
+	std::string mshfilename = "LOG/gmshAPI_polyh.msh";
+	gmsh::option::setNumber("Mesh.Algorithm3D",1);  // (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT) Default value: 1
+	// Insert nodes ____________________________________
+	{TPZManVector<REAL,3> coord(3);
+	for(int64_t inode : nodes){
+		fGMesh->NodeVec()[inode].GetCoordinates(coord);
+		REAL meshsize = 0.;
+		gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],meshsize,inode+shift);
+	}}
+	// Insert lines ____________________________________
+	for(int64_t iline : lines){
+		TPZGeoEl *gel = fGMesh->Element(iline);
+		int64_t node0 = gel->NodeIndex(0)+shift;
+		int64_t node1 = gel->NodeIndex(1)+shift;
+		gmsh::model::geo::addLine(node0,node1,iline+shift);
+		gmsh::model::geo::mesh::setTransfiniteCurve(iline+shift,2);
+	}
+	// Insert faces ____________________________________
+	{
+		// wiretag is a dummy vector with the shifted index of the face/curve-loop
+		std::vector<int> wiretag(1,-1);
+		std::vector<int> lineloop;
+		lineloop.reserve(4);
+		for(int64_t iface : surfaceloop){
+			TPZGeoEl* face_el = fGMesh->Element(iface);
+			DFN::GetLineLoop(face_el,lineloop,shift);
+			wiretag[0] = iface+shift;
+			gmsh::model::geo::addCurveLoop(lineloop,wiretag[0]);
+			gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);
+			gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
+		}
+	}
+
+	// Set volume _______________________________________
+	{
+		std::vector<int> shelltag(1,1);
+		// shift indices in surface loop
+		for(int i=0; i < nfaces; i++){
+			surfaceloop[i] += shift;
+		}
+		gmsh::model::geo::addSurfaceLoop(surfaceloop,shelltag[0]);
+		gmsh::model::geo::addVolume(shelltag,shelltag[0]);
+		gmsh::model::addPhysicalGroup(3,shelltag,DFNMaterial::Eintact);
+	}
+
+	// synchronize before meshing
+	gmsh::model::geo::synchronize();
+	// mesh
+	gmsh::model::mesh::generate(3);
+	#ifdef PZDEBUG
+		gmsh::write(mshfilename);
+	#endif //PZDEBUG
+	// import meshed volume back into PZ geoMesh
+	std::set<int64_t>& old_nodes = nodes;
+	ImportElementsFromGMSH(fGMesh,3,old_nodes);
+	gmsh::model::remove();
+	gmsh::clear();
+	// gmsh::finalize();
+
 }
 
 
