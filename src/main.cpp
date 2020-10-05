@@ -54,7 +54,7 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
  * @brief information and assumptions
 */
 void PrintPreamble(){
-	std::string neopzversion = "/commit/85f5651"; // https://github.com/labmec/neopz/commit/...
+	std::string neopzversion = "/commit/29373e1"; // https://github.com/labmec/neopz/commit/...
 	std::string gmshversion = "4.5.6";
 	std::cout<<"\n";
 	std::cout<<"\nNeoPZ assumed version: " << neopzversion;
@@ -148,7 +148,7 @@ int main(int argc, char* argv[]){
 		dfn.Print(logtest);
 	}
 	// Mesh transition volumes
-    dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+    // dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
 	time.stop();
 	std::cout<<"\n\n"<<time;
@@ -156,6 +156,7 @@ int main(int argc, char* argv[]){
 		for(auto frac : dfn.FractureList()){
 			frac->Polygon().InsertGeoEl(gmesh);
 		}
+		dfn.PrintVTK("pzmesh.txt","skip");
 		dfn.PrintVTKColorful();
 
 	std::cout<<"\n ...the end.\n\n";

@@ -901,7 +901,13 @@ void DFNMesh::ExportGMshCAD(std::string filename){
                 // find face element
                 TPZGeoElSide gelside(gel,iside);
                 TPZGeoElSide side = gelside.Neighbour();
-                while(side.Element()->Dimension() != 2) {side = side.Neighbour();}
+                while(side.Element()->Dimension() != 2) {
+					side = side.Neighbour();
+					if(side == gelside){
+						PZError << "3D element without 2D skeleton:\n\t index = " << gel->Index() << " side = "<<iside;
+						DebugStop();
+					}
+				}
 				outfile << side.Element()->Index()+shift << (iside < nsides-2? "," : "};\n");
 				if(side.Element()->HasSubElement()) volumeIsCut = true;
             }
@@ -1554,13 +1560,11 @@ void DFNMesh::BuildPolyhedra(){
 			BuildVolume(initial_face_orientation,IsConvex,polyhedron);
 
 			#ifdef PZDEBUG
-			{
 				std::cout << "Polyh#"<< std::setw(3) << polyh_counter << ":  " << polyhedron << std::endl;
-				polyh_counter++;
-			}
 			#endif //PZDEBUG
 
 			if(!IsConvex) MeshPolyhedron(polyhedron);
+			polyh_counter++;
 		}
 	}
 }

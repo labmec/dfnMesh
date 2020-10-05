@@ -246,34 +246,7 @@ private:
 };
 
 
-namespace DFN{
-/**
- * @brief Tests if a 2D element is an interface or boundary for 3D coarse elements in the context of DFN meshing
- */
-bool IsInterface(TPZGeoEl* gel);
-}
 
-// @TODO there should be lengthy explanation here documenting the why and how
-// of these material ids
-enum DFNMaterial{
-    Eintact = 1, 
-    Efracture = 2, 
-    // Esurface = 2, 
-    Erefined = 3, 
-    // Etransition = 3
-};
-
-
-// Set Material ID for element and its children
-static void SetMaterialIDChildren(int id, TPZGeoEl* gel){
-    gel->SetMaterialId(id);
-    if(gel->HasSubElement()){
-        int nchildren = gel->NSubElements();
-        for(int i=0; i<nchildren; i++){
-            SetMaterialIDChildren(id,gel->SubElement(i));
-        }
-    }
-}
 
 
 

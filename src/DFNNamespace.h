@@ -20,6 +20,15 @@ const float _2PI = 6.2831853071795865;
 // A small number for geometric tolerances
 static const double gSmallNumber = 1.e-3;
 
+/**
+ * @brief Tests if a 2D element is an interface or boundary for 3D coarse elements in the context of DFN meshing
+ */
+bool IsInterface(TPZGeoEl* gel);
+
+
+
+
+
 
 
 template<typename Ttype>
@@ -210,11 +219,38 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
             }
         }
         return;
-}
+    }
 
 
 
 } /*namespace DFN*/
+
+
+
+/// The robustness of these material ids is dependant upon the method DFNMesh::ClearMaterials()
+/// Leaving Erefined as the biggest material id is important for better graphics, but isn't mandatory for the code to work. 
+/// The choice of ids is, otherwise, arbitrary.
+enum DFNMaterial{
+    Eintact = 1, 
+    Efracture = 2, 
+    // Esurface = 2, 
+    Erefined = 3, 
+    // Etransition = 3
+};
+
+
+
+// Set Material ID for element and its children
+static void SetMaterialIDChildren(int id, TPZGeoEl* gel){
+    gel->SetMaterialId(id);
+    if(gel->HasSubElement()){
+        int nchildren = gel->NSubElements();
+        for(int i=0; i<nchildren; i++){
+            SetMaterialIDChildren(id,gel->SubElement(i));
+        }
+    }
+}
+
 
 
 #endif /* DFNNamespace_h */
