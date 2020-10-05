@@ -189,10 +189,32 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
         }
         return nullptr;
     }
+
+
+    /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
+    /// @param shift: indices will get shifted by a constant 
+    static void GetLineLoop(TPZGeoEl* face_el, std::vector<int>& lineloop, const int shift=0){
+        if(face_el->Dimension() != 2) DebugStop();
+        int nsides = face_el->NSides();
+        TPZManVector<int,4> lineloop_debug(4,-999999999);
+        lineloop.resize(face_el->NSides(1));
+        for(int iside = face_el->NSides(0); iside<nsides-1; iside++){
+            TPZGeoElSide gelside(face_el,iside);
+            TPZGeoElSide neig;
+            for(neig = gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
+                if(neig.Element()->Dimension()!=1) continue;
+                int orientation = OrientationMatch(gelside,neig)?1:-1;
+                lineloop[iside-face_el->NSides(1)] = orientation*(neig.Element()->Index()+shift);
+                lineloop_debug[iside-face_el->NSides(1)] = orientation*neig.Element()->Index();
+                break;
+            }
+        }
+        return;
 }
 
 
 
+} /*namespace DFN*/
 
 
 #endif /* DFNNamespace_h */
