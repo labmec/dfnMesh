@@ -1717,6 +1717,7 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 			gmsh::model::geo::addCurveLoop(lineloop,wiretag[0]);
 			gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);
 			gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
+			// gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
 		}
 	}
 
