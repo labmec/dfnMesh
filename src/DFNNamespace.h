@@ -43,6 +43,7 @@ float DotProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
     return dot;
 }
 
+/** @brief Returns the norm of a vector with float precision*/
 template<typename Ttype>
 float Norm_f(TPZManVector<Ttype, 3> &vec){
     float norm = 0.;
@@ -221,8 +222,59 @@ static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
         return;
     }
 
+    /**
+     * @brief Generates the best fitting plane to approximate a point cloud in R3 using least squares
+     * @param pointcloud A 3xN matrix of coordinates for N points
+     * @param centroid: Reference to a vector to fill with centroid coordinates 
+     * @param normal: Reference to a vector to fill with normal vector 
+    */
+    static void BestFitPlane(TPZFMatrix<REAL>& pointcloud, TPZManVector<REAL,3>& centroid, TPZManVector<REAL,3>& normal){
+        // Coherence checks
+        int npoints = pointcloud.Cols();
+        if(npoints < 3) DebugStop();
+        if(pointcloud.Rows() != 3) DebugStop();
+        
+        // compute centroid
+        centroid.Resize(3,0.);
+        centroid.Fill(0.);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<npoints; j++){
+                centroid[i] += pointcloud(i,j);
+            }
+            centroid[i] /= npoints;
+        }
 
+        // A = pointcloud - centroid
+        TPZFMatrix<REAL> A(pointcloud);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<npoints; j++){
+                A(i,j) -= centroid[i];
+            }
+        }
 
+        // Singular Value Decomposition (SVD): A = U*SIGMA*VT
+        #ifdef USING_MKL
+        {   // using MKL dgvesd()
+            // U (3x3)
+            TPZFMatrix<REAL> U(3,3,0.);
+            // S (3x1) = Diagonal of Sigma with non zero elements
+            TPZFMatrix<REAL> S(3,1,0.);
+            // VT (npointsxnpoints)
+            TPZFMatrix<REAL> VT(npoints,npoints,0.);
+            A.SingularValueDecomposition(U,S,VT,'S','N');
+            // Normal vector is the column of U corresponding to the least eigenvalue of A
+            normal[0] = U(0,2);
+            normal[1] = U(1,2);
+            normal[2] = U(2,2);
+        }
+        #else
+            PZError << "\nThis method needs NeoPZ compiled with MKL\n"<<__PRETTY_FUNCTION__;
+            DebugStop();
+        #endif // USING_MKL
+        
+        // float norm = Norm_f(normal);
+        // if(std::fabs(1.-norm) > DFN::gSmallNumber) DebugStop();
+    }
 } /*namespace DFN*/
 
 
