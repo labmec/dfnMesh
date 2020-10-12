@@ -111,7 +111,6 @@ int main(int argc, char* argv[]){
         // @TODO : wouldnt it be wiser to pass the geometric mesh so that the complete
         // data structure can be initialized?
 		DFNPolygon polygon(planevector[iplane]);
-        
         // Initialize the basic data of fracture
 		fracture = new DFNFracture(polygon,&dfn);
 		dfn.AddFracture(fracture);
@@ -167,7 +166,7 @@ int main(int argc, char* argv[]){
 
 
 
-
+// Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle){
 	TPZGeoMesh* gmesh = nullptr;
 	std::string default_example("examples/two-hex-and-a-frac.txt");
