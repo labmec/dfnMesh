@@ -612,7 +612,6 @@ void DFNFace::UpdateMaterial(){
 	if(cutnodes==nnodes){fGeoEl->SetMaterialId(DFNMaterial::Efracture);}
 	else if(cutnodes==2 && two_in_a_row){fGeoEl->SetMaterialId(DFNMaterial::Eintact);}
 	else {fGeoEl->SetMaterialId(DFNMaterial::Erefined);}
-	// @todo... this is incomplete. 2_nodes_in_a_row may mean intact
 }
 
 int64_t DFNFace::LineInFace(){

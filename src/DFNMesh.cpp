@@ -14,7 +14,6 @@
 static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 #endif
 
-// @TODO why are the class variables not initialized
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 	fGMesh = gmesh;
     fTolDist = tolDist;
@@ -28,7 +27,14 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 	}
 	
 	fSortedFaces.Resize(fGMesh->NElements());
-	fPolyh_per_2D_el.Resize(fGMesh->NElements(),{-1,-1});
+	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
+	fPolyhedra.clear();
+	fFractures.clear();
+	fVolumes.clear();
+
+	if(fGMesh->Dimension() == 3){
+		BuildPolyhedra_firstrun();
+	}
 }
 
 
@@ -39,12 +45,15 @@ DFNMesh::DFNMesh(const DFNMesh &copy){
 
 /// Assignment operator
 DFNMesh &DFNMesh::operator=(const DFNMesh &copy){
-    fFractures = copy.fFractures;
-    fVolumes = copy.fVolumes;
-    fTolDist = copy.fTolDist;
-    fTolAngle = copy.fTolAngle;
-    fTolAngle_cos = copy.fTolAngle_cos;
-    fGMesh = copy.fGMesh;
+    fFractures = 		copy.fFractures;
+    fTolDist = 			copy.fTolDist;
+    fTolAngle = 		copy.fTolAngle;
+    fTolAngle_cos = 	copy.fTolAngle_cos;
+    fGMesh = 			copy.fGMesh;
+	fSortedFaces = 		copy.fSortedFaces;
+    fPolyh_per_face = 	copy.fPolyh_per_face;
+	fPolyhedra = 		copy.fPolyhedra;
+	fVolumes = 			copy.fVolumes;
     return *this;
 }
 
@@ -1529,15 +1538,12 @@ void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
 // }
 
 void DFNMesh::BuildPolyhedra(){
+	DebugStop(); //@todo I'm separating BuildPolyhedra() and BuildPolyhedra_firstrun()
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
-	fPolyh_per_2D_el.Resize(fGMesh->NElements(),{-1,-1});
-	int polyh_counter = 0;
+	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
+	int polyh_counter = fPolyhedra.size();
 	
-	#ifdef PZDEBUG 
-	std::cout<<"\n\nPrint polyhedra:\n\n"; 
-	#endif // PZDEBUG
-
 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
 	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
@@ -1549,7 +1555,7 @@ void DFNMesh::BuildPolyhedra(){
 		// look for polyhedron on each orientation of the initial_face
 		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
 			// if the first has been found, continue to the next
-			if(fPolyh_per_2D_el[initial_id][ipolyh_local] != -1) continue;
+			if(fPolyh_per_face[initial_id][ipolyh_local] != -1) continue;
 			polyhedron.Fill({-1,0});
 			polyhedron.clear();
 			int orientation = ipolyh_local?-1:1;
@@ -1564,7 +1570,69 @@ void DFNMesh::BuildPolyhedra(){
 			#endif //PZDEBUG
 
 			if(!IsConvex) MeshPolyhedron(polyhedron);
+			else{
+				DFNPolyhedron new_polyhedron(this,polyh_counter,polyhedron);
+				fPolyhedra.push_back(new_polyhedron);
+			}
 			polyh_counter++;
+		}
+	}
+}
+
+template<int NAlloc>
+void DFNMesh::IsolateBoundaryPolyh(TPZStack<std::pair<int64_t,int>,NAlloc>& polyhedron){
+	for(auto& orientedface : polyhedron){
+		SetPolyhedralIndex(orientedface,0);
+	}
+}
+
+void DFNMesh::BuildPolyhedra_firstrun(){
+	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
+	this->SortFacesAroundEdges();
+	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
+	int polyh_counter = 1;
+	fPolyhedra.resize(1); 
+	
+	int vinte = 20;
+	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
+	// loop over 2D skeleton elements
+	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
+		if(!initial_face) continue;
+		if(initial_face->Dimension() != 2) continue;
+		if(initial_face->HasSubElement()) continue;
+		int64_t initial_id = initial_face->Index();
+
+		// look for polyhedron on each orientation of the initial_face
+		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
+			// if the first has been found, continue to the next
+			if(fPolyh_per_face[initial_id][ipolyh_local] != -1) continue;
+			polyhedron.Fill({-1,0});
+			polyhedron.clear();
+			int orientation = ipolyh_local?-1:1;
+			std::pair<int64_t,int> initial_face_orientation = {initial_id,orientation};
+			polyhedron.push_back({initial_id,orientation});
+			SetPolyhedralIndex(initial_face_orientation,polyh_counter);
+			bool IsConvex = true;
+			BuildVolume(initial_face_orientation,IsConvex,polyhedron);
+
+			#ifdef PZDEBUG
+				std::cout << "Polyh#"<< std::setw(4) << int(IsConvex)*polyh_counter;
+				std::cout << ":  " << polyhedron << std::endl;
+			#endif //PZDEBUG
+
+			if(!IsConvex){
+				if(polyhedron.size() <= pztopology::TPZCube::NumSides(2)){
+					PZError << "\n\n"<<__PRETTY_FUNCTION__<<"\nAre there any 3D elements that are not convex? Check jacobian.\n";
+					DebugStop();
+				}
+				IsolateBoundaryPolyh(polyhedron);
+				DFNPolyhedron boundary_polyhedron(this,0,polyhedron);
+				fPolyhedra[0] = boundary_polyhedron;
+			}else{
+				DFNPolyhedron new_polyhedron(this,polyh_counter,polyhedron);
+				fPolyhedra.push_back(new_polyhedron);
+				polyh_counter++;
+			}
 		}
 	}
 }
@@ -1588,16 +1656,16 @@ TPZManVector<int64_t,4> DFNMesh::GetEdgeIndices(int64_t face_index){
 
 void DFNMesh::SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index){
 	switch(face_orient.second){
-		case  1: fPolyh_per_2D_el[face_orient.first][0] = polyh_index; break;
-		case -1: fPolyh_per_2D_el[face_orient.first][1] = polyh_index; break;
+		case  1: fPolyh_per_face[face_orient.first][0] = polyh_index; break;
+		case -1: fPolyh_per_face[face_orient.first][1] = polyh_index; break;
 		default: DebugStop();
 	}
 }
 int DFNMesh::GetPolyhedralIndex(std::pair<int64_t,int> face_orient){
 	int polyh_index = -1;
 	switch(face_orient.second){
-		case  1: polyh_index = fPolyh_per_2D_el[face_orient.first][0]; break;
-		case -1: polyh_index = fPolyh_per_2D_el[face_orient.first][1]; break;
+		case  1: polyh_index = fPolyh_per_face[face_orient.first][0]; break;
+		case -1: polyh_index = fPolyh_per_face[face_orient.first][1]; break;
 		default: DebugStop();
 	}
 	return polyh_index;
@@ -1763,7 +1831,7 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 // 	if(current_face->HasSubElement()) 			DebugStop();
 	
 // 	int64_t current_index = current_face->Index();
-// 	int currentface_orientation = (fPolyh_per_2D_el[current_index][0]==polyh_index ? 1:-1);
+// 	int currentface_orientation = (fPolyh_per_face[current_index][0]==polyh_index ? 1:-1);
 // 	int nedges = current_face->NSides(1);
 // 	bool newface=false;
 // 	// Loop over each edge of the current 2D_el to append neighbours to the polyhedron. 
@@ -1783,9 +1851,9 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 // 		else continue;
 		
 // 		if(nextcard_orientation > 0)
-// 			{fPolyh_per_2D_el[nextcard.fgelindex][0] = polyh_index;}
+// 			{fPolyh_per_face[nextcard.fgelindex][0] = polyh_index;}
 // 		else
-// 			{fPolyh_per_2D_el[nextcard.fgelindex][1] = polyh_index;}
+// 			{fPolyh_per_face[nextcard.fgelindex][1] = polyh_index;}
 // 		// check if polyh is not convex
 // 		if(angle > M_PI+DFN::gSmallNumber){convexPolyh = false;}
 // 	}//for each edge
@@ -1796,7 +1864,7 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 // void DFNMesh::GetPolyhedra2(){
 // 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 // 	this->SortFacesAroundEdges();
-// 	fPolyh_per_2D_el.Resize(fGMesh->NElements(),{-1,-1});
+// 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 // 	TPZGeoEl* initial_face = nullptr;
 //     // For each polyhedra, a vector of face indexes 
 // 	// @todo this will probably only be used for debug. We can decide after this method is finished
@@ -1816,9 +1884,9 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 // 		const int npolyh_total = 2;
 
 // 		// flank defines if we're looking for a polyhedron on the positive or the negative side of the face
-// 		int initial_face_flank = (fPolyh_per_2D_el[el->Index()][0] >= 0 ? -1 : 1);
+// 		int initial_face_flank = (fPolyh_per_face[el->Index()][0] >= 0 ? -1 : 1);
 // 		// number of polyhedra found on either flank of this face
-// 		int npolyh_found = int(fPolyh_per_2D_el[el->Index()][0] >= 0) + int(fPolyh_per_2D_el[el->Index()][1] >= 0);
+// 		int npolyh_found = int(fPolyh_per_face[el->Index()][0] >= 0) + int(fPolyh_per_face[el->Index()][1] >= 0);
 
 // 		// for each 2D skeleton we get 2 polyhedra
 // 		while(npolyh_found < npolyh_total){
@@ -1829,9 +1897,9 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 // 			// match face and polyhedron in datastructure
 // 			polyhedron->push_back(initial_face->Index());
 // 			if(initial_face_flank > 0)
-// 				{fPolyh_per_2D_el[initial_face->Index()][0] = polyh_counter;}
+// 				{fPolyh_per_face[initial_face->Index()][0] = polyh_counter;}
 // 			else
-// 				{fPolyh_per_2D_el[initial_face->Index()][1] = polyh_counter;}
+// 				{fPolyh_per_face[initial_face->Index()][1] = polyh_counter;}
 			
 // 			// flags
 // 			bool convexPolyh = true;
@@ -1915,6 +1983,29 @@ void DFNMesh::SortFacesAroundEdges(){
 	}
 }
 
+// void DFNMesh::IsolateBoundaryPolyh2(){
+// 	if(fPolyhedra.size() == 0) DebugStop();
+// 	int aux_id = -1;
+// 	DFNPolyhedron aux_polyh;
+// 	for(auto& polyh : fPolyhedra){
+// 		if(polyh.NElements() > pztopology::TPZCube::NumSides(2)){
+// 			if(polyh.Index() == 0) return;
+// 			aux_id = polyh.Index();
+
+// 			aux_polyh = *fPolyhedra.begin();
+// 			*fPolyhedra.begin() = polyh;
+// 			polyh = aux_polyh;
+			
+// 			fPolyhedra.begin()->SwapIndex(0);
+// 			polyh.SwapIndex(aux_id);
+// 			return;
+// 		}
+// 	}
+// 	PZError << "\nCouldn't find the boundary of the domain?\n";
+// 	DebugStop();
+// }
+
+
 void DFNMesh::Print(std::ostream & out) const
 {
 	out << "\n\t DFN MESH INFORMATION:\n\n";
@@ -1957,17 +2048,22 @@ void DFNMesh::PrintPolyhedra(std::ostream & out) const{
 	out <<"\n\nPOLYHEDRA BY FACE:_________________\n";
 	{
 		out<<"                 (+)  |  (-)";
-		int npolyhedra=0;
+		// int npolyhedra=0;
 		for(TPZGeoEl* gel : fGMesh->ElementVec()){
 			if(!gel) continue;
 			if(gel->Dimension() != 2) continue;
 			if(gel->HasSubElement()) continue;
 			
 			out << "\nFace #" << std::setw(5)<<std::right << gel->Index() << ":    "; 
-			out << std::setw(3)<<std::right << fPolyh_per_2D_el[gel->Index()][0] << "   | ";
-			out << std::setw(3)<<std::right << fPolyh_per_2D_el[gel->Index()][1];
-			npolyhedra = std::max({npolyhedra,fPolyh_per_2D_el[gel->Index()][0],fPolyh_per_2D_el[gel->Index()][1]});
+			out << std::setw(3)<<std::right << fPolyh_per_face[gel->Index()][0] << "   | ";
+			out << std::setw(3)<<std::right << fPolyh_per_face[gel->Index()][1];
+			// npolyhedra = std::max({npolyhedra,fPolyh_per_face[gel->Index()][0],fPolyh_per_face[gel->Index()][1]});
 		}
-		out<<"\n\nNumber of polyhedra found: "<<npolyhedra+1;
+		// out<<"\n\nNumber of polyhedra found: "<<npolyhedra+1;
+		out<<"\n\nNumber of polyhedra found: "<<fPolyhedra.size();
+		for(auto& polyh : fPolyhedra){
+			polyh.Print(out);
+		}
 	}
+	out.flush();
 }

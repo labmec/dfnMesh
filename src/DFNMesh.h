@@ -10,6 +10,7 @@
 #include "DFNNamespace.h"
 #include "DFNFracture.h"
 #include "DFNVolume.h"
+#include "DFNPolyhedron.h"
 #include "DFNRolodex.h"
 #include <gmsh.h>
 #include <array>
@@ -21,9 +22,6 @@ private:
     // A set of fractures
     std::list<DFNFracture *> fFractures;
     
-    // A set of volumes
-    std::map<int64_t, DFNVolume> fVolumes;
-    
     // Minimum acceptable distance/length for point insertion
     REAL fTolDist = 1e-5;
     
@@ -32,21 +30,26 @@ private:
     REAL fTolAngle_cos = 0.98006657784; // == cos(0.2)
 
     // Pointer to geometric mesh
-    TPZGeoMesh *fGMesh;
+    TPZGeoMesh *fGMesh = nullptr;
 
-
-    
-    
     /// For each edge, a vector of sorted faces around that edge
     TPZVec<TRolodex> fSortedFaces;
 
-
     /** 
      * For each 2D skeleton element the left and right polyhedral index
-     * - fPolyh_per_2D_el[i][0] is the index of the polyhedron on the positive side of element of index i
-     * - fPolyh_per_2D_el[i][1] is the index of the polyhedron on the negative side of element of index i
+     * - fPolyh_per_face[i][0] is the index of the polyhedron on the positive side of element of index i
+     * - fPolyh_per_face[i][1] is the index of the polyhedron on the negative side of element of index i
     */
-	TPZVec<std::array<int,2>> fPolyh_per_2D_el;
+	TPZVec<std::array<int,2>> fPolyh_per_face;
+    
+    // A set of polyhedral volumes
+    TPZStack<DFNPolyhedron,20> fPolyhedra;
+
+    /** 
+     * @brief A set of volumes 
+     * @todo this is probably getting deprecated soon
+     */
+    std::map<int64_t, DFNVolume> fVolumes;
 
 public:
     // // Local enumeration of material indices
@@ -77,6 +80,10 @@ public:
     
     /// Pointer to geometric mesh
     TPZGeoMesh *Mesh(){return fGMesh;}
+
+    /// Get a reference to fPolyh_per_face
+    /// [for each 2D element an index for each of the polyhedral volume that it encloses]
+    TPZVec<std::array<int,2>>& GetPolyhedraPerFace(){return fPolyh_per_face;}
 
     /// Set tolerances
     void SetTolerances(REAL tolerableLength, REAL tolerableAngle){
@@ -184,9 +191,9 @@ public:
     void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZManVector<int64_t,4> GetEdgeIndices(int64_t face_index);
-    /// set a polyhedral index for a face in the structure fPolyh_per_2D_el
+    /// set a polyhedral index for a face in the structure fPolyh_per_face
     void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
-    /// get the polyhedral index for a face from the structure fPolyh_per_2D_el
+    /// get the polyhedral index for a face from the structure fPolyh_per_face
     int GetPolyhedralIndex(std::pair<int64_t,int> face_orient);
     /**
      * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
@@ -194,7 +201,15 @@ public:
     template<int Talloc>
     void MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
 
+    /**
+     * @brief Reference to polyhedra stack
+    */
+    // template<int Talloc>
+    TPZStack<DFNPolyhedron,20>& Polyhedra(){return fPolyhedra;}
+
 private:
+    /// Runs DFNMesh::BuildPolyhedra without convexity verification to isolate the boundary
+    void BuildPolyhedra_firstrun();
     
     /**
      * @brief Navigate through neighbours of first level, than second level, and so on, until an element of a specific material id is found
@@ -243,6 +258,13 @@ private:
     
     // @todo
     void RestoreMaterials(TPZGeoMesh *originalmesh);
+
+    // After the first run of DFNMesh::BuildPolyhedra,
+    // swap polyh indices so the "boundary polyh" has index zero
+    void IsolateBoundaryPolyh2();
+
+    template<int NAlloc>
+    void IsolateBoundaryPolyh(TPZStack<std::pair<int64_t,int>,NAlloc>& polyhedron);
 };
 
 

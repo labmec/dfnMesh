@@ -103,6 +103,7 @@ int main(int argc, char* argv[]){
     /// Constructor of DFNMesh initializes the skeleton mesh
 	time.start();
 	DFNMesh dfn(gmesh);
+	dfn.PrintPolyhedra();
 	dfn.SetTolerances(tol_dist,tol_angle);
 	// Loop over fractures and refine mesh around them
 	DFNFracture *fracture = nullptr;
@@ -136,13 +137,13 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 	// Mesh fracture surface
 		fracture->AssembleOutline();
-		// fracture->GetSubPolygons();
-		if(gmesh->Dimension() == 3){
-			fracture->MeshFractureSurface();
-		}
+		fracture->GetSubPolygons();
+	// 	if(gmesh->Dimension() == 3){
+	// 		fracture->MeshFractureSurface();
+	// 	}
 
-		dfn.CreateVolumes();
-		dfn.BuildPolyhedra(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
+	// 	dfn.CreateVolumes();
+	// 	dfn.BuildPolyhedra(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
 		std::ofstream logtest("LOG/dfnlog.txt");
 		dfn.Print(logtest);
 	}
