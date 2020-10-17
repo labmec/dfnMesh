@@ -1593,7 +1593,6 @@ void DFNMesh::BuildPolyhedra_firstrun(){
 	int polyh_counter = 1;
 	fPolyhedra.resize(1); 
 	
-	int vinte = 20;
 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
 	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
@@ -1694,7 +1693,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
 		REAL angle = 0.0;
 		facingcards[i] = rolodex.FacingCard(current_card,angle);
-		if(angle > M_PI+DFN::gSmallNumber){ IsConvex = false; }
+		if(angle > M_PI+gDFN_SmallNumber){ IsConvex = false; }
 	}
 	// queue neighbour cards to verify
 	std::list<std::pair<int64_t, int>> to_verify;
@@ -2045,6 +2044,10 @@ void DFNMesh::PrintRolodexes(std::ostream & out) const{
 	}
 }
 void DFNMesh::PrintPolyhedra(std::ostream & out) const{
+	if(fPolyhedra.size() == 0) {
+		out << "\nNo polyhedra in this mesh\n"; 
+		return;
+	}
 	out <<"\n\nPOLYHEDRA BY FACE:_________________\n";
 	{
 		out<<"                 (+)  |  (-)";

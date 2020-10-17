@@ -98,9 +98,9 @@ bool DFNPolygon::Check_Data_Consistency() const
                       +fAxis.GetVal(1,2)*(fCornerPoints.g(1,ic)-fCornerPoints.g(1,1))
                       +fAxis.g(2,2)*(fCornerPoints.g(2,ic)-fCornerPoints.g(2,1));
             //Checks if points are coplanar
-            if(std::abs(ver) > DFN::gSmallNumber){
+            if(std::abs(ver) > gDFN_SmallNumber){
                 std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
-                // DebugStop();
+                DebugStop();
             }
         }
 	}

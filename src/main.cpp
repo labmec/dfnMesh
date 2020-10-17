@@ -103,14 +103,12 @@ int main(int argc, char* argv[]){
     /// Constructor of DFNMesh initializes the skeleton mesh
 	time.start();
 	DFNMesh dfn(gmesh);
-	dfn.PrintPolyhedra();
+	// dfn.PrintPolyhedra();
 	dfn.SetTolerances(tol_dist,tol_angle);
 	// Loop over fractures and refine mesh around them
 	DFNFracture *fracture = nullptr;
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
         // a polygon represents a set of points in a plane
-        // @TODO : wouldnt it be wiser to pass the geometric mesh so that the complete
-        // data structure can be initialized?
 		DFNPolygon polygon(planevector[iplane]);
         // Initialize the basic data of fracture
 		fracture = new DFNFracture(polygon,&dfn);
@@ -118,36 +116,28 @@ int main(int argc, char* argv[]){
         
 	// Find and split intersected ribs
 		fracture->FindRibs();
-        
-        
 		fracture->SnapIntersections_ribs(tol_dist);
 	// Build the DFNFace objects and split intersected faces if necessary
 		fracture->FindFaces();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
-		fracture->RefineRibs();
 
 #ifdef LOG4CXX
-        if(logger->isDebugEnabled())
-        {
+        if(logger->isDebugEnabled()){
             std::stringstream sout;
             fracture->Print(sout);
             LOGPZ_DEBUG(logger,sout.str())
         }
 #endif
+		fracture->RefineRibs();
 		fracture->RefineFaces();
 	// Mesh fracture surface
-		fracture->AssembleOutline();
-		fracture->GetSubPolygons();
-	// 	if(gmesh->Dimension() == 3){
-	// 		fracture->MeshFractureSurface();
-	// 	}
+		if(gmesh->Dimension() == 3){
+		}
 
-	// 	dfn.CreateVolumes();
-	// 	dfn.BuildPolyhedra(); // for now, this should be called after CreateVolumes because that's where the fracture surface gets truncated to the original mesh domain. This will change as soon as we start meshing fracture surface using SubPolygons
-		std::ofstream logtest("LOG/dfnlog.txt");
-		dfn.Print(logtest);
+		// std::ofstream logtest("LOG/dfnlog.txt");
+		// dfn.Print(logtest);
 	}
-	// Mesh transition volumes
+	// Mesh intersected volumes
     // dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
 	time.stop();
