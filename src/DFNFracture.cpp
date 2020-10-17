@@ -12,6 +12,7 @@
 #include <algorithm>
 #include "TPZRefPatternDataBase.h"
 #include "TPZGeoMeshBuilder.h"
+#include "DFNNamespace.h"
 
 #ifdef LOG4CXX
 static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
@@ -245,6 +246,7 @@ void DFNFracture::RefineFaces(){
 #endif
         face->Refine();
     }
+    fdfnMesh->CreateSkeletonElements(1);
 }
 
 
@@ -481,127 +483,440 @@ void GetCurveLoop(TPZGeoEl* el, std::vector<int> &loop, const int shift=0){
 
 
 
+// void DFNFracture::MeshFractureSurface_old(){
+//     fdfnMesh->Mesh()->BuildConnectivity();
+//     // GMsh does not accept zero index entities
+//     const int shift = 1;
+//     // First construct the edges of the fracture surface
+//     std::vector<int> outerLoop;
+//     GetOuterLoop(outerLoop);
+//     std::vector<TPZGeoEl*> facesInSurface;
+//     GetFacesInSurface(facesInSurface);
+    
+//     // initialize GMsh
+//     // gmsh::initialize();
+// 	std::string modelname = "modelsurface";
+// 	gmsh::model::add(modelname);
+//     gmsh::model::setCurrent(modelname);
+//     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
+//     // INSERT POINTS
+//         // iterate over fOutline and get points
+//     std::set<int64_t> pointset;
+//     {
+//         int64_t index = -1;
+//         TPZManVector<REAL,3> projcoord(3,0);
+//         TPZManVector<REAL,3> realcoord(3,0);
+//         for(auto itr : fOutline){
+//             TPZGeoEl* gel = itr.second;
+//             for(int inode=0; inode<gel->NCornerNodes(); inode++){
+//                 index = gel->NodeIndex(inode);
+//                 bool newpoint = pointset.insert(index).second;
+//                 if(!newpoint){continue;}
+//                 gel->NodePtr(inode)->GetCoordinates(realcoord);
+//                 projcoord = fPolygon.GetProjectedX(realcoord);
+//                 gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],0.,index+shift);
+
+//             }
+//         }
+//     }
+//     // INSERT LINES
+//     std::vector<int> curvesInSurface;
+//     {
+//         for(auto iter = fOutline.begin(); iter != fOutline.end(); iter++){
+//             int64_t iel = iter->first+shift;
+//             TPZGeoEl *gel = iter->second;
+//             if(gel->Dimension() != 1) continue;
+//             int64_t node0 = gel->NodeIndex(0)+shift;
+//             int64_t node1 = gel->NodeIndex(1)+shift;
+
+//             gmsh::model::geo::addLine(node0,node1,iel);
+//             gmsh::model::geo::mesh::setTransfiniteCurve(iel,2); // to reduce number of nodes created by GMsh
+//             bool lineIsInEdge = (std::find(outerLoop.begin(),outerLoop.end(),iel-shift) != outerLoop.end());
+//             if(lineIsInEdge == false){
+//                 curvesInSurface.push_back(iel);
+//             }
+//         }
+//     }
+//     // CURVE LOOPS
+//         for(auto itr = outerLoop.begin(); itr != outerLoop.end(); itr++){
+//             *itr += shift;
+//         }
+//         int surfaceIndex = 0 + shift;
+//         std::vector<int> wiretags(facesInSurface.size()+1,-1);
+//         wiretags[0] = gmsh::model::geo::addCurveLoop(outerLoop,surfaceIndex);
+//     // Holes in surface
+//         for(int iface=0;iface<facesInSurface.size();iface++){
+//             TPZGeoEl* face = facesInSurface[iface];
+//             std::vector<int> loop;
+//             GetCurveLoop(face,loop,shift);
+//             wiretags[iface+1] = gmsh::model::geo::addCurveLoop(loop);
+//         }
+
+//     // SURFACE + HOLES
+//         gmsh::model::geo::addPlaneSurface(wiretags,surfaceIndex);
+    
+//     // lines in surface
+//         // @comment GMsh requires synchronize before embedding geometric entities
+//         gmsh::model::geo::synchronize();
+//         gmsh::model::mesh::embed(1,curvesInSurface,2,surfaceIndex);
+//     // PHYSICAL GROUPS
+//         // physical curve
+//         int nlines = curvesInSurface.size() + outerLoop.size();
+//         if(curvesInSurface.size() > outerLoop.size()){
+//             curvesInSurface.reserve(nlines);
+//             curvesInSurface.insert(curvesInSurface.end(), outerLoop.begin(), outerLoop.end() );
+
+//             gmsh::model::addPhysicalGroup(1,curvesInSurface,DFNMaterial::Efracture);
+//         }else{
+//             outerLoop.reserve(nlines);
+//             outerLoop.insert(outerLoop.end(), curvesInSurface.begin(), curvesInSurface.end() );
+
+//             gmsh::model::addPhysicalGroup(1,outerLoop,DFNMaterial::Efracture);
+//         }
+//         // physical surface
+//         gmsh::model::addPhysicalGroup(2,{surfaceIndex},DFNMaterial::Efracture);
+
+//     // synchronize before meshing
+//         gmsh::model::geo::synchronize();
+//     // mesh
+//         gmsh::model::mesh::generate(2);
+//         // gmsh::model::mesh::optimize("Netgen");
+//     // write (for testing)
+//         // gmsh::write("testAPI.msh");
+//     // import meshed plane back into PZ geoMesh
+//         TPZVec<int64_t> newelements;
+//         ImportElementsFromGMSH(fdfnMesh->Mesh(),2,pointset,newelements);
+//     // close GMsh
+//     gmsh::model::remove();
+// 	// gmsh::clear();
+//     // gmsh::finalize();
+    
+//     InsertElementsInSurface(newelements);
+//     fdfnMesh->CreateSkeletonElements(1, DFNMaterial::Efracture);
+// }
+
+void DFNFracture::SetPolygonIndex(std::pair<int64_t,int> face_orient, int polyg_index,TPZVec<std::array<int, 2>>& Polygon_per_face){
+	switch(face_orient.second){
+		case  1: Polygon_per_face[face_orient.first][0] = polyg_index; break;
+		case -1: Polygon_per_face[face_orient.first][1] = polyg_index; break;
+		default: DebugStop();
+	}
+}
+int DFNFracture::GetPolygonIndex(std::pair<int64_t,int> face_orient,const TPZVec<std::array<int, 2>>& Polygon_per_face){
+	int polyg_index = -1;
+	switch(face_orient.second){
+		case  1: polyg_index = Polygon_per_face[face_orient.first][0]; break;
+		case -1: polyg_index = Polygon_per_face[face_orient.first][1]; break;
+		default: DebugStop();
+	}
+	return polyg_index;
+}
+std::pair<int64_t,int> DFNFracture::PolyhNeighbour(std::pair<int64_t,int>& currentface_orient, int current_side, int& neig_side){
+    int polyh_index = fdfnMesh->GetPolyhedralIndex(currentface_orient);
+    if(polyh_index < 0) DebugStop();
+    // Loop through 2D neighbours and find the one that shares the same polyhedron
+    TPZGeoEl* gel = fdfnMesh->Mesh()->Element(currentface_orient.first);
+    TPZGeoElSide gelside(gel,current_side);
+    if(gelside.Dimension() != 1) DebugStop();
+    TPZGeoElSide neig = gelside.Neighbour();
+    for(/*void*/; neig != gelside; neig = neig.Neighbour()){
+        if(neig.Element()->Dimension() != 2) continue;
+        int64_t neigindex = neig.Element()->Index();
+        if(!Face(neigindex)) continue;
+        neig_side = neig.Side();
+        // To share the same subpolygon, they have to share the same polyhedron
+        if(      polyh_index == fdfnMesh->GetPolyhedralIndex({neigindex,+1})){
+            return {neigindex,+1};
+        }else if(polyh_index == fdfnMesh->GetPolyhedralIndex({neigindex,-1})){
+            return {neigindex,-1};
+        }
+    }
+    DebugStop();
+    return {-1,0};
+}
+
+void DFNFracture::SetLoopOrientation(TPZStack<int64_t>& edgelist){
+    int nedges = edgelist.size();
+    if(nedges < 3) DebugStop();
+
+    TPZGeoEl* prev_gel = fdfnMesh->Mesh()->Element(edgelist[0]);
+    TPZGeoEl* gel = fdfnMesh->Mesh()->Element(edgelist[1]);
+
+    int initialedge_orientation=0;
+    if(prev_gel->NodeIndex(1) == gel->NodeIndex(0) ||
+       prev_gel->NodeIndex(1) == gel->NodeIndex(1)){
+            initialedge_orientation =  1;
+    }else{
+            initialedge_orientation = -1;
+    }
+
+    edgelist[0] *= initialedge_orientation;
+    for(int i=1; i<nedges; i++){
+        int prev_orientation = (edgelist[i-1]>0?1:-1);
+        prev_gel = fdfnMesh->Mesh()->Element(edgelist[i-1]*prev_orientation);
+        gel = fdfnMesh->Mesh()->Element(edgelist[i]);
+        int prev_node = prev_orientation > 0;
+        int orientation = (prev_gel->NodeIndex(prev_node) == gel->NodeIndex(0)?1:-1);
+        edgelist[i] *= orientation;
+    }
+}
+
+TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, int dim){
+    TPZGeoMesh* gmesh = gelside1.Element()->Mesh();
+    std::set<int64_t> neighbours1;
+    std::set<int64_t> neighbours2;
+
+    TPZGeoElSide neig;
+    for(neig = gelside1.Neighbour(); neig != gelside1; neig = neig.Neighbour()){
+        TPZGeoEl* neig_el = neig.Element();
+        if(dim > -1 && neig_el->Dimension() != dim) continue;
+        neighbours1.insert(neig_el->Index());
+    }
+    if(neighbours1.size() < 1) return nullptr;
+    for(neig = gelside2.Neighbour(); neig != gelside2; neig = neig.Neighbour()){
+        TPZGeoEl* neig_el = neig.Element();
+        if(dim > -1 && neig_el->Dimension() != dim) continue;
+        neighbours2.insert(neig_el->Index());
+    }
+    if(neighbours2.size() < 1) return nullptr;
+
+    std::set<int64_t>& smaller_set =  neighbours1.size() > neighbours2.size() ? neighbours2 : neighbours1;
+    std::set<int64_t>& bigger_set = !(neighbours1.size() > neighbours2.size()) ? neighbours2 : neighbours1;
+
+    for(auto& iel : smaller_set){
+        auto itr = bigger_set.find(iel);
+        if(itr == bigger_set.end()) continue;
+        return gmesh->Element(*itr);
+    }
+
+    
+    return nullptr;
+}
+
+TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+
+    int i=0;
+    while(polygon[i]<0) i++;
+    TPZGeoEl* gel1 = gmesh->Element(polygon[i]);
+    i++;
+    while(polygon[i]<0) i++;
+    TPZGeoEl* gel2 = gmesh->Element(polygon[i]);
+
+    if(gel1->Dimension() != 1 || gel2->Dimension() != 1) DebugStop();
+
+    TPZGeoElSide gelside1(gel1,2);
+    TPZGeoElSide gelside2(gel2,2);
+
+    TPZGeoEl* common_neig = FindCommonNeighbour(gelside1,gelside2,2);
+
+    if(!common_neig) return nullptr;
+
+    common_neig->SetMaterialId(DFNMaterial::Efracture);
+    return common_neig;
+}
+
 void DFNFracture::MeshFractureSurface(){
-    fdfnMesh->Mesh()->BuildConnectivity();
-    // GMsh does not accept zero index entities
-    const int shift = 1;
-    // First construct the edges of the fracture surface
-    std::vector<int> outerLoop;
-    GetOuterLoop(outerLoop);
-    std::vector<TPZGeoEl*> facesInSurface;
-    GetFacesInSurface(facesInSurface);
+    // SubPolygons are subsets of the fracture surface contained by a polyhedral volume
+    // A subpolygon is formed whenever (at least) 2 DFNFaces, are refined and part of the same polyhedron
+    std::cout<<"\n\n";
+    fdfnMesh->CreateSkeletonElements(1);
+    TPZVec<std::array<int, 2>> Polygon_per_face(fdfnMesh->Mesh()->NElements(),{-1,-1});
+    TPZStack<int64_t> subpolygon(10,-999999);
+    int polygon_counter = 0;
+    // Loop over DFNFaces
+    for(auto& itr : fFaces){
+        DFNFace& initial_face = itr.second;
+
+        for(int i=0; i<2; i++){
+            int orientation = 1 - 2*i; // (i==0?1:-1)
+            // skip 'boundary polyhedron'
+            std::pair<int64_t,int> initialface_orient = {initial_face.Index(),orientation};
+            if(fdfnMesh->GetPolyhedralIndex(initialface_orient)==0) continue;
+            if(fdfnMesh->GetPolyhedralIndex(initialface_orient)< 0) DebugStop();
+            if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
+            subpolygon.Fill(-999999);
+            subpolygon.clear();
+            int inletside = initial_face.FirstRibSide();
+            SetPolygonIndex(initialface_orient,polygon_counter,Polygon_per_face);
+            BuildSubPolygon(Polygon_per_face,initialface_orient,inletside,subpolygon);
+            DFN::BulkSetMaterialId(fdfnMesh->Mesh(),subpolygon,DFNMaterial::Efracture);
+            
+            if(DFN::IsValidPolygon(subpolygon) == false) continue;
+            polygon_counter++;
+            // Check if would-be polygon already exists in the mesh
+            if(FindPolygon(subpolygon)) continue;
+            MeshPolygon(subpolygon);
+        }
+    }
+}
+
+void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
+                                    std::pair<int64_t,int> currentface_orient,
+                                    int inlet_side,
+                                    TPZStack<int64_t>& subpolygon)
+{
+    int polyg_index = GetPolygonIndex(currentface_orient,Polygon_per_face);
+    if(polyg_index < 0) DebugStop();
+
+    DFNFace* current_dfnface = Face(currentface_orient.first);
+    if(!current_dfnface) DebugStop();
+    // add line in face to polygon
+    int64_t nextedge = current_dfnface->LineInFace();
+    subpolygon.push_back(nextedge);
+
+    // Get next face
+    int outlet_side = current_dfnface->OtherRibSide(inlet_side);
+    int nextinlet_side = -1;
+    std::pair<int64_t,int> nextface_orient = PolyhNeighbour(currentface_orient, outlet_side, nextinlet_side);
+
+    // Check if its set to polygon
+    int nextface_polyg_index = GetPolygonIndex(nextface_orient,Polygon_per_face);
+    if(nextface_polyg_index < 0){
+        SetPolygonIndex(nextface_orient,polyg_index,Polygon_per_face);
+        BuildSubPolygon(Polygon_per_face,nextface_orient,nextinlet_side,subpolygon);
+    }
+    else if(nextface_polyg_index != polyg_index) DebugStop();
+}
+
+// void DFNFracture::GetSubPolygons2(){
+//     // SubPolygons are subsets of the fracture surface contained by a polyhedral volume
+//     // A subpolygon is formed whenever (at least) 2 DFNFaces, are refined and part of the same polyhedron
+
+//     TPZStack<DFNPolyhedron,20>& polyhedra = fdfnMesh->Polyhedra();
+//     if(polyhedra.size() < 2){
+//         PZError << "\nUninitialized polyhedra stack in DFNMesh\n";
+//         DebugStop();
+//     }
+//     TPZStack<DFNFace*> dfnfaces(10,nullptr);
+//     TPZStack<int64_t> polygon;
+//     // @todo: std::vector<int> polygon;
+//     for(DFNPolyhedron& polyh : polyhedra){
+//         // gather DFNFaces that share the same polyhedron
+//         dfnfaces.clear();
+//         polyh.ListDFNFaces(this,dfnfaces);
+
+//         if(dfnfaces.size() == 2) continue; // TODO review this condition when we start dealing with fracture boundary
+
+//         int nrefined=0;
+//         for(auto face : dfnfaces){
+//             nrefined += face->NeedsRefinement();
+//         }
+//     }
     
-    // initialize GMsh
+// }
+
+/// Removes negative integers from a stack
+void DFNFracture::ClearNegativeEntries(TPZStack<int64_t>& subpolygon){
+    TPZStack<int64_t> copy(subpolygon);
+    subpolygon.Fill(-999999);
+    subpolygon.clear();
+    for(int64_t& index : copy){
+        if(index > -1 ) subpolygon.push_back(index);
+    }
+}
+
+/** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
+ * @param polygon an oriented loop of edges that don't necessarily occupy the same plane
+*/
+void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
+    // clear collapsed edges from polygon lineloop
+    ClearNegativeEntries(polygon);
+    // Get set of nodes
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    std::set<int64_t> nodes;
+    for(int64_t line : polygon){
+		TPZGeoEl *gel = gmesh->Element(line);
+		nodes.insert(gel->NodeIndex(0));
+		nodes.insert(gel->NodeIndex(1));
+	}
+    int nnodes = nodes.size();
+    int nedges = polygon.size();
+    
+    // If polygon is planar quadrilateral or triangle, we can skip gmsh
+    SetLoopOrientation(polygon);
+    // std::cout<<"SubPolygon# "<<polygon_counter<<": "<<polygon<<std::endl;
+    switch(nnodes){
+        case 3: DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Efracture); return;
+        case 4: if(DFN::AreCoPlanar(gmesh,nodes))
+                    {DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Efracture); return;}
+    }
+
+    // Project nodes onto best fitting plane
+    TPZManVector<REAL,3> centroid(3,0.);
+    TPZManVector<REAL,3> normal(3,0.);
+    TPZFMatrix<REAL> nodecloud(3,nnodes);
+    int j=0;
+	for(int64_t inode : nodes){
+	    TPZManVector<REAL,3> coord(3,0.);
+		gmesh->NodeVec()[inode].GetCoordinates(coord);
+        for(int i=0; i<3; i++){
+            nodecloud(i,j) = coord[i];
+        }
+        j++;
+    }
+    DFN::BestFitPlane(nodecloud,centroid,normal);
+    
     // gmsh::initialize();
-	std::string modelname = "modelsurface";
+	std::string modelname = "model_polyg";
 	gmsh::model::add(modelname);
-    gmsh::model::setCurrent(modelname);
+	gmsh::model::setCurrent(modelname);
+	std::string mshfilename = "LOG/gmshAPI_polyg.msh";
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
-    // INSERT POINTS
-        // iterate over fOutline and get points
-    std::set<int64_t> pointset;
-    {
-        int64_t index = -1;
-        TPZManVector<REAL,3> projcoord(3,0);
-        TPZManVector<REAL,3> realcoord(3,0);
-        for(auto itr : fOutline){
-            TPZGeoEl* gel = itr.second;
-            for(int inode=0; inode<gel->NCornerNodes(); inode++){
-                index = gel->NodeIndex(inode);
-                bool newpoint = pointset.insert(index).second;
-                if(!newpoint){continue;}
-                gel->NodePtr(inode)->GetCoordinates(realcoord);
-                projcoord = fPolygon.GetProjectedX(realcoord);
-                gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],0.,index+shift);
+	// Insert nodes ____________________________________
+	{TPZManVector<REAL,3> coord(3,0.);
+	TPZManVector<REAL,3> projcoord(3,0.);
+	for(int64_t inode : nodes){
+		gmesh->NodeVec()[inode].GetCoordinates(coord);
+		REAL meshsize = 0.;
+        projcoord = DFN::GetProjectedX(coord,centroid,normal);
+		gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],meshsize,inode+gmshshift);
+	}}
+	// Insert lines ____________________________________
+    std::vector<int> lineloop;
+    lineloop.resize(nedges);
+    std::array<int,10> lineloopdebug;
+	for(int i=0; i<nedges; i++){
+        int64_t iline = abs(polygon[i]);
+		TPZGeoEl *gel = gmesh->Element(iline);
+		int64_t node0 = gel->NodeIndex(0)+gmshshift;
+		int64_t node1 = gel->NodeIndex(1)+gmshshift;
+		gmsh::model::geo::addLine(node0,node1,iline+gmshshift);
+		gmsh::model::geo::mesh::setTransfiniteCurve(iline+gmshshift,2);
+        int orientation = (polygon[i] > 0 ? 1 : -1);
+        lineloop[i] = (iline+gmshshift)*orientation;
+        lineloopdebug[i] = lineloop[i];
+	}
+	// Insert faces ____________________________________
+    // wiretag is a dummy vector with the shifted index of the face/curve-loop
+    std::vector<int> wiretag(1,-1);
+    wiretag[0] = gmsh::model::geo::addCurveLoop(lineloop);
+    gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
+    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Efracture);
+    // gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);
+    // gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
+    // gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
 
-            }
-        }
-    }
-    // INSERT LINES
-    std::vector<int> curvesInSurface;
-    {
-        for(auto iter = fOutline.begin(); iter != fOutline.end(); iter++){
-            int64_t iel = iter->first+shift;
-            TPZGeoEl *gel = iter->second;
-            if(gel->Dimension() != 1) continue;
-            int64_t node0 = gel->NodeIndex(0)+shift;
-            int64_t node1 = gel->NodeIndex(1)+shift;
+	
+	// synchronize before meshing
+	gmsh::model::geo::synchronize();
+	// mesh
+	gmsh::model::mesh::generate(2);
+	#ifdef PZDEBUG
+		gmsh::write(mshfilename);
+	#endif //PZDEBUG
+	// import meshed volume back into PZ geoMesh
+	std::set<int64_t>& old_nodes = nodes;
+    TPZVec<int64_t> newelements;
+	ImportElementsFromGMSH(gmesh,2,old_nodes,newelements);
+	gmsh::model::remove();
+	gmsh::clear();
+	// gmsh::finalize();
 
-            gmsh::model::geo::addLine(node0,node1,iel);
-            gmsh::model::geo::mesh::setTransfiniteCurve(iel,2); // to reduce number of nodes created by GMsh
-            bool lineIsInEdge = (std::find(outerLoop.begin(),outerLoop.end(),iel-shift) != outerLoop.end());
-            if(lineIsInEdge == false){
-                curvesInSurface.push_back(iel);
-            }
-        }
-    }
-    // CURVE LOOPS
-        for(auto itr = outerLoop.begin(); itr != outerLoop.end(); itr++){
-            *itr += shift;
-        }
-        int surfaceIndex = 0 + shift;
-        std::vector<int> wiretags(facesInSurface.size()+1,-1);
-        wiretags[0] = gmsh::model::geo::addCurveLoop(outerLoop,surfaceIndex);
-    // Holes in surface
-        for(int iface=0;iface<facesInSurface.size();iface++){
-            TPZGeoEl* face = facesInSurface[iface];
-            std::vector<int> loop;
-            GetCurveLoop(face,loop,shift);
-            wiretags[iface+1] = gmsh::model::geo::addCurveLoop(loop);
-        }
-
-    // SURFACE + HOLES
-        gmsh::model::geo::addPlaneSurface(wiretags,surfaceIndex);
-    
-    // lines in surface
-        // @comment GMsh requires synchronize before embedding geometric entities
-        gmsh::model::geo::synchronize();
-        gmsh::model::mesh::embed(1,curvesInSurface,2,surfaceIndex);
-    // PHYSICAL GROUPS
-        // physical curve
-        int nlines = curvesInSurface.size() + outerLoop.size();
-        if(curvesInSurface.size() > outerLoop.size()){
-            curvesInSurface.reserve(nlines);
-            curvesInSurface.insert(curvesInSurface.end(), outerLoop.begin(), outerLoop.end() );
-
-            gmsh::model::addPhysicalGroup(1,curvesInSurface,DFNMaterial::Efracture);
-        }else{
-            outerLoop.reserve(nlines);
-            outerLoop.insert(outerLoop.end(), curvesInSurface.begin(), curvesInSurface.end() );
-
-            gmsh::model::addPhysicalGroup(1,outerLoop,DFNMaterial::Efracture);
-        }
-        // physical surface
-        gmsh::model::addPhysicalGroup(2,{surfaceIndex},DFNMaterial::Efracture);
-
-    // synchronize before meshing
-        gmsh::model::geo::synchronize();
-    // mesh
-        gmsh::model::mesh::generate(2);
-        // gmsh::model::mesh::optimize("Netgen");
-    // write (for testing)
-        // gmsh::write("testAPI.msh");
-    // import meshed plane back into PZ geoMesh
-        TPZVec<int64_t> newelements;
-        ImportElementsFromGMSH(fdfnMesh->Mesh(),2,pointset,newelements);
-    // close GMsh
-    gmsh::model::remove();
-	// gmsh::clear();
-    // gmsh::finalize();
-    
-    InsertElementsInSurface(newelements);
-    fdfnMesh->CreateSkeletonElements(1, DFNMaterial::Efracture);
 }
 
 
-
-
-
-
-
-
-
-// void DFNFracture::GetSubPolygons(){
+// void DFNFracture::GetSubPolygons_old(){
 //     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
 //     std::map<int, TPZAutoPointer<std::vector<int>>> subpolygons_map; // @todo maybe change this to a vector of autopointers...
 //     // initialize a data structure to track which subpolygons have included which lines

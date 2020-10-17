@@ -132,6 +132,7 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
+			fracture->MeshFractureSurface();
 		}
 
 		// std::ofstream logtest("LOG/dfnlog.txt");
