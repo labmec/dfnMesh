@@ -783,3 +783,20 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 	out<<"\n";
 }
 
+
+
+/// @brief Returns the other 1D side with a DFNRib
+int DFNFace::OtherRibSide(int inletside){
+	if(fGeoEl->SideDimension(inletside) != 1) DebugStop();
+	int nnodes = fGeoEl->NSides(0);
+	int inletedge = inletside-nnodes;
+	if(!fRibs[inletedge]) DebugStop();
+
+	int nedges = fGeoEl->NSides(1);
+	for(int outedge=0; outedge < nedges; outedge++){
+		if(outedge == inletedge) continue;
+		if(fRibs[outedge]) return outedge + nnodes;
+	}
+	DebugStop();
+	return -1;
+}

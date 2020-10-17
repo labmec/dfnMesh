@@ -221,7 +221,21 @@ public:
      */ 
     int64_t LineInFace();
 
-    private: 
+    
+    /// @brief Returns the first 1D side that contains a DFNRib 
+    int FirstRibSide(){
+        int nedges = fGeoEl->NSides(1);
+        for(int iedge=0; iedge<nedges; iedge++){
+            if(fRibs[iedge]) return iedge + fGeoEl->NSides(0);
+        }
+        DebugStop();
+        return -1;
+    }
+
+    /// @brief Returns the other 1D side with a DFNRib
+    int OtherRibSide(int inletside);
+
+private: 
 
     /**
      * @brief Determines split case and fill nodes of children and indices of the intersection points
