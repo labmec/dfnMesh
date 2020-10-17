@@ -2,7 +2,7 @@
 
 
 file(GLOB headers *.h)
-file(GLOB sources DFNRib.cpp DFNFace.cpp DFNVolume.cpp DFNPolygon.cpp DFNFracture.cpp DFNMesh.cpp DFNPolyhedron.cpp)
+file(GLOB sources DFNNamespace.cpp DFNRib.cpp DFNFace.cpp DFNVolume.cpp DFNPolygon.cpp DFNFracture.cpp DFNMesh.cpp DFNPolyhedron.cpp)
 
 # Default Target
 add_executable(dfnTest main.cpp  ${sources} ${headers})
