@@ -1,3 +1,12 @@
+verify volume of polyhedra meshed by gmsh and debugStop if not match
+
+
+
+
+
+
+
+
 # Ongoing
 
 - [ ] HANDLING ELEMENTS WITH BAD ASPECT RATIO
@@ -15,7 +24,7 @@
     - [ ] Fracture that overlaps mesh plane should not divide anything, but rather incorporate mesh ribs onto its plane to define the fracture outline.
       - [ ] The problem with this, is that fracture surface mesh would be made up of MHM faces. This is a considerably different code than the one we've written so far.
       - [ ] A probable solution for this would be using GMsh to mesh all planes parallel to fracture surface (one at a time) in order to keep the father->children structure.
-        - [ ] If so, it might help to define another map for faces that are parallel to fracPlane.
+        - [ ] If so, it might help to define another map for faces that are parallel to fracPolygon.
 - [ ] Geometrical center -> Centroid (in documentation)
 
 
@@ -60,7 +69,7 @@
   - [x] Store in mid-faces if has 2 ribs cut
   - [x] Store in end-faces if has 1 rib cut
 - [x] Find intersection points in end-faces
-  - [x] figure out 'prettiest' conversion from TPZGeoEl to DFNFracPlane
+  - [x] figure out 'prettiest' conversion from TPZGeoEl to DFNPolygon
   - [x] create EPoint for intersection points 
 - [x] Connect intersection points to define fracture surface outline
   - [x] Connect them at the time an intersected face is found and pair of points are created
@@ -78,7 +87,7 @@
     - [x] Refpattern for ribs shouldn't be uniform
   - [x] Use PZ's data structure to specify level of element splitting
 - [X] Swap pzgeoel::NNodes() for pzgeoel::NCornerNodes where necessary
-- [x] Mesh fracplane 
+- [x] Mesh polygon 
   - [X] ~~*Ear-clipping-like algorithm*~~ [2019-09-30] 
   - [x] Legalize triangles 
   - [x] GMsh is doing it perfectly

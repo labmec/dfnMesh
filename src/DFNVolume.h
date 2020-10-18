@@ -42,6 +42,8 @@ class DFNVolume
   public:
     /// Empty constructor
     DFNVolume();
+    /// Empty destructor
+    ~DFNVolume(){};
     
     /// Constructor
     DFNVolume(int64_t index, bool iscut);
@@ -72,5 +74,8 @@ class DFNVolume
 
     /// Get 2D elements enclosed by volume
     TPZVec<int64_t> GetFacesInVolume(){return fEnclosedFaces;}
+
+    /** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout) const;
 };
 #endif /* DFNVolume_h */
