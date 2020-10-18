@@ -52,13 +52,6 @@ private:
     std::map<int64_t, DFNVolume> fVolumes;
 
 public:
-    // // Local enumeration of material indices
-    // enum class Ematerial {intact = 1, fracture = 2, surface = 2, refined = 3, transition = 3};
-    
-    /// Material tags
-    // const int MatIntact = 1;
-    // const int MatFracture = 2;
-    // const int MatRefined = 3;
     
     /// Constructor
     DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = 1e-5, REAL tolerableAngle = 0.2);
@@ -108,22 +101,22 @@ public:
      */
     void CreateSkeletonElements(int dimension, int matid = -1);
     
-    /// Setup datastructure for fractured volumes (including finding fracture elements enclosed by them)
-    void CreateVolumes();
+    // /// Setup datastructure for fractured volumes (including finding fracture elements enclosed by them)
+    // void CreateVolumes();
     
     /// Exports a .geo file for this mesh
     void ExportGMshCAD(std::string filename);
     
-    /// Uses gmsh API to tetrahedralize a DFNVolume
-    void Tetrahedralize(DFNVolume *volume);
+    // /// Uses gmsh API to tetrahedralize a DFNVolume
+    // void Tetrahedralize(DFNVolume *volume);
     
-    /// Find the volumetrical element that encloses a 2D element
-    bool FindEnclosingVolume(TPZGeoEl *ifracface);
+    // /// Find the volumetrical element that encloses a 2D element
+    // bool FindEnclosingVolume(TPZGeoEl *ifracface);
     /**
-     * @brief Tetrahedralize fractured volumes and refine intact volumes
-     * @todo refine intact volumes and maybe we could pass a target measure for subelements size as parameter
-     */
-    void GenerateSubMesh();
+    //  * @brief Tetrahedralize fractured volumes and refine intact volumes
+    //  * @todo refine intact volumes and maybe we could pass a target measure for subelements size as parameter
+    //  */
+    // void GenerateSubMesh();
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
@@ -230,22 +223,6 @@ private:
      */
     void QueueNeighbours(TPZGeoEl* gel,   std::list<int64_t> &candidate_queue);
     
-    /**
-     * @brief Deletes face + ribs (if left isolated) + nodes (if left isolated)
-     * @param face: 2D element to be deleted
-     */
-    void DeleteElementAndRibs(TPZGeoEl *face);
-    /**
-     * @brief Deletes gel + children + isolated ribs + unused nodes
-     * @note It will assume element has been found not to belong to the domain of interest and will not verify
-     * @param gel: pointer to the geometric element
-     */
-    void CropExternalElement(TPZGeoEl *gel);
-    /**
-     * @brief Deletes gel and all elements that share the same eldest ancestor, then deletes the ancestor
-     * @param gel: Any member of the family
-     */
-    void DeleteFamily(TPZGeoEl *gel);
     /**
      * @brief Check if the neighbour has equal dimension
      * @param geliside GeoElement side

@@ -28,11 +28,11 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh)
     :fPolygon(Polygon)
 {
     fdfnMesh = dfnMesh;
-    // Set corner nodes of fracture into mesh
-    // @todo I'll remove this after surface meshing is updated to use the SubPolygons
-    if(fdfnMesh->Dimension() == 3){
-        TPZManVector<int64_t,4> nodeindices = fPolygon.SetPointsInGeomesh(fdfnMesh->Mesh());
-    }
+    // // Set corner nodes of fracture into mesh
+    // // @todo I'll remove this after surface meshing is updated to use the SubPolygons
+    // if(fdfnMesh->Dimension() == 3){
+    //     TPZManVector<int64_t,4> nodeindices = fPolygon.SetPointsInGeomesh(fdfnMesh->Mesh());
+    // }
     // fPolygon.FindNodesAbove(fdfnMesh->Mesh());
 }
 
@@ -48,7 +48,6 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
 	fFaces = copy.fFaces;
     fPolygon = copy.fPolygon;
     fSurface = copy.fSurface;
-    fOutline = copy.fOutline;
     return *this;
 }
 
@@ -279,144 +278,142 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
 
 
 
-void DFNFracture::GetOuterLoop(std::vector<int> &loop){
-    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    // Compute fracture edges' lenghts
-    int nedges = fPolygon.GetCornersX().Cols();
-    TPZVec<REAL> edgelength(nedges,0);
-    Matrix fraccorners(3,nedges);
-    fraccorners = fPolygon.GetCornersX();
-    for(int i = 0; i < nedges; i++){
-        edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
-                              +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
-                              +pow(fraccorners(2,i)-fraccorners(2,(i+1)%nedges),2));
-    }
+// void DFNFracture::GetOuterLoop(std::vector<int> &loop){
+//     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+//     // Compute fracture edges' lenghts
+//     int nedges = fPolygon.GetCornersX().Cols();
+//     TPZVec<REAL> edgelength(nedges,0);
+//     Matrix fraccorners(3,nedges);
+//     fraccorners = fPolygon.GetCornersX();
+//     for(int i = 0; i < nedges; i++){
+//         edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
+//                               +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
+//                               +pow(fraccorners(2,i)-fraccorners(2,(i+1)%nedges),2));
+//     }
     
-	// vector of pointers to maps
-    // @todo refactor this to tpzautopointer<map> to prevent memory leak
-	// TPZManVector<std::map<REAL, int64_t>* > edgemap(nedges);
-	TPZManVector<TPZAutoPointer<std::map<REAL, int64_t>> > edgemap(nedges);
-    for(int i = 0; i < nedges; i++){
-        edgemap[i] = new std::map<REAL, int64_t>;
-    }
-    // The set of points that have already been checked
-    std::set<int64_t> checked;
+// 	// vector of pointers to maps
+//     // @todo refactor this to tpzautopointer<map> to prevent memory leak
+// 	// TPZManVector<std::map<REAL, int64_t>* > edgemap(nedges);
+// 	TPZManVector<TPZAutoPointer<std::map<REAL, int64_t>> > edgemap(nedges);
+//     for(int i = 0; i < nedges; i++){
+//         edgemap[i] = new std::map<REAL, int64_t>;
+//     }
+//     // The set of points that have already been checked
+//     std::set<int64_t> checked;
 
-    // iterate over all endfaces and map it to the fracture-edge that cuts it
-    for (auto it = fFaces.begin(); it != fFaces.end(); it++){
-        // get intersection node index and coordinates
-        DFNFace *iface = &it->second;
-        // @todo iface->IsOnBoundary2
-        TPZManVector<REAL,3> ipointcoord = iface->IntersectionCoord();
-        if(ipointcoord.size()<2) continue;
-        int64_t ipointindex = iface->IntersectionIndex();
+//     // iterate over all endfaces and map it to the fracture-edge that cuts it
+//     for (auto it = fFaces.begin(); it != fFaces.end(); it++){
+//         // get intersection node index and coordinates
+//         DFNFace *iface = &it->second;
+//         // @todo iface->IsOnBoundary2
+//         TPZManVector<REAL,3> ipointcoord = iface->IntersectionCoord();
+//         if(ipointcoord.size()<2) continue;
+//         int64_t ipointindex = iface->IntersectionIndex();
 
-        // check if point was already checked
-        auto aux = checked.insert(ipointindex);
-        bool already_checked = !aux.second;
-        if(already_checked) continue;
+//         // check if point was already checked
+//         auto aux = checked.insert(ipointindex);
+//         bool already_checked = !aux.second;
+//         if(already_checked) continue;
 
-        // @todo if(ipointindex == any of the polygon.CornerIndex) continue;
-        // iterate over edges to check if ipoint belongs to it
-        for(int iedge = 0; iedge < nedges; iedge++){
-			//vectors from ipoint to iedge's nodes
-			TPZManVector<REAL, 3> v1(3);
-				v1[0] = fraccorners(0,iedge) - ipointcoord[0];
-				v1[1] = fraccorners(1,iedge) - ipointcoord[1];
-				v1[2] = fraccorners(2,iedge) - ipointcoord[2];
-			TPZManVector<REAL, 3> v2(3);
-				v2[0] = fraccorners(0,(iedge+1)%nedges) - ipointcoord[0];
-				v2[1] = fraccorners(1,(iedge+1)%nedges) - ipointcoord[1];
-				v2[2] = fraccorners(2,(iedge+1)%nedges) - ipointcoord[2];
-			// square of cross product
-			REAL temp = pow(v1[1]*v2[2] - v1[2]*v2[1],2);
-				temp += pow(v1[2]*v2[0] - v1[0]*v2[2],2);
-				temp += pow(v1[0]*v2[1] - v1[1]*v2[0],2);
-				temp = sqrtl(temp);
-            // check if point is in edge by calculating if it's normal distance to the edge is zero
-            REAL dist = temp/edgelength[iedge];
-			if(dist<DFN::gSmallNumber){
-				// compute local 1D coordinate (alpha)
-				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
-				REAL alpha = norm/edgelength[iedge];
-				if(alpha > 1+DFN::gSmallNumber){std::cout<<"\nMisattribution of point to edge\n";DebugStop();}
-				// map intersection indexes from smallest alpha to biggest
-                // map <alpha, index>
-				edgemap[iedge]->insert({alpha, ipointindex});
-			}
-        }
-    }
-    bool warning_message_Q = true;
-    //Once intersections on fracture-edges have been properly ordered and mapped by edge
-	//iterate over edges to split them
-	for (int iedge = 0; iedge < nedges; iedge++)
-	{
-		int64_t nels = gmesh->NElements();
-		TPZManVector<int64_t,2> inodes(2);     //index of nodes to be connected
-        int icorner = iedge; //for readability
+//         // @todo if(ipointindex == any of the polygon.CornerIndex) continue;
+//         // iterate over edges to check if ipoint belongs to it
+//         for(int iedge = 0; iedge < nedges; iedge++){
+// 			//vectors from ipoint to iedge's nodes
+// 			TPZManVector<REAL, 3> v1(3);
+// 				v1[0] = fraccorners(0,iedge) - ipointcoord[0];
+// 				v1[1] = fraccorners(1,iedge) - ipointcoord[1];
+// 				v1[2] = fraccorners(2,iedge) - ipointcoord[2];
+// 			TPZManVector<REAL, 3> v2(3);
+// 				v2[0] = fraccorners(0,(iedge+1)%nedges) - ipointcoord[0];
+// 				v2[1] = fraccorners(1,(iedge+1)%nedges) - ipointcoord[1];
+// 				v2[2] = fraccorners(2,(iedge+1)%nedges) - ipointcoord[2];
+// 			// square of cross product
+// 			REAL temp = pow(v1[1]*v2[2] - v1[2]*v2[1],2);
+// 				temp += pow(v1[2]*v2[0] - v1[0]*v2[2],2);
+// 				temp += pow(v1[0]*v2[1] - v1[1]*v2[0],2);
+// 				temp = sqrtl(temp);
+//             // check if point is in edge by calculating if it's normal distance to the edge is zero
+//             REAL dist = temp/edgelength[iedge];
+// 			if(dist<DFN::gSmallNumber){
+// 				// compute local 1D coordinate (alpha)
+// 				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
+// 				REAL alpha = norm/edgelength[iedge];
+// 				if(alpha > 1+DFN::gSmallNumber){std::cout<<"\nMisattribution of point to edge\n";DebugStop();}
+// 				// map intersection indexes from smallest alpha to biggest
+//                 // map <alpha, index>
+// 				edgemap[iedge]->insert({alpha, ipointindex});
+// 			}
+//         }
+//     }
+//     bool warning_message_Q = true;
+//     //Once intersections on fracture-edges have been properly ordered and mapped by edge
+// 	//iterate over edges to split them
+// 	for (int iedge = 0; iedge < nedges; iedge++)
+// 	{
+// 		int64_t nels = gmesh->NElements();
+// 		TPZManVector<int64_t,2> inodes(2);     //index of nodes to be connected
+//         int icorner = iedge; //for readability
 
-		// connect first end-face intersection to iedge's first node
-        inodes[0] = fPolygon.CornerIndex(icorner);
-		auto it = edgemap[iedge]->begin();
-        if(edgemap[iedge]->size() == 0){
-            #ifdef PZDEBUG
-                if(warning_message_Q){
-                    PZError<<"\n Warning: Is there an edge of a fracture that doesn't cut any element? \n\n";
-                    warning_message_Q = false;
-                }
-            #endif //PZDEBUG
-            // DebugStop();
-        }
-        // iterate over iedge's map
-        while(it != edgemap[iedge]->end()){
-            inodes[1] = it->second;
-            gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
-            loop.push_back((int) nels);
-            inodes[0] = inodes[1];
-            it++;
-        }
+// 		// connect first end-face intersection to iedge's first node
+//         inodes[0] = fPolygon.CornerIndex(icorner);
+// 		auto it = edgemap[iedge]->begin();
+//         if(edgemap[iedge]->size() == 0){
+//             #ifdef PZDEBUG
+//                 if(warning_message_Q){
+//                     PZError<<"\n Warning: Is there an edge of a fracture that doesn't cut any element? \n\n";
+//                     warning_message_Q = false;
+//                 }
+//             #endif //PZDEBUG
+//             // DebugStop();
+//         }
+//         // iterate over iedge's map
+//         while(it != edgemap[iedge]->end()){
+//             inodes[1] = it->second;
+//             gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
+//             loop.push_back((int) nels);
+//             inodes[0] = inodes[1];
+//             it++;
+//         }
 
-		// connect last end-intersection to edge last node
-        inodes[1] = fPolygon.CornerIndex((icorner+1)%nedges);
-		gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
-        loop.push_back((int) nels);
-    }
+// 		// connect last end-intersection to edge last node
+//         inodes[1] = fPolygon.CornerIndex((icorner+1)%nedges);
+// 		gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
+//         loop.push_back((int) nels);
+//     }
 	
-    gmesh->BuildConnectivity();
-    // correct duplicates
-    int nlines = loop.size();
-    TPZGeoEl* gel;
-    for(int iline=0; iline<nlines; iline++){
-        int iedge = loop[iline];
-        gel = gmesh->Element(iedge);
-        if(!gel || gel->Dimension() != 1) DebugStop();
-        TPZGeoElSide gelside(gel,2);
-        TPZGeoElSide neig = gelside.Neighbour();
-        bool newedge_Q = true;
-        for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
-            if(neig.Element()->Dimension() != 1) continue;
-            // if duplicate, replace in loop and delete duplicate
-            newedge_Q = false;
-            loop[iline] = neig.Element()->Index(); 
-            gmesh->DeleteElement(gel,iedge);
-        }
-        // if it's new, add it to fOutline
-        if(newedge_Q){fOutline.insert({iedge,gel});}
-    }
+//     gmesh->BuildConnectivity();
+//     // correct duplicates
+//     int nlines = loop.size();
+//     TPZGeoEl* gel;
+//     for(int iline=0; iline<nlines; iline++){
+//         int iedge = loop[iline];
+//         gel = gmesh->Element(iedge);
+//         if(!gel || gel->Dimension() != 1) DebugStop();
+//         TPZGeoElSide gelside(gel,2);
+//         TPZGeoElSide neig = gelside.Neighbour();
+//         bool newedge_Q = true;
+//         for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
+//             if(neig.Element()->Dimension() != 1) continue;
+//             // if duplicate, replace in loop and delete duplicate
+//             newedge_Q = false;
+//             loop[iline] = neig.Element()->Index(); 
+//             gmesh->DeleteElement(gel,iedge);
+//         }
+//         // if it's new, add it to fOutline
+//         if(newedge_Q){fOutline.insert({iedge,gel});}
+//     }
 
-    // fix orientation
-    for(int iline=1; iline<nlines; iline++){
-        int iline_index = loop[iline];
-        gel = gmesh->Element(iline_index);
-        int anterior_index = loop[(iline+nlines-1)%nlines];
-        TPZGeoEl *anterior = gmesh->Element(anterior_index);
-        if(gel->NodeIndex(0) != anterior->NodeIndex(1)){
-            loop[iline] *= -1;
-        }
-    }
-}
-
-
+//     // fix orientation
+//     for(int iline=1; iline<nlines; iline++){
+//         int iline_index = loop[iline];
+//         gel = gmesh->Element(iline_index);
+//         int anterior_index = loop[(iline+nlines-1)%nlines];
+//         TPZGeoEl *anterior = gmesh->Element(anterior_index);
+//         if(gel->NodeIndex(0) != anterior->NodeIndex(1)){
+//             loop[iline] *= -1;
+//         }
+//     }
+// }
 
 
 
@@ -426,36 +423,6 @@ void DFNFracture::GetOuterLoop(std::vector<int> &loop){
 
 
 
-
-
-void DFNFracture::GetFacesInSurface(std::vector<TPZGeoEl*> &faces){
-    faces.reserve(20);
-    std::map<int64_t, int> candidates;
-    TPZGeoEl *cand_face;
-    int nedges;
-    TPZGeoEl *edge;
-    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    // loop through edges in outline and check their 2D neighbours
-    for(auto itr = fOutline.begin(); itr != fOutline.end(); itr++){
-        edge = itr->second;
-        TPZGeoElSide gelside(edge,2);
-        TPZGeoElSide neig = gelside.Neighbour();
-        for(/*void*/;neig!=gelside; neig = neig.Neighbour()){
-            cand_face = neig.Element();
-            if(cand_face->Dimension() != 2) continue;
-            nedges = cand_face->NCornerNodes();
-            int64_t index = cand_face->Index();
-            if(++candidates[index] < nedges) continue;
-            // @todo{ if 2 or more edges of cand_face belong to fracture outerloop
-                // cand_face will not enter;
-                // the matching edges should be swaped by the remaining edges of cand_face
-                // pay attention to the orientation  }
-            faces.push_back(gmesh->Element(index));
-            SetMaterialIDChildren(DFNMaterial::Efracture,cand_face);
-            fSurface.insert({index,cand_face});
-        }
-    }
-}
 
 
 
@@ -1197,95 +1164,6 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std:
 
 
 
-
-
-
-
-
-
-
-
-
-void DFNFracture::AssembleOutline(){
-    // Build skeleton of 1D elements between new subelements
-    fdfnMesh->CreateSkeletonElements(1);
-    DFNFace *face = nullptr;
-    TPZGeoEl *face_gel = nullptr;
-
-    for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
-        face = &itr->second;
-        face_gel = face->GeoEl();
-        int n_intersection_points = 0;
-        for(int istate : face->StatusVec()){
-            n_intersection_points += istate;
-        }
-        if(n_intersection_points < 2) continue;
-
-        int nsides = face_gel->NSides();
-        int nnodes = face_gel->NCornerNodes();
-        TPZStack<int64_t> framenodes;
-        for(int i=0; i<nsides; i++){
-            if(face->StatusVec()[i]){
-                if(i<nnodes){
-                    framenodes.push_back(face_gel->NodeIndex(i));
-                }else if(i<nsides-1){
-                    framenodes.push_back(face->Rib(i-nnodes)->IntersectionIndex());
-                }else if(i == nsides-1){
-                    framenodes.push_back(face->IntersectionIndex());
-                }
-            }
-        }
-        TPZGeoEl *frame_el = nullptr;
-        int64_t frame_el_index = -1;
-        int nchildren = face_gel->NSubElements();
-        if(nchildren == 0){nchildren++;}
-        // queue all possible lines by checking 1D neighbours of children
-		std::set<TPZGeoEl *> candidate_ribs;
-		for(int ichild=0; ichild<nchildren; ichild++){
-            TPZGeoEl* child;
-            if(face_gel->HasSubElement()){
-                child = face_gel->SubElement(ichild);
-            }else{
-                child = face_gel;
-            }
-			int nribs = child->NCornerNodes();
-			for(int cside = nribs; cside < 2*nribs; cside++){
-				TPZGeoElSide childside(child,cside);
-				TPZGeoElSide neig = childside.Neighbour();
-				for(/*void*/; neig != childside; neig = neig.Neighbour()){
-					if(neig.Element()->Dimension() != 1) continue;
-					candidate_ribs.insert(neig.Element());
-                    break;
-				}
-			}
-		}
-        bool enters_Q = false;
-        int nframenodes = framenodes.size();
-        int counter = 0;
-        for(auto candidate : candidate_ribs){
-            for(int inode=0; inode<nframenodes; inode++){
-                if(framenodes[inode]==candidate->NodeIndex(0)){
-                    for(int nextnode=0; nextnode<nframenodes; nextnode++){
-                        if(framenodes[nextnode]==candidate->NodeIndex(1)){
-                            enters_Q = true;
-                            break;
-                        }
-                    }
-                }
-                if(enters_Q) break;
-            }
-            if(!enters_Q) continue;
-            frame_el = candidate;
-            frame_el_index = candidate->Index();
-            fOutline.insert({frame_el_index,frame_el});
-            frame_el->SetMaterialId(DFNMaterial::Efracture);
-            enters_Q = false;
-            counter++;
-            if(counter==2) break; //2 ribs is already an exception... 3 should never happen
-            // if(counter==framenodes.size()-1) break;
-        }
-    }
-}
 
 
 

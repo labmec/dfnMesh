@@ -52,14 +52,8 @@ private:
 	/// A planar convex polygon that defines the outline of the fracture
 	DFNPolygon fPolygon;
 	
-	/// Map of elements on fracture surface
-    // @TODO what is the value of the first key?
+	/// Map of elements on fracture surface {Elindex,Elpointer}
 	std::map<int64_t, TPZGeoEl *> fSurface;
-
-	/// A set of constraints to the surface mesh of the fracture
-    // @TODO I have no idea what constraint means? I see a map of geometric elements
-    // @TODO what is the value of the first key?
-	std::map<int64_t, TPZGeoEl *> fOutline;
 
 public:
     
@@ -136,8 +130,6 @@ private:
     int GetPolygonIndex(std::pair<int64_t,int> face_orient,const TPZVec<std::array<int, 2>>& Polygon_per_face);
     /// Builds and fills a list with this fracture outer loop of edges
     void GetOuterLoop(std::vector<int> &outerLoop);
-    /// Find faces that should be incorporated to fracture surface
-    void GetFacesInSurface(std::vector<TPZGeoEl*> &faces);
 
     /** @brief Insert elements in the map of elements in surface */
     void InsertElementsInSurface(TPZVec<int64_t> &idvec){
@@ -162,10 +154,6 @@ public:
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
     /// Triangulates fracture surface from outline
     void MeshFractureSurface();
-    /// Assemble the set of constraints that outlines the fracture surface
-    void AssembleOutline();
-    /// Assemble subpolygons (as ordered line loops of 1D members of the Outline)
-    void GetSubPolygons();
    /// Access the ribs data structure
     void AddRib(DFNRib &rib);
     
