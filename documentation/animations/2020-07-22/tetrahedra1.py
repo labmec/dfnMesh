@@ -12,7 +12,7 @@ destination = "documentation/animations/2020-07-22/"
 # ../examples/<example>
 example = destination+"tetrahedra1.txt"
 # ../examples/<msh>
-msh = "examples/tetrahedra3.msh"
+msh = "examples/tetrahedra1.msh"
 
 preamble = (
 """NumberOfFractures 1
@@ -21,8 +21,8 @@ Fracture 0 4"""
 )
 z = "\n-1.50 -1.50  1.50  1.50"
 
-# toldist = [0.01, 0.333]
-toldist = [0.01, 0.05]
+toldist = [0.01, 0.333]
+# toldist = [0.01, 0.05]
 tolangle = [0.01, (19)*math.pi/180]
 step = 0.5
 # steps = 0
