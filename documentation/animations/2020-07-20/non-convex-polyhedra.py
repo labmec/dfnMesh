@@ -30,14 +30,17 @@ x = "\n-1.00  5.00  5.00 -1.00"
 z = "\n-1.00 -1.00  5.00  5.00"
 
 toldist = 0.6
+# toldist = 0.00006
 step = 0.05
 # steps = 0
-y0 = -1.0
+yinitial = -1.0
 yfinal = 6.5
-steps = int((yfinal-y0)/step)
+steps = int((yfinal-yinitial)/step)
 steps += 1
 
 for i in range(steps):
+# for i in range(101,102):
+    y0 = yinitial+step*i
     f = open(example,"w+")
     f.write(preamble)
     f.write(x)
@@ -60,7 +63,6 @@ for i in range(steps):
               , vtkfile+".vtk"
               , destination+vtkfile+"."+str(i)+".vtk"]
     subprocess.call(rename)
-    y0 += step
 
 
 # for i in range(steps):

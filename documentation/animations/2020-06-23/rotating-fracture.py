@@ -8,9 +8,9 @@ import math
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
 # where to save vtk files?
-destination = "documentation/animations/2020-06-25/"
+destination = "documentation/animations/2020-06-23/"
 # ../examples/<example>
-example = "scripts/rotating-fracture.txt"
+example = destination+"rotating-fracture.txt"
 # ../examples/<msh>
 msh = "no-msh-file"
 
@@ -37,9 +37,10 @@ steps += 1
 x0 = 4.0
 y0 = 4.0
 r = 5.66
-theta = 0
+theta0 = 0
 
 for i in range(steps):
+    theta = theta0 + i*step
     f = open(example,"w+")
     f.write(preamble)
     x1 = x0+r*math.cos(theta)
@@ -64,7 +65,6 @@ for i in range(steps):
               , vtkfile+".vtk"
               , destination+vtkfile+"."+str(i)+".vtk"]
     subprocess.call(rename)
-    theta += step
 
 
 # for i in range(steps):

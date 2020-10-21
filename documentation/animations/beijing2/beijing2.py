@@ -1,6 +1,6 @@
-# @brief Example number 2 for cilamce2020 paper
+# @brief Example number 2 for LSEC Seminar 2020 (Beijing)
 # @author github/PedroLima92
-# @date august 2020
+# @date october 2020
 
 import subprocess
 import math
@@ -8,11 +8,11 @@ import math
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
 # where to save vtk files?
-destination = "documentation/animations/cilamce/ex2/"
+destination = "documentation/animations/beijing2/"
 # ../examples/<example>
-example = destination+"cilamce2.txt"
+example = destination+"beijing2.txt"
 # ../examples/<msh>
-msh = "no-msh-file"
+msh = "examples/tetrahedra2.msh"
 
 
 
@@ -20,43 +20,47 @@ msh = "no-msh-file"
 firstFracture = (
 """\n\n
 Fracture 1 4
- 3.00  3.00  3.00  3.00
--1.00  5.00  5.00 -1.00
--1.50 -1.50  5.50  5.50
+ 0.50  0.50  0.50  0.50
+-1.50  1.50  1.50 -1.50
+-1.50 -1.50  1.50  1.50
 """)
 
 
 
 
 
-preamble = (
-"""Domain
-4.0 4.0 4.0
+preamble = ("NumberOfFractures 1")
+# """Domain
+# 4.0 4.0 4.0
 
-Mesh
-EQuadrilateral
-2 2 2
+# Mesh
+# EQuadrilateral
+# 2 2 2
 
-NumberOfFractures 2
+# NumberOfFractures 2
 
-"""
-)
-x = "\nFracture 0 4\n-1.00  5.00  5.00 -1.00"
-z = "\n-1.00 -1.00  5.00  5.00"
+# """
+# )
 
-toldist = 0.8
+x = "\n-2.00  2.00  2.00 -2.00"
+z = "\n-2.00 -2.00  2.00  2.00"
+
+toldist = 0.2
+tolangle = 0.5
 step = 0.07
 # steps = 0
-starty0 = 1.85
-yfinal = 5.0
+starty0 = -1.0
+yfinal = 0.9999
 steps = int((yfinal-starty0)/step)
 steps += 1
 
 for i in range(steps):
-# for i in range(17,18):
+# for i in range(3,4):
+    print("step ",i)
     y0 = starty0 + i*step
     f = open(example,"w+")
     f.write(preamble)
+    f.write("\n\nFracture 0 4")
     f.write(x)
     if y0 < 0 :
         y = ("\n%.2f %.2f %.2f %.2f" % (y0,y0,y0,y0))
@@ -64,14 +68,18 @@ for i in range(steps):
         y = ("\n %.2f  %.2f  %.2f  %.2f" % (y0,y0,y0,y0))
     f.write(y)
     f.write(z)
-    f.write(firstFracture)
+    # f.write("\n\nFracture 1 4")
+    # f.write(y)
+    # f.write(x)
+    # f.write(z)
     f.close()
     # run dfnMesh
     print(y0)
     dfnMesh = ["build/src/dfnTest"
               ,example
               ,msh
-              ,str(toldist)]
+              ,str(toldist)
+              ,str(tolangle)]
     subprocess.call(dfnMesh)
     # @todo exception handler to stop loop could go in here
     rename = ["cp"
