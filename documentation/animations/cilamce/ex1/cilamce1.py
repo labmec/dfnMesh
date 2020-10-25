@@ -27,22 +27,23 @@ NumberOfFractures 1
 
 """
 )
-x = "\nFracture 0 4\n-1.00  5.00  5.00 -1.00"
+x = "\n-1.00  5.00  5.00 -1.00"
 z = "\n-1.00 -1.00  5.00  5.00"
 
-toldist = 0.8
+toldist = 0.5
 step = 0.07
 # steps = 0
-starty0 = 1.85
+starty0 = -0.1
 yfinal = 5.0
 steps = int((yfinal-starty0)/step)
 steps += 1
 
-# for i in range(steps):
-for i in range(17,18):
+for i in range(steps):
+# for i in range(17,18):
     y0 = starty0 + i*step
     f = open(example,"w+")
     f.write(preamble)
+    f.write("\nFracture 0 4")
     f.write(x)
     if y0 < 0 :
         y = ("\n%.2f %.2f %.2f %.2f" % (y0,y0,y0,y0))

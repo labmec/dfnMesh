@@ -311,7 +311,7 @@ namespace DFN{
         return true;
     }
 
-    /** @brief Set material ids for a set of element indices and skip -1 entries*/
+    /** @brief Set material ids for a set of element indices and skip negative entries*/
     template<class TContainer>
     void BulkSetMaterialId(TPZGeoMesh* gmesh, TContainer elementindices, int matid){
         if(elementindices.size() < 1) DebugStop();
@@ -326,6 +326,7 @@ namespace DFN{
     */
     bool IsValidPolygon(TPZStack<int64_t> polygon);
 
+    /** @brief returns the intersection of 2 sets*/
     template<typename Ttype>
     std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2){
         std::set<Ttype> intersection;
