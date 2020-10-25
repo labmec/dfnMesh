@@ -141,7 +141,7 @@ private:
             {InsertElementsInSurface(el);}
     }
     void InsertElementsInSurface(TPZGeoEl* el){fSurface.insert({el->Index(),el});}
-/// Removes negative integers from a stack
+    /// Removes negative integers from a stack
     void ClearNegativeEntries(TPZStack<int64_t>& subpolygon);
 
     /** @} */
@@ -152,7 +152,7 @@ public:
 
     /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
     /// @param dim: Filter by dimension. Set -1 to skip filter
-    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, int dim = -1);
+    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim = -1);
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
     /// Triangulates fracture surface from outline

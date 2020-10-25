@@ -242,6 +242,8 @@ void DFNFracture::RefineRibs(){
         rib.Refine();
     }
 }
+
+
 void DFNFracture::RefineFaces(){
     for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
         DFNFace *face = &itr->second;
@@ -256,6 +258,7 @@ void DFNFracture::RefineFaces(){
         face->Refine();
     }
     fdfnMesh->CreateSkeletonElements(1);
+    if(fdfnMesh->Dimension() < 3){SetFracMaterial_2D();}
 }
 
 
@@ -638,10 +641,30 @@ void DFNFracture::SetLoopOrientation(TPZStack<int64_t>& edgelist){
     }
 }
 
-TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, int dim){
+namespace DFN{
+    template<typename Ttype>
+    std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2){
+        std::set<Ttype> intersection;
+        std::set<int64_t>& smaller_set =  set1.size() > set2.size() ? set2 : set1;
+        std::set<int64_t>& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
+
+        if(smaller_set.size() < 1) return intersection; //empty set
+
+        auto end = bigger_set.end();
+        for(auto& iel : smaller_set){
+            auto itr = bigger_set.find(iel);
+            if(itr == end) continue;
+            intersection.insert(*itr);
+        }
+        return intersection;
+    }
+}
+
+TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
     TPZGeoMesh* gmesh = gelside1.Element()->Mesh();
     std::set<int64_t> neighbours1;
     std::set<int64_t> neighbours2;
+    std::set<int64_t> neighbours3;
 
     TPZGeoElSide neig;
     for(neig = gelside1.Neighbour(); neig != gelside1; neig = neig.Neighbour()){
@@ -656,18 +679,32 @@ TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide&
         neighbours2.insert(neig_el->Index());
     }
     if(neighbours2.size() < 1) return nullptr;
-
-    std::set<int64_t>& smaller_set =  neighbours1.size() > neighbours2.size() ? neighbours2 : neighbours1;
-    std::set<int64_t>& bigger_set = !(neighbours1.size() > neighbours2.size()) ? neighbours2 : neighbours1;
-
-    for(auto& iel : smaller_set){
-        auto itr = bigger_set.find(iel);
-        if(itr == bigger_set.end()) continue;
-        return gmesh->Element(*itr);
+    for(neig = gelside3.Neighbour(); neig != gelside3; neig = neig.Neighbour()){
+        TPZGeoEl* neig_el = neig.Element();
+        if(dim > -1 && neig_el->Dimension() != dim) continue;
+        neighbours3.insert(neig_el->Index());
     }
+    if(neighbours3.size() < 1) return nullptr;
 
-    
-    return nullptr;
+    std::set<int64_t> common = DFN::set_intersection(neighbours1,neighbours3);
+    if(common.size() < 1) return nullptr;
+    common = DFN::set_intersection(common,neighbours2);
+
+    if(common.size() > 1) DebugStop(); // I don't think this could possibly happen, but if it ever does, I've left a weaker imposition rather than DebugStop() commented below
+    // {
+        // // in this case, what you probably want is 
+        // for(auto& iel : common){
+        //     if(gmesh->Element(*itr)->HasSubElement()) continue;
+        //     return gmesh->Element(*itr);
+        // }
+        // DebugStop();
+        // // or maybe just bet on the highest index candidate
+        // return gmesh->Element(*(common.rbegin()));
+    // }
+    if(common.size() < 1) return nullptr;
+
+    return gmesh->Element(*(common.begin()));
+
 }
 
 TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
@@ -679,13 +716,17 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     i++;
     while(polygon[i]<0) i++;
     TPZGeoEl* gel2 = gmesh->Element(polygon[i]);
+    i++;
+    while(polygon[i]<0) i++;
+    TPZGeoEl* gel3 = gmesh->Element(polygon[i]);
 
-    if(gel1->Dimension() != 1 || gel2->Dimension() != 1) DebugStop();
+    if(gel1->Dimension() != 1 || gel2->Dimension() != 1 || gel3->Dimension() != 1) DebugStop();
 
     TPZGeoElSide gelside1(gel1,2);
     TPZGeoElSide gelside2(gel2,2);
+    TPZGeoElSide gelside3(gel3,2);
 
-    TPZGeoEl* common_neig = FindCommonNeighbour(gelside1,gelside2,2);
+    TPZGeoEl* common_neig = FindCommonNeighbour(gelside1,gelside2,gelside3,2);
 
     if(!common_neig) return nullptr;
 
@@ -726,6 +767,8 @@ void DFNFracture::MeshFractureSurface(){
             MeshPolygon(subpolygon);
         }
     }
+    fdfnMesh->Mesh()->BuildConnectivity();
+    fdfnMesh->CreateSkeletonElements(1);
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
