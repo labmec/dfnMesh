@@ -81,10 +81,14 @@ struct TRolodexCard{
 /// A set of 2D elements around an edge, sorted by an angle to a reference
 // The reference is the first card = fcards.begin() and angles are right-hand oriented according to the orientation of the edge.
 struct TRolodex{
+
+public:
+    // a vector of cards in this rolodex
     std::vector<TRolodexCard> fcards;
-    /// index of the one dimensional geometric index
+    /// index of the one dimensional geometric element (the axle of the rolodex)
     int64_t fedgeindex;
 
+public:
     /// default constructor and destructor
     TRolodex(): fedgeindex(-1){fcards.resize(0);};
     ~TRolodex(){};
@@ -97,28 +101,28 @@ struct TRolodex{
     TRolodex(const TRolodex& copy){
         this->operator=(copy);
     }
-    /**
-     * @brief Get the next face forward or backwards according to direction and fill the angle between faces
-     * @param current_index = index of current element
-     * @param angle to be filled with angle between current and next face
-     * @param direction 1 or -1
-    */
-    TRolodexCard& NextCard(int64_t current_index, REAL& angle, int direction=1){
-        TRolodexCard& current_card = Card(current_index);
-        int ncards = fcards.size();
-        int jcard = current_card.fposition; //position where current card appears in the card vector
+    // /**
+    //  * @brief Get the next face forward or backwards according to direction and fill the angle between faces
+    //  * @param current_index = index of current element
+    //  * @param angle to be filled with angle between current and next face
+    //  * @param direction 1 or -1
+    // */
+    // TRolodexCard& NextCard(int64_t current_index, REAL& angle, int direction=1){
+    //     TRolodexCard& current_card = Card(current_index);
+    //     int ncards = fcards.size();
+    //     int jcard = current_card.fposition; //position where current card appears in the card vector
         
-        int64_t next_id = -1;
-        switch(direction){
-            case  1: next_id = (jcard+1)%ncards;        break;
-            case -1: next_id = (jcard-1+ncards)%ncards; break;
-            default: DebugStop();
-        }
-        TRolodexCard& next_card = fcards[next_id];
-        angle = next_card.fangle_to_reference - current_card.fangle_to_reference;
-        if(angle < 0.) {angle = angle + DFN::_2PI;}
-        return next_card;
-    }
+    //     int64_t next_id = -1;
+    //     switch(direction){
+    //         case  1: next_id = (jcard+1)%ncards;        break;
+    //         case -1: next_id = (jcard-1+ncards)%ncards; break;
+    //         default: DebugStop();
+    //     }
+    //     TRolodexCard& next_card = fcards[next_id];
+    //     angle = next_card.fangle_to_reference - current_card.fangle_to_reference;
+    //     if(angle < 0.) {angle = angle + DFN::_2PI;}
+    //     return next_card;
+    // }
     /**
      * @brief Get the next face forward or backwards according to direction and fill the angle between faces
      * @param current_index = index of current element
