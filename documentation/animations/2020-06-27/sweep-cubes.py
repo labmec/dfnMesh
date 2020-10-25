@@ -37,8 +37,8 @@ yfinal = 5.0
 steps = int((yfinal-y0)/step)
 steps += 1
 
-for i in range(17,18):
-# for i in range(50,steps):
+# for i in range(17,18):
+for i in range(steps):
     y0 += step
     f = open(example,"w+")
     f.write(preamble)
