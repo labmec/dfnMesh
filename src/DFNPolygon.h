@@ -79,10 +79,10 @@ class DFNPolygon
 	Matrix axis() const {return fAxis;}
 
 	/// Return corner coordinates
-	Matrix GetCornersX() const;
+	const Matrix& GetCornersX() const;
 
 	/// Return corner coordinates matching indices of corner nodes that have been added to GeoMesh
-	Matrix GetRealCornersX(TPZGeoMesh* gmesh) const;
+	Matrix& GetRealCornersX(TPZGeoMesh* gmesh) const;
 
 	/// Return area of polygon
 	double area() const { return fArea; }
@@ -148,6 +148,7 @@ class DFNPolygon
 	/** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
 
+	void PlotNodesAbove_n_Below(TPZGeoMesh* gmesh);
   private:
 	/// Checks consistency and initializes the datastructure of the object
 	bool Check_Data_Consistency() const;

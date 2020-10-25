@@ -36,6 +36,7 @@ DFNPolygon::DFNPolygon(const DFNPolygon &copy){
 	fAxis = copy.fAxis;
 	fArea = copy.area();
 	fPointsIndex = copy.fPointsIndex;
+    fNodesAbove = copy.fNodesAbove;
 	return *this;
  }
 
@@ -90,7 +91,7 @@ bool DFNPolygon::Check_Data_Consistency() const
 	
     int cols = fCornerPoints.Cols();
 	//Coplanarity verification for quadrilateral polygon
-	if(cols >= 4){
+	if(cols > 3){
         for(int ic = 3; ic<cols; ic++)
         {
             //scalar product between Ax2 and <P3-P1> should be zero
@@ -112,7 +113,7 @@ bool DFNPolygon::Check_Data_Consistency() const
  * @brief Get polygon's corner points
  * @return polygon corner coordinates
  */
-Matrix DFNPolygon::GetCornersX() const{
+const Matrix& DFNPolygon::GetCornersX() const{
     return fCornerPoints;
 }
 
@@ -128,9 +129,9 @@ Matrix DFNPolygon::GetCornersX() const{
 bool DFNPolygon::Check_point_above(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture polygon computation
-        double point_distance = (point[0] - GetCornersX()(0,1))*(axis().GetVal(0,2)) 
-                                +(point[1] - GetCornersX()(1,1))*(axis().GetVal(1,2)) 
-                                +(point[2] - GetCornersX()(2,1))*(axis().GetVal(2,2));
+        double point_distance = (point[0] - GetCornersX().g(0,1))*(axis().GetVal(0,2)) 
+                                +(point[1] - GetCornersX().g(1,1))*(axis().GetVal(1,2)) 
+                                +(point[2] - GetCornersX().g(2,1))*(axis().GetVal(2,2));
         if (point_distance>0){
             return true;    //If the point is above the polygon
         }
@@ -401,5 +402,18 @@ void DFNPolygon::FindNodesAbove(TPZGeoMesh* gmesh){
         if(node.Id() < 0) continue;
         node.GetCoordinates(coord);
         fNodesAbove[i] = Check_point_above(coord);
+    }
+}
+
+void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){
+    FindNodesAbove(gmesh);
+
+    TPZManVector<int64_t,1> nodeindices(1,-1);
+    const int64_t nnodes = gmesh->NNodes();
+    for(int64_t i=0; i<nnodes; i++){
+        if(gmesh->NodeVec()[i].Id() < 0) continue;
+        nodeindices[0] = i;
+        int64_t index;
+        gmesh->CreateGeoElement(EPoint,nodeindices,fNodesAbove[i],index);
     }
 }

@@ -585,8 +585,8 @@ bool DFNFace::FindInPlanePoint(){
             TPZManVector<REAL,3> p1(3);
             TPZManVector<REAL,3> p2(3);
             for(int i = 0; i<3; i++){
-                p1[i] = fFracture->Polygon().GetCornersX()(i, irib);
-                p2[i] = fFracture->Polygon().GetCornersX()(i, (irib+1)%nribs);
+                p1[i] = fFracture->Polygon().GetCornersX().g(i, irib);
+                p2[i] = fFracture->Polygon().GetCornersX().g(i, (irib+1)%nribs);
             }
             if(faceplane.Check_rib(p1, p2, fCoord)){
 				fStatus[fGeoEl->NSides()-1] = 1;

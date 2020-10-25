@@ -108,6 +108,7 @@ int main(int argc, char* argv[]){
 	// Loop over fractures and refine mesh around them
 	DFNFracture *fracture = nullptr;
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
+		gmesh->BuildConnectivity();//@todo There is a proper buildconnectivity missing... this is a temporary patching until I find out where it's actually supposed to be
         // a polygon represents a set of points in a plane
 		DFNPolygon polygon(planevector[iplane]);
         // Initialize the basic data of fracture
@@ -120,12 +121,13 @@ int main(int argc, char* argv[]){
 	// Build the DFNFace objects and split intersected faces if necessary
 		fracture->FindFaces();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
+		// fracture->Polygon().PlotNodesAbove_n_Below(gmesh);
 
 #ifdef LOG4CXX
         if(logger->isDebugEnabled()){
             std::stringstream sout;
             fracture->Print(sout);
-            LOGPZ_DEBUG(logger,sout.str())
+            LOGPZ_DEBUG(logger,sout.str());
         }
 #endif
 		fracture->RefineRibs();
@@ -133,23 +135,25 @@ int main(int argc, char* argv[]){
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			fracture->MeshFractureSurface();
+			dfn.BuildPolyhedra_firstrun();
 		}
 
-		// std::ofstream logtest("LOG/dfnlog.txt");
-		// dfn.Print(logtest);
+		std::ofstream logtest("LOG/dfnlog.txt");
+		dfn.Print(logtest);
 	}
 	// Mesh intersected volumes
     // dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
 	time.stop();
-	std::cout<<"\n\n"<<time;
+	std::cout<<"\n\n"<<time<<" ms"<<std::endl;
 	//Print graphics
 		for(auto frac : dfn.FractureList()){
 			frac->Polygon().InsertGeoEl(gmesh);
 		}
 		dfn.PrintVTK("pzmesh.txt","skip");
+		TPZManVector<int64_t> indices = {1,4,7,10};
+		// dfn.PlotTolerance(indices);
 		dfn.PrintVTKColorful();
-
 	std::cout<<"\n ...the end.\n\n";
 
 	gmsh::finalize();
