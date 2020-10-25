@@ -226,6 +226,16 @@ void DFNFracture::FindRibs(){
 }
 
 
+void DFNFracture::SetFracMaterial_2D(){
+    if(fdfnMesh->Dimension() != 2) return;
+    for(auto& itr : fFaces){
+        DFNFace& face = itr.second;
+        int64_t iline = face.LineInFace();
+        if(iline < 0) continue;
+        fdfnMesh->Mesh()->Element(iline)->SetMaterialId(DFNMaterial::Efracture);
+    }
+}
+
 void DFNFracture::RefineRibs(){
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
         DFNRib &rib = itr->second;

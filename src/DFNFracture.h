@@ -145,6 +145,9 @@ private:
     void ClearNegativeEntries(TPZStack<int64_t>& subpolygon);
 
     /** @} */
+
+    // Special setup of fracture mat id when working in 2D
+    void SetFracMaterial_2D();
 public:
 
     /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
