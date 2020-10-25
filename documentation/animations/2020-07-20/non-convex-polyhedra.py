@@ -39,7 +39,8 @@ steps = int((yfinal-yinitial)/step)
 steps += 1
 
 for i in range(steps):
-# for i in range(101,102):
+# for i in range(14,15):
+    print("\nstep ",i,"\n")
     y0 = yinitial+step*i
     f = open(example,"w+")
     f.write(preamble)
@@ -52,7 +53,6 @@ for i in range(steps):
     f.write(z)
     f.close()
     # run dfnMesh
-    print(y0)
     dfnMesh = ["build/src/dfnTest"
               ,example
               ,msh

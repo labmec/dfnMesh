@@ -45,7 +45,7 @@ preamble = ("NumberOfFractures 1")
 x = "\n-2.00  2.00  2.00 -2.00"
 z = "\n-2.00 -2.00  2.00  2.00"
 
-toldist = 0.2
+toldist = 2
 tolangle = 0.5
 step = 0.07
 # steps = 0

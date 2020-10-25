@@ -6,19 +6,22 @@ import subprocess
 
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
+# where to save vtk files?
+destination = "documentation/animations/2020-06-22/"
 # ../examples/<example>
-example = "examples/variable-tol.txt"
+example = destination+"variable-tol.txt"
 # ../examples/<msh>
 msh = "no-msh-file"
 
-maxtoldist = 1.5
+maxtoldist = 1.0
 steps = 10
 tol = maxtoldist/steps
-toldist = -tol
+steps += 1
+# toldist = -tol
 
 for i in range(steps):
     # run dfnMesh
-    toldist += tol
+    toldist = tol*i
     print(toldist)
     dfnMesh = ["build/src/dfnTest"
               ,example
@@ -27,5 +30,5 @@ for i in range(steps):
     subprocess.call(dfnMesh)
     rename = ["cp"
               , vtkfile+".vtk"
-              , vtkfile+"."+str(i)+".vtk"]
+              , destination+vtkfile+"."+str(i)+".vtk"]
     subprocess.call(rename)

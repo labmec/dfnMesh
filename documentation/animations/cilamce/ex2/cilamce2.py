@@ -41,13 +41,13 @@ NumberOfFractures 2
 
 """
 )
-x = "\nFracture 0 4\n-1.00  5.00  5.00 -1.00"
+x = "\n-1.00  5.00  5.00 -1.00"
 z = "\n-1.00 -1.00  5.00  5.00"
 
-toldist = 0.8
+toldist = 0.4
 step = 0.07
 # steps = 0
-starty0 = 1.85
+starty0 = -0.1
 yfinal = 5.0
 steps = int((yfinal-starty0)/step)
 steps += 1
@@ -57,6 +57,7 @@ for i in range(steps):
     y0 = starty0 + i*step
     f = open(example,"w+")
     f.write(preamble)
+    f.write("\n\nFracture 0 4")
     f.write(x)
     if y0 < 0 :
         y = ("\n%.2f %.2f %.2f %.2f" % (y0,y0,y0,y0))
@@ -64,7 +65,10 @@ for i in range(steps):
         y = ("\n %.2f  %.2f  %.2f  %.2f" % (y0,y0,y0,y0))
     f.write(y)
     f.write(z)
-    f.write(firstFracture)
+    f.write("\n\nFracture 1 4")
+    f.write(y)
+    f.write(x)
+    f.write(z)
     f.close()
     # run dfnMesh
     print(y0)
