@@ -115,6 +115,17 @@ namespace DFN{
         }
         return result;
     }
+    template <class T, int NumExtAlloc1, int NumExtAlloc2>
+    TPZManVector<T,3> operator+(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2){
+        int64_t size1 = v1.size();
+        int64_t size2 = v2.size();
+        if(size1 != size2) DebugStop();
+        TPZManVector<T,3> result(size1);
+        for(int64_t i = 0; i<size1; i++){
+            result[i] = v1[i] + v2[i];
+        }
+        return result;
+    }
 
     /// @brief Get an orthogonal projection of x onto an arbitrary plane represented by a normal vector and a reference point in the plane
     /// @warning It assumes the given normal vector has norm == 1 and won't verify (to keep it efficient)
@@ -251,7 +262,8 @@ namespace DFN{
             case  4: eltype = MElementType::EQuadrilateral; break;
             default: DebugStop();
         }
-        return gmesh->CreateGeoElement(eltype,cornerindices,matid,index);
+        TPZGeoEl* new_el = gmesh->CreateGeoElement(eltype,cornerindices,matid,index);
+        return new_el;
     }
 
     /** @brief Check if a set of mesh nodes are coplanar
