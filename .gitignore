@@ -5,3 +5,6 @@
 /debug
 /doc
 LOG
+# documentation/animations/*
+# documentation/animations/*/*.py
+*/quicktests.cpp

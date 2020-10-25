@@ -9,6 +9,7 @@
 	#include "TPZRefPatternDataBase.h"
 	#include "TPZGmshReader.h"
 	#include "pzlog.h"
+	#include "TPZTimer.h"
 	
 	#include <stdio.h>
 	#include <math.h>
@@ -53,7 +54,7 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
  * @brief information and assumptions
 */
 void PrintPreamble(){
-	std::string neopzversion = "/commit/85f5651"; // https://github.com/labmec/neopz/commit/...
+	std::string neopzversion = "/commit/29373e1"; // https://github.com/labmec/neopz/commit/...
 	std::string gmshversion = "4.5.6";
 	std::cout<<"\n";
 	std::cout<<"\nNeoPZ assumed version: " << neopzversion;
@@ -65,6 +66,9 @@ void PrintPreamble(){
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle);
 
 
+#ifdef LOG4CXX
+static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
+#endif
 
 
 
@@ -82,65 +86,88 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &p
 using namespace std;
 
 int main(int argc, char* argv[]){
-	#ifdef LOG4CXX
-    	InitializePZLOG();
-	#endif
+#ifdef LOG4CXX
+    InitializePZLOG();
+#endif
+	TPZTimer time("DFNMesh");
 	PrintPreamble();
+    /// this data structure defines the fractures which will cut the mesh
+    // each matrix is dimension (3xn) where n is the number of vertices
 	TPZManVector< TPZFMatrix<REAL>> planevector;
 	TPZGeoMesh *gmesh = nullptr;
 	REAL tol_dist = 1.e-4;
 	REAL tol_angle = 1.e-3; 
 	gmesh = ReadInput(argc,argv,planevector,tol_dist,tol_angle);
-
-
+	gmsh::initialize();
+	
+    /// Constructor of DFNMesh initializes the skeleton mesh
+	time.start();
 	DFNMesh dfn(gmesh);
+	// dfn.PrintPolyhedra();
+	dfn.SetTolerances(tol_dist,tol_angle);
 	// Loop over fractures and refine mesh around them
+	DFNFracture *fracture = nullptr;
 	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
-		DFNFracPlane *fracplane = new DFNFracPlane(planevector[iplane]);
-		DFNFracture *fracture = new DFNFracture(*fracplane,&dfn);
+        // a polygon represents a set of points in a plane
+		DFNPolygon polygon(planevector[iplane]);
+        // Initialize the basic data of fracture
+		fracture = new DFNFracture(polygon,&dfn);
+		dfn.AddFracture(fracture);
+        
 	// Find and split intersected ribs
 		fracture->FindRibs();
-		fracture->OptimizeRibs(tol_dist);
-		fracture->RefineRibs();
-	// Find and split intersected faces
+		fracture->SnapIntersections_ribs(tol_dist);
+	// Build the DFNFace objects and split intersected faces if necessary
 		fracture->FindFaces();
+		fracture->SnapIntersections_faces(tol_dist,tol_angle);
+
+#ifdef LOG4CXX
+        if(logger->isDebugEnabled()){
+            std::stringstream sout;
+            fracture->Print(sout);
+            LOGPZ_DEBUG(logger,sout.str())
+        }
+#endif
+		fracture->RefineRibs();
 		fracture->RefineFaces();
-		fracture->AssembleOutline();
-	// // Mesh fracture surface
-	// 	if(gmesh->Dimension() == 3){
-	// 		fracture->MeshFractureSurface();
-	// 	}
-	// //insert fracture
-	// 	dfn.AddFracture(fracture);
+	// Mesh fracture surface
+		if(gmesh->Dimension() == 3){
+			fracture->MeshFractureSurface();
+		}
+
+		// std::ofstream logtest("LOG/dfnlog.txt");
+		// dfn.Print(logtest);
 	}
-	// Mesh transition volumes
-		// dfn.CreateVolumes();
-		// dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
+	// Mesh intersected volumes
+    // dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
+	time.stop();
+	std::cout<<"\n\n"<<time;
+	//Print graphics
+		for(auto frac : dfn.FractureList()){
+			frac->Polygon().InsertGeoEl(gmesh);
+		}
+		dfn.PrintVTK("pzmesh.txt","skip");
+		dfn.PrintVTKColorful();
 
-	//Print result
-		dfn.PrintColorful();
+	std::cout<<"\n ...the end.\n\n";
 
-	std::cout<<"\n\n ...the end.\n\n";
-
+	gmsh::finalize();
 	return 0;
 }
 
 
 
-
+// Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle){
 	TPZGeoMesh* gmesh = nullptr;
+	std::string default_example("examples/two-hex-and-a-frac.txt");
 	switch(argc){
-		case 0:
-		case 1: gmesh = ReadExampleFromFile("examples/2D-mult-fracture.txt",planevector); 
-				break;
-		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);
-				break;
 		case 5: tolangle = std::stod(argv[4]);
 		case 4: toldist = std::stod(argv[3]);
-		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);
-				break;
+		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);break;
+		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);break;
+		case 1: gmesh = ReadExampleFromFile(default_example,planevector);break;
 		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
 	}
 	return gmesh;
