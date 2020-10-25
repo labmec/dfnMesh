@@ -641,24 +641,7 @@ void DFNFracture::SetLoopOrientation(TPZStack<int64_t>& edgelist){
     }
 }
 
-namespace DFN{
-    template<typename Ttype>
-    std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2){
-        std::set<Ttype> intersection;
-        std::set<int64_t>& smaller_set =  set1.size() > set2.size() ? set2 : set1;
-        std::set<int64_t>& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
 
-        if(smaller_set.size() < 1) return intersection; //empty set
-
-        auto end = bigger_set.end();
-        for(auto& iel : smaller_set){
-            auto itr = bigger_set.find(iel);
-            if(itr == end) continue;
-            intersection.insert(*itr);
-        }
-        return intersection;
-    }
-}
 
 TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
     TPZGeoMesh* gmesh = gelside1.Element()->Mesh();
