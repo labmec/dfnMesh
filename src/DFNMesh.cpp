@@ -83,7 +83,7 @@ void DFNMesh::PrintVTK(std::string pzmesh
 
 void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 	// mesh.txt doesn't gain much... so print it normal first
-	// this->PrintResult(pzmesh,"skip");
+	this->PrintVTK(pzmesh,"skip");
 	TPZGeoMesh *gmesh = this->fGMesh;
 	int64_t nels = gmesh->NElements();
 	int64_t iel;
@@ -98,7 +98,7 @@ void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 		if(gel->MaterialId() == DFNMaterial::Efracture) continue;
 		int subindex = gel->WhichSubel();
 		int matid = gel->MaterialId();
-		gel->SetMaterialId(matid+subindex);
+		gel->SetMaterialId(DFNMaterial::Erefined+subindex);
 	}
 	// print vtk only, since txt has already been print
 	this->PrintVTK("skip",vtkmesh);
@@ -117,10 +117,68 @@ void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 }
 
 
+void InwardNormal(const TPZGeoElSide& gelside, TPZManVector<REAL,3>& qsi, TPZManVector<REAL,3>& normal){
+	gelside.Normal(qsi,normal);
+	for(int dim=normal.size(), i=0; i<dim; i++){
+		normal[i] *= -1;
+	}
+}
 
 
 
 
+/** @brief adds geoels for graphics that illustrate the tolerance
+ * @warning only implemented for 2D right now
+*/
+void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
+	using namespace DFN;
+	TPZManVector<int64_t,8> nodeindices(8,-1);
+	TPZGeoEl* gel = nullptr;
+	TPZManVector<REAL,3> orig_coord(3,0.);
+	TPZManVector<REAL,3> clone_coord(3,0.);
+
+	TPZStack<TPZManVector<REAL,3>,4> Side_inNormals(4,{0.,0.,0.});
+
+	for(int64_t iel : indices){
+		gel = fGMesh->Element(iel);
+		if(gel->Dimension() != 2) DebugStop();
+		int sidedim = gel->Dimension()-1;
+
+		int nnodes = gel->NCornerNodes();
+		int nedges = gel->NSides(1);
+		nodeindices.Fill(-1);
+		nodeindices.Resize(nnodes);
+		
+		// Get inward normal vector for every edge and scale them by the tolerable distance
+		Side_inNormals.resize(nedges);
+		for(int iside=nnodes, iedge=0; iside<gel->NSides()-1; iside++, iedge++){
+			TPZGeoElSide gelside(gel,iside);
+			TPZManVector<REAL,3> qsi(gelside.Dimension(),0.);
+			InwardNormal(gelside,qsi,Side_inNormals[iedge]);
+			for(int idim=0; idim<3; idim++)
+				{Side_inNormals[iedge][idim] *= fTolDist;}
+			Side_inNormals[iedge][2] += gDFN_SmallNumber;
+		}
+
+		// Clone nodes and move inward by the tolerable distance 
+		for(int i=0; i<nnodes; i++){
+			nodeindices[i] = fGMesh->NodeVec().AllocateNewElement();
+			gel->Node(i).GetCoordinates(orig_coord);
+			// desloc from posterior and anterior edges
+			for(int idim=0; idim<3; idim++){
+				clone_coord[idim] = orig_coord[idim] 
+									+Side_inNormals[i][idim]
+									+Side_inNormals[(i+nedges-1)%nedges][idim];
+			}
+			fGMesh->NodeVec()[nodeindices[i]].Initialize(clone_coord,*fGMesh);
+		}
+
+		// Create clone geoel
+		MElementType etype = gel->Type();
+		int64_t index = -1;
+		fGMesh->CreateGeoElement(etype,nodeindices,-1,index);
+	}
+}
 
 
 
@@ -1590,6 +1648,7 @@ void DFNMesh::IsolateBoundaryPolyh(TPZStack<std::pair<int64_t,int>,NAlloc>& poly
 void DFNMesh::BuildPolyhedra_firstrun(){
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
+	fPolyh_per_face.Fill({-1,-1});
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 	int polyh_counter = 1;
 	fPolyhedra.resize(1); 
@@ -1941,6 +2000,7 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 
 void DFNMesh::SortFacesAroundEdges(){
 	// std::cout<<"\n\n Print rolodexes:\n\n";
+	fSortedFaces.clear();
 	fSortedFaces.Resize(fGMesh->ElementVec().NElements());
 
 	// Loop over 1D elements
@@ -1967,6 +2027,7 @@ void DFNMesh::SortFacesAroundEdges(){
 		int j = 0;
 		// std::cout<<"\n Edge # "<<gel->Index();
 		fSortedFaces[gel->Index()].fedgeindex = gel->Index();
+		fSortedFaces[gel->Index()].fcards.clear();
 		fSortedFaces[gel->Index()].fcards.resize(facemap.size());
 		for(auto iterator : facemap){
 			TPZGeoElSide& faceside = iterator.second;
@@ -2044,7 +2105,7 @@ void DFNMesh::PrintRolodexes(std::ostream & out) const{
 		if(!edge) continue;
 		if(edge->Dimension() != 1) continue;
 		if(edge->HasSubElement()) continue;
-		
+		if(edge->Index() >= fSortedFaces.size()) break;
 		fSortedFaces[edge->Index()].Print(out);
 	}
 }
@@ -2061,6 +2122,7 @@ void DFNMesh::PrintPolyhedra(std::ostream & out) const{
 			if(!gel) continue;
 			if(gel->Dimension() != 2) continue;
 			if(gel->HasSubElement()) continue;
+			if(gel->Index() >= fPolyh_per_face.size()) break;
 			
 			out << "\nFace #" << std::setw(5)<<std::right << gel->Index() << ":    "; 
 			out << std::setw(3)<<std::right << fPolyh_per_face[gel->Index()][0] << "   | ";

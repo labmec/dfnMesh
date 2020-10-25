@@ -83,6 +83,10 @@ public:
         fTolDist = tolerableLength;
         fTolAngle = tolerableAngle;
         fTolAngle_cos = std::cos(tolerableAngle);
+        std::cout<<"\nTolerable distance:  "<<fTolDist;
+        std::cout<<"\nTolerable angle:     "<<fTolAngle;
+        std::cout<<"\n      cos(angle):    "<<fTolAngle_cos;
+        std::cout<<std::endl;
     }
 
     /// Get minimal tolerable length
@@ -200,9 +204,12 @@ public:
     // template<int Talloc>
     TPZStack<DFNPolyhedron,20>& Polyhedra(){return fPolyhedra;}
 
-private:
+    /** @brief adds geoels for graphics that illustrate the tolerance*/
+    void PlotTolerance(TPZManVector<int64_t>&);
+
     /// Runs DFNMesh::BuildPolyhedra without convexity verification to isolate the boundary
     void BuildPolyhedra_firstrun();
+private:
     
     /**
      * @brief Navigate through neighbours of first level, than second level, and so on, until an element of a specific material id is found
