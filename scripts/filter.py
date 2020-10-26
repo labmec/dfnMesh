@@ -1,4 +1,3 @@
-
 #### import the simple module from the paraview
 from paraview.simple import *
 #### disable automatic camera reset on 'Show'
@@ -21,6 +20,23 @@ renderView1 = GetActiveViewOrCreate('RenderView')
 layout1 = GetLayout()
 
 
+# 2D FULL
+dim2Dfull = Threshold(Input=elementRange)
+dim2Dfull.Scalars = ['CELLS', 'Dimension']
+dim2Dfull.ThresholdRange = [2.0, 2.0]
+RenameSource('2D', dim2Dfull)
+
+# FRACTURES FULL
+Fractures = Threshold(Input=dim2Dfull)
+Fractures.Scalars = ['CELLS', 'material']
+Fractures.ThresholdRange = [100.0, 100.0]
+RenameSource('Fractures', Fractures)
+FracturesDisplay = Show(Fractures, renderView1,'UnstructuredGridRepresentation')
+# FracturesDisplay.SetRepresentationType('Surface With Edges')
+FracturesDisplay.SetRepresentationType('Wireframe')
+FracturesDisplay.EdgeColor = [0.0, 0.0, 0.0]
+FracturesDisplay.Opacity = 1.0
+
 # 3D FULL
 dim3Dfull = Threshold(Input=elementRange)
 dim3Dfull.Scalars = ['CELLS', 'Dimension']
@@ -36,12 +52,14 @@ RenameSource('1D', dim1Dfull)
 # COARSE MESH
 coarseMesh = Threshold(Input=dim3Dfull)
 coarseMesh.Scalars = ['CELLS', 'elIndex']
-coarseMesh.ThresholdRange = [0.0, 16.0]
+coarseMesh.ThresholdRange = [0.0, 50.0]
 RenameSource('CoarseMesh', coarseMesh)
 # show data in view
 coarseMeshDisplay = Show(coarseMesh, renderView1, 'UnstructuredGridRepresentation')
 coarseMeshDisplay.SetRepresentationType('Wireframe')
-coarseMeshDisplay.Opacity = 0.3
+coarseMeshDisplay.AmbientColor = [0.259, 0.263, 0.298]
+coarseMeshDisplay.DiffuseColor = [0.259, 0.263, 0.298]
+coarseMeshDisplay.Opacity = 1.0
 
 # iPOINTS
 iPoints = Threshold(Input=dim1Dfull)
@@ -81,6 +99,9 @@ ribsDisplay.DiffuseColor = [0.0, 0.0, 0.4980392156862745]
 # SHRINK
 shrink1 = Shrink(Input=elementRange)
 shrink1.ShrinkFactor = 0.82
+# EstimatedNCoarseEls = int(shrink1.GetDataInformation().GetNumberOfCells() / 4)
+# print(EstimatedNCoarseEls)
+
 
 # 2D FULL
 dim2Dshrink = Threshold(Input=shrink1)
@@ -152,22 +173,6 @@ RenameSource('SubMesh', submesh)
 submeshDisplay = Show(submesh, renderView1, 'UnstructuredGridRepresentation')
 
 
-# 2D FULL
-dim2Dfull = Threshold(Input=elementRange)
-dim2Dfull.Scalars = ['CELLS', 'Dimension']
-dim2Dfull.ThresholdRange = [2.0, 2.0]
-RenameSource('2D', dim2Dfull)
-
-# FRACTURES FULL
-Fractures = Threshold(Input=dim2Dfull)
-Fractures.Scalars = ['CELLS', 'material']
-Fractures.ThresholdRange = [100.0, 100.0]
-RenameSource('Fractures', Fractures)
-FracturesDisplay = Show(Fractures, renderView1,'UnstructuredGridRepresentation')
-FracturesDisplay.SetRepresentationType('Surface With Edges')
-FracturesDisplay.EdgeColor = [1.0, 1.0, 1.0]
-FracturesDisplay.Opacity = 0.5
-
 # update the view to ensure updated data information
 Hide(vtkmesh, renderView1)
 Hide(elementRange, renderView1)
@@ -176,10 +181,11 @@ Hide(dim1Dfull, renderView1)
 Hide(shrink1, renderView1)
 Hide(ribs, renderView1)
 Hide(dim2Dshrink, renderView1)
+Hide(intact, renderView1)
 Hide(dim3Dshrink, renderView1)
 Hide(submesh, renderView1)
 Hide(dim2Dfull, renderView1)
-Hide(Fractures, renderView1)
+# Hide(Fractures, renderView1)
 renderView1.Update()
 
 

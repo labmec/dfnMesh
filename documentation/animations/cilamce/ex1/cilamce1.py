@@ -1,4 +1,4 @@
-# @brief Example number 2 for cilamce2020 paper
+# @brief Example number 1 for cilamce2020 paper
 # @author github/PedroLima92
 # @date august 2020
 
