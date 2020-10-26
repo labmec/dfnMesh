@@ -1,7 +1,7 @@
 ########### next target ###############
 
 
-file(GLOB headers *.h)
+file(GLOB headers *.h *.tpp)
 file(GLOB sources DFNNamespace.cpp DFNRib.cpp DFNFace.cpp DFNVolume.cpp DFNPolygon.cpp DFNFracture.cpp DFNMesh.cpp DFNPolyhedron.cpp)
 
 # Default Target
