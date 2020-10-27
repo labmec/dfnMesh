@@ -4,8 +4,8 @@
  *  @brief     Namespace DFN template definitions
  */
 
-#ifndef DFNNamespace_tpp
-#define DFNNamespace_tpp
+#ifndef DFNNamespaceTemp_cpp
+#define DFNNamespaceTemp_cpp
 
 
 #include "pzgmesh.h"
@@ -19,12 +19,12 @@ namespace DFN{
 
 
 
-    template<typename Ttypeout,typename Ttype1,typename Ttype2>
-    Ttypeout DotProduct(TPZManVector<Ttype1,3> &vec1, TPZManVector<Ttype2,3> &vec2){
+    template<typename TReturnType,typename Ttype1,typename Ttype2>
+    TReturnType DotProduct(TPZManVector<Ttype1,3> &vec1, TPZManVector<Ttype2,3> &vec2){
         int size1 = vec1.size();
         int size2 = vec2.size();
         if(size1 != size2){DebugStop();}
-        Ttypeout dot = 0.;
+        TReturnType dot = 0.;
         for(int j=0; j<size1; j++){
             dot += vec1[j]*vec2[j];
         }
@@ -63,12 +63,16 @@ namespace DFN{
         return std::sqrt(norm);
     }
 
-    template<typename Ttype>
-    TPZManVector<Ttype,3> CrossProduct(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
-        if(vec1.size() != 3){throw std::bad_exception();}
-        if(vec2.size() != 3){throw std::bad_exception();}
+    /** 
+     * @brief Vector cross product with template return type
+     * @param ReturnType CrossProduct<ReturnType>(vec1,vec2)
+    */
+    template<typename T1, typename T2>
+    TPZVec<T1> CrossProduct(TPZManVector<T2,3> &vec1, TPZManVector<T2,3> &vec2){
+        if(vec1.size() != 3){throw std::invalid_argument("CrossProduct requires vector of dimension 3\n");}
+        if(vec2.size() != 3){throw std::invalid_argument("CrossProduct requires vector of dimension 3\n");}
         
-        TPZManVector<Ttype,3> result(3,0.);
+        TPZManVector<T1,3> result(3,0.);
         result[0] = vec1[1]*vec2[2] - vec1[2]*vec2[1];
         result[1] = vec1[2]*vec2[0] - vec1[0]*vec2[2];
         result[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
@@ -76,9 +80,9 @@ namespace DFN{
     }
 
     template<typename Ttype>
-    TPZManVector<float,3> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
-        if(vec1.size() != 3){throw std::bad_exception();}
-        if(vec2.size() != 3){throw std::bad_exception();}
+    TPZVec<float> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2){
+        if(vec1.size() != 3){throw std::invalid_argument("CrossProduct requires vector of dimension 3\n");}
+        if(vec2.size() != 3){throw std::invalid_argument("CrossProduct requires vector of dimension 3\n");}
         
         TPZManVector<float,3> result(3,0.);
         result[0] = vec1[1]*vec2[2] - vec1[2]*vec2[1];
@@ -86,23 +90,23 @@ namespace DFN{
         result[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
         return result;
     }
-    template <class T, int NumExtAlloc1, int NumExtAlloc2>
-    TPZManVector<T,3> operator-(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2){
+    template <typename T>
+    TPZVec<T> operator-(TPZVec<T>& v1,TPZVec<T>& v2){
         int64_t size1 = v1.size();
         int64_t size2 = v2.size();
         if(size1 != size2) DebugStop();
-        TPZManVector<T,3> result(size1);
+        TPZVec<T> result(size1);
         for(int64_t i = 0; i<size1; i++){
             result[i] = v1[i] - v2[i];
         }
         return result;
     }
-    template <class T, int NumExtAlloc1, int NumExtAlloc2>
-    TPZManVector<T,3> operator+(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2){
+    template <typename T>
+    TPZVec<T> operator+(TPZVec<T>& v1,TPZVec<T>& v2){
         int64_t size1 = v1.size();
         int64_t size2 = v2.size();
         if(size1 != size2) DebugStop();
-        TPZManVector<T,3> result(size1);
+        TPZVec<T> result(size1);
         for(int64_t i = 0; i<size1; i++){
             result[i] = v1[i] + v2[i];
         }
@@ -224,5 +228,4 @@ namespace DFN{
 
 
 
-#include "DFNNamespace.tpp"
-#endif /* DFNNamespace_tpp */
+#endif /* DFNNamespaceTemp_cpp */

@@ -135,9 +135,9 @@ namespace DFN{
             default: DebugStop();
         }
         
-        TPZManVector<float,3> normalvec_gel = CrossProduct_f(tangentvec_gel,tangentvec_edge);
-        TPZManVector<float,3> normalvec_neig = CrossProduct_f(tangentvec_neig,tangentvec_edge);;
-        TPZManVector<float,3> aux = CrossProduct_f(normalvec_neig,normalvec_gel);
+        TPZManVector<float,3> normalvec_gel = CrossProduct<float>(tangentvec_gel,tangentvec_edge);
+        TPZManVector<float,3> normalvec_neig = CrossProduct<float>(tangentvec_neig,tangentvec_edge);;
+        TPZManVector<float,3> aux = CrossProduct<float>(normalvec_neig,normalvec_gel);
         float x = Norm_f(tangentvec_edge)*DotProduct_f(normalvec_neig,normalvec_gel);
         float y = DotProduct_f(tangentvec_edge,aux);
         float angle = atan2(y,x);

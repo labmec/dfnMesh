@@ -32,8 +32,8 @@ namespace DFN{
      */
     bool IsInterface(TPZGeoEl* gel);
 
-    template<typename Ttypeout,typename Ttype1,typename Ttype2>
-    Ttypeout DotProduct(TPZManVector<Ttype1,3> &vec1, TPZManVector<Ttype2,3> &vec2);
+    template<typename TReturnType,typename Ttype1,typename Ttype2>
+    TReturnType DotProduct(TPZManVector<Ttype1,3> &vec1, TPZManVector<Ttype2,3> &vec2);
 
     template<typename Ttype1, typename Ttype2>
     float DotProduct_f(TPZManVector<Ttype1,3> &vec1, TPZManVector<Ttype2,3> &vec2);
@@ -46,17 +46,21 @@ namespace DFN{
     template<typename Ttype>
     float Norm_f(TPZManVector<Ttype, 3> &vec);
 
-    template<typename Ttype>
-    TPZManVector<Ttype,3> CrossProduct(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2);
+    /** 
+     * @brief Vector cross product with template return type
+     * @param ReturnType CrossProduct<ReturnType>(vec1,vec2)
+    */
+    template<typename TReturnType, typename T2>
+    TPZVec<TReturnType> CrossProduct(TPZManVector<T2,3> &vec1, TPZManVector<T2,3> &vec2);
 
     template<typename Ttype>
-    TPZManVector<float,3> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2);
+    TPZVec<float> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2);
 
-    template <class T, int NumExtAlloc1, int NumExtAlloc2>
-    TPZManVector<T,3> operator-(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2);
+    template <typename T>
+    TPZVec<T> operator-(TPZVec<T>& v1,TPZVec<T>& v2);
 
-    template <class T, int NumExtAlloc1, int NumExtAlloc2>
-    TPZManVector<T,3> operator+(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v2);
+    template <typename T>
+    TPZVec<T> operator+(TPZVec<T>& v1,TPZVec<T>& v2);
 
     /// @brief Get an orthogonal projection of x onto an arbitrary plane represented by a normal vector and a reference point in the plane
     /// @warning It assumes the given normal vector has norm == 1 and won't verify (to keep it efficient)
@@ -216,5 +220,5 @@ static void SetMaterialIDChildren(int id, TPZGeoEl* gel){
 }
 
 
-#include "DFNNamespace.tpp"
+#include "DFNNamespaceTemp.cpp"
 #endif /* DFNNamespace_h */
