@@ -163,4 +163,26 @@ namespace DFN{
         return !IsValidPolygon(polygon);
     }
 
+    /** @brief Check if a 2D side of a 3D element is oriented outward according to NeoPZ topolgy */
+    bool PZOutwardPointingFace(TPZGeoElSide faceside){
+        // consistency check
+        TPZGeoEl* gel = faceside.Element();
+        if(faceside.Dimension() != 2 || gel->Dimension() < 3) 
+            {PZError<<__PRETTY_FUNCTION__<<" Invalid_Argument\n"; DebugStop();}
+        
+        int nlowdimsides = gel->NSides(0) + gel->NSides(1);
+        int iface = faceside.Side() - nlowdimsides;
+
+        switch(gel->Type()){
+            case ETetraedro: return TPZTetrahedron_faceorient[iface];
+            case ECube:      return TPZCube_faceorient[iface];
+            case EPrisma:    return TPZPrism_faceorient[iface];
+            case EPiramide:  return TPZPyramid_faceorient[iface];
+            default: DebugStop();
+        }
+
+        DebugStop();
+        return false;
+    }
+
 } /* namespace DFN*/

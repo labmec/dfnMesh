@@ -191,6 +191,17 @@ namespace DFN{
     template<typename Ttype>
     std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2);
 
+    /** Outward/inward (true/false) orientation of faces in NeoPZ's tetrahedron */
+    static const bool TPZTetrahedron_faceorient[4] = {0,1,1,0};
+    /** Outward/inward (true/false) orientation of faces in NeoPZ's hexahedron */
+    static const bool TPZCube_faceorient[6] =        {0,1,1,0,0,1};
+    /** Outward/inward (true/false) orientation of faces in NeoPZ's prism */
+    static const bool TPZPrism_faceorient[5] =       {0,1,1,0,1};
+    /** Outward/inward (true/false) orientation of faces in NeoPZ's pyramid */
+    static const bool TPZPyramid_faceorient[5] =     {0,1,1,0,0};
+    /** @brief Check if a 2D side of a 3D element is oriented outward according to NeoPZ topolgy */
+    bool PZOutwardPointingFace(TPZGeoElSide faceside);
+
 } /*namespace DFN*/
 
 
