@@ -404,8 +404,9 @@ void DFNFace::Refine(){
 	TPZManVector<TPZGeoEl*,6> children(fRefMesh.NElements()-1);
 	// refine
 	fGeoEl->Divide(children);
-	// set father for children?
-	// create sskeleton?
+
+	// let children inherit polyhedral indices
+	InheritPolyhedra();
 
 	// update internal node index
 	int splitcase = GetSplitPattern(fStatus);
@@ -422,7 +423,22 @@ void DFNFace::Refine(){
 
 
 
+void DFNFace::InheritPolyhedra(){
+	if(!fGeoEl->HasSubElement()) return;
+	DFNMesh* dfn = fFracture->dfnMesh();
+	if(dfn->Dimension() < 3) return;
 
+	int polyh_front = dfn->GetPolyhedralIndex({fGeoEl->Index(),+1});
+	int polyh_back  = dfn->GetPolyhedralIndex({fGeoEl->Index(),-1});
+
+	TPZGeoEl* child = nullptr;
+	int nchildren = fGeoEl->NSubElements();
+	for(int i=0; i<nchildren; i++){
+		child = fGeoEl->SubElement(i);
+		dfn->SetPolyhedralIndex({fGeoEl->Index(),+1},polyh_front);
+		dfn->SetPolyhedralIndex({fGeoEl->Index(),-1},polyh_back);
+	}
+}
 
 
 

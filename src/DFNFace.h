@@ -235,6 +235,10 @@ public:
     /// @brief Returns the other 1D side with a DFNRib
     int OtherRibSide(int inletside);
 
+    /// @brief Make children of this element inherit its polyhedral indices
+    /// @note: Does nothing if mesh is not 3D
+    void InheritPolyhedra();
+
 private: 
 
     /**
