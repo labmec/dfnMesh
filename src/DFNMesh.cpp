@@ -1606,7 +1606,7 @@ void DFNMesh::InitializePolyhedra(){
 	TPZStack<std::pair<int64_t,int>,20> shell(20,{-1,0});	///< oriented faces that enclose the polyhedron
 
 
-	/// Gather mesh boundary first
+	// Gather mesh boundary first
 	shell.clear();
 	DFNPolyhedron polyhedron;
 	TPZGeoElSide gelside;
@@ -1621,10 +1621,9 @@ void DFNMesh::InitializePolyhedra(){
 		for(neig=gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
 			if(neig.Element()->Dimension() < 3) continue;
 			nneighbours += neig.Element()->Dimension() > 2;
-			volneig = neig;
+			volneig = neig; //< catch a volume in case there's a boundary condition 
 		}
 		if(nneighbours > 1) continue;
-		// gelside.NNeighbours
 		// Faces don't have guaranteed positive orientation, since they were created using CreateBCGeoEl(). @see  DFN::CreateSkeletonElements()
 		int orient = DFN::PZOutwardPointingFace(volneig) ? 1 : -1; 
 		shell.push_back({gel->Index(),orient});
@@ -1636,8 +1635,9 @@ void DFNMesh::InitializePolyhedra(){
 	shell.Fill({-1,0});
 	shell.clear();
 
-	/// Loop over 3D elements and match a polyhedral index to their shell
+	// Then initialize the rest of the polyhedra
 	BuildPolyhedra();
+	// @maybeTODO - Looping over 3D elements and matching a polyhedral index to their shell would be more efficient. But I have to pick my battles
 }
 
 void DFNMesh::BuildPolyhedra(){
