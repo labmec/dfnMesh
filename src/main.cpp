@@ -135,7 +135,7 @@ int main(int argc, char* argv[]){
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			fracture->MeshFractureSurface();
-			dfn.BuildPolyhedra_firstrun();
+			// dfn.InitializePolyhedra();
 		}
 
 		std::ofstream logtest("LOG/dfnlog.txt");

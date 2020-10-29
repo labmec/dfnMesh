@@ -15,6 +15,7 @@
 #include <gmsh.h>
 #include <array>
 /**
+ * @class DFNMesh
  * @brief Describes a fractured MHM geomesh
  */
 class DFNMesh{
@@ -209,6 +210,11 @@ public:
 
     /// Runs DFNMesh::BuildPolyhedra without convexity verification to isolate the boundary
     void BuildPolyhedra_firstrun();
+
+    /** @brief Initializes the polyhedral volumes datastructure. 
+     * @attention It isolates the boundary as the polyhedron of index 0.*/
+    void InitializePolyhedra();
+
 private:
     
     /**
