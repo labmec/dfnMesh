@@ -11,6 +11,3 @@ target_link_libraries(dfnTest ${GMSH_LIB} pz)
 # # Quick Tests
 # add_executable(quickTests quicktests.cpp)
 # target_link_libraries(quickTests ${GMSH_LIB} pz)
-
-
-#test

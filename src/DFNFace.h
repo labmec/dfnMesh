@@ -243,6 +243,7 @@ private:
 
     /**
      * @brief Determines split case and fill nodes of children and indices of the intersection points
+     * @details 1. Children's normal vector is guaranteed to match their father's;
     */
     void FillChildrenAndNewNodes(TPZManVector<TPZManVector<int64_t,4>,6> &child, TPZManVector<TPZManVector<REAL,3>> &newnode);
 

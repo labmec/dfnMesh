@@ -141,7 +141,6 @@ void DFNFace::UpdateRefMesh(){
 	fRefMesh.BuildConnectivity(); 
 }
 
-// @TODO phil Sua temosia de não querer adequar os padroes de refinemento eh impressionante!!
 void DFNFace::FillChildrenAndNewNodes(
 	TPZManVector<TPZManVector<int64_t,4>,6> &child, 
 	TPZManVector<TPZManVector<REAL,3>> &newnode)
@@ -155,7 +154,7 @@ void DFNFace::FillChildrenAndNewNodes(
 	fGeoEl->GetNodeIndices(node);
 	
 	switch(splitcase){
-		case 1:{
+		case 1:{ // A quadrilateral with 2 opposite refined edges
 			child.resize(2);
 			newnode.resize(2);
 			int i = 0;
@@ -178,7 +177,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][2] = (i+3)%4;
 				child[1][3] = i;
 			break;}
-		case 2:{
+		case 2:{ // A quadrilateral with 2 adjancent refined edges
 			child.resize(4);
 			newnode.resize(2);
 			int i = 0;
@@ -191,8 +190,8 @@ void DFNFace::FillChildrenAndNewNodes(
 			newnode[1] = ribB->AntCoord();
 
 			child[0].Resize(3);
-				child[0][0] = nodeA;
-				child[0][1] = nodeB;
+				child[0][0] = nodeB;
+				child[0][1] = nodeA;
 				child[0][2] = i;
 			child[1].resize(3);
 				child[1][0] = nodeB;
@@ -207,7 +206,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[3][1] = (i+2)%4;
 				child[3][2] = (i+3)%4;
 			break;}
-		case 3:{
+		case 3:{ // A quadrilateral with 2 opposite intersected corners
 			child.resize(2);
 			int i = fStatus[1];
 			child[0].Resize(3);
@@ -219,8 +218,8 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][1] = i+2;
 				child[1][2] = (i+3)%4;
 			break;}
-		case 4:
-		case 7:{
+		case 4: // A quadrilateral with a single refined edge
+		case 7:{ // A quadrilateral with an intersected corner and a refined edge
 			child.resize(3);
 			newnode.resize(1);
 			int i = 0;
@@ -242,7 +241,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[2][1] = (i+3)%4;
 				child[2][2] = i;
 			break;}
-		case 5:{
+		case 5:{ // A quadrilateral with a refined edge and a mid-face intersection node
 			DebugStop();
 			// child.resize(5);
 			// newnode.resize(2);
@@ -276,9 +275,10 @@ void DFNFace::FillChildrenAndNewNodes(
 			// 	child[4][1] = i;
 			// 	child[4][2] = nodeA;
 			break;}
-		case 6:
-		// case 7 == case 4
-		case 8:{ // case 8 == case 6
+		case 6: // A quadrilateral with an intersected corner and a mid-face intersection node
+		// algorithm for case 8 == case 6
+		// algorithm for case 7 == case 4
+		case 8:{ // A quadrilateral with a single mid-face intersection node 
 			DebugStop();
 			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
 			// In-plane itersection node
@@ -292,11 +292,11 @@ void DFNFace::FillChildrenAndNewNodes(
 			// 	child[i][2] = (i+1)%4;
 			// }
 			break;}
-		case 9:{
+		case 9:{ // A quadrilateral with 2 mid-face intersection nodes
 			// @ToDo
 			DebugStop();
 			break;}
-		case 10:{
+		case 10:{// A triangle with 2 adjancent refined edges
 			child.resize(2);
 			newnode.resize(2);
 			int i = 0;
@@ -318,8 +318,9 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][2] = (i+1)%3;
 				child[1][3] = (i+2)%3;
 			break;}
-		case 11:
-		case 14:{ //case 11 == case 14
+		case 11: // A triangle with an intersected corner and a refined edge
+		// algorithm for case 11 == case 14
+		case 14:{ // A triangle with a single refined edge
 			child.resize(2);
 			newnode.resize(1);
 			int i=0;
@@ -337,7 +338,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][1] = (i+2)%3;
 				child[1][2] = i;
 			break;}
-		case 12:{
+		case 12:{ // A triangle with a refined edge and a mid-face intersection node
 			DebugStop();
 			// child.resize(4);
 			// newnode.resize(2);
@@ -366,9 +367,10 @@ void DFNFace::FillChildrenAndNewNodes(
 			// 	child[3][1] = i;
 			// 	child[3][2] = nodeA;
 			break;}
-		case 13: // case 13 == case 15
-		// case 14 == case 11
-		case 15:{
+		case 13: // A triangle with an intersected corner and a mid-face intersection node
+		// algorithm for case 13 == case 15
+		// algorithm for case 14 == case 11
+		case 15:{ // A triangle with a single mid-face intersection node
 			DebugStop();
 			// In-plane itersection node
 			// child.resize(3);
@@ -380,7 +382,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			// 	child[i][2] = (i+1)%3;
 			// }
 			break;}
-		case 16:{
+		case 16:{ // A triangle with 2 mid-face intersection nodes
 			DebugStop();
 			// @ToDo
 			break;}
