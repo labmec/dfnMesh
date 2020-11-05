@@ -55,7 +55,7 @@ class DFNPolygon
 
 	/// Default constructor. Matrix should be 3xN (3 coordinates for each of the N corner points)
     // the first 3 points cannot be colinear
-	DFNPolygon(const Matrix &CornerPoints);
+	DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh);
 
 	/// Copy constructor
 	DFNPolygon(const DFNPolygon &copy);
@@ -91,16 +91,16 @@ class DFNPolygon
 	REAL ComputeArea();
  
     /// Sort nodes as above or below this polygon
-    void FindNodesAbove(TPZGeoMesh* gmesh);
+    void SortNodes(const TPZGeoMesh* gmesh);
 
-	/// Return true if the rib intersects the polygon
-	bool Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> &intersection);
+	/// Check if the segment that conects 2 coordinates has intersection with this polygon
+	bool Check_pair(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2, TPZManVector<REAL,3> &intersection);
 
 	/// Return true if the rib intersects the polygon
 	bool Check_rib(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection);
 
 	/// Return true if a point is above the polygon plane
-   	bool Check_point_above(const TPZVec<REAL> &point) const;
+   	bool Compute_PointAbove(const TPZVec<REAL> &point) const;
 
    	/// Check whether the point coordinates are within the polygon region
    	bool IsPointInPolygon(TPZVec<REAL> &point);
@@ -149,6 +149,10 @@ class DFNPolygon
     void Print(std::ostream& out = std::cout) const;
 
 	void PlotNodesAbove_n_Below(TPZGeoMesh* gmesh);
+
+	/** @brief Check if node is above plane by checking fNodesAbove */
+	bool IsPointAbove(int64_t index){return fNodesAbove[index];}
+
   private:
 	/// Checks consistency and initializes the datastructure of the object
 	bool Check_Data_Consistency() const;

@@ -48,3 +48,11 @@ void DFNPolyhedron::ListDFNFaces(DFNFracture* fracture, TPZStack<DFNFace*> facel
         facelist.push_back(dfnface);
     }
 }
+
+/** @brief Remove faces from this polyhedron*/
+void DFNPolyhedron::RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack){
+    for(auto& face_orient : facestack){
+        int64_t index = face_orient.first;
+        fShell.erase(index);
+    }
+}

@@ -124,7 +124,7 @@ public:
     // void GenerateSubMesh();
 
     /** @brief Print method for logging */
-    void Print(std::ostream& out = std::cout) const;
+    void Print(std::ostream& out = std::cout, char* name = nullptr) const;
     void PrintRolodexes(std::ostream& out = std::cout) const;
     void PrintPolyhedra(std::ostream& out = std::cout) const;
 
@@ -169,6 +169,21 @@ public:
     
     
     
+    /**
+     * @brief Assembles mesh's polyhedral volumes as lists of the faces that outline them, and fills DFNMesh::fPolyh_by_2D_el
+     * @attention Assumes boundary polyhedron is already in DFNMesh::fPolyh_by_2D_el
+     */
+    void UpdatePolyhedra();
+    /**
+     * @brief Identify and match polyh-index of neighbour faces that enclose the same polyhedron recursively
+     * @param initial_face_orient Index of geoEl of current face paired with orientation {index,orientation}
+     * @param IsConvex Method will flag this as false if a dihedral angle is found to be bigger than 180 degrees (non-convex polyhedron)
+     * @param polyhedron: A stack to list every face (and corresponding orientation) that share this polyhedron 
+     * @note This method is called by DFNMesh::UpdatePolyhedra to split intersected polyhedra
+     * @returns Index of intersected polyhedron to overwrite. Returns -1 if it was already overwriting
+    */
+    template<int Talloc>
+    int BuildVolume2(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
     /**
      * @brief Sort faces around each 1D element of the mesh
      * @note Fills SortedFaces data
@@ -255,6 +270,12 @@ private:
 
     template<int NAlloc>
     void IsolateBoundaryPolyh(TPZStack<std::pair<int64_t,int>,NAlloc>& polyhedron);
+
+    /** @brief set polyh index -1 for every face in a stack*/
+    void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);
+    /** @brief For every face without a polyh index inherit their father's*/
+    void InheritPolyhedra();
+
 };
 
 

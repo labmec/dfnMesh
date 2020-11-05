@@ -407,8 +407,8 @@ void DFNFace::Refine(){
 	// refine
 	fGeoEl->Divide(children);
 
-	// let children inherit polyhedral indices
-	InheritPolyhedra();
+	// // let children inherit polyhedral indices
+	// InheritPolyhedra();
 
 	// update internal node index
 	int splitcase = GetSplitPattern(fStatus);
@@ -425,22 +425,23 @@ void DFNFace::Refine(){
 
 
 
-void DFNFace::InheritPolyhedra(){
-	if(!fGeoEl->HasSubElement()) return;
-	DFNMesh* dfn = fFracture->dfnMesh();
-	if(dfn->Dimension() < 3) return;
+// void DFNFace::InheritPolyhedra(){
+// 	if(!fGeoEl->HasSubElement()) return;
+// 	DFNMesh* dfn = fFracture->dfnMesh();
+// 	if(dfn->Dimension() < 3) return;
+// 	dfn->
 
-	int polyh_front = dfn->GetPolyhedralIndex({fGeoEl->Index(),+1});
-	int polyh_back  = dfn->GetPolyhedralIndex({fGeoEl->Index(),-1});
+// 	int polyh_front = dfn->GetPolyhedralIndex({fGeoEl->Index(),+1});
+// 	int polyh_back  = dfn->GetPolyhedralIndex({fGeoEl->Index(),-1});
 
-	TPZGeoEl* child = nullptr;
-	int nchildren = fGeoEl->NSubElements();
-	for(int i=0; i<nchildren; i++){
-		child = fGeoEl->SubElement(i);
-		dfn->SetPolyhedralIndex({fGeoEl->Index(),+1},polyh_front);
-		dfn->SetPolyhedralIndex({fGeoEl->Index(),-1},polyh_back);
-	}
-}
+// 	TPZGeoEl* child = nullptr;
+// 	int nchildren = fGeoEl->NSubElements();
+// 	for(int i=0; i<nchildren; i++){
+// 		child = fGeoEl->SubElement(i);
+// 		dfn->SetPolyhedralIndex({child->Index(),+1},polyh_front);
+// 		dfn->SetPolyhedralIndex({child->Index(),-1},polyh_back);
+// 	}
+// }
 
 
 
@@ -596,7 +597,7 @@ bool DFNFace::FindInPlanePoint(){
         }else{
             subcorners = corners;
         }
-        DFNPolygon faceplane(subcorners);
+        DFNPolygon faceplane(subcorners, fGeoEl->Mesh());
         // Check fPolygon's ribs for intersection with faceplane
         int nribs = fFracture->Polygon().GetCornersX().Cols();
         for(int irib = 0; irib < nribs; irib++){
@@ -606,7 +607,7 @@ bool DFNFace::FindInPlanePoint(){
                 p1[i] = fFracture->Polygon().GetCornersX().g(i, irib);
                 p2[i] = fFracture->Polygon().GetCornersX().g(i, (irib+1)%nribs);
             }
-            if(faceplane.Check_rib(p1, p2, fCoord)){
+            if(faceplane.Check_pair(p1, p2, fCoord)){
 				fStatus[fGeoEl->NSides()-1] = 1;
                 return true;
             }
@@ -785,7 +786,14 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 	}
 
 	out<<"Status Vector : {"<< fStatus<<"}";
-	out<<"\nSplit Case: " << GetSplitPattern(fStatus);
+	out<<"\nSplit Case: "; 
+	int splitcase = GetSplitPattern(fStatus);
+	if(!splitcase){	
+		out<<"\'unrefined\'";
+	}else{  		
+		out<<splitcase;
+	}
+
 	out<<"\nCorner Nodes:\n";
 	for(int i=0; i<fGeoEl->NCornerNodes(); i++){
 		out<<"\t"<<i<<": index: "<<fGeoEl->NodeIndex(i)<<" "; 
@@ -793,8 +801,7 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 	}
 
 	if(print_refmesh){
-		out<<"\n\n";
-		out<<"\nStart of Refinement Mesh:_________________________________\n\n";
+		out<<"Start of Refinement Mesh:_________________________________\n\n";
 		fRefMesh.Print(out);
 		out<<"\nEnd  of  Refinement Mesh:_________________________________\n\n";
 	}

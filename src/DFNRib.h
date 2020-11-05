@@ -29,7 +29,7 @@ class DFNRib
 private:
     
     /// pointer to its original geometric element
-	TPZGeoEl *fGeoEl;
+	TPZGeoEl *fGeoEl = nullptr;
 
 	/// Contains the side of this element that has been intersected
 	int fStatus = -1;
@@ -43,6 +43,10 @@ private:
 
     /// Pointer to the fracture
     DFNFracture *fFracture = nullptr;
+
+    /// Purple ribs are edges of an intersected polyhedral volume, and intersected by the plane that contains a DFNPolygon
+    /// however, their intersection node is not within DFNPolygon's bounds
+    bool fpurple = false;
 
 public:
     /// Empty constructor

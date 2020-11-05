@@ -1640,6 +1640,65 @@ void DFNMesh::InitializePolyhedra(){
 	// @maybeTODO - Looping over 3D elements and matching a polyhedral index to their shell would be more efficient. But I have to pick my battles
 }
 
+void DFNMesh::UpdatePolyhedra(){
+	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
+	this->SortFacesAroundEdges();
+	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
+	// Refined faces pass down their polyh index to their subelements
+	InheritPolyhedra();
+
+	int polyh_counter = fPolyhedra.size();
+	int polyh_index = polyh_counter;
+	int overwrite_polyh = -1;
+	
+	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
+	// loop over 2D skeleton elements
+	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
+		if(!initial_face) continue;
+		if(initial_face->Dimension() != 2) continue;
+		if(initial_face->HasSubElement()) continue;
+		// if(initial_face->MaterialId() != DFNMaterial::Eskeleton && 
+		// 	initial_face->MaterialId() != DFNMaterial::Efracture) continue;
+		int64_t initial_id = initial_face->Index();
+		
+		// look for polyhedron on each orientation of the initial_face
+		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
+			// if the first has been found, continue to the next
+			if(fPolyh_per_face[initial_id][ipolyh_local] != -1) continue;
+			polyhedron.Fill({-1,0});
+			polyhedron.clear();
+			int orientation = ipolyh_local?-1:1;
+			std::pair<int64_t,int> initial_face_orient = {initial_id,orientation};
+			polyhedron.push_back({initial_id,orientation});
+			polyh_index = overwrite_polyh < 0 ? polyh_counter : overwrite_polyh;
+			SetPolyhedralIndex(initial_face_orient,polyh_index);
+			bool IsConvex = true;
+			overwrite_polyh = BuildVolume2(initial_face_orient,IsConvex,polyhedron);
+
+			#ifdef PZDEBUG
+				// std::cout << "Polyh#"<< std::setw(4) << polyh_counter;
+				// std::cout << ":  " << polyhedron << std::endl;
+			#endif //PZDEBUG
+
+			if(!IsConvex) {
+				MeshPolyhedron(polyhedron);
+				ClearPolyhIndex(polyhedron);
+				// this->SortFacesAroundEdges();
+			}else{
+				DFNPolyhedron new_polyhedron(this,polyh_counter,polyhedron);
+				fPolyhedra.push_back(new_polyhedron);
+				polyh_counter++;
+			}
+		}
+	}
+}
+
+void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
+	for(auto& faceorient : facestack){
+		SetPolyhedralIndex(faceorient, -1);
+	}
+}
+
 void DFNMesh::BuildPolyhedra(){
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
@@ -1718,6 +1777,54 @@ int DFNMesh::GetPolyhedralIndex(std::pair<int64_t,int> face_orient){
 }
 
 template<int Talloc>
+int DFNMesh::BuildVolume2(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
+	int polyh_index = GetPolyhedralIndex(initial_face_orient);
+	if(polyh_index == -1) DebugStop();
+	int overwrite_polyh = -1; ///< Index of polyhedron to overwrite because it was split in 2. Ignores if -1
+	// Edges occupying the one dimensional sides
+	TPZManVector<int64_t,4> edges = GetEdgeIndices(initial_face_orient.first);
+	// Neighbour cards through the edges
+	TPZManVector<TRolodexCard,4> cards(edges.size());
+	// List the neighbour cards
+	for(int i=0; i<edges.size(); i++){
+		int64_t iedge = edges[i];
+		TRolodex& rolodex = fSortedFaces[iedge];
+		cards[i] = rolodex.Card(initial_face_orient.first);
+	}
+
+	// Determine orientation of neighbour cards
+	TPZManVector<std::pair<TRolodexCard, int>,4> facingcards(edges.size());
+	for(int i=0; i<edges.size(); i++){
+		int64_t iedge = edges[i];
+		TRolodex& rolodex = fSortedFaces[iedge];
+		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
+		REAL angle = 0.0;
+		facingcards[i] = rolodex.FacingCard(current_card,angle);
+		if(angle > M_PI+gDFN_SmallNumber){ IsConvex = false; }
+	}
+	// queue neighbour cards to verify
+	std::list<std::pair<int64_t, int>> to_verify;
+	for(int i=0; i<edges.size(); i++){
+		int64_t iedge = edges[i];
+		std::pair<int64_t,int> faceorient = {facingcards[i].first.fgelindex,facingcards[i].second};
+		int nextface_polyindex = GetPolyhedralIndex(faceorient);
+		if(nextface_polyindex != polyh_index){
+			to_verify.push_back(faceorient);
+			SetPolyhedralIndex(faceorient,polyh_index);
+			polyhedron.push_back(faceorient);
+			overwrite_polyh = MAX(nextface_polyindex,overwrite_polyh);
+		}
+	}
+	// recursively try to add neighbours of cards that have been queued 
+	for(auto orientedface : to_verify){
+		int aux = BuildVolume2(orientedface,IsConvex,polyhedron);
+		overwrite_polyh = MAX(aux,overwrite_polyh);
+	}
+
+	return overwrite_polyh;
+}
+
+template<int Talloc>
 void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
 	int polyh_index = GetPolyhedralIndex(initial_face_orient);
 	if(polyh_index == -1) DebugStop();
@@ -1756,7 +1863,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 			DebugStop();
 		}
 	}
-	// recursevily verify cards that have been queued 
+	// recursively verify cards that have been queued 
 	for(auto orientedface : to_verify){
 		BuildVolume(orientedface,IsConvex,polyhedron);
 	}
@@ -1860,7 +1967,8 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 	gmsh::model::remove();
 	gmsh::clear();
 	// gmsh::finalize();
-
+	CreateSkeletonElements(1);
+	CreateSkeletonElements(2);
 }
 
 
@@ -2053,11 +2161,29 @@ void DFNMesh::SortFacesAroundEdges(){
 // 	DebugStop();
 // }
 
+void DFNMesh::InheritPolyhedra(){
+	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 
-void DFNMesh::Print(std::ostream & out) const
+	for(TPZGeoEl* childface : fGMesh->ElementVec()){
+		if(!childface) continue;
+		TPZGeoEl* father = childface->Father();
+		if(!father) continue;
+
+		for(int i=0; i<2; i++){
+			int orient = i?-1:1;
+			if(GetPolyhedralIndex({childface->Index(),orient}) < 0){
+				int father_polyhindex = GetPolyhedralIndex({father->Index(),orient});
+				SetPolyhedralIndex({childface->Index(),orient},father_polyhindex);
+			}
+		}
+	}
+}
+
+void DFNMesh::Print(std::ostream & out, char* name) const
 {
-	out << "\n\t DFN MESH INFORMATION:\n\n";
-	out << "\n\t\t GEOMETRIC TPZGeoMesh INFORMATIONS:\n\n";
+	out << "\n\t DFN MESH INFORMATION:\n";
+	if(name) out <<"\"" << name <<"\"\n";
+	out << "\n\n\t\t GEOMETRIC TPZGeoMesh INFORMATIONS:\n\n";
 	out << "TITLE-> " << fGMesh->Name() << "\n\n";
 	out << "Number of nodes               = " << fGMesh->NodeVec().NElements() << "\n";
 	out << "Number of elements            = " << fGMesh->ElementVec().NElements()-fGMesh->ElementVec().NFreeElements() << "\n";

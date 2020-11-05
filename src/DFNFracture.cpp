@@ -79,7 +79,8 @@ void DFNFracture::AddFace(DFNFace &face){
         std::stringstream sout;
         sout << "Adding face\n";
         res.first->second.Print(sout,true);
-        LOGPZ_DEBUG(logger,sout.str())
+        logger->setAdditivity(true);
+        LOGPZ_DEBUG(logger,sout.str());
     }
 #endif
     if(res.second == false) DebugStop();
@@ -155,16 +156,10 @@ void DFNFracture::FindFaces(){
         // @TODO why not include the rib_index in the constructor?
         face.SetRibs(rib_vec);
         face.UpdateStatusVec();
-        // if(!face.IsIntersected()) continue;
-        // @TODO Premature, we will check on boundaries later!!
-        // what needs to be done is creating DFNRib objects for faces that have only
-        // one rib (this means one of its 1D sides are outside the polygon)
-        if(face.IsOnBoundary()){
-            face.FindInPlanePoint();
-        }
-        // gel->SetMaterialId(DFNMaterial::Erefined);
-        // this method will divide the corresponding geometric face element
-        // @TODO where do we check for small angle intersections?
+        // if(face.IsOnBoundary()){
+        //     face.FindInPlanePoint();
+        // }
+        // Setup a refinement mesh whose quality measures are checked in DFNFace::NeedsSnap()
         face.UpdateRefMesh();
         AddFace(face);
     }
@@ -735,8 +730,8 @@ void DFNFracture::MeshFractureSurface(){
 
         for(int i=0; i<2; i++){
             int orientation = 1 - 2*i; // (i==0?1:-1)
-            // skip 'boundary polyhedron'
             std::pair<int64_t,int> initialface_orient = {initial_face.Index(),orientation};
+            // skip 'boundary polyhedron'
             if(fdfnMesh->GetPolyhedralIndex(initialface_orient)==0) continue;
             if(fdfnMesh->GetPolyhedralIndex(initialface_orient)< 0) DebugStop();
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
@@ -898,11 +893,14 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
     // wiretag is a dummy vector with the shifted index of the face/curve-loop
     std::vector<int> wiretag(1,-1);
     wiretag[0] = gmsh::model::geo::addCurveLoop(lineloop);
-    gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
+    if(lineloop.size() < 5){///< To make it more resistant to new nodes
+        gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);
+        gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]); 
+        // gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
+    }else{
+        gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
+    }
     gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Efracture);
-    // gmsh::model::geo::addSurfaceFilling(wiretag,wiretag[0]);
-    // gmsh::model::geo::mesh::setTransfiniteSurface(wiretag[0]);
-    // gmsh::model::geo::mesh::setRecombine(2,wiretag[0]);
 
 	
 	// synchronize before meshing

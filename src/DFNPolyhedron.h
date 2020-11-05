@@ -81,6 +81,9 @@ class DFNPolyhedron
 
 		// Lists DFNFaces that are part of this polyhedron
 		void ListDFNFaces(DFNFracture* fracture, TPZStack<DFNFace*> facelist);
+
+		/** @brief Remove faces from this polyhedron*/
+		void RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack);
 };
 
 

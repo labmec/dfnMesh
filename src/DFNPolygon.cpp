@@ -11,7 +11,7 @@
 #include "DFNMesh.h"
 
 //Constructor
-DFNPolygon::DFNPolygon(const Matrix &CornerPoints) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1.), fAxis(3,3,0.)
+DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1.), fAxis(3,3,0.)
 {
     //If data is consistent, fAxis was computed during consistency check
     fCornerPoints = CornerPoints;
@@ -21,6 +21,7 @@ DFNPolygon::DFNPolygon(const Matrix &CornerPoints) : fPointsIndex(CornerPoints.C
 		DebugStop();
 	}
 	ComputeArea();
+    SortNodes(gmesh);
 }
 
 // Copy constructor
@@ -126,7 +127,7 @@ const Matrix& DFNPolygon::GetCornersX() const{
  * @return False if the point is below the fracture polygon
  */
 
-bool DFNPolygon::Check_point_above(const TPZVec<REAL> &point) const{
+bool DFNPolygon::Compute_PointAbove(const TPZVec<REAL> &point) const{
     
     //Point distance to the fracture polygon computation
         double point_distance = (point[0] - GetCornersX().g(0,1))*(axis().GetVal(0,2)) 
@@ -149,19 +150,25 @@ bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
     TPZManVector<REAL,3> node1(3,0);
     gel->NodePtr(0)->GetCoordinates(node0);
     gel->NodePtr(1)->GetCoordinates(node1);
-    return Check_rib(node0,node1,intersection);
-}
-
-bool DFNPolygon::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<REAL,3> &p2, TPZManVector<REAL,3> &intersection) {
     //check for infinite plane
-    if(Check_point_above(p1) != Check_point_above(p2)){
+    if(IsPointAbove(inode[0]) != IsPointAbove(inode[1])){
         //Rib cut by infinite plane
         //then calculate intersection point and check if it's within polygon boundaries
-        intersection = CalculateIntersection(p1, p2);
+        intersection = CalculateIntersection(node0, node1);
         return IsPointInPolygon(intersection);
+    }else{
+        return false;    //Rib is not cut by polygon
     }
-    else
-    {
+}
+
+
+bool DFNPolygon::Check_pair(const TPZVec<REAL>& p1, const TPZVec<REAL>& p2, TPZManVector<REAL,3> &intersection){
+    //check for infinite plane
+    if(Compute_PointAbove(p1) != Compute_PointAbove(p2)){
+        //then calculate intersection point and check if it's within polygon boundaries
+        intersection = CalculateIntersection(p1,p2);
+        return IsPointInPolygon(intersection);
+    }else{
         return false;    //Rib is not cut by polygon
     }
 }
@@ -174,16 +181,15 @@ bool DFNPolygon::Check_rib(const TPZManVector<REAL,3> &p1, const TPZManVector<RE
  */
 TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
 {     
-    TPZVec<double> Pint;
+    TPZManVector<double,3> Pint(3,0.);
 
-    double term1 = ((fCornerPoints(0,1)-p2[0])*(fAxis(0,2))) 
-                   +((fCornerPoints(1,1)-p2[1])*(fAxis(1,2)))
-                   +((fCornerPoints(2,1)-p2[2])*(fAxis(2,2)));
-    double term2 = (p1[0]-p2[0])*fAxis(0,2) 
-                   +(p1[1]-p2[1])*fAxis(1,2) 
-                   +(p1[2]-p2[2])*fAxis(2,2);
-    double alpha = term1/term2;
-    Pint.Resize(3);
+    double orthdist_p2 = ((fCornerPoints(0,1)-p2[0])*(fAxis(0,2))) 
+                        +((fCornerPoints(1,1)-p2[1])*(fAxis(1,2)))
+                        +((fCornerPoints(2,1)-p2[2])*(fAxis(2,2)));
+    double rib_normal_component = (p1[0]-p2[0])*fAxis(0,2) 
+                                 +(p1[1]-p2[1])*fAxis(1,2) 
+                                 +(p1[2]-p2[2])*fAxis(2,2);
+    double alpha = orthdist_p2/rib_normal_component;
     for (int p=0; p<3; p++){
         Pint[p] = p2[p] + alpha*(p1[p]-p2[p]);
     }
@@ -393,7 +399,7 @@ void DFNPolygon::Print(std::ostream & out) const
 
 
 
-void DFNPolygon::FindNodesAbove(TPZGeoMesh* gmesh){
+void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
     fNodesAbove.Resize(gmesh->NNodes(),false);
     TPZManVector<REAL,3> coord(3,0.0);
     int nnodes = gmesh->NNodes();
@@ -401,12 +407,12 @@ void DFNPolygon::FindNodesAbove(TPZGeoMesh* gmesh){
         TPZGeoNode& node = gmesh->NodeVec()[i];
         if(node.Id() < 0) continue;
         node.GetCoordinates(coord);
-        fNodesAbove[i] = Check_point_above(coord);
+        fNodesAbove[i] = Compute_PointAbove(coord);
     }
 }
 
 void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){
-    FindNodesAbove(gmesh);
+    SortNodes(gmesh);
 
     TPZManVector<int64_t,1> nodeindices(1,-1);
     const int64_t nnodes = gmesh->NNodes();

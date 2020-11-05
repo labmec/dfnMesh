@@ -41,18 +41,16 @@ private:
 	/// Pointer for the complete DFN mesh
 	DFNMesh *fdfnMesh = nullptr;
 
-	/// Map of ribs affected by this fracture
-    // @TODO what is the value of the first key?
+	/// Map of ribs affected by this fracture {gel_index, DFNRib}
 	std::map<int64_t, DFNRib> fRibs;
 
-	/// Map of faces affected by this fracture
-    // @TODO what is the value of the first key?
+	/// Map of faces affected by this fracture {gel_index, DFNFace}
 	std::map<int64_t, DFNFace> fFaces;
 
 	/// A planar convex polygon that defines the outline of the fracture
 	DFNPolygon fPolygon;
 	
-	/// Map of elements on fracture surface {Elindex,Elpointer}
+	/// Map of elements on fracture surface {El_index,El_pointer}
 	std::map<int64_t, TPZGeoEl *> fSurface;
 
 public:
