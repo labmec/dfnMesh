@@ -230,6 +230,17 @@ static void SetMaterialIDChildren(int id, TPZGeoEl* gel){
     }
 }
 
+template <typename T1, typename T2>
+std::ostream& 
+operator<<(std::ostream& out, 
+           const std::pair<T1,T2>& pair )
+{
+    // out << pair.first << "|" << (pair.second < 0 ? "":" ") << pair.second;
+    out << pair.first << "|";
+    out << std::showpos << pair.second;
+    out << std::noshowpos;
+	return out;
+}
 
 #include "DFNNamespaceTemp.cpp"
 #endif /* DFNNamespace_h */
