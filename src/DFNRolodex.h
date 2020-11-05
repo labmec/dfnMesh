@@ -173,6 +173,9 @@ public:
             card.Print(out);
         }
     }
+
+    /** @return Number of cards*/
+    int NCards(){return fcards.size();}
 };
 
 

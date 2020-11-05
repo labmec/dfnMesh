@@ -2103,9 +2103,19 @@ void DFNMesh::SortFacesAroundEdges(){
 		if(!gel) continue;
 		if(gel->Dimension() != 1) continue;
 		if(gel->HasSubElement()) continue;
+
+
 		std::map<REAL,TPZGeoElSide> facemap;
+		TRolodex& rolodex = fSortedFaces[gel->Index()];
 
 		TPZGeoElSide edgeside(gel,2);
+		// skip if there aren't any new faces on the rolodex
+			// std::set<int> mats = {DFNMaterial::Efracture, DFNMaterial::Eskeleton};
+			// int nfaces = edgeside.NNeighbours(2,mats);
+		int nfaces = edgeside.NNeighbours(2);
+		int ncards = rolodex.NCards();
+		if(nfaces <= ncards) continue;
+
 		TPZGeoElSide neig = edgeside.Neighbour();
 		TPZGeoElSide reference_el;
 		int reference_orientation;
@@ -2121,12 +2131,12 @@ void DFNMesh::SortFacesAroundEdges(){
 		}
 		int j = 0;
 		// std::cout<<"\n Edge # "<<gel->Index();
-		fSortedFaces[gel->Index()].fedgeindex = gel->Index();
-		fSortedFaces[gel->Index()].fcards.clear();
-		fSortedFaces[gel->Index()].fcards.resize(facemap.size());
+		rolodex.fedgeindex = gel->Index();
+		rolodex.fcards.clear();
+		rolodex.fcards.resize(facemap.size());
 		for(auto iterator : facemap){
 			TPZGeoElSide& faceside = iterator.second;
-			TRolodexCard& facecard = fSortedFaces[gel->Index()].fcards[j];
+			TRolodexCard& facecard = rolodex.fcards[j];
 			facecard.fgelindex = faceside.Element()->Index();
 			facecard.fSide = faceside.Side();
 			facecard.fangle_to_reference = iterator.first;
