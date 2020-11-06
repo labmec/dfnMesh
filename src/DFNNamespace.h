@@ -235,10 +235,13 @@ std::ostream&
 operator<<(std::ostream& out, 
            const std::pair<T1,T2>& pair )
 {
-    // out << pair.first << "|" << (pair.second < 0 ? "":" ") << pair.second;
     out << pair.first << "|";
-    out << std::showpos << pair.second;
-    out << std::noshowpos;
+    if(std::is_convertible<T2,int>::value){
+        out << (pair.second < 0 ? "":" ");
+    }
+    out << pair.second;
+    // out << std::showpos << pair.second;
+    // out << std::noshowpos;
 	return out;
 }
 

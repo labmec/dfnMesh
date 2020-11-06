@@ -389,10 +389,10 @@ void DFNPolygon::Print(std::ostream & out) const
 	out << "Number of corners             = " << NCornerNodes() << "\n";
 	out << "Area                          = " << fArea << "\n";
 	out << "Corner coordinates:\n";
-    fCornerPoints.Print(out);
+    fCornerPoints.Print("CornersX",out,EFixedColumn);
 	out << "Axes:\n";
-    fAxis.Print(out);
-	out << "\nGeoNode indices:\n\t\t";
+    fAxis.Print("Axes",out,EFixedColumn);
+	out << "GeoNode indices:\n\t\t";
     out << fPointsIndex;
     out << std::endl;
 }

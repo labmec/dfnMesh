@@ -65,7 +65,7 @@ class DFNPolyhedron
 		DFNPolyhedron &operator=(const DFNPolyhedron &copy);
 
 		/** @brief Print method for logging */
-		void Print(std::ostream& out = std::cout) const;
+		void Print(std::ostream& out = std::cout);
 
 		// Index of polyhedron
 		int Index(){return fIndex;}
