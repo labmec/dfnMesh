@@ -1636,7 +1636,8 @@ void DFNMesh::InitializePolyhedra(){
 	shell.clear();
 
 	// Then initialize the rest of the polyhedra
-	BuildPolyhedra();
+	// BuildPolyhedra();
+	UpdatePolyhedra();
 	// @maybeTODO - Looping over 3D elements and matching a polyhedral index to their shell would be more efficient. But I have to pick my battles
 }
 
@@ -1646,10 +1647,8 @@ void DFNMesh::UpdatePolyhedra(){
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 	// Refined faces pass down their polyh index to their subelements
 	InheritPolyhedra();
+	int polyh_index = fPolyhedra.size();
 
-	int polyh_counter = fPolyhedra.size();
-	int polyh_index = polyh_counter;
-	int overwrite_polyh = -1;
 	
 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
@@ -1670,13 +1669,13 @@ void DFNMesh::UpdatePolyhedra(){
 			int orientation = ipolyh_local?-1:1;
 			std::pair<int64_t,int> initial_face_orient = {initial_id,orientation};
 			polyhedron.push_back({initial_id,orientation});
-			polyh_index = overwrite_polyh < 0 ? polyh_counter : overwrite_polyh;
+			polyh_index = fPolyhedra.size();
 			SetPolyhedralIndex(initial_face_orient,polyh_index);
 			bool IsConvex = true;
-			overwrite_polyh = BuildVolume2(initial_face_orient,IsConvex,polyhedron);
+			BuildVolume(initial_face_orient,IsConvex,polyhedron);
 
 			#ifdef PZDEBUG
-				// std::cout << "Polyh#"<< std::setw(4) << polyh_counter;
+				// std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size();;
 				// std::cout << ":  " << polyhedron << std::endl;
 			#endif //PZDEBUG
 
@@ -1685,9 +1684,8 @@ void DFNMesh::UpdatePolyhedra(){
 				ClearPolyhIndex(polyhedron);
 				// this->SortFacesAroundEdges();
 			}else{
-				DFNPolyhedron new_polyhedron(this,polyh_counter,polyhedron);
+				DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron);
 				fPolyhedra.push_back(new_polyhedron);
-				polyh_counter++;
 			}
 		}
 	}
@@ -1699,47 +1697,47 @@ void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
 	}
 }
 
-void DFNMesh::BuildPolyhedra(){
-	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
-	this->SortFacesAroundEdges();
-	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
-	int polyh_counter = fPolyhedra.size();
+// void DFNMesh::BuildPolyhedra(){
+// 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
+// 	this->SortFacesAroundEdges();
+// 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
+// 	int polyh_counter = fPolyhedra.size();
 	
-	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
-	// loop over 2D skeleton elements
-	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
-		if(!initial_face) continue;
-		if(initial_face->Dimension() != 2) continue;
-		if(initial_face->HasSubElement()) continue;
-		int64_t initial_id = initial_face->Index();
+// 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
+// 	// loop over 2D skeleton elements
+// 	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
+// 		if(!initial_face) continue;
+// 		if(initial_face->Dimension() != 2) continue;
+// 		if(initial_face->HasSubElement()) continue;
+// 		int64_t initial_id = initial_face->Index();
 
-		// look for polyhedron on each orientation of the initial_face
-		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
-			// if the first has been found, continue to the next
-			if(fPolyh_per_face[initial_id][ipolyh_local] != -1) continue;
-			polyhedron.Fill({-1,0});
-			polyhedron.clear();
-			int orientation = ipolyh_local?-1:1;
-			std::pair<int64_t,int> initial_face_orientation = {initial_id,orientation};
-			polyhedron.push_back({initial_id,orientation});
-			SetPolyhedralIndex(initial_face_orientation,polyh_counter);
-			bool IsConvex = true;
-			BuildVolume(initial_face_orientation,IsConvex,polyhedron);
+// 		// look for polyhedron on each orientation of the initial_face
+// 		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
+// 			// if the first has been found, continue to the next
+// 			if(fPolyh_per_face[initial_id][ipolyh_local] != -1) continue;
+// 			polyhedron.Fill({-1,0});
+// 			polyhedron.clear();
+// 			int orientation = ipolyh_local?-1:1;
+// 			std::pair<int64_t,int> initial_face_orientation = {initial_id,orientation};
+// 			polyhedron.push_back({initial_id,orientation});
+// 			SetPolyhedralIndex(initial_face_orientation,polyh_counter);
+// 			bool IsConvex = true;
+// 			BuildVolume(initial_face_orientation,IsConvex,polyhedron);
 
-			#ifdef PZDEBUG
-				// std::cout << "Polyh#"<< std::setw(4) << polyh_counter;
-				// std::cout << ":  " << polyhedron << std::endl;
-			#endif //PZDEBUG
+// 			#ifdef PZDEBUG
+// 				// std::cout << "Polyh#"<< std::setw(4) << polyh_counter;
+// 				// std::cout << ":  " << polyhedron << std::endl;
+// 			#endif //PZDEBUG
 
-			if(!IsConvex) MeshPolyhedron(polyhedron);
-			else{
-				DFNPolyhedron new_polyhedron(this,polyh_counter,polyhedron);
-				fPolyhedra.push_back(new_polyhedron);
-			}
-			polyh_counter++;
-		}
-	}
-}
+// 			if(!IsConvex) MeshPolyhedron(polyhedron);
+// 			else{
+// 				DFNPolyhedron new_polyhedron(this,polyh_counter,polyhedron);
+// 				fPolyhedra.push_back(new_polyhedron);
+// 			}
+// 			polyh_counter++;
+// 		}
+// 	}
+// }
 
 
 TPZManVector<int64_t,4> DFNMesh::GetEdgeIndices(int64_t face_index){
@@ -1777,10 +1775,9 @@ int DFNMesh::GetPolyhedralIndex(std::pair<int64_t,int> face_orient){
 }
 
 template<int Talloc>
-int DFNMesh::BuildVolume2(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
+void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
 	int polyh_index = GetPolyhedralIndex(initial_face_orient);
 	if(polyh_index == -1) DebugStop();
-	int overwrite_polyh = -1; ///< Index of polyhedron to overwrite because it was split in 2. Ignores if -1
 	// Edges occupying the one dimensional sides
 	TPZManVector<int64_t,4> edges = GetEdgeIndices(initial_face_orient.first);
 	// Neighbour cards through the edges
@@ -1812,63 +1809,60 @@ int DFNMesh::BuildVolume2(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 			to_verify.push_back(faceorient);
 			SetPolyhedralIndex(faceorient,polyh_index);
 			polyhedron.push_back(faceorient);
-			overwrite_polyh = MAX(nextface_polyindex,overwrite_polyh);
 		}
 	}
 	// recursively try to add neighbours of cards that have been queued 
 	for(auto orientedface : to_verify){
-		int aux = BuildVolume2(orientedface,IsConvex,polyhedron);
-		overwrite_polyh = MAX(aux,overwrite_polyh);
-	}
-
-	return overwrite_polyh;
-}
-
-template<int Talloc>
-void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
-	int polyh_index = GetPolyhedralIndex(initial_face_orient);
-	if(polyh_index == -1) DebugStop();
-	// Edges occupying the one dimensional sides
-	TPZManVector<int64_t,4> edges = GetEdgeIndices(initial_face_orient.first);
-	// Neighbour cards through the edges
-	TPZManVector<TRolodexCard,4> cards(edges.size());
-	// List the neighbour cards
-	for(int i=0; i<edges.size(); i++){
-		int64_t iedge = edges[i];
-		TRolodex& rolodex = fSortedFaces[iedge];
-		cards[i] = rolodex.Card(initial_face_orient.first);
-	}
-
-	// Determine orientation of neighbour cards
-	TPZManVector<std::pair<TRolodexCard, int>,4> facingcards(edges.size());
-	for(int i=0; i<edges.size(); i++){
-		int64_t iedge = edges[i];
-		TRolodex& rolodex = fSortedFaces[iedge];
-		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
-		REAL angle = 0.0;
-		facingcards[i] = rolodex.FacingCard(current_card,angle);
-		if(angle > M_PI+gDFN_SmallNumber){ IsConvex = false; }
-	}
-	// queue neighbour cards to verify
-	std::list<std::pair<int64_t, int>> to_verify;
-	for(int i=0; i<edges.size(); i++){
-		int64_t iedge = edges[i];
-		std::pair<int64_t,int> faceorient = {facingcards[i].first.fgelindex,facingcards[i].second};
-		int nextface_polyindex = GetPolyhedralIndex(faceorient);
-		if(nextface_polyindex == -1) {
-			to_verify.push_back(faceorient);
-			SetPolyhedralIndex(faceorient,polyh_index);
-			polyhedron.push_back(faceorient);
-		}else if(nextface_polyindex != polyh_index){
-			DebugStop();
-		}
-	}
-	// recursively verify cards that have been queued 
-	for(auto orientedface : to_verify){
 		BuildVolume(orientedface,IsConvex,polyhedron);
 	}
-	
+
 }
+
+// template<int Talloc>
+// void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
+// 	int polyh_index = GetPolyhedralIndex(initial_face_orient);
+// 	if(polyh_index == -1) DebugStop();
+// 	// Edges occupying the one dimensional sides
+// 	TPZManVector<int64_t,4> edges = GetEdgeIndices(initial_face_orient.first);
+// 	// Neighbour cards through the edges
+// 	TPZManVector<TRolodexCard,4> cards(edges.size());
+// 	// List the neighbour cards
+// 	for(int i=0; i<edges.size(); i++){
+// 		int64_t iedge = edges[i];
+// 		TRolodex& rolodex = fSortedFaces[iedge];
+// 		cards[i] = rolodex.Card(initial_face_orient.first);
+// 	}
+
+// 	// Determine orientation of neighbour cards
+// 	TPZManVector<std::pair<TRolodexCard, int>,4> facingcards(edges.size());
+// 	for(int i=0; i<edges.size(); i++){
+// 		int64_t iedge = edges[i];
+// 		TRolodex& rolodex = fSortedFaces[iedge];
+// 		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
+// 		REAL angle = 0.0;
+// 		facingcards[i] = rolodex.FacingCard(current_card,angle);
+// 		if(angle > M_PI+gDFN_SmallNumber){ IsConvex = false; }
+// 	}
+// 	// queue neighbour cards to verify
+// 	std::list<std::pair<int64_t, int>> to_verify;
+// 	for(int i=0; i<edges.size(); i++){
+// 		int64_t iedge = edges[i];
+// 		std::pair<int64_t,int> faceorient = {facingcards[i].first.fgelindex,facingcards[i].second};
+// 		int nextface_polyindex = GetPolyhedralIndex(faceorient);
+// 		if(nextface_polyindex == -1) {
+// 			to_verify.push_back(faceorient);
+// 			SetPolyhedralIndex(faceorient,polyh_index);
+// 			polyhedron.push_back(faceorient);
+// 		}else if(nextface_polyindex != polyh_index){
+// 			DebugStop();
+// 		}
+// 	}
+// 	// recursively verify cards that have been queued 
+// 	for(auto orientedface : to_verify){
+// 		BuildVolume(orientedface,IsConvex,polyhedron);
+// 	}
+	
+// }
 
 
 
@@ -2109,11 +2103,10 @@ void DFNMesh::SortFacesAroundEdges(){
 		TRolodex& rolodex = fSortedFaces[gel->Index()];
 
 		TPZGeoElSide edgeside(gel,2);
-		// skip if there aren't any new faces on the rolodex
-			// std::set<int> mats = {DFNMaterial::Efracture, DFNMaterial::Eskeleton};
-			// int nfaces = edgeside.NNeighbours(2,mats);
+		// @todo std::set<int> mats = {DFNMaterial::Efracture, DFNMaterial::Eskeleton}; int nfaces = edgeside.NNeighbours(2,mats);
 		int nfaces = edgeside.NNeighbours(2);
 		int ncards = rolodex.NCards();
+		// skip if there aren't any new faces on the rolodex
 		if(nfaces <= ncards) continue;
 
 		TPZGeoElSide neig = edgeside.Neighbour();
@@ -2174,17 +2167,25 @@ void DFNMesh::SortFacesAroundEdges(){
 void DFNMesh::InheritPolyhedra(){
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 
-	for(TPZGeoEl* childface : fGMesh->ElementVec()){
-		if(!childface) continue;
-		TPZGeoEl* father = childface->Father();
+	for(TPZGeoEl* father : fGMesh->ElementVec()){
 		if(!father) continue;
+		if(!father->HasSubElement()) continue;
 
+		TPZGeoEl* child = nullptr;
+		int nchildren = father->NSubElements();
 		for(int i=0; i<2; i++){
 			int orient = i?-1:1;
-			if(GetPolyhedralIndex({childface->Index(),orient}) < 0){
-				int father_polyhindex = GetPolyhedralIndex({father->Index(),orient});
-				SetPolyhedralIndex({childface->Index(),orient},father_polyhindex);
+			int father_polyhindex = GetPolyhedralIndex({father->Index(),orient});
+			if(father_polyhindex<0) continue;
+			for(int jchild=0; jchild<nchildren; jchild++){
+				child = father->SubElement(jchild);
+				if(GetPolyhedralIndex({child->Index(),orient}) < 0){
+					SetPolyhedralIndex({child->Index(),orient},father_polyhindex);
+				}
 			}
+			SetPolyhedralIndex({father->Index(),orient},-1); //< refined face doesn't need a polyhedral index
+			DFNPolyhedron& polyhedron = fPolyhedra[father_polyhindex];
+			polyhedron.SwapForChildren(father);
 		}
 	}
 }

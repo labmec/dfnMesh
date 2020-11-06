@@ -183,7 +183,7 @@ public:
      * @returns Index of intersected polyhedron to overwrite. Returns -1 if it was already overwriting
     */
     template<int Talloc>
-    int BuildVolume2(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    void BuildVolume2(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
     /**
      * @brief Sort faces around each 1D element of the mesh
      * @note Fills SortedFaces data
