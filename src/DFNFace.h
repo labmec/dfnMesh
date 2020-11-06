@@ -239,6 +239,7 @@ public:
     /// @note: Does nothing if mesh is not 3D
     void InheritPolyhedra();
 
+    int NIntersectedRibs();
 private: 
 
     /**

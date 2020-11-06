@@ -202,8 +202,6 @@ public:
     */
     template<int Talloc>
     void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
-    /// return a vector of indices for edges occupying 1D sides of a face
-    TPZManVector<int64_t,4> GetEdgeIndices(int64_t face_index);
     /// set a polyhedral index for a face in the structure fPolyh_per_face
     void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
     /// get the polyhedral index for a face from the structure fPolyh_per_face
@@ -217,8 +215,8 @@ public:
     /**
      * @brief Reference to polyhedra stack
     */
-    // template<int Talloc>
     TPZStack<DFNPolyhedron,20>& Polyhedra(){return fPolyhedra;}
+    // template<int Talloc>
 
     /** @brief adds geoels for graphics that illustrate the tolerance*/
     void PlotTolerance(TPZManVector<int64_t>&);
@@ -229,6 +227,9 @@ public:
     /** @brief Initializes the polyhedral volumes datastructure. 
      * @attention It isolates the boundary as the polyhedron of index 0.*/
     void InitializePolyhedra();
+
+    /// return a vector of indices for edges occupying 1D sides of a face
+    TPZVec<int64_t> GetEdgeIndices(int64_t face_index){return DFN::GetEdgeIndices(fGMesh->Element(face_index));}
 
 private:
     

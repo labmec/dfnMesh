@@ -84,3 +84,43 @@ void DFNPolyhedron::SwapForChildren(TPZGeoEl* father){
         fShell.insert({childindex,orientation});
     }
 }
+
+/** @brief Checks if this polyhedron was intersected by a fracture*/
+bool DFNPolyhedron::IsIntersected(DFNFracture& fracture){
+    for(auto& face_orient : fShell){
+        int64_t index = face_orient.first;
+        DFNFace* face = fracture.Face(index);
+        if(face) return true;
+    }
+    return false;
+}
+
+/** @brief Returns true if any of the faces in this polyhedron's shell contains only one Inbound rib*/
+bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture){
+    for(auto& face_orient : fShell){
+        int64_t index = face_orient.first;
+        DFNFace* face = fracture.Face(index);
+        if(!face) continue;
+        if(face->NIntersectedRibs() == 1) return true;
+    }
+    return false;
+}
+
+void DFNPolyhedron::GetEdges(TPZVec<TPZGeoEl*>& edgelist){
+    // Throw every edge of every face from fShell into an std::set then copy into edgelist
+    std::set<int64_t> edge_set;
+    TPZGeoMesh* gmesh = fDFN->Mesh();
+    for(auto& face_orient : fShell){
+        TPZGeoEl* face = gmesh->Element(face_orient.first);
+        TPZManVector<int64_t,4> face_edges = DFN::GetEdgeIndices(face);
+        for(int64_t iedge : face_edges){
+            edge_set.insert(iedge);
+        }
+    }
+    edgelist.resize(edgelist.size());
+    int i=0;
+    for(int64_t iedge : edge_set){
+        edgelist[i] = gmesh->Element(iedge);
+        i++;
+    }
+}

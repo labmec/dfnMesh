@@ -202,6 +202,9 @@ namespace DFN{
     /** @brief Check if a 2D side of a 3D element is oriented outward according to NeoPZ topolgy */
     bool PZOutwardPointingFace(TPZGeoElSide faceside);
 
+    /// return a vector of indices for edges occupying 1D sides of a face
+    TPZManVector<int64_t,4> GetEdgeIndices(TPZGeoEl* face);
+
 } /*namespace DFN*/
 
 
@@ -230,10 +233,11 @@ static void SetMaterialIDChildren(int id, TPZGeoEl* gel){
     }
 }
 
+/** @brief a better overload of operator<< for std::pair*/
 template <typename T1, typename T2>
 std::ostream& 
-operator<<(std::ostream& out, 
-           const std::pair<T1,T2>& pair )
+operator<<(      std::ostream&      out, 
+           const std::pair<T1,T2>&  pair )
 {
     out << pair.first << "|";
     if(std::is_convertible<T2,int>::value){

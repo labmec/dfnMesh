@@ -11,7 +11,10 @@
 #include "DFNMesh.h"
 
 //Constructor
-DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) : fPointsIndex(CornerPoints.Cols(),-1), fArea(-1.), fAxis(3,3,0.)
+DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) 
+:   fPointsIndex(CornerPoints.Cols(),-1), 
+    fArea(-1.), 
+    fAxis(3,3,0.)
 {
     //If data is consistent, fAxis was computed during consistency check
     fCornerPoints = CornerPoints;
@@ -55,22 +58,22 @@ void DFNPolygon::ComputeAxis()
         DebugStop();
     }
 
-    //Ax0 without normalization
+    //Ax0
     fAxis(0,0) = fCornerPoints(0,0) - fCornerPoints(0,1);
     fAxis(1,0) = fCornerPoints(1,0) - fCornerPoints(1,1);
     fAxis(2,0) = fCornerPoints(2,0) - fCornerPoints(2,1);
 
-    //Ax1 without normalization
+    //Ax1
     fAxis(0,1) = fCornerPoints(0,2) - fCornerPoints(0,1);
     fAxis(1,1) = fCornerPoints(1,2) - fCornerPoints(1,1);
     fAxis(2,1) = fCornerPoints(2,2) - fCornerPoints(2,1);
 
-    //Ax2 computation
+    //Ax2
     fAxis(0,2) = fAxis(1,0)*fAxis(2,1) - fAxis(2,0)*fAxis(1,1);
     fAxis(1,2) = fAxis(2,0)*fAxis(0,1) - fAxis(0,0)*fAxis(2,1);
     fAxis(2,2) = fAxis(0,0)*fAxis(1,1) - fAxis(1,0)*fAxis(0,1);
     
-    //Ax2 normalization
+    //Ax2 norm
     REAL norm = sqrt(fAxis(0,2)*fAxis(0,2)+fAxis(1,2)*fAxis(1,2)+fAxis(2,2)*fAxis(2,2));
     
     if(norm < 1.e-8) DebugStop();
@@ -79,7 +82,10 @@ void DFNPolygon::ComputeAxis()
     {
         fAxis(i, 2) = fAxis(i, 2)/norm;
     }
-
+    Matrix orth(3,3,0.);
+    Matrix transf(3,3,0.);
+    fAxis.GramSchmidt(orth,transf);
+    fAxis = orth;
 }
 
 
@@ -140,8 +146,7 @@ bool DFNPolygon::Compute_PointAbove(const TPZVec<REAL> &point) const{
             return false;   //If the point is below the polygon
         }
 }
-
-bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
+bool DFNPolygon::IsCutByPlane(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
     if(gel->Dimension() != 1) {PZError<<"\n\n This ain't no rib \n\n"; DebugStop();}
     // Get rib's vertices
     TPZManVector<int64_t,2> inode(2,0);
@@ -150,15 +155,20 @@ bool DFNPolygon::Check_rib(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
     TPZManVector<REAL,3> node1(3,0);
     gel->NodePtr(0)->GetCoordinates(node0);
     gel->NodePtr(1)->GetCoordinates(node1);
+    
     //check for infinite plane
     if(IsPointAbove(inode[0]) != IsPointAbove(inode[1])){
         //Rib cut by infinite plane
         //then calculate intersection point and check if it's within polygon boundaries
         intersection = CalculateIntersection(node0, node1);
-        return IsPointInPolygon(intersection);
+        return true;
     }else{
         return false;    //Rib is not cut by polygon
     }
+}
+
+bool DFNPolygon::IsCutByPolygon(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
+    return IsCutByPlane(gel,intersection) && IsPointInPolygon(intersection);
 }
 
 

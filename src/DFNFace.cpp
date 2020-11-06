@@ -825,3 +825,9 @@ int DFNFace::OtherRibSide(int inletside){
 	DebugStop();
 	return -1;
 }
+
+int DFNFace::NIntersectedRibs(){
+	int n=0;
+	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {n += fRibs[i]!=nullptr;}
+	return n;
+}

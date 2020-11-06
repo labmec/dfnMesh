@@ -1682,7 +1682,7 @@ void DFNMesh::UpdatePolyhedra(){
 			if(!IsConvex) {
 				MeshPolyhedron(polyhedron);
 				ClearPolyhIndex(polyhedron);
-				// this->SortFacesAroundEdges();
+				this->SortFacesAroundEdges();
 			}else{
 				DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron);
 				fPolyhedra.push_back(new_polyhedron);
@@ -1740,21 +1740,7 @@ void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
 // }
 
 
-TPZManVector<int64_t,4> DFNMesh::GetEdgeIndices(int64_t face_index){
-	// consistency checks
-	TPZGeoEl* face = Mesh()->Element(face_index);
-	if(!face) 							DebugStop();
-	if(face->Dimension() != 2) 			DebugStop();
-	if(face->HasSubElement()) 			DebugStop();
 
-	int nedges = face->NSides(1);
-	TPZManVector<int64_t,4> output(nedges,-1);
-	for(int iside = nedges; iside<face->NSides()-1; iside++){
-		output[iside-nedges] = DFN::GetSkeletonNeighbour(face,iside)->Index();
-	}
-
-	return output;
-}
 
 
 void DFNMesh::SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index){

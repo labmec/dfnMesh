@@ -189,6 +189,21 @@ public:
     void RefineFaces();
 
 
+    /**
+     * @name Handling frature limits
+     * @{
+    */
+    /** @brief Identify Ribs, Faces and Polyhedra that are affected by the limits of the fracture
+     * @note Should be called after DFNFracture::FindFaces()
+    */
+    void IsolateFractureLimits();
+    /** @brief Find Ribs that lie out of the bounds of this fracture but are still influenced by its limits */
+    void FindOffboundRibs();
+    /** @brief Find Faces that lie out of the bounds of this fracture but are still influenced by its limits */
+    void FindOffboundFaces();
+
+    /** @} */
+
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
 

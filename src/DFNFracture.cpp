@@ -204,7 +204,7 @@ void DFNFracture::FindRibs(){
 
         // Check rib
         TPZManVector<REAL,3> intpoint(3,0);
-        bool result = fPolygon.Check_rib(gel, intpoint);
+        bool result = fPolygon.IsCutByPolygon(gel, intpoint);
 
         // Add rib
         if (result == true){
@@ -1068,11 +1068,27 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 
 
 
+/** @brief Identify Ribs, Faces and Polyhedra that are affected by the limits of the fracture*/
+void DFNFracture::IsolateFractureLimits(){
+    FindOffboundRibs();
+    FindOffboundFaces();
+}
 
 
+void DFNFracture::FindOffboundRibs(){
+    // Maybe some consistency checks?
+    if(fdfnMesh->Polyhedra().size() < 2) {PZError<<"Uninitialized polyhedra"; DebugStop();}
 
+    TPZStack<TPZGeoEl*> edgelist(10,nullptr);
+    for(DFNPolyhedron& polyhedron : fdfnMesh->Polyhedra()){
+        if(!polyhedron.IntersectsFracLimit(*this)) continue;
+        polyhedron.GetEdges(edgelist);
+    }
 
-
+}
+void DFNFracture::FindOffboundFaces(){
+    DebugStop(); //@todo
+}
 
 
 

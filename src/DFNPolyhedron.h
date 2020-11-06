@@ -85,11 +85,22 @@ class DFNPolyhedron
 		/** @brief Remove faces from this polyhedron*/
 		void RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack);
 
-		/** @brief Checks if this polyhedron was refined*/
+		/** @brief Checks if this polyhedron was split in 2 smaller polyhedra*/
 		bool IsRefined();
 
 		/** @brief Remove father from shell and add its subelements */
 		void SwapForChildren(TPZGeoEl* father);
+
+		/** @brief Fills a vector with the indices of the 1D skeleton elements around the faces of this polyhedron */
+		void GetEdges(TPZVec<TPZGeoEl*>& edgelist);
+
+		/** @brief Checks if this polyhedron was intersected by a fracture
+		 * @todo(maybe) - This method could be made more restrictive if we wished to do so. I'll leave it returning true if any face of fShell is intersected, but we could potentially want it to return true only if the intersection would actually lead to the polyhedron being split. This, of course, would cost some extra computations, and I don't really see a need for this more restrictive version yet.
+		*/
+		bool IsIntersected(DFNFracture& fracture);
+
+		/** @brief Returns true if any of the faces in this polyhedron's shell contains only one Inbound rib*/
+		bool IntersectsFracLimit(DFNFracture& fracture);
 };
 
 

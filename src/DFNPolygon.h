@@ -96,8 +96,16 @@ class DFNPolygon
 	/// Check if the segment that conects 2 coordinates has intersection with this polygon
 	bool Check_pair(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2, TPZManVector<REAL,3> &intersection);
 
-	/// Return true if the rib intersects the polygon
-	bool Check_rib(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection);
+	/** @brief Return true if the rib intersects the polygon by also checking if intersection point is within bounds of the polygon
+	 * @attention If you want to skip check on polygon limits, use DFNPolygon::IsCutByPlane()
+	 * @param intersection [out] If intersected, fills vector with intersection coordinates
+	*/
+	bool IsCutByPolygon(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection);
+	/** @brief Return true if the rib intersects the plane that contains the polygon
+	 * @attention This doesn't check if intersection is in the bounds of the polygon. If you want to check on polygon limits, use DFNPolygon::IsCutByPolygon()
+	 * @param intersection [out] If intersected, fills vector with intersection coordinates
+	*/
+	bool IsCutByPlane(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection);
 
 	/// Return true if a point is above the polygon plane
    	bool Compute_PointAbove(const TPZVec<REAL> &point) const;

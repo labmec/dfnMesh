@@ -185,4 +185,18 @@ namespace DFN{
         return false;
     }
 
+    TPZManVector<int64_t,4> GetEdgeIndices(TPZGeoEl* face){
+        // consistency checks
+        if(!face) 							DebugStop();
+        if(face->Dimension() != 2) 			DebugStop();
+        if(face->HasSubElement()) 			DebugStop();
+
+        int nedges = face->NSides(1);
+        TPZManVector<int64_t,4> output(nedges,-1);
+        for(int iside = nedges; iside<face->NSides()-1; iside++){
+            output[iside-nedges] = DFN::GetSkeletonNeighbour(face,iside)->Index();
+        }
+
+        return output;
+    }
 } /* namespace DFN*/

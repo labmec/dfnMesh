@@ -44,9 +44,15 @@ private:
     /// Pointer to the fracture
     DFNFracture *fFracture = nullptr;
 
-    /// Purple ribs are edges of an intersected polyhedral volume, and intersected by the plane that contains a DFNPolygon
+    /// Offbound ribs are edges of an intersected polyhedral volume, and intersected by the plane that contains a DFNPolygon
     /// however, their intersection node is not within DFNPolygon's bounds
-    bool fpurple = false;
+    bool fOffbound = false;
+    // bool fAdjacent = false;
+    // bool fAttached = false;
+    // bool fVirtual = false;
+    // bool fExternal = false;
+    // bool fOutter = false;
+    // bool fProwling = false;
 
 public:
     /// Empty constructor
