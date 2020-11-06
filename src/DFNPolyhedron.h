@@ -84,6 +84,12 @@ class DFNPolyhedron
 
 		/** @brief Remove faces from this polyhedron*/
 		void RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack);
+
+		/** @brief Checks if this polyhedron was refined*/
+		bool IsRefined();
+
+		/** @brief Remove father from shell and add its subelements */
+		void SwapForChildren(TPZGeoEl* father);
 };
 
 

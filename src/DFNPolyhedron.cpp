@@ -56,3 +56,30 @@ void DFNPolyhedron::RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack)
         fShell.erase(index);
     }
 }
+
+/** @brief Checks if this polyhedron was refined*/
+bool DFNPolyhedron::IsRefined(){
+    std::pair<const int64_t,int>& firstface = *(fShell.begin());
+    int firstface_polyh = fDFN->GetPolyhedralIndex(firstface);
+    return firstface_polyh != this->fIndex;
+}
+
+/** @brief Remove father from shell and add its subelements */
+void DFNPolyhedron::SwapForChildren(TPZGeoEl* father){
+    // if no children, return
+    int nchildren = father->NSubElements();
+    if(!nchildren) return;
+    // check if father is actually part of this polyhedron
+    auto position = fShell.find(father->Index());
+    if(position == fShell.end()) DebugStop();
+
+    // get orientation and remove father
+    int orientation = (*position).second;
+    fShell.erase(position);
+
+    // enter children
+    for(int i=0; i<nchildren; i++){
+        int64_t childindex = father->SubElement(i)->Index();
+        fShell.insert({childindex,orientation});
+    }
+}
