@@ -22,7 +22,8 @@ DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture, int status) :
     fGeoEl(gel),
     fStatus(status),
     fFracture(Fracture),
-    fIntersectionIndex(-1)
+    fIntersectionIndex(-1),
+    fOffbound(false)
 {fCoord.resize(0);};
 
 // Copy constructor
@@ -37,6 +38,7 @@ DFNRib &DFNRib::operator=(const DFNRib &copy){
     fCoord = copy.fCoord;
     fIntersectionIndex = copy.fIntersectionIndex;
     fFracture = copy.fFracture;
+    fOffbound = copy.fOffbound;
     return *this;
 }
 
@@ -221,7 +223,27 @@ void DFNRib::UpdateNeighbours(int iside){
     return;
 }
 
-
+/** @brief Adds a pointer of this rib into the corresponding position of its neighbour faces ribvectors*/
+void DFNRib::AppendToNeighbourFaces(){
+    // Find a neighbour DFNFace through side 2, and change its fRibs vector.
+    TPZGeoElSide gelside(fGeoEl,2);
+    TPZGeoElSide neig;
+    for(neig=gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
+        if(neig.Element()->Dimension() != 2) continue;
+        // if(neig.Element()->MaterialId() != DFNMaterial::Efracture && 
+        //    neig.Element()->MaterialId() != DFNMaterial::Eskeleton) continue;
+        int64_t neigindex = neig.Element()->Index();
+        DFNFace* dfnface = fFracture->Face(neigindex);
+        // If DFNFace is missing, create one
+        if(!dfnface){
+            DFNFace new_dfnface(neig.Element(),fFracture);
+            dfnface = fFracture->AddFace(new_dfnface);
+        }
+        dfnface->AddRib(this,neig.Side());
+        dfnface->UpdateStatusVec();
+        dfnface->UpdateRefMesh();
+    }
+}
 
 
 

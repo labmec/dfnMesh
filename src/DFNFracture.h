@@ -156,9 +156,9 @@ public:
     /// Triangulates fracture surface from outline
     void MeshFractureSurface();
    /// Access the ribs data structure
-    void AddRib(DFNRib &rib);
+    DFNRib* AddRib(DFNRib &rib);
     
-    void AddFace(DFNFace &face);
+    DFNFace* AddFace(DFNFace &face);
 
     /// Insert new volume in data structure
     void AddVolume(DFNVolume volume);

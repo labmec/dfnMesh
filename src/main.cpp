@@ -120,6 +120,7 @@ int main(int argc, char* argv[]){
 		fracture->SnapIntersections_ribs(tol_dist);
 	// Build the DFNFace objects and split intersected faces if necessary
 		fracture->FindFaces();
+		fracture->IsolateFractureLimits();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 		// fracture->Polygon().PlotNodesAbove_n_Below(gmesh);
 
@@ -134,8 +135,8 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
-			fracture->MeshFractureSurface();
-			dfn.UpdatePolyhedra();
+			// fracture->MeshFractureSurface();
+			// dfn.UpdatePolyhedra();
 		}
 
 		std::ofstream logtest("LOG/dfnprint.log");
@@ -151,8 +152,6 @@ int main(int argc, char* argv[]){
 			frac->Polygon().InsertGeoEl(gmesh);
 		}
 		dfn.PrintVTK("pzmesh.txt","skip");
-		TPZManVector<int64_t> indices = {1,4,7,10};
-		// dfn.PlotTolerance(indices);
 		dfn.PrintVTKColorful();
 	std::cout<<"\n ...the end.\n\n";
 

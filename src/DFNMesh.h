@@ -221,8 +221,8 @@ public:
     /** @brief adds geoels for graphics that illustrate the tolerance*/
     void PlotTolerance(TPZManVector<int64_t>&);
 
-    /// Runs DFNMesh::BuildPolyhedra without convexity verification to isolate the boundary
-    void BuildPolyhedra_firstrun();
+    // /// Runs DFNMesh::BuildPolyhedra without convexity verification to isolate the boundary
+    // void BuildPolyhedra_firstrun();
 
     /** @brief Initializes the polyhedral volumes datastructure. 
      * @attention It isolates the boundary as the polyhedron of index 0.*/
@@ -230,6 +230,8 @@ public:
 
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZVec<int64_t> GetEdgeIndices(int64_t face_index){return DFN::GetEdgeIndices(fGMesh->Element(face_index));}
+
+    DFNPolyhedron& Polyhedron(int i){return fPolyhedra[i];}
 
 private:
     

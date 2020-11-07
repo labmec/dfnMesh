@@ -70,7 +70,7 @@ DFNPolygon &DFNFracture::Polygon() {
 
 
 
-void DFNFracture::AddFace(DFNFace &face){
+DFNFace* DFNFracture::AddFace(DFNFace &face){
     int index= face.Index();
     auto res = fFaces.emplace(index,face);
 #ifdef LOG4CXX
@@ -84,10 +84,11 @@ void DFNFracture::AddFace(DFNFace &face){
     }
 #endif
     if(res.second == false) DebugStop();
+    return &(res.first->second);
 }
-void DFNFracture::AddRib(DFNRib &rib){
+DFNRib* DFNFracture::AddRib(DFNRib &rib){
     int index= rib.Index();
-    auto res = fRibs.emplace(index,rib);
+    auto res = fRibs.insert({index,rib});
     // Check if the rib is already included
     if(res.second == false) DebugStop();
     #ifdef LOG4CXX
@@ -99,6 +100,7 @@ void DFNFracture::AddRib(DFNRib &rib){
         LOGPZ_DEBUG(logger,sout.str())
     }
     #endif
+    return &(res.first->second);
 }
 
 
@@ -145,7 +147,7 @@ void DFNFracture::FindFaces(){
                 // @TODO shouldn't you check on the material id? It has to be a skeleton matid
                 rib_index[iedge] = neig.Element()->Index();
             }
-            if(rib_index[iedge] == -1) DebugStop();
+            if(rib_index[iedge] == -1) DebugStop(); //Missing 1D skeleton
             rib_vec[iedge] = Rib(rib_index[iedge]);
             if(rib_vec[iedge]) is_intersected = true;
         }
@@ -1071,7 +1073,7 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 /** @brief Identify Ribs, Faces and Polyhedra that are affected by the limits of the fracture*/
 void DFNFracture::IsolateFractureLimits(){
     FindOffboundRibs();
-    FindOffboundFaces();
+    // FindOffboundFaces();
 }
 
 
@@ -1080,9 +1082,25 @@ void DFNFracture::FindOffboundRibs(){
     if(fdfnMesh->Polyhedra().size() < 2) {PZError<<"Uninitialized polyhedra"; DebugStop();}
 
     TPZStack<TPZGeoEl*> edgelist(10,nullptr);
-    for(DFNPolyhedron& polyhedron : fdfnMesh->Polyhedra()){
+    TPZManVector<REAL,3> intersection(3,0.);
+    int npolyh = fdfnMesh->Polyhedra().size();
+    // Loop over polyhedra that intersect fracture limits (start at 1 to skip boundary)
+    for(int ipoly=1; ipoly<npolyh; ipoly++){
+        DFNPolyhedron& polyhedron = fdfnMesh->Polyhedron(ipoly);
+        if(polyhedron.IsRefined()) continue;
         if(!polyhedron.IntersectsFracLimit(*this)) continue;
         polyhedron.GetEdges(edgelist);
+        for(TPZGeoEl* edge : edgelist){
+            if(!fPolygon.IsCutByPlane(edge,intersection)) continue;
+            if(Rib(edge->Index())) continue;
+            DFNRib rib(edge,this,2);
+            rib.SetIntersectionCoord(intersection);
+            rib.FlagOffbound(true);
+            // if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
+            edge->SetMaterialId(-5);
+            DFNRib* ribptr = AddRib(rib);
+            ribptr->AppendToNeighbourFaces();
+        }
     }
 
 }

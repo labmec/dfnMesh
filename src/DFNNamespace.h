@@ -249,5 +249,13 @@ operator<<(      std::ostream&      out,
 	return out;
 }
 
+// // TPZGeoElSideIndex &operator= (const TPZGeoElSideIndex &A );
+// TPZGeoElSide operator++(TPZGeoElSide& gelside,int){
+//     TPZGeoElSide pre = gelside;
+//     gelside = gelside.Neighbour();
+//     return pre;
+// }
+
+
 #include "DFNNamespaceTemp.cpp"
 #endif /* DFNNamespace_h */

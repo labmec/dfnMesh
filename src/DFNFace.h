@@ -98,6 +98,8 @@ public:
     /// Set ribs of face
     void SetRibs(TPZVec<DFNRib*> &RibVec) {fRibs = RibVec;}
 
+    void AddRib(DFNRib* ribptr, int side);
+
     /// Get ribs of face
     TPZVec<DFNRib*> GetRibs() const {return fRibs;}
 
@@ -240,6 +242,9 @@ public:
     void InheritPolyhedra();
 
     int NIntersectedRibs();
+
+    /** @return Number of ribs whose intersection point is within the fracture limits*/
+    int NInboundRibs();
 private: 
 
     /**

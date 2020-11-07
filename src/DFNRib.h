@@ -83,9 +83,10 @@ public:
     int64_t IntersectionIndex() const {return fIntersectionIndex;}
     
     /// Set anticipated intersection coordinates (real coordinates are defined after DFNRib::SnapIntersection_try())
-    void SetIntersectionCoord(TPZManVector<REAL, 3> coord){
-        fCoord = coord;
-    }
+    void SetIntersectionCoord(TPZManVector<REAL, 3>& coord){fCoord = coord;}
+
+    /// Set flag for offbound rib
+    void FlagOffbound(bool flag){fOffbound = flag;}
 
     /// Get anticipated intersection coordinates
     TPZManVector<REAL, 3> AntCoord(){return fCoord;}
@@ -147,6 +148,11 @@ public:
      * @param tolDist: Minimum acceptable distance
     */
     bool NeedsSnap(int64_t& closestnode, REAL tolDist = 1e-4);
+
+    /** @brief Adds a pointer of this rib into the corresponding position of its neighbour faces ribvectors*/
+    void AppendToNeighbourFaces();
+
+    const bool IsOffbound(){return fOffbound;}
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;

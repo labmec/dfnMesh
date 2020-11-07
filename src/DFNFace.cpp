@@ -773,6 +773,16 @@ void DFNFace::UpdateNeighbours(int iside){
 	}
 }
 
+void DFNFace::AddRib(DFNRib* ribptr, int side){
+	if(fGeoEl->SideDimension(side) != 1) DebugStop();
+	TPZGeoElSide ribside = {ribptr->GeoEl(),2};
+	TPZGeoElSide faceside = {fGeoEl,side};
+	if(!faceside.NeighbourExists(ribside)) DebugStop();
+
+	int ribindex = side - fGeoEl->NSides(0);
+	fRibs[ribindex] = ribptr;
+}
+
 /// Print the data structure
 void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 {
@@ -828,6 +838,15 @@ int DFNFace::OtherRibSide(int inletside){
 
 int DFNFace::NIntersectedRibs(){
 	int n=0;
-	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {n += fRibs[i]!=nullptr;}
+	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {
+		n += fRibs[i]!=nullptr;
+	}
+	return n;
+}
+int DFNFace::NInboundRibs(){
+	int n=0;
+	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {
+		n += fRibs[i]!=nullptr && !fRibs[i]->IsOffbound();
+	}
 	return n;
 }

@@ -101,7 +101,7 @@ bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture){
         int64_t index = face_orient.first;
         DFNFace* face = fracture.Face(index);
         if(!face) continue;
-        if(face->NIntersectedRibs() == 1) return true;
+        if(face->NInboundRibs() == 1) return true;
     }
     return false;
 }
@@ -117,7 +117,7 @@ void DFNPolyhedron::GetEdges(TPZVec<TPZGeoEl*>& edgelist){
             edge_set.insert(iedge);
         }
     }
-    edgelist.resize(edgelist.size());
+    edgelist.resize(edge_set.size());
     int i=0;
     for(int64_t iedge : edge_set){
         edgelist[i] = gmesh->Element(iedge);
