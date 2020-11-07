@@ -8,3 +8,5 @@ LOG
 # documentation/animations/*
 # documentation/animations/*/*.py
 */quicktests.cpp
+vtkmesh.vtk
+pzmesh.txt
