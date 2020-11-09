@@ -177,7 +177,7 @@ namespace DFN{
 
         TPZManVector<REAL,3> normal = CrossProduct<REAL>(vec0,vec2);
         REAL norm = DFN::Norm<REAL>(normal);
-        if(fabs(norm -1) < tolerance){
+        if(fabs(norm) < tolerance){
             PZError << "\n" << __PRETTY_FUNCTION__;
             PZError << "\n\t Failed due to co-linear points";
             DebugStop();

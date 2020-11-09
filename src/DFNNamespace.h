@@ -13,7 +13,7 @@
 
 /// 2*3.1415...
 #define gDFN_2PI 6.2831853071795865
-#define gDFN_SmallNumber DFN::gSmallNumber
+#define gDFN_SmallNumber 1.e-4
 /// gmsh doesn't like zero indexed entities
 #define gmshshift int(1)
 
@@ -25,7 +25,7 @@ namespace DFN{
     /// 2*3.1415...
     static const float _2PI = 6.2831853071795865;
     // A small number for geometric tolerances
-    static const double gSmallNumber = 1.e-3;
+    // static const double gSmallNumber = 1.e-4;
 
     /**
      * @brief Tests if a 2D element is an interface or boundary for 3D coarse elements in the context of DFN meshing

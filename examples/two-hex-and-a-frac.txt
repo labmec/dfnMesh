@@ -5,9 +5,9 @@ Mesh
 EQuadrilateral
 2 1 1
 
-NumberOfFractures 1
-
 Fracture 0 4
 -0.5  1.5  1.5 -0.5
 -0.5 -0.5  1.5  1.5
  0.5  0.5  0.5  0.5
+
+toldist 0.2

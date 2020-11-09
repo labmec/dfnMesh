@@ -247,7 +247,7 @@ bool DFNPolygon::IsPointInPolygon(TPZVec<REAL> &point)
 
     //If total computed area is equal to the polygon's area, then
     //point is in polygon
-    return( fabs(area-fArea) < DFN::gSmallNumber );
+    return( fabs(area-fArea) < gDFN_SmallNumber );
 }
 
 

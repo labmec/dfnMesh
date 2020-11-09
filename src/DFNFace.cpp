@@ -715,20 +715,26 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 	if(!this->NeedsRefinement()) {return false;}
 	int nels = fRefMesh.NElements();
 	if(nels < 1) {PZError<<"\n\n"<<__PRETTY_FUNCTION__<<"\nSnap face refinements requires a proper refinement mesh to describe the refinement\n";DebugStop();}
-	if(tolAngle_cos > 1 + DFN::gSmallNumber || tolAngle_cos < -1 - DFN::gSmallNumber) {
+	if(tolAngle_cos > 1 + gDFN_SmallNumber || tolAngle_cos < -1 - gDFN_SmallNumber) {
 		PZError << "\n\n Tolerable angle cosine doesn't seem to be a cosine value.\n"; DebugStop();
 	}
 
 	// If intersections have already been snapped to corners, there's nothing else to snap
 	if(!this->CanBeSnapped()) return false;
 
-	// Check if any angle violates the tolerable angle
 	for(int iel=1; iel <nels; iel++){
 		TPZGeoEl* gel = fRefMesh.Element(iel);
+		// Check if any angle violates the tolerable angle
 		int ncorners = gel->NCornerNodes();
 		for(int icorner=0; icorner < ncorners; icorner++){
 			REAL corner_cosine = DFN::CornerAngle_cos(gel,icorner);
 			if(corner_cosine > tolAngle_cos) return true;
+		}
+		// Check if any edge violates the tolerable distance
+		int nedges = gel->NSides(1);
+		int nsides = gel->NSides();
+		for(int iedge=ncorners; iedge<nsides-1; iedge++){
+			if(gel->SideArea(iedge) < tolDist) return true;
 		}
 	}
 	return false;

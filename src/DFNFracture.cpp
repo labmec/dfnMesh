@@ -344,11 +344,11 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
 // 				temp = sqrtl(temp);
 //             // check if point is in edge by calculating if it's normal distance to the edge is zero
 //             REAL dist = temp/edgelength[iedge];
-// 			if(dist<DFN::gSmallNumber){
+// 			if(dist<gDFN_SmallNumber){
 // 				// compute local 1D coordinate (alpha)
 // 				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
 // 				REAL alpha = norm/edgelength[iedge];
-// 				if(alpha > 1+DFN::gSmallNumber){std::cout<<"\nMisattribution of point to edge\n";DebugStop();}
+// 				if(alpha > 1+gDFN_SmallNumber){std::cout<<"\nMisattribution of point to edge\n";DebugStop();}
 // 				// map intersection indexes from smallest alpha to biggest
 //                 // map <alpha, index>
 // 				edgemap[iedge]->insert({alpha, ipointindex});
@@ -729,12 +729,14 @@ void DFNFracture::MeshFractureSurface(){
     // Loop over DFNFaces
     for(auto& itr : fFaces){
         DFNFace& initial_face = itr.second;
+        if(initial_face.NInboundRibs() < 1) continue;
 
         for(int i=0; i<2; i++){
             int orientation = 1 - 2*i; // (i==0?1:-1)
             std::pair<int64_t,int> initialface_orient = {initial_face.Index(),orientation};
             // skip 'boundary polyhedron'
             if(fdfnMesh->GetPolyhedralIndex(initialface_orient)==0) continue;
+            // if(fdfnMesh->Polyhedron(fdfnMesh->GetPolyhedralIndex(initialface_orient)).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
             if(fdfnMesh->GetPolyhedralIndex(initialface_orient)< 0) DebugStop();
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
             subpolygon.Fill(-999999);
@@ -1003,7 +1005,7 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 //                         current_side = neig.Side();
 //                     }
 //                 }
-//                 if(angle > M_PI+DFN::gSmallNumber){
+//                 if(angle > M_PI+gDFN_SmallNumber){
 //                     if(npolyhedra == 1 && !DirectionFailed) {
 //                         // Might be an unluckly bad oriented line in initial_face. So try going the other way before DebugStop.
 //                         DirectionFailed = true;
@@ -1096,8 +1098,8 @@ void DFNFracture::FindOffboundRibs(){
             DFNRib rib(edge,this,2);
             rib.SetIntersectionCoord(intersection);
             rib.FlagOffbound(true);
-            // if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
-            edge->SetMaterialId(-5);
+            if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
+            // edge->SetMaterialId(-5);
             DFNRib* ribptr = AddRib(rib);
             ribptr->AppendToNeighbourFaces();
         }
@@ -1105,7 +1107,7 @@ void DFNFracture::FindOffboundRibs(){
 
 }
 void DFNFracture::FindOffboundFaces(){
-    DebugStop(); //@todo
+    DebugStop(); //@todo - Since 2020/nov/06 this is being done by DFNRib::AppendToNeighbourFaces(), so this method will probably be unnecessary
 }
 
 

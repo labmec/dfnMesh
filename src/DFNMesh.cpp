@@ -1590,7 +1590,7 @@ void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
 // 			if(angle < 0.) {angle = angle +DFN::_2PI;}
 // 			REAL test = std::abs(angle - angle_debug);
 // 			if( test > 1e-5) DebugStop();
-// 			if(angle > M_PI+DFN::gSmallNumber){ return false; }
+// 			if(angle > M_PI+gDFN_SmallNumber){ return false; }
 			
 // 		}
 // 	}
@@ -1989,7 +1989,7 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 // 		else
 // 			{fPolyh_per_face[nextcard.fgelindex][1] = polyh_index;}
 // 		// check if polyh is not convex
-// 		if(angle > M_PI+DFN::gSmallNumber){convexPolyh = false;}
+// 		if(angle > M_PI+gDFN_SmallNumber){convexPolyh = false;}
 // 	}//for each edge
 
 // }
