@@ -30,23 +30,31 @@
 //includes
 
 /**
- * @brief Calls ReadExampleFromFile but for a single fracture
+ * @brief Calls SetupExampleFromFile but for a single fracture
  * @param filename: path to the file that defines the fracture
- * @param planevector: Matrix to fill with corners of the fracture
+ * @param polyg_stack: Matrix to fill with corners of the fracture
 */
 void ReadFracture(std::string filename, TPZFMatrix<REAL> &plane);
 
 /**
  * @brief Define which example to run. See example file sintax in function definition
  * @param filename: path to the file that defines the example
- * @param planevector: vector to fill with corners of the fractures
+ * @param polyg_stack: vector to fill with corners of the fractures
  * @param mshfile: [optional] path to .msh file (if applicable)
  * @returns pointer to geometric mesh created/read
 */
-TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector, std::string mshfile = "no-msh-file");
+TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle);
 
 
-
+void ReadFile(	const std::string&				filename, 
+					TPZStack<TPZFMatrix<REAL>>& polygonmatrices, 
+					std::string& 				mshfile,
+					TPZManVector<REAL,3>& 		x0,
+					TPZManVector<REAL,3>& 		xf,
+					TPZManVector<int,3>& 		nels,
+					MMeshType&					eltype,
+					TPZManVector<REAL,2>&		tol
+					);
 
 
 
@@ -63,7 +71,7 @@ void PrintPreamble(){
 
 }
 
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle);
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle);
 
 
 #ifdef LOG4CXX
@@ -93,11 +101,11 @@ int main(int argc, char* argv[]){
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
     // each matrix is dimension (3xn) where n is the number of vertices
-	TPZManVector< TPZFMatrix<REAL>> planevector;
+	TPZStack<TPZFMatrix<REAL>> polyg_stack;
 	TPZGeoMesh *gmesh = nullptr;
 	REAL tol_dist = 1.e-4;
 	REAL tol_angle = 1.e-3; 
-	gmesh = ReadInput(argc,argv,planevector,tol_dist,tol_angle);
+	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle);
 	gmsh::initialize();
 	
     /// Constructor of DFNMesh initializes the skeleton mesh
@@ -107,10 +115,10 @@ int main(int argc, char* argv[]){
 	dfn.SetTolerances(tol_dist,tol_angle);
 	// Loop over fractures and refine mesh around them
 	DFNFracture *fracture = nullptr;
-	for(int iplane = 0, nfractures = planevector.size(); iplane < nfractures; iplane++){
+	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
 		gmesh->BuildConnectivity();//@todo There is a proper buildconnectivity missing... this is a temporary patching until I find out where it's actually supposed to be
         // a polygon represents a set of points in a plane
-		DFNPolygon polygon(planevector[iplane], gmesh);
+		DFNPolygon polygon(polyg_stack[iplane], gmesh);
         // Initialize the basic data of fracture
 		fracture = new DFNFracture(polygon,&dfn);
 		dfn.AddFracture(fracture);
@@ -135,8 +143,8 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
-			// fracture->MeshFractureSurface();
-			// dfn.UpdatePolyhedra();
+			fracture->MeshFractureSurface();
+			dfn.UpdatePolyhedra();
 		}
 
 		std::ofstream logtest("LOG/dfnprint.log");
@@ -162,16 +170,70 @@ int main(int argc, char* argv[]){
 
 
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &planevector, REAL &toldist, REAL &tolangle){
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle){
 	TPZGeoMesh* gmesh = nullptr;
 	std::string default_example("examples/two-hex-and-a-frac.txt");
-	switch(argc){
-		case 5: tolangle = std::stod(argv[4]);
-		case 4: toldist = std::stod(argv[3]);
-		case 3: gmesh = ReadExampleFromFile(argv[1],planevector,argv[2]);break;
-		case 2: gmesh = ReadExampleFromFile(argv[1],planevector);break;
-		case 1: gmesh = ReadExampleFromFile(default_example,planevector);break;
-		default: PZError << "\n\n Invalid parameters \n\n"; DebugStop();
+	std::string example = default_example;
+	std::string mshfile = "no-msh-file";
+	for(int iarg=1; iarg < argc; ++iarg){
+		std::string aux = argv[iarg];
+		if(argv[iarg][0] != '-'){example = argv[iarg];}
+		else if(aux == "-m"){mshfile = argv[++iarg];}
+		else if(aux == "-f"){example = argv[++iarg];}
+		else if(aux == "-td"){toldist = std::stod(argv[++iarg]);}
+		else if(aux == "-ta"){tolangle = std::stod(argv[++iarg]);}
+		else if(aux == "-tc"){tolangle = std::acos(std::stod(argv[++iarg]));}
+		else{
+			PZError << "\nUnrecognized arguments passed\n\t\""<<argv[iarg]<<"\" \""<<argv[++iarg]<<"\"\n\n"; 
+			DebugStop();
+		}
+	}
+	gmesh = SetupExampleFromFile(example,polyg_stack,mshfile,toldist,tolangle);
+	return gmesh;
+}
+
+
+
+
+
+
+TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle){
+
+
+	MMeshType eltype;
+	TPZStack<Matrix> planestack;
+	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
+	TPZManVector<int,3> nels(3,0);
+	TPZManVector<REAL,2> tol = {toldist,tolangle};
+	
+	ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol);
+	toldist = tol[0];
+	tolangle = tol[1];
+
+
+	// Creating the Geo mesh
+	TPZGeoMesh *gmesh = new TPZGeoMesh;
+	if(mshfile == "no-msh-file"){
+		TPZManVector<int, 2> ndiv(2);
+		ndiv[0] = nels[0];
+		ndiv[1] = nels[1];
+		TPZGenGrid2D gengrid(ndiv, x0, x1);
+		gengrid.SetElementType(eltype);
+		gengrid.SetRefpatternElements(true);
+		gengrid.Read(gmesh);
+		gmesh->SetDimension(2);
+
+		// Mesh 3D
+		if(nels[2] != 0){
+			REAL Lz = (x1[2]-x0[2])/nels[2];
+			TPZExtendGridDimension extend(gmesh,Lz);
+			extend.SetElType(1);
+			TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nels[2]);
+			gmesh = gmesh3d;
+		}
+	}else{
+		TPZGmshReader reader;
+		gmesh = reader.GeometricGmshMesh4(mshfile, gmesh);
 	}
 	return gmesh;
 }
@@ -179,15 +241,18 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZManVector< TPZFMatrix<REAL>> &p
 
 
 
-void ReadFracture(std::string filename, TPZFMatrix<REAL> &plane){
-	TPZManVector<TPZFMatrix<REAL>> planevector;
-	ReadExampleFromFile(filename, planevector);
-	plane = planevector[0];
-}
 
-
-TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<REAL> > &planevector, std::string mshfile){
-	/*_______________________________________________________________
+void ReadFile(	const std::string&			filename, 
+				TPZStack<TPZFMatrix<REAL>>& polygonmatrices, 
+				std::string& 				mshfile,
+				TPZManVector<REAL,3>& 		x0,
+				TPZManVector<REAL,3>& 		xf,
+				TPZManVector<int,3>& 		nels,
+				MMeshType&					eltype,
+				TPZManVector<REAL,2>&		tol
+				)
+{
+		/*_______________________________________________________________
 						FILE FORMAT 
 
 		Domain 								//dimensions of the domain
@@ -196,8 +261,6 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 		Mesh			
 		2D ELTYPE (string)
 		Nx Ny Nz (int)						// number of divisions
-
-		NumberOfFractures [N] (int)
 
 		Fracture 0	[ncorners]				// coordinates for j corner nodes
 		[x0] [x1] ... [xj]
@@ -216,8 +279,6 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 		EQuadrilateral
 		2 2 2
 
-		NumberOfFractures 2
-
 		Fracture 0 4
 		0.3 1.3 1.3 0.3
 		0.3 0.3 1.4 1.4
@@ -228,154 +289,107 @@ TPZGeoMesh* ReadExampleFromFile(std::string filename, TPZManVector<TPZFMatrix<RE
 		0.55 0.7 0.55 0.40
 		1.3 1.3 0.25 0.25
 	 */
-
 	string line, word;
 	bool create_mesh_Q = mshfile == "no-msh-file";
 	// const string Domain = "Domain";
 	// const string Mesh("Mesh"), Fractures("NumberOfFractures");
-	int i, j, nfractures;
+	int i, j, nfractures, ifrac=0;
 	REAL Lx, Ly, Lz;
-	MMeshType eltype;
-	int nx, ny, nz;
-
+	TPZManVector<REAL,3> L(3,-1.);
+	x0.Fill(0.);
 	// Read file
-	ifstream plane_file(filename);
-	if (!plane_file){
+	ifstream file(filename);
+	if (!file){
 		std::cout << "\nCouldn't find file " << filename << std::endl;
 		DebugStop();
 	}
 	// Go through it line by line
-	while (getline(plane_file, line)){
-		if(create_mesh_Q){
-			{
-				std::stringstream ss(line);
-				getline(ss, word, ' ');
-			}
-			if(word == "Domain"){
-				getline(plane_file, line);
-				std::stringstream ss(line);
-				getline(ss, word, ' ');
-				while (word.length() == 0){getline(ss, word, ' ');}
-				Lx = std::stod(word);
-				getline(ss, word, ' ');
-				while (word.length() == 0){getline(ss, word, ' ');}
-				Ly = std::stod(word);
-				getline(ss, word, ' ');
-				while (word.length() == 0){getline(ss, word, ' ');}
-				Lz = std::stod(word);
-			}
+	while (getline(file, line)){
+		while(line.length() == 0){getline(file, line);}
+		std::stringstream ss(line);
+		getline(ss, word, ' ');
+		while (word.length() == 0){getline(ss, word, ' ');}
+		if(word == "Domain"){
+			getline(file,line);
+			ss.clear();
+			ss.str(line);
 
-			{
-				getline(plane_file, line);
-				while(line.length() == 0){getline(plane_file, line);}
-				std::stringstream ss(line);
-				getline(ss, word, ' ');
-			}
-			if(word == "Mesh"){
-				getline(plane_file, line);
-				{
-					std::stringstream ss(line);
-					getline(ss, word, ' ');
-					while (word.length() == 0){getline(ss, word, ' ');}
-					if(word == "EQuadrilateral"){
-						eltype = MMeshType::EQuadrilateral;
-					}else if(word == "ETriangle" || word == "ETriangular"){
-						eltype = MMeshType::ETriangular;
-					}else{ std::cout<<"\nError reading file\n"; DebugStop();}
-				}
-				getline(plane_file, line);
-				{
-					std::stringstream ss(line);
-					getline(ss, word, ' ');
-					while (word.length() == 0){getline(ss, word, ' ');}
-					nx = std::stoi(word);
-					getline(ss, word, ' ');
-					while (word.length() == 0){getline(ss, word, ' ');}
-					ny = std::stoi(word);
-					getline(ss, word, ' ');
-					while (word.length() == 0){getline(ss, word, ' ');}
-					nz = std::stoi(word);
-				}
-			}
-			getline(plane_file, line);
-		}
-
-		{
-			while(line.length() == 0){getline(plane_file, line);}
-			std::stringstream ss(line);
-			getline(ss, word, ' ');
-			if(word == "NumberOfFractures") {
-				getline(ss, word, ' ');
-				while (word.length() == 0){getline(ss, word, ' ');}
-				nfractures = std::stoi(word);
-			}
-		}
-		planevector.resize(nfractures);
-		for(int ifrac = 0; ifrac < nfractures; ifrac++){
-			string aux;
-			while(aux != "Fracture"){
-				getline(plane_file, line);
-				std::stringstream ss(line);
-				getline(ss, aux, ' ');
-			}
-			int fracid;
-			int ncorners;
-			{
-				std::stringstream ss(line);
-				getline(ss, word, ' ');
-				while (word.length() == 0 || word == "Fracture"){getline(ss, word, ' ');}
-				fracid = std::stoi(word);
-				getline(ss, word, ' ');
-				while (word.length() == 0 || word == "Fracture"){getline(ss, word, ' ');}
-				ncorners = std::stoi(word);
-			}
-			planevector[ifrac].Resize(3,ncorners);
-			std::cout<<"\nCorners of fracture #"<<fracid<<":\n";
 			for(int i=0; i<3; i++){
-				getline(plane_file, line);
-				std::stringstream ss(line);
+				getline(ss,word, ' ');
+				while (word.length() == 0){getline(ss, word, ' ');}
+				L[i] = std::stod(word);
+			}
+		}
+		else if(word == "Origin"){
+			getline(file,line);
+			ss.clear();
+			ss.str(line);
+			for(int i=0; i<3; i++){
+				getline(ss,word, ' ');
+				while (word.length() == 0){getline(ss, word, ' ');}
+				x0[i] = std::stod(word);
+			}
+		}
+		else if(word == "Mesh"){
+			getline(file,line);
+			ss.clear();
+			ss.str(line);
+			getline(ss,word, ' ');
+			if(word[0] == 'E'){
+				if(word == "EQuadrilateral") eltype = MMeshType::EQuadrilateral;
+				else if(word == "ETriangle" || word == "ETriangular") eltype = MMeshType::ETriangular;
+				else {PZError << "\nUnrecognized mesh type\n"<<word<<std::endl; DebugStop();}
+
+				getline(file,line);
+				ss.clear();
+				ss.str(line);
+				for(int i=0; i<3; i++){
+					getline(ss,word, ' ');
+					while (word.length() == 0){getline(ss, word, ' ');}
+					nels[i] = std::stoi(word);
+				}
+			}else if(word[0] == '\"' || word[0] == '\''){
+				mshfile = word.substr(1, word.size()-2);
+			}else{PZError<<"\nUnrecognized mesh info syntax\n"; DebugStop();}
+		}
+		else if(word == "Fracture" || word == "fracture"){
+			getline(ss,word, ' ');
+			ifrac = std::stoi(word);
+			getline(ss,word, ' ');
+			int ncorners = std::stoi(word);
+			int size = MAX(ifrac+1,polygonmatrices.size());
+			polygonmatrices.resize(size);
+			polygonmatrices[ifrac].Resize(3,ncorners);
+			for(int i=0; i<3; i++){
+				getline(file, line);
+				while(line.length() == 0){getline(file, line);}
+				ss.clear();
+				ss.str(line);
 				int j = 0;
 				while (getline(ss, word, ' ')){
 					while (word.length() == 0){getline(ss, word, ' ');}
-					planevector[ifrac](i, j) = std::stod(word);
-					std::cout << std::setw(14) << std::setprecision(6) << std::right << planevector[ifrac](i, j) << (j<ncorners-1?",":"\n");
+					polygonmatrices[ifrac](i, j) = std::stod(word);
+					// std::cout << std::setw(14) << std::setprecision(6) << std::right << polygonmatrices[ifrac](i, j) << (j<ncorners-1?",":"\n");
 					j++;
 				}
 			}
-			std::cout<<"\n";
 		}
-	}
-
-
-
-
-	// Creating the Geo mesh
-	TPZGeoMesh *gmesh = new TPZGeoMesh;
-	if(create_mesh_Q){
-		TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
-		x1[0] = Lx;
-		x1[1] = Ly;
-		x1[2] = 0.;
-		TPZManVector<int, 2> ndiv(2);
-		ndiv[0] = nx;
-		ndiv[1] = ny;
-		TPZGenGrid2D gengrid(ndiv, x0, x1);
-		gengrid.SetElementType(eltype);
-		gengrid.SetRefpatternElements(true);
-		gengrid.Read(gmesh);
-		gmesh->SetDimension(2);
-
-		// Mesh 3D
-		if(nz != 0){
-			Lz = Lz/nz;
-			TPZExtendGridDimension extend(gmesh,Lz);
-			extend.SetElType(1);
-			TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nz);
-			gmesh = gmesh3d;
+		else if(word == "toldist" || word == "tolDist" || word == "TolDist" || word == "TolerableDistance"){
+			getline(ss, word, ' ');
+			tol[0] = std::stod(word);
 		}
-	}else{
-		TPZGmshReader reader;
-		gmesh = reader.GeometricGmshMesh4(mshfile, gmesh);
+		else if(word == "tolangle" || word == "tolAngle" || word == "TolAngle" || word == "TolerableAngle"){
+			getline(ss, word, ' ');
+			tol[1] = std::stod(word);
+		}
+		else if(word == "tolcos" || word == "tolCos" || word == "TolCos" || word == "TolerableCosine"){
+			getline(ss, word, ' ');
+			tol[1] = std::acos(std::stod(word));
+		}
+
 	}
-	return gmesh;
+	for(int i=0; i<3; i++) {xf[i] = x0[i] + L[i];}
+	std::cout<<std::endl;
+
+	
 }
