@@ -157,7 +157,7 @@ int main(int argc, char* argv[]){
 	std::cout<<"\n\n"<<time<<" ms"<<std::endl;
 	//Print graphics
 		for(auto frac : dfn.FractureList()){
-			frac->Polygon().InsertGeoEl(gmesh);
+			frac->Polygon().InsertGeomRepresentation(gmesh);
 		}
 		dfn.PrintVTK("pzmesh.txt","skip");
 		dfn.PrintVTKColorful();
@@ -184,7 +184,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 		else if(aux == "-ta"){tolangle = std::stod(argv[++iarg]);}
 		else if(aux == "-tc"){tolangle = std::acos(std::stod(argv[++iarg]));}
 		else{
-			PZError << "\nUnrecognized arguments passed\n\t\""<<argv[iarg]<<"\" \""<<argv[++iarg]<<"\"\n\n"; 
+			PZError << "\nUnrecognized arguments passed:\n\t\""<<argv[iarg]<<"\" \""<<argv[++iarg]<<"\"\n\n"; 
 			DebugStop();
 		}
 	}

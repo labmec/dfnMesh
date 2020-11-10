@@ -1,6 +1,7 @@
-NumberOfFractures 1
-
 Fracture 0 4
  -2.27 1.67 1.67 -2.27
  -0.65 0.05 0.05 -0.65
 -1.50 -1.50  1.50  1.50
+
+Mesh
+"examples/tetrahedra1.msh"

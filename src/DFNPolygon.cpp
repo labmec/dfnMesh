@@ -392,6 +392,57 @@ TPZGeoEl* DFNPolygon::InsertGeoEl(TPZGeoMesh* gmesh, int matid, TPZVec<int64_t>*
     return gmesh->CreateGeoElement(eltype,*nodes,matid,elindex);
 }
 
+void DFNPolygon::ComputeCentroid(TPZVec<REAL>& centroid){
+    centroid.resize(3);
+    centroid.Fill(0.);
+    int nnodes = this->NCornerNodes();
+    for(int inode=0; inode<nnodes; ++inode){
+        centroid[0] += fCornerPoints(0,inode);
+        centroid[1] += fCornerPoints(1,inode);
+        centroid[2] += fCornerPoints(2,inode);
+    }
+    centroid[0] /= nnodes;
+    centroid[1] /= nnodes;
+    centroid[2] /= nnodes;
+}
+/**
+ * @brief Inserts a geometric mesh to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
+*/
+TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid){
+    int nnodes = this->NCornerNodes();
+    if(nnodes <= 4) return {InsertGeoEl(gmesh,matid)};
+    
+    // Create nodes
+    TPZManVector<int64_t> polyg_nodes(nnodes+1,0);
+    TPZManVector<REAL, 3> coord(3,0);
+    int64_t nodeindex=-1;
+    for(int inode=0; inode < nnodes; ++inode){
+        nodeindex = gmesh->NodeVec().AllocateNewElement();
+        polyg_nodes[inode] = nodeindex;
+        coord[0] = fCornerPoints(0,inode);
+        coord[1] = fCornerPoints(1,inode);
+        coord[2] = fCornerPoints(2,inode);
+        gmesh->NodeVec()[nodeindex].Initialize(coord,*gmesh);
+    }
+    // Create centroid
+    nodeindex = gmesh->NodeVec().AllocateNewElement();
+    polyg_nodes[nnodes] = nodeindex;
+    this->ComputeCentroid(coord);
+    gmesh->NodeVec()[nodeindex].Initialize(coord,*gmesh);
+    // Create elements
+    int nels = nnodes;
+    TPZVec<TPZGeoEl*> els(nels,nullptr);
+    TPZManVector<int64_t> el_nodes(3,-1);
+    el_nodes[0] = polyg_nodes[nnodes]; ///< centroid
+    for(int iel=0; iel<nels; ++iel){
+        el_nodes[1] = polyg_nodes[iel];
+        el_nodes[2] = polyg_nodes[(iel+1)%nnodes];
+        int64_t dummyindex=-1;
+        gmesh->CreateGeoElement(ETriangle,el_nodes,matid,dummyindex,0);
+    }
+    return els;
+}
+
 
 void DFNPolygon::Print(std::ostream & out) const
 {

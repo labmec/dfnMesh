@@ -153,6 +153,13 @@ class DFNPolygon
 	*/
 	TPZGeoEl* InsertGeoEl(TPZGeoMesh* gmesh, int matid = 100, TPZVec<int64_t>* nodes = nullptr);
 
+	/**
+	 * @brief Inserts a geometric mesh to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
+	*/
+	TPZVec<TPZGeoEl*> InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid = 100);
+
+	void ComputeCentroid(TPZVec<REAL>& centroid);
+
 	/** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
 
