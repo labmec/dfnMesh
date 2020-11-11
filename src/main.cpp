@@ -349,16 +349,31 @@ void ReadFile(	const std::string&			filename,
 					nels[i] = std::stoi(word);
 				}
 			}else if(word[0] == '\"' || word[0] == '\''){
-				mshfile = word.substr(1, word.size()-2);
-			}else{PZError<<"\nUnrecognized mesh info syntax\n"; DebugStop();}
+				// mshfile = word.substr(1, word.size()-2);
+				mshfile = line.substr(1, line.size()-2);
+			}else{
+				PZError<<"\nUnrecognized mesh info syntax\n\""<<line<<"\""; 
+				PZError<<"\nMeshtypes should start with an uppercase E, and .msh file path should be written between quotes or double-quotes.\n";
+				DebugStop();
+			}
 		}
 		else if(word == "Fracture" || word == "fracture"){
 			getline(ss,word, ' ');
 			ifrac = std::stoi(word);
 			getline(ss,word, ' ');
 			int ncorners = std::stoi(word);
-			int size = MAX(ifrac+1,polygonmatrices.size());
-			polygonmatrices.resize(size);
+			if(ncorners < 3){
+				PZError<<"\nInvalid input file.\t Invalid number of corners.\n"; 
+				PZError<<"\tFile:"<<filename<<"\n\tFracture index: "<<ifrac<<"\n\tNumber of corners: "<<ncorners<<"\n\n"; 
+				DebugStop();
+			}
+			int npolygons = MAX(ifrac+1,polygonmatrices.size());
+			polygonmatrices.resize(npolygons);
+			if(polygonmatrices[ifrac].Cols()>2){
+				PZError<<"\nInvalid input file.\t Do you have fractures with repeated indices?\n"; 
+				PZError<<"\tFile:"<<filename<<"\n\tFracture index:"<<ifrac<<"\n\n"; 
+				DebugStop();
+			}
 			polygonmatrices[ifrac].Resize(3,ncorners);
 			for(int i=0; i<3; i++){
 				getline(file, line);
@@ -372,17 +387,24 @@ void ReadFile(	const std::string&			filename,
 					// std::cout << std::setw(14) << std::setprecision(6) << std::right << polygonmatrices[ifrac](i, j) << (j<ncorners-1?",":"\n");
 					j++;
 				}
+				if(j<ncorners){
+					PZError<<"\nInvalid input file.\n\t Maybe a missing corner coordinate, or coordinate matrix size doesn't match specified number of corners?\n";
+					PZError<<"\tFile:"<<filename<<"\n\tFracture index:"<<ifrac<<"\n\n"; 
+					DebugStop();
+				}
 			}
 		}
 		else if(word == "toldist" || word == "tolDist" || word == "TolDist" || word == "TolerableDistance"){
-			getline(ss, word, ' ');
+			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
 			tol[0] = std::stod(word);
 		}
 		else if(word == "tolangle" || word == "tolAngle" || word == "TolAngle" || word == "TolerableAngle"){
+			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
 			getline(ss, word, ' ');
 			tol[1] = std::stod(word);
 		}
 		else if(word == "tolcos" || word == "tolCos" || word == "TolCos" || word == "TolerableCosine"){
+			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
 			getline(ss, word, ' ');
 			tol[1] = std::acos(std::stod(word));
 		}
