@@ -47,7 +47,9 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
     fRibs = copy.fRibs;
 	fFaces = copy.fFaces;
     fPolygon = copy.fPolygon;
-    fSurface = copy.fSurface;
+    fmatid = copy.fmatid;
+    fSurfaceFaces = copy.fSurfaceFaces;
+    fSurfaceEdges = copy.fSurfaceEdges;
     return *this;
 }
 

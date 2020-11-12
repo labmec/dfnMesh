@@ -5,3 +5,6 @@ Fracture 0 4
 
 Mesh
 "examples/tetrahedra1.msh"
+
+toldist   0.3333333
+tolangle    1.571

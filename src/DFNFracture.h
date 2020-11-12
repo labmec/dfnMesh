@@ -50,8 +50,14 @@ private:
 	/// A planar convex polygon that defines the outline of the fracture
 	DFNPolygon fPolygon;
 	
-	/// Map of elements on fracture surface {El_index,El_pointer}
-	std::map<int64_t, TPZGeoEl *> fSurface;
+    /// A material id for this fracture elements
+    int fmatid = gNoMaterial;
+
+	/// Set (of indices) of 2D geo elements on fracture surface
+	std::set<int64_t> fSurfaceFaces;
+	
+	/// Set (of indices) of 1D geo elements on fracture surface
+	std::set<int64_t> fSurfaceEdges;
 
 public:
     
@@ -129,16 +135,16 @@ private:
     /// Builds and fills a list with this fracture outer loop of edges
     void GetOuterLoop(std::vector<int> &outerLoop);
 
-    /** @brief Insert elements in the map of elements in surface */
-    void InsertElementsInSurface(TPZVec<int64_t> &idvec){
-        for(auto id : idvec)
-            {InsertElementsInSurface(fRibs.begin()->second.GeoEl()->Mesh()->Element(id));}
+    /** @brief Insert 2D elements in the set of 2D elements in surface */
+    void InsertFaceInSurface(int64_t elindex){fSurfaceFaces.insert(elindex);}
+    void InsertFaceInSurface(const TPZVec<int64_t>& el_indices){
+        for(int64_t index : el_indices){InsertFaceInSurface(index);}
     }
-    void InsertElementsInSurface(TPZVec<TPZGeoEl*> &elvec){
-        for(auto el : elvec)
-            {InsertElementsInSurface(el);}
+    /** @brief Insert 1D elements in the set of 1D elements in surface */
+    void InsertEdgeInSurface(int64_t elindex){fSurfaceEdges.insert(elindex);}
+    void InsertEdgeInSurface(const TPZVec<int64_t>& el_indices){
+        for(int64_t index : el_indices){InsertEdgeInSurface(index);}
     }
-    void InsertElementsInSurface(TPZGeoEl* el){fSurface.insert({el->Index(),el});}
     /// Removes negative integers from a stack
     void ClearNegativeEntries(TPZStack<int64_t>& subpolygon);
 

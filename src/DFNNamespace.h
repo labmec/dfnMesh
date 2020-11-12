@@ -14,6 +14,7 @@
 /// 2*3.1415...
 #define gDFN_2PI 6.2831853071795865
 #define gDFN_SmallNumber 1.e-4
+#define gNoMaterial GMESHNOMATERIAL
 /// gmsh doesn't like zero indexed entities
 #define gmshshift int(1)
 
@@ -80,52 +81,18 @@ namespace DFN{
     /**
      * @brief Get a vector from node 0 to node 1 of a 1D side
      */
-    static void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector){
-        if(gelside.Dimension() != 1) DebugStop();
-        int node0 = gelside.SideNodeLocIndex(0);
-        int node1 = gelside.SideNodeLocIndex(1);
-        
-        TPZManVector<REAL,3> coord0(3,0);
-        TPZManVector<REAL,3> coord1(3,0);
-        gelside.Element()->Node(node0).GetCoordinates(coord0);
-        gelside.Element()->Node(node1).GetCoordinates(coord1);
-        
-        vector = coord1 - coord0;
-    }
+    void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector);
 
     /**
      * @brief Check if the side that connects 2 neighbours has the same orientation in each element
      * @note currently exclusive to 1D sides
      */
-    static bool OrientationMatch(TPZGeoElSide &neig1, TPZGeoElSide &neig2){
-        if(neig1.Dimension() != 1) DebugStop();
-        if(!neig1.NeighbourExists(neig2)) DebugStop();
-        return (neig1.SideNodeIndex(0) == neig2.SideNodeIndex(0));
-    }
+    bool OrientationMatch(TPZGeoElSide &neig1, TPZGeoElSide &neig2);
 
     /**
      * @brief Computes the cossine of the angle at a corner of a 2D element
     */
-    static REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
-        int ncorners = gel->NCornerNodes();
-        if(corner >= ncorners) DebugStop();
-
-        int nsides = gel->NSides();
-
-        TPZManVector<REAL,3> point_corner(3);
-        TPZManVector<REAL,3> point_anterior(3);
-        TPZManVector<REAL,3> point_posterior(3);
-
-        gel->Node(corner).GetCoordinates(point_corner);
-        gel->Node((corner+1)%ncorners).GetCoordinates(point_posterior);
-        gel->Node((corner-1+ncorners)%ncorners).GetCoordinates(point_anterior);
-
-        TPZManVector<REAL,3> vec1 = point_posterior - point_corner;
-        TPZManVector<REAL,3> vec2 = point_anterior  - point_corner;
-
-        REAL cosine = DotProduct_f(vec1,vec2)/(Norm_f(vec1)*Norm_f(vec2));
-        return cosine;
-    }
+    REAL CornerAngle_cos(TPZGeoEl *gel, int corner);
 
     /**
      * @brief Get a pointer to an element that is superposed in a lower dimensional side of a geometric element
@@ -136,24 +103,7 @@ namespace DFN{
 
     /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
     /// @param shift: indices will get shifted by a constant 
-    static void GetLineLoop(TPZGeoEl* face_el, std::vector<int>& lineloop, const int shift=0){
-        if(face_el->Dimension() != 2) DebugStop();
-        int nsides = face_el->NSides();
-        TPZManVector<int,4> lineloop_debug(4,-999999999);
-        lineloop.resize(face_el->NSides(1));
-        for(int iside = face_el->NSides(0); iside<nsides-1; iside++){
-            TPZGeoElSide gelside(face_el,iside);
-            TPZGeoElSide neig;
-            for(neig = gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
-                if(neig.Element()->Dimension()!=1) continue;
-                int orientation = OrientationMatch(gelside,neig)?1:-1;
-                lineloop[iside-face_el->NSides(1)] = orientation*(neig.Element()->Index()+shift);
-                lineloop_debug[iside-face_el->NSides(1)] = orientation*neig.Element()->Index();
-                break;
-            }
-        }
-        return;
-    }
+    void GetLineLoop(TPZGeoEl* face_el, std::vector<int>& lineloop, const int shift=0);
 
     /**
      * @brief Generates the best fitting plane to approximate a point cloud in R3 using least squares
