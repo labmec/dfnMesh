@@ -239,7 +239,7 @@ namespace DFN{
     void GetLineLoop(TPZGeoEl* face_el, std::vector<int>& lineloop, const int shift){
         if(face_el->Dimension() != 2) DebugStop();
         int nsides = face_el->NSides();
-        TPZManVector<int,4> lineloop_debug(4,-999999999);
+        TPZManVector<int,4> lineloop_debug(4,gDFN_NoIndex);
         lineloop.resize(face_el->NSides(1));
         for(int iside = face_el->NSides(0); iside<nsides-1; iside++){
             TPZGeoElSide gelside(face_el,iside);

@@ -28,6 +28,10 @@
 class DFNMesh;
 typedef TPZFMatrix<REAL> Matrix;
 
+// Options for handling the limits of the fracture {Truncated, Extended, Recovered}
+enum FracLimit{Etruncated=0,Eextended=1,Erecovered=2};
+
+
 /** 
  *  @brief     Describes a surface mesh for a fracture and all ribs & faces that are intersected by it.
  *  @details   Intersection search is performed after creation of skeleton
@@ -53,10 +57,14 @@ private:
     /// A material id for this fracture elements
     int fmatid = gNoMaterial;
 
+    /// Option for determining if this fracture limits' are truncated, extended or recovered
+    FracLimit fLimit = Eextended;
+
 	/// Set (of indices) of 2D geo elements on fracture surface
 	std::set<int64_t> fSurfaceFaces;
 	
-	/// Set (of indices) of 1D geo elements on fracture surface
+	/// Set (of indices) of 1D geo elements on fracture surface. 
+    /// @comment Right now, I'm thinking of filling this datastructure only temporarily, to use in DFNFracture::RecoverFractureLimits recovery. This may change later...
 	std::set<int64_t> fSurfaceEdges;
 
 public:
@@ -70,7 +78,7 @@ public:
     /**
      * @brief Constructor from a DFNPolygon
      */
-    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh);
+    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -110,10 +118,14 @@ private:
      * @name Surface Meshing auxiliar methods
      * @{
     */
-    /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
-     * @param polygon an oriented loop of edges that don't necessarily occupy the same plane
+    /** @brief Mesh a convex polygon from a list of sequentialy connected edges. If not simple, calls on Gmsh
+     * @param polygon a loop of edges that don't necessarily occupy the same plane
     */
     void MeshPolygon(TPZStack<int64_t>& polygon);
+    /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
+     * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
+    */
+    void MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon,std::set<int64_t>& nodes, TPZVec<int64_t>& newelements, bool isplane=false);
     /** @brief Recursively finds the next face and gets its in-plane edge to build a SubPolygon (subset of the Fracture DFNPolygon contained in a polyhedron)
      *  @param Polygon_per_face a structure to store the two subpolygons per face
     */

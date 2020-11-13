@@ -24,16 +24,11 @@ DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh)
+DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling)
     :fPolygon(Polygon)
 {
     fdfnMesh = dfnMesh;
-    // // Set corner nodes of fracture into mesh
-    // // @todo I'll remove this after surface meshing is updated to use the SubPolygons
-    // if(fdfnMesh->Dimension() == 3){
-    //     TPZManVector<int64_t,4> nodeindices = fPolygon.SetPointsInGeomesh(fdfnMesh->Mesh());
-    // }
-    // fPolygon.FindNodesAbove(fdfnMesh->Mesh());
+    fLimit = limithandling;
 }
 
 // Copy constructor
@@ -48,6 +43,7 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
 	fFaces = copy.fFaces;
     fPolygon = copy.fPolygon;
     fmatid = copy.fmatid;
+    fLimit = copy.fLimit;
     fSurfaceFaces = copy.fSurfaceFaces;
     fSurfaceEdges = copy.fSurfaceEdges;
     return *this;
@@ -726,7 +722,7 @@ void DFNFracture::MeshFractureSurface(){
     std::cout<<"\n\n";
     fdfnMesh->CreateSkeletonElements(1);
     TPZVec<std::array<int, 2>> Polygon_per_face(fdfnMesh->Mesh()->NElements(),{-1,-1});
-    TPZStack<int64_t> subpolygon(10,-999999);
+    TPZStack<int64_t> subpolygon(10,gDFN_NoIndex);
     int polygon_counter = 0;
     // Loop over DFNFaces
     for(auto& itr : fFaces){
@@ -741,7 +737,7 @@ void DFNFracture::MeshFractureSurface(){
             // if(fdfnMesh->Polyhedron(fdfnMesh->GetPolyhedralIndex(initialface_orient)).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
             if(fdfnMesh->GetPolyhedralIndex(initialface_orient)< 0) DebugStop();
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
-            subpolygon.Fill(-999999);
+            subpolygon.Fill(gDFN_NoIndex);
             subpolygon.clear();
             int inletside = initial_face.FirstRibSide();
             SetPolygonIndex(initialface_orient,polygon_counter,Polygon_per_face);
@@ -817,53 +813,42 @@ void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
 /// Removes negative integers from a stack
 void DFNFracture::ClearNegativeEntries(TPZStack<int64_t>& subpolygon){
     TPZStack<int64_t> copy(subpolygon);
-    subpolygon.Fill(-999999);
+    subpolygon.Fill(gDFN_NoIndex);
     subpolygon.clear();
     for(int64_t& index : copy){
         if(index > -1 ) subpolygon.push_back(index);
     }
 }
 
+
+
+
+
+
 /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
- * @param polygon an oriented loop of edges that don't necessarily occupy the same plane
+ * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
 */
-void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
-    // clear collapsed edges from polygon lineloop
-    ClearNegativeEntries(polygon);
-    // Get set of nodes
+void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<int64_t>& nodes, TPZVec<int64_t>& newelements, bool isplane){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    std::set<int64_t> nodes;
-    for(int64_t line : polygon){
-		TPZGeoEl *gel = gmesh->Element(line);
-		nodes.insert(gel->NodeIndex(0));
-		nodes.insert(gel->NodeIndex(1));
-	}
-    int nnodes = nodes.size();
-    int nedges = polygon.size();
-    
-    // If polygon is planar quadrilateral or triangle, we can skip gmsh
-    SetLoopOrientation(polygon);
-    // std::cout<<"SubPolygon# "<<polygon_counter<<": "<<polygon<<std::endl;
-    switch(nnodes){
-        case 3: DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Efracture); return;
-        case 4: if(DFN::AreCoPlanar(gmesh,nodes))
-                    {DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Efracture); return;}
-    }
+    const int nnodes = nodes.size();
+    const int nedges = nnodes;
 
     // Project nodes onto best fitting plane
     TPZManVector<REAL,3> centroid(3,0.);
     TPZManVector<REAL,3> normal(3,0.);
-    TPZFMatrix<REAL> nodecloud(3,nnodes);
-    int j=0;
-	for(int64_t inode : nodes){
-	    TPZManVector<REAL,3> coord(3,0.);
-		gmesh->NodeVec()[inode].GetCoordinates(coord);
-        for(int i=0; i<3; i++){
-            nodecloud(i,j) = coord[i];
+    if(!isplane){
+        TPZFMatrix<REAL> nodecloud(3,nnodes);
+        int j=0;
+        for(int64_t inode : nodes){
+            TPZManVector<REAL,3> coord(3,0.);
+            gmesh->NodeVec()[inode].GetCoordinates(coord);
+            for(int i=0; i<3; i++){
+                nodecloud(i,j) = coord[i];
+            }
+            j++;
         }
-        j++;
+        DFN::BestFitPlane(nodecloud,centroid,normal);
     }
-    DFN::BestFitPlane(nodecloud,centroid,normal);
     
     // gmsh::initialize();
 	std::string modelname = "model_polyg";
@@ -873,25 +858,32 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
 	// Insert nodes ____________________________________
 	{TPZManVector<REAL,3> coord(3,0.);
-	TPZManVector<REAL,3> projcoord(3,0.);
-	for(int64_t inode : nodes){
-		gmesh->NodeVec()[inode].GetCoordinates(coord);
-		REAL meshsize = 0.;
-        projcoord = DFN::GetProjectedX(coord,centroid,normal);
-		gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],meshsize,inode+gmshshift);
+    REAL meshsize = 0.;
+    if(isplane){
+        for(int64_t inode : nodes){
+            gmesh->NodeVec()[inode].GetCoordinates(coord);
+            gmsh::model::geo::addPoint(coord[0],coord[1],coord[2],meshsize,inode+gmshshift);
+        }
+    }else{
+        TPZManVector<REAL,3> projcoord(3,0.);
+        for(int64_t inode : nodes){
+            gmesh->NodeVec()[inode].GetCoordinates(coord);
+            projcoord = isplane? coord : DFN::GetProjectedX(coord,centroid,normal);
+            gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],meshsize,inode+gmshshift);
+        }
 	}}
 	// Insert lines ____________________________________
     std::vector<int> lineloop;
     lineloop.resize(nedges);
     std::array<int,10> lineloopdebug;
 	for(int i=0; i<nedges; i++){
-        int64_t iline = abs(polygon[i]);
+        int64_t iline = abs(orientedpolygon[i]);
 		TPZGeoEl *gel = gmesh->Element(iline);
 		int64_t node0 = gel->NodeIndex(0)+gmshshift;
 		int64_t node1 = gel->NodeIndex(1)+gmshshift;
 		gmsh::model::geo::addLine(node0,node1,iline+gmshshift);
 		gmsh::model::geo::mesh::setTransfiniteCurve(iline+gmshshift,2);
-        int orientation = (polygon[i] > 0 ? 1 : -1);
+        int orientation = (orientedpolygon[i] > 0 ? 1 : -1);
         lineloop[i] = (iline+gmshshift)*orientation;
         lineloopdebug[i] = lineloop[i];
 	}
@@ -918,11 +910,49 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 	#endif //PZDEBUG
 	// import meshed volume back into PZ geoMesh
 	std::set<int64_t>& old_nodes = nodes;
-    TPZVec<int64_t> newelements;
 	ImportElementsFromGMSH(gmesh,2,old_nodes,newelements);
 	gmsh::model::remove();
 	gmsh::clear();
 	// gmsh::finalize();
+}
+
+/** @brief Mesh a convex polygon from a list of sequentialy connected edges. If not simple, calls on Gmsh
+ * @param polygon a loop of edges that don't necessarily occupy the same plane
+*/
+void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
+    int nedges = polygon.size();
+    int nnodes = nedges;
+    // New elements to be created
+    TPZVec<int64_t> newelements(1,-1);
+
+    // clear collapsed edges from polygon lineloop
+    ClearNegativeEntries(polygon);
+    // Get set of nodes
+    std::set<int64_t> nodes;
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    for(int64_t line : polygon){
+		TPZGeoEl *gel = gmesh->Element(line);
+		nodes.insert(gel->NodeIndex(0));
+		nodes.insert(gel->NodeIndex(1));
+	}
+    
+    SetLoopOrientation(polygon);
+    // std::cout<<"SubPolygon# "<<polygon_counter<<": "<<polygon<<std::endl;
+    // If polygon is planar quadrilateral or triangle, we can skip gmsh
+    bool isplane = DFN::AreCoPlanar(gmesh,nodes);
+    switch(nedges){
+        case  0: 
+        case  1: 
+        case  2: DebugStop();
+        case  3:             
+        case  4: if(isplane){
+                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Efracture); 
+                    newelements[0] = newel->Index();
+                 }
+        default: MeshPolygon_GMSH(polygon,nodes,newelements,isplane);
+    }
+
+    InsertFaceInSurface(newelements);
 
 }
 

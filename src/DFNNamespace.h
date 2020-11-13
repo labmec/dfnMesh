@@ -15,6 +15,7 @@
 #define gDFN_2PI 6.2831853071795865
 #define gDFN_SmallNumber 1.e-4
 #define gNoMaterial GMESHNOMATERIAL
+#define gDFN_NoIndex -999999
 /// gmsh doesn't like zero indexed entities
 #define gmshshift int(1)
 
