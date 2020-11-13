@@ -19,7 +19,7 @@ preamble = (
 4.0 4.0 4.0
 
 Mesh
-EQuadrilateral
+EHexahedral
 2 2 2
 
 NumberOfFractures 1

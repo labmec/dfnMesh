@@ -29,6 +29,20 @@
 	#include <gmsh.h>
 //includes
 
+MMeshType StringToMeshtype(const std::string& name){
+	if(name[0] != 'E'){}
+    if(name == "EQuadrilateral"){	return MMeshType::EQuadrilateral;}
+    if(name == "ETriangular"){		return MMeshType::ETriangular;}
+    if(name == "EHexahedral"){		return MMeshType::EHexahedral;}
+    if(name == "ETetrahedral"){		return MMeshType::ETetrahedral;}
+    if(name == "EPyramidal"){		return MMeshType::EPyramidal;}
+    if(name == "EPrismatic"){		return MMeshType::EPrismatic;}
+    if(name == "EHexaPyrMixed"){	return MMeshType::EHexaPyrMixed;}
+    if(name == "ENoType"){			return MMeshType::ENoType;}
+	else DebugStop();
+	return MMeshType::ENoType;
+}
+
 /**
  * @brief Calls SetupExampleFromFile but for a single fracture
  * @param filename: path to the file that defines the fracture
@@ -193,7 +207,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 }
 
 
-
+#include "TPZGenGrid3D.h"
 
 
 
@@ -214,24 +228,21 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 	// Creating the Geo mesh
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
 	if(mshfile == "no-msh-file"){
-		TPZManVector<int, 2> ndiv(2);
-		ndiv[0] = nels[0];
-		ndiv[1] = nels[1];
-		TPZGenGrid2D gengrid(ndiv, x0, x1);
-		gengrid.SetElementType(eltype);
-		gengrid.SetRefpatternElements(true);
-		gengrid.Read(gmesh);
-		gmesh->SetDimension(2);
+		if(!nels[2]){ // 2D mesh
+			TPZManVector<int, 2> ndiv(2);
+			ndiv[0] = nels[0];
+			ndiv[1] = nels[1];
+			TPZGenGrid2D gengrid(ndiv, x0, x1);
+			gengrid.SetElementType(eltype);
+			gengrid.SetRefpatternElements(true);
+			gengrid.Read(gmesh);
+			gmesh->SetDimension(2);
 
-		// Mesh 3D
-		if(nels[2] != 0){
-			REAL Lz = (x1[2]-x0[2])/nels[2];
-			TPZExtendGridDimension extend(gmesh,Lz);
-			extend.SetElType(1);
-			TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nels[2]);
-			gmesh = gmesh3d;
+		}else{ // 3D mesh
+			TPZGenGrid3D gengrid(x0,x1,nels,eltype);
+			gmesh = gengrid.BuildVolumetricElements(1);
 		}
-	}else{
+	}else{ // mesh file
 		TPZGmshReader reader;
 		gmesh = reader.GeometricGmshMesh4(mshfile, gmesh);
 	}
@@ -336,9 +347,10 @@ void ReadFile(	const std::string&			filename,
 			ss.str(line);
 			getline(ss,word, ' ');
 			if(word[0] == 'E'){
-				if(word == "EQuadrilateral") eltype = MMeshType::EQuadrilateral;
-				else if(word == "ETriangle" || word == "ETriangular") eltype = MMeshType::ETriangular;
-				else {PZError << "\nUnrecognized mesh type\n"<<word<<std::endl; DebugStop();}
+				// if(word == "EQuadrilateral") eltype = MMeshType::EQuadrilateral;
+				// else if(word == "ETriangle" || word == "ETriangular") eltype = MMeshType::ETriangular;
+				// else {PZError << "\nUnrecognized mesh type\n"<<word<<std::endl; DebugStop();}
+				eltype = StringToMeshtype(word);
 
 				getline(file,line);
 				ss.clear();
@@ -413,5 +425,17 @@ void ReadFile(	const std::string&			filename,
 	for(int i=0; i<3; i++) {xf[i] = x0[i] + L[i];}
 	std::cout<<std::endl;
 
+	// Test if informed element type matches grid definition
+	int dim = 3;
+	if(nels[0] == 0 || L[0] == 0.0 ||
+	   nels[1] == 0 || L[1] == 0.0 ||
+	   nels[2] == 0 || L[2] == 0.0)
+	{
+		dim = 2;
+	}
+	if(dim != MMeshType_Dimension(eltype)) {
+		PZError << "\n\nInvalid mesh type ("<<eltype<<") for a "<<dim<<"D domain.\n\n";
+		DebugStop();
+	}
 	
 }

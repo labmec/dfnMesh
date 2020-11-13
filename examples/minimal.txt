@@ -2,7 +2,7 @@ Domain
 2.0 2.0 2.0
 
 Mesh
-EQuadrilateral
+EHexahedral
 1 1 1
 
 NumberOfFractures 1
