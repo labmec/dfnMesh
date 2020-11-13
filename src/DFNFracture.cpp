@@ -747,7 +747,11 @@ void DFNFracture::MeshFractureSurface(){
             if(DFN::IsValidPolygon(subpolygon) == false) continue;
             polygon_counter++;
             // Check if would-be polygon already exists in the mesh
-            if(FindPolygon(subpolygon)) continue;
+            TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
+            if(ExistingGel){
+                InsertFaceInSurface(ExistingGel->Index());
+                continue;
+            }
             MeshPolygon(subpolygon);
         }
     }
@@ -941,14 +945,15 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
     // If polygon is planar quadrilateral or triangle, we can skip gmsh
     bool isplane = DFN::AreCoPlanar(gmesh,nodes);
     switch(nedges){
-        case  0: 
-        case  1: 
-        case  2: DebugStop();
-        case  3:             
-        case  4: if(isplane){
+        case 0: 
+        case 1: 
+        case 2: DebugStop();
+        case 3:             
+        case 4: if(isplane){
                     TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Efracture); 
                     newelements[0] = newel->Index();
-                 }
+                    break;
+                }
         default: MeshPolygon_GMSH(polygon,nodes,newelements,isplane);
     }
 
@@ -1294,7 +1299,15 @@ void DFNFracture::Print(std::ostream & out) const
         face->Print(out);
     }
 
-    // todo
     // Surface elements
+	out << "\n\nSurface Elements:_________\n";
+    if(fSurfaceFaces.size() < 1) 
+        {out << "\'No surface was created/incorporated on this fracture\'";}
+    int nelements = fdfnMesh->Mesh()->NElements();
+    int width = 2 + int(std::log10(nelements)+1);
+    for(int64_t index : fSurfaceFaces){
+        out << setw(width) << std::right << index << "\n";
+    }
+    // todo
     // SubPolygons
 }
