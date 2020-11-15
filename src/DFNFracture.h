@@ -57,7 +57,7 @@ private:
     /// A material id for this fracture elements
     int fmatid = gNoMaterial;
 
-    /// Option for determining if this fracture limits' are truncated, extended or recovered
+    /// Directive for determining if this fracture limits are truncated, extended or recovered
     FracLimit fLimit = Eextended;
 
 	/// Set (of indices) of 2D geo elements on fracture surface
@@ -171,9 +171,16 @@ public:
     TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim = -1);
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
+
     /// Triangulates fracture surface from outline
     void MeshFractureSurface();
-   /// Access the ribs data structure
+
+    /** @brief Following directive DFNFracture::fLimit, modify the extended limits of this fracture to better represent the limits (boundary edges) of the polygon that defined this fracture
+     * @todo After debugging, this method should be private and called in the end of DFNFracture::MeshFractureSurface
+    */
+    void RecoverFractureLimits();
+
+    /// Access the ribs data structure
     DFNRib* AddRib(DFNRib &rib);
     
     DFNFace* AddFace(DFNFace &face);

@@ -162,7 +162,9 @@ void DFNFracture::FindFaces(){
         // Setup a refinement mesh whose quality measures are checked in DFNFace::NeedsSnap()
         face.UpdateRefMesh();
         AddFace(face);
+        std::cout<<"\rN Faces intersected = "<<fFaces.size()<<std::flush;
     }
+    std::cout<<std::endl;
 }
 
 
@@ -188,10 +190,8 @@ void DFNFracture::FindFaces(){
 
 
 void DFNFracture::FindRibs(){
+    std::cout<<"\r\n";
     //search gmesh for intersected ribs
-    // @TODO It would be more efficient to classify the geometric nodes as
-    // being above and below the polygon. Then deciding which ribs are to be
-    // divided would be a boolean operation
     int64_t Nels = fdfnMesh->Mesh()->NElements();
     TPZManVector<int64_t, 2> inode(2,0);
     for (int iel = 0; iel < Nels; iel++){
@@ -216,8 +216,10 @@ void DFNFracture::FindRibs(){
             // material id (-1)?
             if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
             AddRib(rib);
+            std::cout<<"\rN Ribs intersected = "<<fRibs.size()<<std::flush;
         }
     }
+    std::cout<<std::endl;
 }
 
 
@@ -753,10 +755,16 @@ void DFNFracture::MeshFractureSurface(){
                 continue;
             }
             MeshPolygon(subpolygon);
+            std::cout<<"\rN SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
+    std::cout<<std::endl;
+    std::cout<<"Building connectivity\r";
     fdfnMesh->Mesh()->BuildConnectivity();
+    std::cout<<"                     \n";
+    std::cout<<"Creating 1D skeletons on fracture surface\r";
     fdfnMesh->CreateSkeletonElements(1);
+    std::cout<<"                                         \n";
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
@@ -1270,6 +1278,18 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std:
 
 
 
+
+
+
+
+
+
+
+
+
+void DFNFracture::RecoverFractureLimits(){
+    DebugStop();
+}
 
 
 

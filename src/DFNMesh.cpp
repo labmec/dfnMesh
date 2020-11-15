@@ -1630,7 +1630,7 @@ void DFNMesh::InitializePolyhedra(){
 		SetPolyhedralIndex({gel->Index(),orient},0);
 	}
 	polyhedron.Initialize(this,ipolyh,shell);
-	polyhedron.Print();
+	// polyhedron.Print();
 	fPolyhedra.push_back(polyhedron);
 	shell.Fill({-1,0});
 	shell.clear();
@@ -1644,6 +1644,7 @@ void DFNMesh::InitializePolyhedra(){
 void DFNMesh::UpdatePolyhedra(){
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
+	std::cout<<"Updating polyhedral volumes\r"<<std::flush;
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 	// Refined faces pass down their polyh index to their subelements
 	InheritPolyhedra();
@@ -1689,6 +1690,7 @@ void DFNMesh::UpdatePolyhedra(){
 			}
 		}
 	}
+	std::cout<<"                             \r"<<std::flush;
 }
 
 void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
@@ -2077,6 +2079,7 @@ void DFNMesh::SortFacesAroundEdges(){
 	// std::cout<<"\n\n Print rolodexes:\n\n";
 	fSortedFaces.clear();
 	fSortedFaces.Resize(fGMesh->ElementVec().NElements());
+	std::cout<<"Sorting Rolodexes\r"<<std::flush;
 
 	// Loop over 1D elements
 	for(TPZGeoEl* gel : fGMesh->ElementVec()){
@@ -2126,6 +2129,7 @@ void DFNMesh::SortFacesAroundEdges(){
 		}
 		// std::cout<<"\n";
 	}
+	std::cout<<"                 \r"<<std::flush;
 }
 
 // void DFNMesh::IsolateBoundaryPolyh2(){

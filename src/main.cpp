@@ -160,6 +160,7 @@ int main(int argc, char* argv[]){
 			fracture->MeshFractureSurface();
 			dfn.UpdatePolyhedra();
 		}
+		fracture->RecoverFractureLimits();
 
 		std::ofstream logtest("LOG/dfnprint.log");
 		dfn.Print(logtest,argv[1]);
@@ -170,12 +171,12 @@ int main(int argc, char* argv[]){
 	time.stop();
 	std::cout<<"\n\n"<<time<<" ms"<<std::endl;
 	//Print graphics
-		for(auto frac : dfn.FractureList()){
-			frac->Polygon().InsertGeomRepresentation(gmesh);
-		}
-		dfn.PrintVTK("pzmesh.txt","skip");
-		dfn.PrintVTKColorful();
-	std::cout<<"\n ...the end.\n\n";
+	for(auto frac : dfn.FractureList()){
+		frac->Polygon().InsertGeomRepresentation(gmesh);
+	}
+	dfn.PrintVTK("pzmesh.txt","skip");
+	dfn.PrintVTKColorful();
+	std::cout<<"\n ...the end.\n\n\a";
 
 	gmsh::finalize();
 	return 0;
@@ -266,12 +267,22 @@ void ReadFile(	const std::string&			filename,
 		/*_______________________________________________________________
 						FILE FORMAT 
 
-		Domain 								//dimensions of the domain
+		Domain 								// dimensions of the domain
 		Lx Ly Lz (double)
 
-		Mesh			
-		2D ELTYPE (string)
+		Origin								// position of x0 to generate TPZGenGrid
+		x0 y0 z0 (double)
+
+		Mesh								
+		2D ELTYPE (string)					// to create a TPZGenGrid
 		Nx Ny Nz (int)						// number of divisions
+
+		Mesh
+		"/path/to/msh/file.msh"				// to read a .msh file (either quotes or double quotes will work and are required)
+
+		TolDist d (double)
+
+		TolAngle a (double)
 
 		Fracture 0	[ncorners]				// coordinates for j corner nodes
 		[x0] [x1] ... [xj]
@@ -283,22 +294,22 @@ void ReadFile(	const std::string&			filename,
 		Fracture N	[ncorners]
 		_______________________________________________________________
 						EXAMPLE
+		Origin
+		-1.0 -1.0 -1.0
+
 		Domain
 		2.0 2.0 2.0
 
 		Mesh
-		EQuadrilateral
-		2 2 2
+		EHexahedral
+		1 1 1
+
+		tolDist 0.0001
 
 		Fracture 0 4
-		0.3 1.3 1.3 0.3
-		0.3 0.3 1.4 1.4
-		0.7 0.7 0.5 0.5
-		
-		Fracture 1 4
-		0.6 1.6 1.6 0.6
-		0.55 0.7 0.55 0.40
-		1.3 1.3 0.25 0.25
+		2.1213 -1.2247 -2.1213  1.2247
+		2.1213  1.2247 -2.1213 -1.2247
+		0.000  -2.4495  0.000   2.4495
 	 */
 	string line, word;
 	bool create_mesh_Q = mshfile == "no-msh-file";
@@ -427,9 +438,9 @@ void ReadFile(	const std::string&			filename,
 
 	// Test if informed element type matches grid definition
 	int dim = 3;
-	if(nels[0] == 0 || L[0] == 0.0 ||
+	if(nels[2] == 0 || L[2] == 0.0 ||
 	   nels[1] == 0 || L[1] == 0.0 ||
-	   nels[2] == 0 || L[2] == 0.0)
+	   nels[0] == 0 || L[0] == 0.0)
 	{
 		dim = 2;
 	}
