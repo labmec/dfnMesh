@@ -134,7 +134,7 @@ int main(int argc, char* argv[]){
         // a polygon represents a set of points in a plane
 		DFNPolygon polygon(polyg_stack[iplane], gmesh);
         // Initialize the basic data of fracture
-		fracture = new DFNFracture(polygon,&dfn);
+		fracture = new DFNFracture(polygon,&dfn,Erecovered);
 		dfn.AddFracture(fracture);
         
 	// Find and split intersected ribs
@@ -174,8 +174,9 @@ int main(int argc, char* argv[]){
 	for(auto frac : dfn.FractureList()){
 		frac->Polygon().InsertGeomRepresentation(gmesh);
 	}
-	dfn.PrintVTK("pzmesh.txt","skip");
-	dfn.PrintVTKColorful();
+	// dfn.PrintVTK("pzmesh.txt","skip");
+	dfn.PrintVTK();
+	// dfn.PrintVTKColorful();
 	std::cout<<"\n ...the end.\n\n\a";
 
 	gmsh::finalize();

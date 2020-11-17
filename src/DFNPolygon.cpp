@@ -484,3 +484,32 @@ void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){
         gmesh->CreateGeoElement(EPoint,nodeindices,fNodesAbove[i],index);
     }
 }
+
+
+
+
+
+REAL DFNPolygon::EdgeLength(int edgeindex){
+    // consistency checks
+    // if(edgeindex < 0) DebugStop();
+    // if(edgeindex >= NEdges()) DebugStop();
+    TPZManVector<REAL,3> dif(3,0.);
+    GetEdgeVector(edgeindex,dif);
+    return DFN::Norm<REAL>(dif);
+}
+
+
+
+void DFNPolygon::GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector){
+    // consistency checks
+    if(edgeindex < 0) DebugStop();
+    if(edgeindex >= NEdges()) DebugStop();
+
+    int node0 = edgeindex;
+    int node1 = (edgeindex+1)%NEdges();
+
+    edgevector[0] = fCornerPoints(0,node0) - fCornerPoints(0,node1);
+    edgevector[1] = fCornerPoints(1,node0) - fCornerPoints(1,node1);
+    edgevector[2] = fCornerPoints(2,node0) - fCornerPoints(2,node1);
+
+}

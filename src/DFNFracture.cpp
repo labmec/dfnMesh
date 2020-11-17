@@ -31,6 +31,18 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limith
     fLimit = limithandling;
 }
 
+void DFNFracture::Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling)
+{
+    fPolygon = Polygon;
+    fdfnMesh = dfnMesh;
+    fLimit = limithandling;
+    // fmatid = matid;
+    fRibs.clear();
+    fFaces.clear();
+    fSurfaceFaces.clear();
+    fSurfaceEdges.clear();
+}
+
 // Copy constructor
 DFNFracture::DFNFracture(const DFNFracture &copy){
     this->operator=(copy);
@@ -1281,22 +1293,191 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std:
 
 
 
+void DFNFracture::GetEdgesInSurface(std::set<int64_t>& edges){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    TPZManVector<int64_t,4> edgeindices;
+    for(int64_t faceindex : fSurfaceFaces){
+        TPZGeoEl* face = gmesh->Element(faceindex);
+        edgeindices = DFN::GetEdgeIndices(face);
+        for(int64_t edgeindex : edgeindices){
+            edges.insert(edgeindex);
+        }
+    }
+}
 
 
+void DFNFracture::CreateOrthogonalFracture(DFNFracture& orthfracture, const int edgeindex){
+    // consistency checks
+    if(edgeindex < 0) DebugStop();
+    if(edgeindex >= this->fPolygon.NEdges()) DebugStop();
+    
+    TPZManVector<REAL,3> realnormal(3,0.);
 
+    const TPZFMatrix<REAL>& referencecorners = fPolygon.GetCornersX();
 
+    fPolygon.GetNormal(realnormal);
+    REAL edgelength = fPolygon.EdgeLength(edgeindex);
+    realnormal[0] *= edgelength;
+    realnormal[1] *= edgelength;
+    realnormal[2] *= edgelength;
 
+    TPZFMatrix<REAL> cornercoord(3,3,0.);
+    // node 0
+    cornercoord(0,0) = referencecorners.GetVal(0,(edgeindex+1)%fPolygon.NCornerNodes());
+    cornercoord(1,0) = referencecorners.GetVal(1,(edgeindex+1)%fPolygon.NCornerNodes());
+    cornercoord(2,0) = referencecorners.GetVal(2,(edgeindex+1)%fPolygon.NCornerNodes());
+    // node 1
+    cornercoord(0,1) = referencecorners.GetVal(0,edgeindex);
+    cornercoord(1,1) = referencecorners.GetVal(1,edgeindex);
+    cornercoord(2,1) = referencecorners.GetVal(2,edgeindex);
+    // node 2
+    cornercoord(0,2) = cornercoord(0,1)+realnormal[0];
+    cornercoord(1,2) = cornercoord(1,1)+realnormal[1];
+    cornercoord(2,2) = cornercoord(2,1)+realnormal[2];
+
+    
+    TPZGeoMesh* gmesh = this->fdfnMesh->Mesh();
+    DFNPolygon dummypolygon(cornercoord,gmesh);
+
+    orthfracture.Initialize(dummypolygon,fdfnMesh,fLimit);
+}
+
+void DFNFracture::UpdateFractureSurface(){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    for(int64_t index : fSurfaceFaces){
+        TPZGeoEl* father = gmesh->Element(index);
+        if(father->Dimension() != 2) DebugStop();
+        if(!father){
+            fSurfaceFaces.erase(index);
+            continue;
+        }
+        if(!father->HasSubElement()) continue;
+        TPZStack<TPZGeoEl*> children;
+        father->YoungestChildren(children);
+        for(TPZGeoEl* child : children){
+            AddToSurface(child);
+        }
+    }
+}
 
 void DFNFracture::RecoverFractureLimits(){
-    DebugStop();
+    // fLimit directive decides if this code should run
+    if(this->fLimit != 2) return;
+
+    // this->UpdateFractureSurface();
+    this->GetEdgesInSurface(fSurfaceEdges);
+
+    // Number of limit edges in this fracture's DFNPolygon
+    int nlimits = fPolygon.NCornerNodes();
+
+    for(int ilimit=0; ilimit<nlimits; ++ilimit){
+    // for(int ilimit=0; ilimit<1; ++ilimit){
+        DFNFracture orthfracture;
+        CreateOrthogonalFracture(orthfracture,ilimit);
+        orthfracture.FindRibs(fSurfaceEdges);
+        orthfracture.SnapIntersections_ribs(fdfnMesh->TolDist());
+        orthfracture.SnapIntersections_faces(fdfnMesh->TolDist(),fdfnMesh->TolAngle());
+        orthfracture.RefineRibs();
+        orthfracture.RefineFaces();
+        orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Erefined,*this);
+    }
 }
 
 
 
 
 
+void DFNFracture::FindRibs(const std::set<int64_t>& ribset){
+    if(ribset.size() == 0) return;
+
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+
+    for(int64_t index : ribset){
+        TPZGeoEl* gel = gmesh->Element(index);
+        if(!gel) continue;
+        if(gel->Dimension() != 1) DebugStop();
+        if(gel->HasSubElement()) DebugStop();
+
+        TPZManVector<REAL,3> intpoint(3,0.);
+        if(fPolygon.IsCutByPlane(gel,intpoint)){
+            DFNRib rib(gel,this,2);
+            rib.SetIntersectionCoord(intpoint);
+            DFNRib* newrib = AddRib(rib);
+            newrib->AppendToNeighbourFaces();
+        }
+    }
+}
 
 
+void DFNFracture::RemoveFromSurface(TPZGeoEl* gel){
+    gel->SetMaterialId(DFNMaterial::Erefined);
+    switch (gel->Dimension()){
+        case 1: fSurfaceEdges.erase(gel->Index()); break;
+        case 2: fSurfaceFaces.erase(gel->Index()); break;
+        default: DebugStop();;
+    }
+}
+void DFNFracture::AddToSurface(TPZGeoEl* gel){
+    gel->SetMaterialId(fmatid);
+    switch (gel->Dimension()){
+        case 1: fSurfaceEdges.insert(gel->Index()); break;
+        case 2: fSurfaceFaces.insert(gel->Index()); break;
+        default: DebugStop();;
+    }
+}
+
+void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    for(auto& it : fFaces){
+        DFNFace& face = it.second;
+        // This classification is only useful for faces with 2 intersected ribs
+        if(face.NIntersectedRibs() < 2) continue;
+
+        TPZGeoEl* father = face.GeoEl();
+        TPZStack<TPZGeoEl*> children;
+        TPZManVector<int64_t,4> edgeindices;
+        if(father->HasSubElement()){
+            father->YoungestChildren(children);
+            //? only if father was refined, remove it from the surface of realfracture together with its edges?
+        }else{
+            children.push_back(father);
+        }
+        // If I remove the father regardless, it'll get add back in case it shouldn't have been deleted
+        realfracture.RemoveFromSurface(father);
+        edgeindices = DFN::GetEdgeIndices(father);
+        for(int64_t index : edgeindices){
+            TPZGeoEl* edge = gmesh->Element(index);
+            realfracture.RemoveFromSurface(edge);
+        }
+
+        for(TPZGeoEl* child : children){
+            TPZManVector<REAL,2> centroid(3,0.);
+            TPZGeoElSide childside(child,child->NSides()-1);
+            childside.CenterX(centroid);
+            edgeindices = DFN::GetEdgeIndices(child);
+            if(fPolygon.Compute_PointAbove(centroid)){
+                realfracture.AddToSurface(child);
+                // edgeindices = DFN::GetEdgeIndices(child);
+                for(int64_t index : edgeindices){
+                    TPZGeoEl* edge = gmesh->Element(index);
+                    realfracture.AddToSurface(edge);
+                }
+            }
+            else{
+                child->SetMaterialId(id_below);
+                edgeindices = DFN::GetEdgeIndices(child);
+                for(int64_t index : edgeindices){
+                    TPZGeoEl* edge = gmesh->Element(index);
+                    edge->SetMaterialId(id_below);
+                }
+                // realfracture.RemoveFromSurface(child);
+            }
+        }
+        int64_t lineinface_index = face.LineInFace();
+        TPZGeoEl* lineinface = gmesh->Element(lineinface_index);
+        lineinface->SetMaterialId(id_above);
+    }
+}
 
 
 

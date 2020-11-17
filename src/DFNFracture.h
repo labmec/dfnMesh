@@ -55,7 +55,7 @@ private:
 	DFNPolygon fPolygon;
 	
     /// A material id for this fracture elements
-    int fmatid = gNoMaterial;
+    int fmatid = Efracture;
 
     /// Directive for determining if this fracture limits are truncated, extended or recovered
     FracLimit fLimit = Eextended;
@@ -93,6 +93,8 @@ public:
     DFNMesh* dfnMesh() const{return fdfnMesh;}
     
 private:
+
+    void Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended);
         
     /// Checks neighbour's dimension and returns true if it is equal
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
@@ -164,6 +166,15 @@ private:
 
     // Special setup of fracture mat id when working in 2D
     void SetFracMaterial_2D();
+
+    /** @brief For every child of every face in fFaces, check if it's above or below the fracture plane. It changes the material id of the elements and corrects the real fracture datastructures accordingly
+     * @attention This method was written to be called by a virtual fracture. One that is auxiliar orthogonal to a real fracture.
+    */
+    void SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture);
+    void RemoveFromSurface(TPZGeoEl* gel);
+    void AddToSurface(TPZGeoEl* gel);
+
+
 public:
 
     /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
@@ -197,6 +208,9 @@ public:
     
     /// Find intersected ribs, create DFNRib objects
     void FindRibs();
+    /// Find and intersect ribs within the element indices in a set.
+    /// @attention Unlike DFNFracture::FindRibs(), this method won't check if intersection point is within fPolygon limits. Since ribs are already limited to a set, intersection search is done with the unbounded plane that contains fPolygon
+    void FindRibs(const std::set<int64_t>& ribset);
     
     /// verify proximity of rib intersection node
     /// Coalesce intersected ribs
@@ -213,6 +227,9 @@ public:
     /// Set Refinement Patterns and create sub elements
     void RefineFaces();
 
+    /// Remove refined faces from the surface gelindex set and replace them by their youngest children
+    void UpdateFractureSurface();
+
 
     /**
      * @name Handling frature limits
@@ -226,6 +243,14 @@ public:
     void FindOffboundRibs();
     /** @brief Find Faces that lie out of the bounds of this fracture but are still influenced by its limits */
     void FindOffboundFaces();
+    /** @brief Fill a set with every 1D element that is contained in the surface of this fracture*/
+    void GetEdgesInSurface(std::set<int64_t>& edges);
+    /** @brief Creates a fracture (orthogonal to this) that contains the specified edge and whose normal vector is oriented towards the interior of this
+     * @param orthfracture [out] The reference to the created fracture
+     * @param edgeindex Index of the edge of the original fracture that is calling this method
+     * @details its polygon plane is a triangle with the nodes of the specified edge and a node above the real fracture
+    */
+    void CreateOrthogonalFracture(DFNFracture& orthfracture, const int edgeindex);
 
     /** @} */
 

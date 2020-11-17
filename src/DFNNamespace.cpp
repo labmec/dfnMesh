@@ -189,7 +189,7 @@ namespace DFN{
         // consistency checks
         if(!face) 							DebugStop();
         if(face->Dimension() != 2) 			DebugStop();
-        if(face->HasSubElement()) 			DebugStop();
+        // if(face->HasSubElement()) 			DebugStop();
 
         int nedges = face->NSides(1);
         TPZManVector<int64_t,4> output(nedges,-1);

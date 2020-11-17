@@ -25,13 +25,12 @@ Mesh
 EHexahedral
 2 2 2
 
-NumberOfFractures 2
-
 """
 )
-x = "\n 1.50  5.00  5.00  1.50"
+x0 = "\n-1.50  5.00  5.00 -1.50"
+z0 = "\n-0.50 -0.50  5.00  5.00"
+x1 = "\n 1.50  5.00  5.00  1.50"
 z1 = "\n 1.50  1.50  5.00  5.00"
-z0 = "\n 0.50  0.50  5.00  5.00"
 
 toldist = 0.4
 step = 0.07
@@ -42,12 +41,12 @@ steps = int((yfinal-starty0)/step)
 steps += 1
 
 for i in range(steps):
-# for i in range(17,18):
+# for i in range(12,13):
     y0 = starty0 + i*step
     f = open(example,"w+")
     f.write(preamble)
     f.write("\n\nFracture 0 4")
-    f.write(x)
+    f.write(x0)
     if y0 < 0 :
         y = ("\n%.2f %.2f %.2f %.2f" % (y0,y0,y0,y0))
     else:
@@ -56,7 +55,7 @@ for i in range(steps):
     f.write(z0)
     f.write("\n\nFracture 1 4")
     f.write(y)
-    f.write(x)
+    f.write(x1)
     f.write(z1)
     f.close()
     # run dfnMesh

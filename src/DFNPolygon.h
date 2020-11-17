@@ -65,6 +65,7 @@ class DFNPolygon
 
 	/// Return number of corners of polygon
 	int NCornerNodes() const{return fCornerPoints.Cols();}
+	int NEdges() const{return fCornerPoints.Cols();}
     
     /// compute the direction of the axes based on the first three nodes
     void ComputeAxis();
@@ -167,6 +168,11 @@ class DFNPolygon
 
 	/** @brief Check if node is above plane by checking fNodesAbove */
 	bool IsPointAbove(int64_t index){return fNodesAbove[index];}
+
+	/// Compute the length of an edge
+	REAL EdgeLength(int edgeindex);
+	/// Compute a vector from the first to last nodes of an edge
+	void GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector);
 
   private:
 	/// Checks consistency and initializes the datastructure of the object

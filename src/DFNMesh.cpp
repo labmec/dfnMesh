@@ -97,6 +97,7 @@ void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 		if(gel->HasSubElement()) continue;
 		if(!gel->Father()) continue;
 		if(gel->MaterialId() == DFNMaterial::Efracture) continue;
+		if(gel->MaterialId() == DFNMaterial::Eintact) continue;
 		int subindex = gel->WhichSubel();
 		int matid = gel->MaterialId();
 		gel->SetMaterialId(DFNMaterial::Erefined+subindex);
