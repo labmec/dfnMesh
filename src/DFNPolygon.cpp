@@ -50,11 +50,11 @@ void DFNPolygon::ComputeAxis()
     int rows = fCornerPoints.Rows();
     
     if(rows != 3){    //Should be 3 (x y z)
-        std::cout<<"Check the input data";
+        std::cout<<"Check the input data. Poorly defined fracture\n";
         DebugStop();
     }
     if(cols < 3){
-        std::cout<<"Check the input data (number of corner points)";
+        std::cout<<"Check the input data (number of corner points for a fracture seems to be less than 3)\n";
         DebugStop();
     }
 

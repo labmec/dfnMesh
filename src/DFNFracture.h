@@ -114,7 +114,7 @@ private:
      * @param newelements: a vector with the indices of imported elements
      * @note If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
     */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<int64_t> &newelements);
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
 
     /**
      * @name Surface Meshing auxiliar methods
@@ -127,7 +127,7 @@ private:
     /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
      * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
     */
-    void MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon,std::set<int64_t>& nodes, TPZVec<int64_t>& newelements, bool isplane=false);
+    void MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon,std::set<int64_t>& nodes, TPZStack<int64_t>& newelements, bool isplane=false);
     /** @brief Recursively finds the next face and gets its in-plane edge to build a SubPolygon (subset of the Fracture DFNPolygon contained in a polyhedron)
      *  @param Polygon_per_face a structure to store the two subpolygons per face
     */
@@ -150,7 +150,7 @@ private:
     void GetOuterLoop(std::vector<int> &outerLoop);
 
     /** @brief Insert 2D elements in the set of 2D elements in surface */
-    void InsertFaceInSurface(int64_t elindex){fSurfaceFaces.insert(elindex);}
+    void InsertFaceInSurface(int64_t elindex);
     void InsertFaceInSurface(const TPZVec<int64_t>& el_indices){
         for(int64_t index : el_indices){InsertFaceInSurface(index);}
     }
@@ -258,6 +258,19 @@ public:
     void Print(std::ostream& out = std::cout) const;
 
 };
+
+
+namespace DFN{
+    static FracLimit StringToFracLimit(const std::string& name){
+        if(name[0] != 'E'){DebugStop();}
+        if(name == "Etruncated"){	return FracLimit::Etruncated;}
+        if(name == "Eextended"){	return FracLimit::Eextended;}
+        if(name == "Erecovered"){	return FracLimit::Erecovered;}
+        PZError << "\nUnrecognized FracLimit directive type: \""<<name<<"\"\n";
+        DebugStop();
+        return FracLimit::Eextended;
+    }
+}
 
 #endif /* DFNFracture_h */
 

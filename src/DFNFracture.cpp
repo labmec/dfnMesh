@@ -131,6 +131,7 @@ DFNFace * DFNFracture::Face(int64_t index){
 
 
 void DFNFracture::FindFaces(){
+    std::cout<<"\r#Faces intersected = 0";
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
     TPZGeoEl *gel;
  
@@ -174,8 +175,9 @@ void DFNFracture::FindFaces(){
         // Setup a refinement mesh whose quality measures are checked in DFNFace::NeedsSnap()
         face.UpdateRefMesh();
         AddFace(face);
-        std::cout<<"\rN Faces intersected = "<<fFaces.size()<<std::flush;
+        std::cout<<"\r#Faces intersected = "<<fFaces.size()<<std::flush;
     }
+    if(fLimit != Etruncated) IsolateFractureLimits();
     std::cout<<std::endl;
 }
 
@@ -202,7 +204,7 @@ void DFNFracture::FindFaces(){
 
 
 void DFNFracture::FindRibs(){
-    std::cout<<"\r\n";
+    std::cout<<"\r\n#Ribs intersected = 0";
     //search gmesh for intersected ribs
     int64_t Nels = fdfnMesh->Mesh()->NElements();
     TPZManVector<int64_t, 2> inode(2,0);
@@ -228,7 +230,7 @@ void DFNFracture::FindRibs(){
             // material id (-1)?
             if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
             AddRib(rib);
-            std::cout<<"\rN Ribs intersected = "<<fRibs.size()<<std::flush;
+            std::cout<<"\r#Ribs intersected = "<<fRibs.size()<<std::flush;
         }
     }
     std::cout<<std::endl;
@@ -731,9 +733,9 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 }
 
 void DFNFracture::MeshFractureSurface(){
+    std::cout<<"\r#SubPolygons meshed = 0";
     // SubPolygons are subsets of the fracture surface contained by a polyhedral volume
     // A subpolygon is formed whenever (at least) 2 DFNFaces, are refined and part of the same polyhedron
-    std::cout<<"\n\n";
     fdfnMesh->CreateSkeletonElements(1);
     TPZVec<std::array<int, 2>> Polygon_per_face(fdfnMesh->Mesh()->NElements(),{-1,-1});
     TPZStack<int64_t> subpolygon(10,gDFN_NoIndex);
@@ -747,9 +749,10 @@ void DFNFracture::MeshFractureSurface(){
             int orientation = 1 - 2*i; // (i==0?1:-1)
             std::pair<int64_t,int> initialface_orient = {initial_face.Index(),orientation};
             // skip 'boundary polyhedron'
-            if(fdfnMesh->GetPolyhedralIndex(initialface_orient)==0) continue;
-            // if(fdfnMesh->Polyhedron(fdfnMesh->GetPolyhedralIndex(initialface_orient)).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
-            if(fdfnMesh->GetPolyhedralIndex(initialface_orient)< 0) DebugStop();
+            int polyhindex = fdfnMesh->GetPolyhedralIndex(initialface_orient);
+            if(polyhindex==0) continue;
+            if(!fLimit && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
+            if(polyhindex< 0) DebugStop();
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
             subpolygon.Fill(gDFN_NoIndex);
             subpolygon.clear();
@@ -767,16 +770,16 @@ void DFNFracture::MeshFractureSurface(){
                 continue;
             }
             MeshPolygon(subpolygon);
-            std::cout<<"\rN SubPolygons meshed = "<<polygon_counter<<std::flush;
+            std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
     std::cout<<std::endl;
     std::cout<<"Building connectivity\r";
     fdfnMesh->Mesh()->BuildConnectivity();
-    std::cout<<"                     \n";
+    std::cout<<"                     \r";
     std::cout<<"Creating 1D skeletons on fracture surface\r";
     fdfnMesh->CreateSkeletonElements(1);
-    std::cout<<"                                         \n";
+    std::cout<<"                                         \r";
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
@@ -852,11 +855,11 @@ void DFNFracture::ClearNegativeEntries(TPZStack<int64_t>& subpolygon){
 /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
  * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
 */
-void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<int64_t>& nodes, TPZVec<int64_t>& newelements, bool isplane){
+void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<int64_t>& nodes, TPZStack<int64_t>& newelements, bool isplane){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     const int nnodes = nodes.size();
     const int nedges = nnodes;
-
+    newelements.clear();
     // Project nodes onto best fitting plane
     TPZManVector<REAL,3> centroid(3,0.);
     TPZManVector<REAL,3> normal(3,0.);
@@ -947,7 +950,7 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
     int nedges = polygon.size();
     int nnodes = nedges;
     // New elements to be created
-    TPZVec<int64_t> newelements(1,-1);
+    TPZStack<int64_t> newelements(1,-1);
 
     // clear collapsed edges from polygon lineloop
     ClearNegativeEntries(polygon);
@@ -1191,7 +1194,7 @@ void DFNFracture::FindOffboundFaces(){
 
 
 
-void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<int64_t> &newelements){
+void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements){
     // GMsh does not accept zero index entities
     const int shift = 1;
 
@@ -1243,7 +1246,7 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std:
     int64_t nels = gmesh->NElements();
     std::vector<std::pair<int, int> > dim_to_physical_groups;
     gmsh::model::getPhysicalGroups(dim_to_physical_groups,dimension);
-   
+    
     /// inserting the elements
     for (auto group: dim_to_physical_groups) {
        
@@ -1269,7 +1272,8 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std:
                 std::vector<int> node_identifiers(n_nodes);
                 int n_elements = group_element_identifiers[itype].size();
                 for (int iel = 0; iel < n_elements; iel++) {
-                    int el_identifier = group_element_identifiers[itype][iel]-1+nels;
+                    // int el_identifier = group_element_identifiers[itype][iel]-1+nels;
+                    int el_identifier = gmesh->CreateUniqueElementId();
 					// std::cout<<"\n"<<el_identifier<<"\n";
 
                     for (int inode = 0; inode < n_nodes; inode++) {
@@ -1278,7 +1282,8 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std:
                         node_identifiers[inode] = mapGMshToPZ[group_node_identifiers[itype][iel*n_nodes+inode]];
                     }
                     TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
-					int64_t ntest = gmesh->NElements();
+                    newelements.push_back(el_identifier);
+					// int64_t ntest = gmesh->NElements();
 					// std::cout<<"nelements = "<<ntest<<"\n";
                 }
             }
@@ -1423,6 +1428,21 @@ void DFNFracture::AddToSurface(TPZGeoEl* gel){
         case 1: fSurfaceEdges.insert(gel->Index()); break;
         case 2: fSurfaceFaces.insert(gel->Index()); break;
         default: DebugStop();;
+    }
+}
+void DFNFracture::InsertFaceInSurface(int64_t elindex){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    TPZGeoEl* gel = gmesh->Element(elindex);
+    if(!gel) DebugStop();
+    TPZStack<TPZGeoEl*> children;
+    if(gel->HasSubElement()){
+        gel->YoungestChildren(children);
+    }else{
+        children.push_back(gel);
+    }
+    for(TPZGeoEl* gel : children){
+        gel->SetMaterialId(fmatid);
+        fSurfaceFaces.insert(gel->Index());
     }
 }
 

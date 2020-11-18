@@ -67,7 +67,7 @@ public:
     DFNMesh &operator=(const DFNMesh &copy);
 
     /// Add new fracture
-    void AddFracture(DFNFracture *fracture){fFractures.push_back(fracture);}
+    void AddFracture(DFNFracture *fracture){fFractures.push_back(fracture);std::cout<<"\nFracture #"<<fFractures.size();}
     
     /// Pointer to volume of index 'index'
     DFNVolume *Volume(int64_t index){return &fVolumes[index];}

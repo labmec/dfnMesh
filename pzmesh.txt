@@ -3,47 +3,28 @@
 
 TITLE-> 
 
-number of nodes               = 35
-number of elements            = 100
+number of nodes               = 16
+number of elements            = 41
 number of free elements       = 0
 
 	Geometric Node Information:
 
 Index: 0 Node : fId = 0    Coordinates	0	0	0
-Index: 1 Node : fId = 1    Coordinates	2	0	0
-Index: 2 Node : fId = 2    Coordinates	4	0	0
-Index: 3 Node : fId = 3    Coordinates	0	2	0
-Index: 4 Node : fId = 4    Coordinates	2	2	0
-Index: 5 Node : fId = 5    Coordinates	4	2	0
-Index: 6 Node : fId = 6    Coordinates	0	4	0
-Index: 7 Node : fId = 7    Coordinates	2	4	0
-Index: 8 Node : fId = 8    Coordinates	4	4	0
-Index: 9 Node : fId = 9    Coordinates	0	0	2
-Index: 10 Node : fId = 10    Coordinates	2	0	2
-Index: 11 Node : fId = 11    Coordinates	4	0	2
-Index: 12 Node : fId = 12    Coordinates	0	2	2
-Index: 13 Node : fId = 13    Coordinates	2	2	2
-Index: 14 Node : fId = 14    Coordinates	4	2	2
-Index: 15 Node : fId = 15    Coordinates	0	4	2
-Index: 16 Node : fId = 16    Coordinates	2	4	2
-Index: 17 Node : fId = 17    Coordinates	4	4	2
-Index: 18 Node : fId = 18    Coordinates	0	0	4
-Index: 19 Node : fId = 19    Coordinates	2	0	4
-Index: 20 Node : fId = 20    Coordinates	4	0	4
-Index: 21 Node : fId = 21    Coordinates	0	2	4
-Index: 22 Node : fId = 22    Coordinates	2	2	4
-Index: 23 Node : fId = 23    Coordinates	4	2	4
-Index: 24 Node : fId = 24    Coordinates	0	4	4
-Index: 25 Node : fId = 25    Coordinates	2	4	4
-Index: 26 Node : fId = 26    Coordinates	4	4	4
-Index: 27 Node : fId = 27    Coordinates	-1.5	4.94	-0.5
-Index: 28 Node : fId = 28    Coordinates	5	4.94	-0.5
-Index: 29 Node : fId = 29    Coordinates	5	4.94	5
-Index: 30 Node : fId = 30    Coordinates	-1.5	4.94	5
-Index: 31 Node : fId = 31    Coordinates	4.94	1.5	1.5
-Index: 32 Node : fId = 32    Coordinates	4.94	5	1.5
-Index: 33 Node : fId = 33    Coordinates	4.94	5	5
-Index: 34 Node : fId = 34    Coordinates	4.94	1.5	5
+Index: 1 Node : fId = 1    Coordinates	1	0	0
+Index: 2 Node : fId = 2    Coordinates	0	1	0
+Index: 3 Node : fId = 3    Coordinates	1	1	0
+Index: 4 Node : fId = 4    Coordinates	0	0	1
+Index: 5 Node : fId = 5    Coordinates	1	0	1
+Index: 6 Node : fId = 6    Coordinates	0	1	1
+Index: 7 Node : fId = 7    Coordinates	1	1	1
+Index: 8 Node : fId = 8    Coordinates	0	1	0.5
+Index: 9 Node : fId = 9    Coordinates	1	1	0.5
+Index: 10 Node : fId = 10    Coordinates	1	0	0.5
+Index: 11 Node : fId = 11    Coordinates	0	0	0.5
+Index: 12 Node : fId = 12    Coordinates	-0.5	1	0.5
+Index: 13 Node : fId = 13    Coordinates	0.5	1.9	0.5
+Index: 14 Node : fId = 14    Coordinates	2	0.5	0.5
+Index: 15 Node : fId = 15    Coordinates	1	-0.4	0.5
 
 	Geometric Element Information:
 
@@ -53,840 +34,64 @@ Is GeoBlend ? : false
 Is Linear Mapping ? : true
 Number of nodes    8
 Corner nodes       8
-Nodes indexes          0 1 4 3 9 10 13 12 
+Nodes indexes          0 1 3 2 4 5 7 6 
 Number of sides    27
 Material id        1
 no father
 no subelements
-Neighbours for side   0 : 67/0 66/0 63/0 19/0 16/1 15/0 
-Neighbours for side   1 : 67/1 66/1 19/1 1/0 72/0 71/0 65/0 27/0 18/1 14/0 
-Neighbours for side   2 : 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 
-Neighbours for side   3 : 67/3 63/1 16/0 2/0 77/0 74/0 64/0 33/1 17/0 12/0 
-Neighbours for side   4 : 66/3 63/3 15/1 4/0 86/0 83/0 62/0 48/0 11/0 8/1 
-Neighbours for side   5 : 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 
-Neighbours for side   6 : 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 
-Neighbours for side   7 : 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 
-Neighbours for side   8 : 67/4 66/4 19/2 
-Neighbours for side   9 : 67/5 1/11 72/7 65/4 18/2 
-Neighbours for side   10 : 67/6 2/8 77/4 64/4 17/2 
-Neighbours for side   11 : 67/7 63/4 16/2 
-Neighbours for side   12 : 66/7 63/7 15/2 
-Neighbours for side   13 : 66/5 1/12 71/7 65/7 14/2 
-Neighbours for side   14 : 3/12 76/7 69/7 13/2 2/13 64/5 1/15 65/5 
-Neighbours for side   15 : 63/5 2/12 74/7 64/7 12/2 
-Neighbours for side   16 : 66/6 4/8 86/4 62/4 11/2 
-Neighbours for side   17 : 5/11 85/4 68/7 10/2 4/9 62/5 1/19 65/6 
-Neighbours for side   18 : 6/8 84/4 73/4 9/2 4/10 62/6 2/16 64/6 
-Neighbours for side   19 : 63/6 4/11 83/4 62/7 8/2 
-Neighbours for side   20 : 67/8 
-Neighbours for side   21 : 66/8 
-Neighbours for side   22 : 1/24 65/8 
-Neighbours for side   23 : 2/21 64/8 
-Neighbours for side   24 : 63/8 
-Neighbours for side   25 : 4/20 62/8 
+Neighbours for side   0 : 25/0 18/0 17/0 34/2 14/0 28/2 12/0 9/1 8/0 
+Neighbours for side   1 : 23/0 18/1 17/1 34/3 16/0 32/2 12/1 11/0 7/0 
+Neighbours for side   2 : 21/0 18/2 16/1 32/3 15/1 30/3 11/1 10/0 6/0 
+Neighbours for side   3 : 19/0 18/3 15/0 30/2 14/1 28/3 10/1 9/0 5/0 
+Neighbours for side   4 : 26/1 17/3 33/3 14/3 27/3 13/0 8/1 4/0 1/1 
+Neighbours for side   5 : 24/1 17/2 33/2 16/3 31/3 13/1 7/1 4/1 3/0 
+Neighbours for side   6 : 22/1 16/2 31/2 15/2 29/2 13/2 6/1 3/1 2/0 
+Neighbours for side   7 : 20/1 15/3 29/3 14/2 27/2 13/3 5/1 2/1 1/0 
+Neighbours for side   8 : 18/4 17/4 34/6 12/2 
+Neighbours for side   9 : 18/5 16/4 32/6 11/2 
+Neighbours for side   10 : 18/6 15/4 30/6 10/2 
+Neighbours for side   11 : 18/7 14/4 28/6 9/2 
+Neighbours for side   12 : 17/7 14/7 8/2 
+Neighbours for side   13 : 17/5 16/7 7/2 
+Neighbours for side   14 : 16/5 15/5 6/2 
+Neighbours for side   15 : 15/7 14/5 5/2 
+Neighbours for side   16 : 17/6 33/6 13/4 4/2 
+Neighbours for side   17 : 16/6 31/6 13/5 3/2 
+Neighbours for side   18 : 15/6 29/6 13/6 2/2 
+Neighbours for side   19 : 14/6 27/6 13/7 1/2 
+Neighbours for side   20 : 18/8 
+Neighbours for side   21 : 17/8 
+Neighbours for side   22 : 16/8 
+Neighbours for side   23 : 15/8 
+Neighbours for side   24 : 14/8 
+Neighbours for side   25 : 13/8 
 Neighbours for side   26 : 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 0 1 4 3 9 10 13 12 
+Nodeindices: 0 1 3 2 4 5 7 6 
 
 Element index      1
 Element id         1
 Is GeoBlend ? : false
 Is Linear Mapping ? : true
-Number of nodes    8
-Corner nodes       8
-Nodes indexes          1 2 5 4 10 11 14 13 
-Number of sides    27
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          6 4 
+Number of sides    3
 Material id        1
 no father
 no subelements
-Neighbours for side   0 : 72/0 71/0 65/0 27/0 18/1 14/0 0/1 67/1 66/1 19/1 
-Neighbours for side   1 : 72/1 71/1 70/0 27/1 26/0 24/0 
-Neighbours for side   2 : 72/2 70/1 26/1 3/1 81/1 80/0 69/1 40/0 25/1 23/0 
-Neighbours for side   3 : 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 
-Neighbours for side   4 : 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 
-Neighbours for side   5 : 71/2 70/3 24/1 5/1 90/1 89/0 68/1 53/0 22/1 21/0 
-Neighbours for side   6 : 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 
-Neighbours for side   7 : 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 
-Neighbours for side   8 : 72/4 71/4 27/2 
-Neighbours for side   9 : 72/5 70/4 26/2 
-Neighbours for side   10 : 72/6 3/8 81/4 69/4 25/2 
-Neighbours for side   11 : 72/7 65/4 18/2 0/9 67/5 
-Neighbours for side   12 : 71/7 65/7 14/2 0/13 66/5 
-Neighbours for side   13 : 71/5 70/7 24/2 
-Neighbours for side   14 : 70/5 3/13 80/7 69/5 23/2 
-Neighbours for side   15 : 65/5 0/14 3/12 76/7 69/7 13/2 2/13 64/5 
-Neighbours for side   16 : 71/6 5/8 90/4 68/4 22/2 
-Neighbours for side   17 : 70/6 5/9 89/4 68/5 21/2 
-Neighbours for side   18 : 7/8 88/4 78/4 20/2 5/10 68/6 3/16 69/6 
-Neighbours for side   19 : 65/6 0/17 5/11 85/4 68/7 10/2 4/9 62/5 
-Neighbours for side   20 : 72/8 
-Neighbours for side   21 : 71/8 
-Neighbours for side   22 : 70/8 
-Neighbours for side   23 : 3/21 69/8 
-Neighbours for side   24 : 65/8 0/22 
-Neighbours for side   25 : 5/20 68/8 
-Neighbours for side   26 : 
+Neighbours for side   0 : 0/7 20/1 15/3 29/3 14/2 27/2 13/3 5/1 2/1 
+Neighbours for side   1 : 0/4 26/1 17/3 33/3 14/3 27/3 13/0 8/1 4/0 
+Neighbours for side   2 : 0/19 14/6 27/6 13/7 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 1 2 5 4 10 11 14 13 
+Nodeindices: 6 4 
 
 Element index      2
 Element id         2
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    8
-Corner nodes       8
-Nodes indexes          3 4 7 6 12 13 16 15 
-Number of sides    27
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 77/0 74/0 64/0 33/1 17/0 12/0 0/3 67/3 63/1 16/0 
-Neighbours for side   1 : 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 
-Neighbours for side   2 : 77/2 75/1 34/0 3/3 81/3 79/0 76/1 39/1 35/0 32/0 
-Neighbours for side   3 : 77/3 75/0 74/1 34/1 33/0 31/0 
-Neighbours for side   4 : 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 
-Neighbours for side   5 : 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 
-Neighbours for side   6 : 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 
-Neighbours for side   7 : 75/3 74/2 31/1 6/3 93/0 92/1 73/3 57/0 29/1 28/0 
-Neighbours for side   8 : 77/4 64/4 17/2 0/10 67/6 
-Neighbours for side   9 : 77/5 3/11 81/7 76/4 35/2 
-Neighbours for side   10 : 77/6 75/4 34/2 
-Neighbours for side   11 : 77/7 74/4 33/2 
-Neighbours for side   12 : 74/7 64/7 12/2 0/15 63/5 
-Neighbours for side   13 : 64/5 1/15 65/5 0/14 3/12 76/7 69/7 13/2 
-Neighbours for side   14 : 75/5 3/15 79/7 76/5 32/2 
-Neighbours for side   15 : 75/7 74/5 31/2 
-Neighbours for side   16 : 64/6 0/18 6/8 84/4 73/4 9/2 4/10 62/6 
-Neighbours for side   17 : 7/11 94/4 78/7 30/2 6/9 73/5 3/19 76/6 
-Neighbours for side   18 : 75/6 6/10 93/4 73/6 29/2 
-Neighbours for side   19 : 74/6 6/11 92/4 73/7 28/2 
-Neighbours for side   20 : 77/8 
-Neighbours for side   21 : 64/8 0/23 
-Neighbours for side   22 : 3/24 76/8 
-Neighbours for side   23 : 75/8 
-Neighbours for side   24 : 74/8 
-Neighbours for side   25 : 6/20 73/8 
-Neighbours for side   26 : 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 3 4 7 6 12 13 16 15 
-
-Element index      3
-Element id         3
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    8
-Corner nodes       8
-Nodes indexes          4 5 8 7 13 14 17 16 
-Number of sides    27
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 
-Neighbours for side   1 : 81/1 80/0 69/1 40/0 25/1 23/0 1/2 72/2 70/1 26/1 
-Neighbours for side   2 : 81/2 80/1 79/1 40/1 39/0 38/0 
-Neighbours for side   3 : 81/3 79/0 76/1 39/1 35/0 32/0 2/2 77/2 75/1 34/0 
-Neighbours for side   4 : 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 
-Neighbours for side   5 : 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 
-Neighbours for side   6 : 80/2 79/2 38/1 7/2 97/1 96/1 78/2 61/0 37/1 36/0 
-Neighbours for side   7 : 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 
-Neighbours for side   8 : 81/4 69/4 25/2 1/10 72/6 
-Neighbours for side   9 : 81/5 80/4 40/2 
-Neighbours for side   10 : 81/6 79/4 39/2 
-Neighbours for side   11 : 81/7 76/4 35/2 2/9 77/5 
-Neighbours for side   12 : 76/7 69/7 13/2 2/13 64/5 1/15 65/5 0/14 
-Neighbours for side   13 : 80/7 69/5 23/2 1/14 70/5 
-Neighbours for side   14 : 80/5 79/5 38/2 
-Neighbours for side   15 : 79/7 76/5 32/2 2/14 75/5 
-Neighbours for side   16 : 69/6 1/18 7/8 88/4 78/4 20/2 5/10 68/6 
-Neighbours for side   17 : 80/6 7/9 97/4 78/5 37/2 
-Neighbours for side   18 : 79/6 7/10 96/4 78/6 36/2 
-Neighbours for side   19 : 76/6 2/17 7/11 94/4 78/7 30/2 6/9 73/5 
-Neighbours for side   20 : 81/8 
-Neighbours for side   21 : 69/8 1/23 
-Neighbours for side   22 : 80/8 
-Neighbours for side   23 : 79/8 
-Neighbours for side   24 : 76/8 2/22 
-Neighbours for side   25 : 7/20 78/8 
-Neighbours for side   26 : 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 4 5 8 7 13 14 17 16 
-
-Element index      4
-Element id         4
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    8
-Corner nodes       8
-Nodes indexes          9 10 13 12 18 19 22 21 
-Number of sides    27
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 86/0 83/0 62/0 48/0 11/0 8/1 0/4 66/3 63/3 15/1 
-Neighbours for side   1 : 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 
-Neighbours for side   2 : 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 
-Neighbours for side   3 : 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 
-Neighbours for side   4 : 86/3 83/3 82/0 48/1 44/0 41/1 
-Neighbours for side   5 : 86/2 82/1 44/1 5/4 90/3 87/0 85/3 51/0 47/1 43/1 
-Neighbours for side   6 : 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 
-Neighbours for side   7 : 83/2 82/3 41/0 6/4 92/3 91/0 84/3 54/1 45/1 42/0 
-Neighbours for side   8 : 86/4 62/4 11/2 0/16 66/6 
-Neighbours for side   9 : 62/5 1/19 65/6 0/17 5/11 85/4 68/7 10/2 
-Neighbours for side   10 : 62/6 2/16 64/6 0/18 6/8 84/4 73/4 9/2 
-Neighbours for side   11 : 83/4 62/7 8/2 0/19 63/6 
-Neighbours for side   12 : 86/7 83/7 48/2 
-Neighbours for side   13 : 86/5 5/12 90/7 85/7 47/2 
-Neighbours for side   14 : 7/12 94/7 88/7 46/2 6/13 84/5 5/15 85/5 
-Neighbours for side   15 : 83/5 6/12 92/7 84/7 45/2 
-Neighbours for side   16 : 86/6 82/4 44/2 
-Neighbours for side   17 : 82/5 5/19 87/7 85/6 43/2 
-Neighbours for side   18 : 82/6 6/16 91/4 84/6 42/2 
-Neighbours for side   19 : 83/6 82/7 41/2 
-Neighbours for side   20 : 62/8 0/25 
-Neighbours for side   21 : 86/8 
-Neighbours for side   22 : 5/24 85/8 
-Neighbours for side   23 : 6/21 84/8 
-Neighbours for side   24 : 83/8 
-Neighbours for side   25 : 82/8 
-Neighbours for side   26 : 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 9 10 13 12 18 19 22 21 
-
-Element index      5
-Element id         5
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    8
-Corner nodes       8
-Nodes indexes          10 11 14 13 19 20 23 22 
-Number of sides    27
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 
-Neighbours for side   1 : 90/1 89/0 68/1 53/0 22/1 21/0 1/5 71/2 70/3 24/1 
-Neighbours for side   2 : 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 
-Neighbours for side   3 : 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 
-Neighbours for side   4 : 90/3 87/0 85/3 51/0 47/1 43/1 4/5 86/2 82/1 44/1 
-Neighbours for side   5 : 90/2 89/3 87/1 53/1 51/1 50/0 
-Neighbours for side   6 : 89/2 87/2 50/1 7/5 97/3 95/1 88/2 60/0 52/1 49/1 
-Neighbours for side   7 : 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 
-Neighbours for side   8 : 90/4 68/4 22/2 1/16 71/6 
-Neighbours for side   9 : 89/4 68/5 21/2 1/17 70/6 
-Neighbours for side   10 : 68/6 3/16 69/6 1/18 7/8 88/4 78/4 20/2 
-Neighbours for side   11 : 85/4 68/7 10/2 4/9 62/5 1/19 65/6 0/17 
-Neighbours for side   12 : 90/7 85/7 47/2 4/13 86/5 
-Neighbours for side   13 : 90/5 89/7 53/2 
-Neighbours for side   14 : 89/5 7/13 97/7 88/5 52/2 
-Neighbours for side   15 : 85/5 4/14 7/12 94/7 88/7 46/2 6/13 84/5 
-Neighbours for side   16 : 90/6 87/4 51/2 
-Neighbours for side   17 : 89/6 87/5 50/2 
-Neighbours for side   18 : 87/6 7/16 95/4 88/6 49/2 
-Neighbours for side   19 : 87/7 85/6 43/2 4/17 82/5 
-Neighbours for side   20 : 68/8 1/25 
-Neighbours for side   21 : 90/8 
-Neighbours for side   22 : 89/8 
-Neighbours for side   23 : 7/21 88/8 
-Neighbours for side   24 : 85/8 4/22 
-Neighbours for side   25 : 87/8 
-Neighbours for side   26 : 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 10 11 14 13 19 20 23 22 
-
-Element index      6
-Element id         6
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    8
-Corner nodes       8
-Nodes indexes          12 13 16 15 21 22 25 24 
-Number of sides    27
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 
-Neighbours for side   1 : 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 
-Neighbours for side   2 : 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 
-Neighbours for side   3 : 93/0 92/1 73/3 57/0 29/1 28/0 2/7 75/3 74/2 31/1 
-Neighbours for side   4 : 92/3 91/0 84/3 54/1 45/1 42/0 4/7 83/2 82/3 41/0 
-Neighbours for side   5 : 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 
-Neighbours for side   6 : 93/2 91/2 55/0 7/7 96/3 95/3 94/2 59/1 58/1 56/0 
-Neighbours for side   7 : 93/3 92/2 91/3 57/1 55/1 54/0 
-Neighbours for side   8 : 84/4 73/4 9/2 4/10 62/6 2/16 64/6 0/18 
-Neighbours for side   9 : 73/5 3/19 76/6 2/17 7/11 94/4 78/7 30/2 
-Neighbours for side   10 : 93/4 73/6 29/2 2/18 75/6 
-Neighbours for side   11 : 92/4 73/7 28/2 2/19 74/6 
-Neighbours for side   12 : 92/7 84/7 45/2 4/15 83/5 
-Neighbours for side   13 : 84/5 5/15 85/5 4/14 7/12 94/7 88/7 46/2 
-Neighbours for side   14 : 93/5 7/15 96/7 94/5 58/2 
-Neighbours for side   15 : 93/7 92/5 57/2 
-Neighbours for side   16 : 91/4 84/6 42/2 4/18 82/6 
-Neighbours for side   17 : 91/5 7/19 95/7 94/6 56/2 
-Neighbours for side   18 : 93/6 91/6 55/2 
-Neighbours for side   19 : 92/6 91/7 54/2 
-Neighbours for side   20 : 73/8 2/25 
-Neighbours for side   21 : 84/8 4/23 
-Neighbours for side   22 : 7/24 94/8 
-Neighbours for side   23 : 93/8 
-Neighbours for side   24 : 92/8 
-Neighbours for side   25 : 91/8 
-Neighbours for side   26 : 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 12 13 16 15 21 22 25 24 
-
-Element index      7
-Element id         7
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    8
-Corner nodes       8
-Nodes indexes          13 14 17 16 22 23 26 25 
-Number of sides    27
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 
-Neighbours for side   1 : 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 
-Neighbours for side   2 : 97/1 96/1 78/2 61/0 37/1 36/0 3/6 80/2 79/2 38/1 
-Neighbours for side   3 : 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 
-Neighbours for side   4 : 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 
-Neighbours for side   5 : 97/3 95/1 88/2 60/0 52/1 49/1 5/6 89/2 87/2 50/1 
-Neighbours for side   6 : 97/2 96/2 95/2 61/1 60/1 59/0 
-Neighbours for side   7 : 96/3 95/3 94/2 59/1 58/1 56/0 6/6 93/2 91/2 55/0 
-Neighbours for side   8 : 88/4 78/4 20/2 5/10 68/6 3/16 69/6 1/18 
-Neighbours for side   9 : 97/4 78/5 37/2 3/17 80/6 
-Neighbours for side   10 : 96/4 78/6 36/2 3/18 79/6 
-Neighbours for side   11 : 94/4 78/7 30/2 6/9 73/5 3/19 76/6 2/17 
-Neighbours for side   12 : 94/7 88/7 46/2 6/13 84/5 5/15 85/5 4/14 
-Neighbours for side   13 : 97/7 88/5 52/2 5/14 89/5 
-Neighbours for side   14 : 97/5 96/5 61/2 
-Neighbours for side   15 : 96/7 94/5 58/2 6/14 93/5 
-Neighbours for side   16 : 95/4 88/6 49/2 5/18 87/6 
-Neighbours for side   17 : 97/6 95/5 60/2 
-Neighbours for side   18 : 96/6 95/6 59/2 
-Neighbours for side   19 : 95/7 94/6 56/2 6/17 91/5 
-Neighbours for side   20 : 78/8 3/25 
-Neighbours for side   21 : 88/8 5/23 
-Neighbours for side   22 : 97/8 
-Neighbours for side   23 : 96/8 
-Neighbours for side   24 : 94/8 6/22 
-Neighbours for side   25 : 95/8 
-Neighbours for side   26 : 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 13 14 17 16 22 23 26 25 
-
-Element index      8
-Element id         8
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          12 9 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 
-Neighbours for side   1 : 0/4 66/3 63/3 15/1 4/0 86/0 83/0 62/0 48/0 11/0 
-Neighbours for side   2 : 0/19 63/6 4/11 83/4 62/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 12 9 
-
-Element index      9
-Element id         9
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          12 13 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 
-Neighbours for side   1 : 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 
-Neighbours for side   2 : 4/10 62/6 2/16 64/6 0/18 6/8 84/4 73/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 12 13 
-
-Element index      10
-Element id         10
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          13 10 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 
-Neighbours for side   1 : 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 
-Neighbours for side   2 : 4/9 62/5 1/19 65/6 0/17 5/11 85/4 68/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 13 10 
-
-Element index      11
-Element id         11
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          9 10 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 8/1 0/4 66/3 63/3 15/1 4/0 86/0 83/0 62/0 48/0 
-Neighbours for side   1 : 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 
-Neighbours for side   2 : 0/16 66/6 4/8 86/4 62/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 9 10 
-
-Element index      12
-Element id         12
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          3 12 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 0/3 67/3 63/1 16/0 2/0 77/0 74/0 64/0 33/1 17/0 
-Neighbours for side   1 : 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 
-Neighbours for side   2 : 0/15 63/5 2/12 74/7 64/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 3 12 
-
-Element index      13
-Element id         13
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          4 13 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 
-Neighbours for side   1 : 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 
-Neighbours for side   2 : 2/13 64/5 1/15 65/5 0/14 3/12 76/7 69/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 4 13 
-
-Element index      14
-Element id         14
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          1 10 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 0/1 67/1 66/1 19/1 1/0 72/0 71/0 65/0 27/0 18/1 
-Neighbours for side   1 : 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 
-Neighbours for side   2 : 0/13 66/5 1/12 71/7 65/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 1 10 
-
-Element index      15
-Element id         15
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          0 9 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 0/0 67/0 66/0 63/0 19/0 16/1 
-Neighbours for side   1 : 4/0 86/0 83/0 62/0 48/0 11/0 8/1 0/4 66/3 63/3 
-Neighbours for side   2 : 0/12 66/7 63/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 0 9 
-
-Element index      16
-Element id         16
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          3 0 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 2/0 77/0 74/0 64/0 33/1 17/0 12/0 0/3 67/3 63/1 
-Neighbours for side   1 : 15/0 0/0 67/0 66/0 63/0 19/0 
-Neighbours for side   2 : 0/11 67/7 63/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 3 0 
-
-Element index      17
-Element id         17
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          3 4 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 12/0 0/3 67/3 63/1 16/0 2/0 77/0 74/0 64/0 33/1 
-Neighbours for side   1 : 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 
-Neighbours for side   2 : 0/10 67/6 2/8 77/4 64/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 3 4 
-
-Element index      18
-Element id         18
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          4 1 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 
-Neighbours for side   1 : 14/0 0/1 67/1 66/1 19/1 1/0 72/0 71/0 65/0 27/0 
-Neighbours for side   2 : 0/9 67/5 1/11 72/7 65/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 4 1 
-
-Element index      19
-Element id         19
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          0 1 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 16/1 15/0 0/0 67/0 66/0 63/0 
-Neighbours for side   1 : 1/0 72/0 71/0 65/0 27/0 18/1 14/0 0/1 67/1 66/1 
-Neighbours for side   2 : 0/8 67/4 66/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 0 1 
-
-Element index      20
-Element id         20
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          13 14 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 
-Neighbours for side   1 : 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 
-Neighbours for side   2 : 5/10 68/6 3/16 69/6 1/18 7/8 88/4 78/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 13 14 
-
-Element index      21
-Element id         21
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          11 14 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 1/5 71/2 70/3 24/1 5/1 90/1 89/0 68/1 53/0 22/1 
-Neighbours for side   1 : 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 
-Neighbours for side   2 : 1/17 70/6 5/9 89/4 68/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 11 14 
-
-Element index      22
-Element id         22
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          10 11 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 
-Neighbours for side   1 : 21/0 1/5 71/2 70/3 24/1 5/1 90/1 89/0 68/1 53/0 
-Neighbours for side   2 : 1/16 71/6 5/8 90/4 68/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 10 11 
-
-Element index      23
-Element id         23
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          5 14 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 1/2 72/2 70/1 26/1 3/1 81/1 80/0 69/1 40/0 25/1 
-Neighbours for side   1 : 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 
-Neighbours for side   2 : 1/14 70/5 3/13 80/7 69/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 5 14 
-
-Element index      24
-Element id         24
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          2 11 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 1/1 72/1 71/1 70/0 27/1 26/0 
-Neighbours for side   1 : 5/1 90/1 89/0 68/1 53/0 22/1 21/0 1/5 71/2 70/3 
-Neighbours for side   2 : 1/13 71/5 70/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 2 11 
-
-Element index      25
-Element id         25
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          4 5 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 
-Neighbours for side   1 : 23/0 1/2 72/2 70/1 26/1 3/1 81/1 80/0 69/1 40/0 
-Neighbours for side   2 : 1/10 72/6 3/8 81/4 69/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 4 5 
-
-Element index      26
-Element id         26
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          2 5 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 24/0 1/1 72/1 71/1 70/0 27/1 
-Neighbours for side   1 : 3/1 81/1 80/0 69/1 40/0 25/1 23/0 1/2 72/2 70/1 
-Neighbours for side   2 : 1/9 72/5 70/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 2 5 
-
-Element index      27
-Element id         27
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          1 2 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 18/1 14/0 0/1 67/1 66/1 19/1 1/0 72/0 71/0 65/0 
-Neighbours for side   1 : 26/0 24/0 1/1 72/1 71/1 70/0 
-Neighbours for side   2 : 1/8 72/4 71/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 1 2 
-
-Element index      28
-Element id         28
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          15 12 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 2/7 75/3 74/2 31/1 6/3 93/0 92/1 73/3 57/0 29/1 
-Neighbours for side   1 : 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 
-Neighbours for side   2 : 2/19 74/6 6/11 92/4 73/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 15 12 
-
-Element index      29
-Element id         29
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          16 15 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 
-Neighbours for side   1 : 28/0 2/7 75/3 74/2 31/1 6/3 93/0 92/1 73/3 57/0 
-Neighbours for side   2 : 2/18 75/6 6/10 93/4 73/6 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 16 15 
-
-Element index      30
-Element id         30
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          16 13 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 
-Neighbours for side   1 : 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 
-Neighbours for side   2 : 6/9 73/5 3/19 76/6 2/17 7/11 94/4 78/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 16 13 
-
-Element index      31
-Element id         31
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          6 15 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 2/3 77/3 75/0 74/1 34/1 33/0 
-Neighbours for side   1 : 6/3 93/0 92/1 73/3 57/0 29/1 28/0 2/7 75/3 74/2 
-Neighbours for side   2 : 2/15 75/7 74/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 6 15 
-
-Element index      32
-Element id         32
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          7 16 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 2/2 77/2 75/1 34/0 3/3 81/3 79/0 76/1 39/1 35/0 
-Neighbours for side   1 : 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 
-Neighbours for side   2 : 2/14 75/5 3/15 79/7 76/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 7 16 
-
-Element index      33
-Element id         33
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          6 3 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 31/0 2/3 77/3 75/0 74/1 34/1 
-Neighbours for side   1 : 17/0 12/0 0/3 67/3 63/1 16/0 2/0 77/0 74/0 64/0 
-Neighbours for side   2 : 2/11 77/7 74/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 6 3 
-
-Element index      34
-Element id         34
 Is GeoBlend ? : false
 Is Linear Mapping ? : true
 Number of nodes    2
@@ -896,13 +101,713 @@ Number of sides    3
 Material id        1
 no father
 no subelements
-Neighbours for side   0 : 3/3 81/3 79/0 76/1 39/1 35/0 32/0 2/2 77/2 75/1 
-Neighbours for side   1 : 33/0 31/0 2/3 77/3 75/0 74/1 
-Neighbours for side   2 : 2/10 77/6 75/4 
+Neighbours for side   0 : 0/6 22/1 16/2 31/2 15/2 29/2 13/2 6/1 3/1 
+Neighbours for side   1 : 1/0 0/7 20/1 15/3 29/3 14/2 27/2 13/3 5/1 
+Neighbours for side   2 : 0/18 15/6 29/6 13/6 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
 Nodeindices: 7 6 
+
+Element index      3
+Element id         3
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          5 7 
+Number of sides    3
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 0/5 24/1 17/2 33/2 16/3 31/3 13/1 7/1 4/1 
+Neighbours for side   1 : 2/0 0/6 22/1 16/2 31/2 15/2 29/2 13/2 6/1 
+Neighbours for side   2 : 0/17 16/6 31/6 13/5 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 5 7 
+
+Element index      4
+Element id         4
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          4 5 
+Number of sides    3
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 1/1 0/4 26/1 17/3 33/3 14/3 27/3 13/0 8/1 
+Neighbours for side   1 : 3/0 0/5 24/1 17/2 33/2 16/3 31/3 13/1 7/1 
+Neighbours for side   2 : 0/16 17/6 33/6 13/4 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 4 5 
+
+Element index      5
+Element id         5
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          2 6 
+Number of sides    3
+Material id        3
+no father
+Subelement indexes     19 20 
+Neighbours for side   0 : 0/3 19/0 18/3 15/0 30/2 14/1 28/3 10/1 9/0 
+Neighbours for side   1 : 2/1 1/0 0/7 20/1 15/3 29/3 14/2 27/2 13/3 
+Neighbours for side   2 : 0/15 15/7 14/5 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 2 6 
+Linear Id 171063908 Sides 2  | -1   0   0    |  | 1   0   0    |  | 0   0   0    | 
+
+Element index      6
+Element id         6
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          3 7 
+Number of sides    3
+Material id        3
+no father
+Subelement indexes     21 22 
+Neighbours for side   0 : 0/2 21/0 18/2 16/1 32/3 15/1 30/3 11/1 10/0 
+Neighbours for side   1 : 3/1 2/0 0/6 22/1 16/2 31/2 15/2 29/2 13/2 
+Neighbours for side   2 : 0/14 16/5 15/5 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 3 7 
+Linear Id -128515704 Sides 2  | -1   0   0    |  | 1   0   0    |  | 0   0   0    | 
+
+Element index      7
+Element id         7
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          1 5 
+Number of sides    3
+Material id        3
+no father
+Subelement indexes     23 24 
+Neighbours for side   0 : 0/1 23/0 18/1 17/1 34/3 16/0 32/2 12/1 11/0 
+Neighbours for side   1 : 4/1 3/0 0/5 24/1 17/2 33/2 16/3 31/3 13/1 
+Neighbours for side   2 : 0/13 17/5 16/7 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 1 5 
+Linear Id 1852400754 Sides 2  | -1   0   0    |  | 1   0   0    |  | 0   0   0    | 
+
+Element index      8
+Element id         8
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          0 4 
+Number of sides    3
+Material id        3
+no father
+Subelement indexes     25 26 
+Neighbours for side   0 : 0/0 25/0 18/0 17/0 34/2 14/0 28/2 12/0 9/1 
+Neighbours for side   1 : 4/0 1/1 0/4 26/1 17/3 33/3 14/3 27/3 13/0 
+Neighbours for side   2 : 0/12 17/7 14/7 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 0 4 
+Linear Id 0 Sides 2  | -1   0   0    |  | 1   0   0    |  | 0   0   0    | 
+
+Element index      9
+Element id         9
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          2 0 
+Number of sides    3
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 5/0 0/3 19/0 18/3 15/0 30/2 14/1 28/3 10/1 
+Neighbours for side   1 : 8/0 0/0 25/0 18/0 17/0 34/2 14/0 28/2 12/0 
+Neighbours for side   2 : 0/11 18/7 14/4 28/6 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 2 0 
+
+Element index      10
+Element id         10
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          3 2 
+Number of sides    3
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 6/0 0/2 21/0 18/2 16/1 32/3 15/1 30/3 11/1 
+Neighbours for side   1 : 9/0 5/0 0/3 19/0 18/3 15/0 30/2 14/1 28/3 
+Neighbours for side   2 : 0/10 18/6 15/4 30/6 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 3 2 
+
+Element index      11
+Element id         11
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          1 3 
+Number of sides    3
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 7/0 0/1 23/0 18/1 17/1 34/3 16/0 32/2 12/1 
+Neighbours for side   1 : 10/0 6/0 0/2 21/0 18/2 16/1 32/3 15/1 30/3 
+Neighbours for side   2 : 0/9 18/5 16/4 32/6 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 1 3 
+
+Element index      12
+Element id         12
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          0 1 
+Number of sides    3
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 9/1 8/0 0/0 25/0 18/0 17/0 34/2 14/0 28/2 
+Neighbours for side   1 : 11/0 7/0 0/1 23/0 18/1 17/1 34/3 16/0 32/2 
+Neighbours for side   2 : 0/8 18/4 17/4 34/6 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 0 1 
+
+Element index      13
+Element id         13
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          4 5 7 6 
+Number of sides    9
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 8/1 4/0 1/1 0/4 26/1 17/3 33/3 14/3 27/3 
+Neighbours for side   1 : 7/1 4/1 3/0 0/5 24/1 17/2 33/2 16/3 31/3 
+Neighbours for side   2 : 6/1 3/1 2/0 0/6 22/1 16/2 31/2 15/2 29/2 
+Neighbours for side   3 : 5/1 2/1 1/0 0/7 20/1 15/3 29/3 14/2 27/2 
+Neighbours for side   4 : 4/2 0/16 17/6 33/6 
+Neighbours for side   5 : 3/2 0/17 16/6 31/6 
+Neighbours for side   6 : 2/2 0/18 15/6 29/6 
+Neighbours for side   7 : 1/2 0/19 14/6 27/6 
+Neighbours for side   8 : 0/25 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 4 5 7 6 
+
+Element index      14
+Element id         14
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          0 2 6 4 
+Number of sides    9
+Material id        3
+no father
+Subelement indexes     27 28 
+Neighbours for side   0 : 28/2 12/0 9/1 8/0 0/0 25/0 18/0 17/0 34/2 
+Neighbours for side   1 : 28/3 10/1 9/0 5/0 0/3 19/0 18/3 15/0 30/2 
+Neighbours for side   2 : 27/2 13/3 5/1 2/1 1/0 0/7 20/1 15/3 29/3 
+Neighbours for side   3 : 27/3 13/0 8/1 4/0 1/1 0/4 26/1 17/3 33/3 
+Neighbours for side   4 : 28/6 9/2 0/11 18/7 
+Neighbours for side   5 : 5/2 0/15 15/7 
+Neighbours for side   6 : 27/6 13/7 1/2 0/19 
+Neighbours for side   7 : 8/2 0/12 17/7 
+Neighbours for side   8 : 0/24 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 0 2 6 4 
+Quad Id 539767072 Sides 5 7  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   0   0    |  | -1   0   0    | 
+
+Element index      15
+Element id         15
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          2 3 7 6 
+Number of sides    9
+Material id        3
+no father
+Subelement indexes     29 30 
+Neighbours for side   0 : 30/2 14/1 28/3 10/1 9/0 5/0 0/3 19/0 18/3 
+Neighbours for side   1 : 30/3 11/1 10/0 6/0 0/2 21/0 18/2 16/1 32/3 
+Neighbours for side   2 : 29/2 13/2 6/1 3/1 2/0 0/6 22/1 16/2 31/2 
+Neighbours for side   3 : 29/3 14/2 27/2 13/3 5/1 2/1 1/0 0/7 20/1 
+Neighbours for side   4 : 30/6 10/2 0/10 18/6 
+Neighbours for side   5 : 6/2 0/14 16/5 
+Neighbours for side   6 : 29/6 13/6 2/2 0/18 
+Neighbours for side   7 : 14/5 5/2 0/15 
+Neighbours for side   8 : 0/23 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 2 3 7 6 
+Quad Id -50 Sides 5 7  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   0   0    |  | -1   0   0    | 
+
+Element index      16
+Element id         16
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          1 3 7 5 
+Number of sides    9
+Material id        3
+no father
+Subelement indexes     31 32 
+Neighbours for side   0 : 32/2 12/1 11/0 7/0 0/1 23/0 18/1 17/1 34/3 
+Neighbours for side   1 : 32/3 15/1 30/3 11/1 10/0 6/0 0/2 21/0 18/2 
+Neighbours for side   2 : 31/2 15/2 29/2 13/2 6/1 3/1 2/0 0/6 22/1 
+Neighbours for side   3 : 31/3 13/1 7/1 4/1 3/0 0/5 24/1 17/2 33/2 
+Neighbours for side   4 : 32/6 11/2 0/9 18/5 
+Neighbours for side   5 : 15/5 6/2 0/14 
+Neighbours for side   6 : 31/6 13/5 3/2 0/17 
+Neighbours for side   7 : 7/2 0/13 17/5 
+Neighbours for side   8 : 0/22 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 1 3 7 5 
+Quad Id -50 Sides 5 7  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   0   0    |  | -1   0   0    | 
+
+Element index      17
+Element id         17
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          0 1 5 4 
+Number of sides    9
+Material id        3
+no father
+Subelement indexes     33 34 
+Neighbours for side   0 : 34/2 14/0 28/2 12/0 9/1 8/0 0/0 25/0 18/0 
+Neighbours for side   1 : 34/3 16/0 32/2 12/1 11/0 7/0 0/1 23/0 18/1 
+Neighbours for side   2 : 33/2 16/3 31/3 13/1 7/1 4/1 3/0 0/5 24/1 
+Neighbours for side   3 : 33/3 14/3 27/3 13/0 8/1 4/0 1/1 0/4 26/1 
+Neighbours for side   4 : 34/6 12/2 0/8 18/4 
+Neighbours for side   5 : 16/7 7/2 0/13 
+Neighbours for side   6 : 33/6 13/4 4/2 0/16 
+Neighbours for side   7 : 14/7 8/2 0/12 
+Neighbours for side   8 : 0/21 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 0 1 5 4 
+Quad Id -50 Sides 5 7  | -1   -1   0    |  | 1   -1   0    |  | 1   1   0    |  | -1   1   0    |  | 1   0   0    |  | -1   0   0    | 
+
+Element index      18
+Element id         18
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          0 1 3 2 
+Number of sides    9
+Material id        1
+no father
+no subelements
+Neighbours for side   0 : 17/0 34/2 14/0 28/2 12/0 9/1 8/0 0/0 25/0 
+Neighbours for side   1 : 17/1 34/3 16/0 32/2 12/1 11/0 7/0 0/1 23/0 
+Neighbours for side   2 : 16/1 32/3 15/1 30/3 11/1 10/0 6/0 0/2 21/0 
+Neighbours for side   3 : 15/0 30/2 14/1 28/3 10/1 9/0 5/0 0/3 19/0 
+Neighbours for side   4 : 17/4 34/6 12/2 0/8 
+Neighbours for side   5 : 16/4 32/6 11/2 0/9 
+Neighbours for side   6 : 15/4 30/6 10/2 0/10 
+Neighbours for side   7 : 14/4 28/6 9/2 0/11 
+Neighbours for side   8 : 0/20 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 0 1 3 2 
+
+Element index      19
+Element id         19
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          2 8 
+Number of sides    3
+Material id        3
+Father index          5
+no subelements
+Neighbours for side   0 : 18/3 15/0 30/2 14/1 28/3 10/1 9/0 5/0 0/3 
+Neighbours for side   1 : 39/0 20/0 28/0 35/0 27/1 30/1 36/1 29/0 
+Neighbours for side   2 : 28/7 30/5 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 2 8 
+
+Element index      20
+Element id         20
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          8 6 
+Number of sides    3
+Material id        3
+Father index          5
+no subelements
+Neighbours for side   0 : 28/0 35/0 27/1 30/1 36/1 29/0 19/1 39/0 
+Neighbours for side   1 : 15/3 29/3 14/2 27/2 13/3 5/1 2/1 1/0 0/7 
+Neighbours for side   2 : 27/5 29/7 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 8 6 
+
+Element index      21
+Element id         21
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          3 9 
+Number of sides    3
+Material id        3
+Father index          6
+no subelements
+Neighbours for side   0 : 18/2 16/1 32/3 15/1 30/3 11/1 10/0 6/0 0/2 
+Neighbours for side   1 : 39/3 22/0 30/0 36/0 29/1 32/0 37/0 31/1 
+Neighbours for side   2 : 30/7 32/7 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 3 9 
+
+Element index      22
+Element id         22
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          9 7 
+Number of sides    3
+Material id        3
+Father index          6
+no subelements
+Neighbours for side   0 : 30/0 36/0 29/1 32/0 37/0 31/1 21/1 39/3 
+Neighbours for side   1 : 16/2 31/2 15/2 29/2 13/2 6/1 3/1 2/0 0/6 
+Neighbours for side   2 : 29/5 31/5 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 9 7 
+
+Element index      23
+Element id         23
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          1 10 
+Number of sides    3
+Material id        3
+Father index          7
+no subelements
+Neighbours for side   0 : 18/1 17/1 34/3 16/0 32/2 12/1 11/0 7/0 0/1 
+Neighbours for side   1 : 39/2 24/0 32/1 37/1 31/0 34/0 38/0 33/1 
+Neighbours for side   2 : 32/5 34/7 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 1 10 
+
+Element index      24
+Element id         24
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          10 5 
+Number of sides    3
+Material id        3
+Father index          7
+no subelements
+Neighbours for side   0 : 32/1 37/1 31/0 34/0 38/0 33/1 23/1 39/2 
+Neighbours for side   1 : 17/2 33/2 16/3 31/3 13/1 7/1 4/1 3/0 0/5 
+Neighbours for side   2 : 31/7 33/5 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 10 5 
+
+Element index      25
+Element id         25
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          0 11 
+Number of sides    3
+Material id        3
+Father index          8
+no subelements
+Neighbours for side   0 : 18/0 17/0 34/2 14/0 28/2 12/0 9/1 8/0 0/0 
+Neighbours for side   1 : 39/1 26/0 28/1 35/1 27/0 34/1 38/1 33/0 
+Neighbours for side   2 : 28/5 34/5 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 0 11 
+
+Element index      26
+Element id         26
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    2
+Corner nodes       2
+Nodes indexes          11 4 
+Number of sides    3
+Material id        3
+Father index          8
+no subelements
+Neighbours for side   0 : 28/1 35/1 27/0 34/1 38/1 33/0 25/1 39/1 
+Neighbours for side   1 : 17/3 33/3 14/3 27/3 13/0 8/1 4/0 1/1 0/4 
+Neighbours for side   2 : 27/7 33/7 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 11 4 
+
+Element index      27
+Element id         27
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          11 8 6 4 
+Number of sides    9
+Material id        3
+Father index          14
+no subelements
+Neighbours for side   0 : 34/1 38/1 33/0 25/1 39/1 26/0 28/1 35/1 
+Neighbours for side   1 : 30/1 36/1 29/0 19/1 39/0 20/0 28/0 35/0 
+Neighbours for side   2 : 13/3 5/1 2/1 1/0 0/7 20/1 15/3 29/3 14/2 
+Neighbours for side   3 : 13/0 8/1 4/0 1/1 0/4 26/1 17/3 33/3 14/3 
+Neighbours for side   4 : 39/4 28/4 35/2 
+Neighbours for side   5 : 29/7 20/2 
+Neighbours for side   6 : 13/7 1/2 0/19 14/6 
+Neighbours for side   7 : 33/7 26/2 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 11 8 6 4 
+
+Element index      28
+Element id         28
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          8 11 0 2 
+Number of sides    9
+Material id        3
+Father index          14
+no subelements
+Neighbours for side   0 : 35/0 27/1 30/1 36/1 29/0 19/1 39/0 20/0 
+Neighbours for side   1 : 35/1 27/0 34/1 38/1 33/0 25/1 39/1 26/0 
+Neighbours for side   2 : 12/0 9/1 8/0 0/0 25/0 18/0 17/0 34/2 14/0 
+Neighbours for side   3 : 10/1 9/0 5/0 0/3 19/0 18/3 15/0 30/2 14/1 
+Neighbours for side   4 : 35/2 27/4 39/4 
+Neighbours for side   5 : 34/5 25/2 
+Neighbours for side   6 : 9/2 0/11 18/7 14/4 
+Neighbours for side   7 : 30/5 19/2 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 8 11 0 2 
+
+Element index      29
+Element id         29
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          8 9 7 6 
+Number of sides    9
+Material id        3
+Father index          15
+no subelements
+Neighbours for side   0 : 19/1 39/0 20/0 28/0 35/0 27/1 30/1 36/1 
+Neighbours for side   1 : 32/0 37/0 31/1 21/1 39/3 22/0 30/0 36/0 
+Neighbours for side   2 : 13/2 6/1 3/1 2/0 0/6 22/1 16/2 31/2 15/2 
+Neighbours for side   3 : 14/2 27/2 13/3 5/1 2/1 1/0 0/7 20/1 15/3 
+Neighbours for side   4 : 39/7 30/4 36/2 
+Neighbours for side   5 : 31/5 22/2 
+Neighbours for side   6 : 13/6 2/2 0/18 15/6 
+Neighbours for side   7 : 20/2 27/5 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 8 9 7 6 
+
+Element index      30
+Element id         30
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          9 8 2 3 
+Number of sides    9
+Material id        3
+Father index          15
+no subelements
+Neighbours for side   0 : 36/0 29/1 32/0 37/0 31/1 21/1 39/3 22/0 
+Neighbours for side   1 : 36/1 29/0 19/1 39/0 20/0 28/0 35/0 27/1 
+Neighbours for side   2 : 14/1 28/3 10/1 9/0 5/0 0/3 19/0 18/3 15/0 
+Neighbours for side   3 : 11/1 10/0 6/0 0/2 21/0 18/2 16/1 32/3 15/1 
+Neighbours for side   4 : 36/2 29/4 39/7 
+Neighbours for side   5 : 19/2 28/7 
+Neighbours for side   6 : 10/2 0/10 18/6 15/4 
+Neighbours for side   7 : 32/7 21/2 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 9 8 2 3 
+
+Element index      31
+Element id         31
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          10 9 7 5 
+Number of sides    9
+Material id        3
+Father index          16
+no subelements
+Neighbours for side   0 : 34/0 38/0 33/1 23/1 39/2 24/0 32/1 37/1 
+Neighbours for side   1 : 21/1 39/3 22/0 30/0 36/0 29/1 32/0 37/0 
+Neighbours for side   2 : 15/2 29/2 13/2 6/1 3/1 2/0 0/6 22/1 16/2 
+Neighbours for side   3 : 13/1 7/1 4/1 3/0 0/5 24/1 17/2 33/2 16/3 
+Neighbours for side   4 : 39/6 32/4 37/2 
+Neighbours for side   5 : 22/2 29/5 
+Neighbours for side   6 : 13/5 3/2 0/17 16/6 
+Neighbours for side   7 : 33/5 24/2 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 10 9 7 5 
+
+Element index      32
+Element id         32
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          9 10 1 3 
+Number of sides    9
+Material id        3
+Father index          16
+no subelements
+Neighbours for side   0 : 37/0 31/1 21/1 39/3 22/0 30/0 36/0 29/1 
+Neighbours for side   1 : 37/1 31/0 34/0 38/0 33/1 23/1 39/2 24/0 
+Neighbours for side   2 : 12/1 11/0 7/0 0/1 23/0 18/1 17/1 34/3 16/0 
+Neighbours for side   3 : 15/1 30/3 11/1 10/0 6/0 0/2 21/0 18/2 16/1 
+Neighbours for side   4 : 37/2 31/4 39/6 
+Neighbours for side   5 : 34/7 23/2 
+Neighbours for side   6 : 11/2 0/9 18/5 16/4 
+Neighbours for side   7 : 21/2 30/7 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 9 10 1 3 
+
+Element index      33
+Element id         33
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          11 10 5 4 
+Number of sides    9
+Material id        3
+Father index          17
+no subelements
+Neighbours for side   0 : 25/1 39/1 26/0 28/1 35/1 27/0 34/1 38/1 
+Neighbours for side   1 : 23/1 39/2 24/0 32/1 37/1 31/0 34/0 38/0 
+Neighbours for side   2 : 16/3 31/3 13/1 7/1 4/1 3/0 0/5 24/1 17/2 
+Neighbours for side   3 : 14/3 27/3 13/0 8/1 4/0 1/1 0/4 26/1 17/3 
+Neighbours for side   4 : 39/5 34/4 38/2 
+Neighbours for side   5 : 24/2 31/7 
+Neighbours for side   6 : 13/4 4/2 0/16 17/6 
+Neighbours for side   7 : 26/2 27/7 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 11 10 5 4 
+
+Element index      34
+Element id         34
+Is GeoBlend ? : false
+Is Linear Mapping ? : true
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          10 11 0 1 
+Number of sides    9
+Material id        3
+Father index          17
+no subelements
+Neighbours for side   0 : 38/0 33/1 23/1 39/2 24/0 32/1 37/1 31/0 
+Neighbours for side   1 : 38/1 33/0 25/1 39/1 26/0 28/1 35/1 27/0 
+Neighbours for side   2 : 14/0 28/2 12/0 9/1 8/0 0/0 25/0 18/0 17/0 
+Neighbours for side   3 : 16/0 32/2 12/1 11/0 7/0 0/1 23/0 18/1 17/1 
+Neighbours for side   4 : 38/2 33/4 39/5 
+Neighbours for side   5 : 25/2 28/5 
+Neighbours for side   6 : 12/2 0/8 18/4 17/4 
+Neighbours for side   7 : 23/2 32/5 
+Neighbours for side   8 : 
+Reference element pointer address: 0
+fNumInterfaces = 0
+fGeo:
+Nodeindices: 10 11 0 1 
 
 Element index      35
 Element id         35
@@ -910,18 +815,18 @@ Is GeoBlend ? : false
 Is Linear Mapping ? : true
 Number of nodes    2
 Corner nodes       2
-Nodes indexes          7 4 
+Nodes indexes          8 11 
 Number of sides    3
-Material id        1
+Material id        2
 no father
 no subelements
-Neighbours for side   0 : 32/0 2/2 77/2 75/1 34/0 3/3 81/3 79/0 76/1 39/1 
-Neighbours for side   1 : 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 
-Neighbours for side   2 : 2/9 77/5 3/11 81/7 76/4 
+Neighbours for side   0 : 27/1 30/1 36/1 29/0 19/1 39/0 20/0 28/0 
+Neighbours for side   1 : 27/0 34/1 38/1 33/0 25/1 39/1 26/0 28/1 
+Neighbours for side   2 : 27/4 39/4 28/4 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 7 4 
+Nodeindices: 8 11 
 
 Element index      36
 Element id         36
@@ -929,18 +834,18 @@ Is GeoBlend ? : false
 Is Linear Mapping ? : true
 Number of nodes    2
 Corner nodes       2
-Nodes indexes          17 16 
+Nodes indexes          9 8 
 Number of sides    3
-Material id        1
+Material id        2
 no father
 no subelements
-Neighbours for side   0 : 3/6 80/2 79/2 38/1 7/2 97/1 96/1 78/2 61/0 37/1 
-Neighbours for side   1 : 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 
-Neighbours for side   2 : 3/18 79/6 7/10 96/4 78/6 
+Neighbours for side   0 : 29/1 32/0 37/0 31/1 21/1 39/3 22/0 30/0 
+Neighbours for side   1 : 29/0 19/1 39/0 20/0 28/0 35/0 27/1 30/1 
+Neighbours for side   2 : 29/4 39/7 30/4 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 17 16 
+Nodeindices: 9 8 
 
 Element index      37
 Element id         37
@@ -948,18 +853,18 @@ Is GeoBlend ? : false
 Is Linear Mapping ? : true
 Number of nodes    2
 Corner nodes       2
-Nodes indexes          14 17 
+Nodes indexes          9 10 
 Number of sides    3
-Material id        1
+Material id        2
 no father
 no subelements
-Neighbours for side   0 : 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 
-Neighbours for side   1 : 36/0 3/6 80/2 79/2 38/1 7/2 97/1 96/1 78/2 61/0 
-Neighbours for side   2 : 3/17 80/6 7/9 97/4 78/5 
+Neighbours for side   0 : 31/1 21/1 39/3 22/0 30/0 36/0 29/1 32/0 
+Neighbours for side   1 : 31/0 34/0 38/0 33/1 23/1 39/2 24/0 32/1 
+Neighbours for side   2 : 31/4 39/6 32/4 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 14 17 
+Nodeindices: 9 10 
 
 Element index      38
 Element id         38
@@ -967,1363 +872,51 @@ Is GeoBlend ? : false
 Is Linear Mapping ? : true
 Number of nodes    2
 Corner nodes       2
-Nodes indexes          8 17 
+Nodes indexes          10 11 
 Number of sides    3
-Material id        1
+Material id        2
 no father
 no subelements
-Neighbours for side   0 : 3/2 81/2 80/1 79/1 40/1 39/0 
-Neighbours for side   1 : 7/2 97/1 96/1 78/2 61/0 37/1 36/0 3/6 80/2 79/2 
-Neighbours for side   2 : 3/14 80/5 79/5 
+Neighbours for side   0 : 33/1 23/1 39/2 24/0 32/1 37/1 31/0 34/0 
+Neighbours for side   1 : 33/0 25/1 39/1 26/0 28/1 35/1 27/0 34/1 
+Neighbours for side   2 : 33/4 39/5 34/4 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 8 17 
+Nodeindices: 10 11 
 
 Element index      39
 Element id         39
 Is GeoBlend ? : false
 Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          8 7 
-Number of sides    3
-Material id        1
+Number of nodes    4
+Corner nodes       4
+Nodes indexes          8 11 10 9 
+Number of sides    9
+Material id        2
 no father
 no subelements
-Neighbours for side   0 : 38/0 3/2 81/2 80/1 79/1 40/1 
-Neighbours for side   1 : 35/0 32/0 2/2 77/2 75/1 34/0 3/3 81/3 79/0 76/1 
-Neighbours for side   2 : 3/10 81/6 79/4 
+Neighbours for side   0 : 20/0 28/0 35/0 27/1 30/1 36/1 29/0 19/1 
+Neighbours for side   1 : 26/0 28/1 35/1 27/0 34/1 38/1 33/0 25/1 
+Neighbours for side   2 : 24/0 32/1 37/1 31/0 34/0 38/0 33/1 23/1 
+Neighbours for side   3 : 22/0 30/0 36/0 29/1 32/0 37/0 31/1 21/1 
+Neighbours for side   4 : 28/4 35/2 27/4 
+Neighbours for side   5 : 34/4 38/2 33/4 
+Neighbours for side   6 : 32/4 37/2 31/4 
+Neighbours for side   7 : 30/4 36/2 29/4 
+Neighbours for side   8 : 
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 8 7 
+Nodeindices: 8 11 10 9 
 
 Element index      40
 Element id         40
 Is GeoBlend ? : false
 Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          5 8 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 25/1 23/0 1/2 72/2 70/1 26/1 3/1 81/1 80/0 69/1 
-Neighbours for side   1 : 39/0 38/0 3/2 81/2 80/1 79/1 
-Neighbours for side   2 : 3/9 81/5 80/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 5 8 
-
-Element index      41
-Element id         41
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          21 18 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 6/4 92/3 91/0 84/3 54/1 45/1 42/0 4/7 83/2 82/3 
-Neighbours for side   1 : 4/4 86/3 83/3 82/0 48/1 44/0 
-Neighbours for side   2 : 4/19 83/6 82/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 21 18 
-
-Element index      42
-Element id         42
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          21 22 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 4/7 83/2 82/3 41/0 6/4 92/3 91/0 84/3 54/1 45/1 
-Neighbours for side   1 : 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 
-Neighbours for side   2 : 4/18 82/6 6/16 91/4 84/6 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 21 22 
-
-Element index      43
-Element id         43
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          22 19 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 
-Neighbours for side   1 : 4/5 86/2 82/1 44/1 5/4 90/3 87/0 85/3 51/0 47/1 
-Neighbours for side   2 : 4/17 82/5 5/19 87/7 85/6 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 22 19 
-
-Element index      44
-Element id         44
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          18 19 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 41/1 4/4 86/3 83/3 82/0 48/1 
-Neighbours for side   1 : 5/4 90/3 87/0 85/3 51/0 47/1 43/1 4/5 86/2 82/1 
-Neighbours for side   2 : 4/16 86/6 82/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 18 19 
-
-Element index      45
-Element id         45
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          12 21 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 
-Neighbours for side   1 : 42/0 4/7 83/2 82/3 41/0 6/4 92/3 91/0 84/3 54/1 
-Neighbours for side   2 : 4/15 83/5 6/12 92/7 84/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 12 21 
-
-Element index      46
-Element id         46
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          13 22 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 
-Neighbours for side   1 : 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 
-Neighbours for side   2 : 6/13 84/5 5/15 85/5 4/14 7/12 94/7 88/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 13 22 
-
-Element index      47
-Element id         47
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          10 19 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 
-Neighbours for side   1 : 43/1 4/5 86/2 82/1 44/1 5/4 90/3 87/0 85/3 51/0 
-Neighbours for side   2 : 4/13 86/5 5/12 90/7 85/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 10 19 
-
-Element index      48
-Element id         48
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          9 18 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 11/0 8/1 0/4 66/3 63/3 15/1 4/0 86/0 83/0 62/0 
-Neighbours for side   1 : 44/0 41/1 4/4 86/3 83/3 82/0 
-Neighbours for side   2 : 4/12 86/7 83/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 9 18 
-
-Element index      49
-Element id         49
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          22 23 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 
-Neighbours for side   1 : 5/6 89/2 87/2 50/1 7/5 97/3 95/1 88/2 60/0 52/1 
-Neighbours for side   2 : 5/18 87/6 7/16 95/4 88/6 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 22 23 
-
-Element index      50
-Element id         50
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          20 23 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 5/5 90/2 89/3 87/1 53/1 51/1 
-Neighbours for side   1 : 7/5 97/3 95/1 88/2 60/0 52/1 49/1 5/6 89/2 87/2 
-Neighbours for side   2 : 5/17 89/6 87/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 20 23 
-
-Element index      51
-Element id         51
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          19 20 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 47/1 43/1 4/5 86/2 82/1 44/1 5/4 90/3 87/0 85/3 
-Neighbours for side   1 : 50/0 5/5 90/2 89/3 87/1 53/1 
-Neighbours for side   2 : 5/16 90/6 87/4 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 19 20 
-
-Element index      52
-Element id         52
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          14 23 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 
-Neighbours for side   1 : 49/1 5/6 89/2 87/2 50/1 7/5 97/3 95/1 88/2 60/0 
-Neighbours for side   2 : 5/14 89/5 7/13 97/7 88/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 14 23 
-
-Element index      53
-Element id         53
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          11 20 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 22/1 21/0 1/5 71/2 70/3 24/1 5/1 90/1 89/0 68/1 
-Neighbours for side   1 : 51/1 50/0 5/5 90/2 89/3 87/1 
-Neighbours for side   2 : 5/13 90/5 89/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 11 20 
-
-Element index      54
-Element id         54
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          24 21 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 6/7 93/3 92/2 91/3 57/1 55/1 
-Neighbours for side   1 : 45/1 42/0 4/7 83/2 82/3 41/0 6/4 92/3 91/0 84/3 
-Neighbours for side   2 : 6/19 92/6 91/7 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 24 21 
-
-Element index      55
-Element id         55
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          25 24 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 7/7 96/3 95/3 94/2 59/1 58/1 56/0 6/6 93/2 91/2 
-Neighbours for side   1 : 54/0 6/7 93/3 92/2 91/3 57/1 
-Neighbours for side   2 : 6/18 93/6 91/6 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 25 24 
-
-Element index      56
-Element id         56
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          25 22 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 6/6 93/2 91/2 55/0 7/7 96/3 95/3 94/2 59/1 58/1 
-Neighbours for side   1 : 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 
-Neighbours for side   2 : 6/17 91/5 7/19 95/7 94/6 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 25 22 
-
-Element index      57
-Element id         57
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          15 24 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 29/1 28/0 2/7 75/3 74/2 31/1 6/3 93/0 92/1 73/3 
-Neighbours for side   1 : 55/1 54/0 6/7 93/3 92/2 91/3 
-Neighbours for side   2 : 6/15 93/7 92/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 15 24 
-
-Element index      58
-Element id         58
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          16 25 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 
-Neighbours for side   1 : 56/0 6/6 93/2 91/2 55/0 7/7 96/3 95/3 94/2 59/1 
-Neighbours for side   2 : 6/14 93/5 7/15 96/7 94/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 16 25 
-
-Element index      59
-Element id         59
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          26 25 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 7/6 97/2 96/2 95/2 61/1 60/1 
-Neighbours for side   1 : 58/1 56/0 6/6 93/2 91/2 55/0 7/7 96/3 95/3 94/2 
-Neighbours for side   2 : 7/18 96/6 95/6 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 26 25 
-
-Element index      60
-Element id         60
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          23 26 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 52/1 49/1 5/6 89/2 87/2 50/1 7/5 97/3 95/1 88/2 
-Neighbours for side   1 : 59/0 7/6 97/2 96/2 95/2 61/1 
-Neighbours for side   2 : 7/17 97/6 95/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 23 26 
-
-Element index      61
-Element id         61
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    2
-Corner nodes       2
-Nodes indexes          17 26 
-Number of sides    3
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 37/1 36/0 3/6 80/2 79/2 38/1 7/2 97/1 96/1 78/2 
-Neighbours for side   1 : 60/1 59/0 7/6 97/2 96/2 95/2 
-Neighbours for side   2 : 7/14 97/5 96/5 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 17 26 
-
-Element index      62
-Element id         62
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
 Number of nodes    4
 Corner nodes       4
-Nodes indexes          9 10 13 12 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 48/0 11/0 8/1 0/4 66/3 63/3 15/1 4/0 86/0 83/0 
-Neighbours for side   1 : 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 
-Neighbours for side   2 : 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 
-Neighbours for side   3 : 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 
-Neighbours for side   4 : 11/2 0/16 66/6 4/8 86/4 
-Neighbours for side   5 : 1/19 65/6 0/17 5/11 85/4 68/7 10/2 4/9 
-Neighbours for side   6 : 2/16 64/6 0/18 6/8 84/4 73/4 9/2 4/10 
-Neighbours for side   7 : 8/2 0/19 63/6 4/11 83/4 
-Neighbours for side   8 : 0/25 4/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 9 10 13 12 
-
-Element index      63
-Element id         63
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          0 3 12 9 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 19/0 16/1 15/0 0/0 67/0 66/0 
-Neighbours for side   1 : 16/0 2/0 77/0 74/0 64/0 33/1 17/0 12/0 0/3 67/3 
-Neighbours for side   2 : 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 
-Neighbours for side   3 : 15/1 4/0 86/0 83/0 62/0 48/0 11/0 8/1 0/4 66/3 
-Neighbours for side   4 : 16/2 0/11 67/7 
-Neighbours for side   5 : 2/12 74/7 64/7 12/2 0/15 
-Neighbours for side   6 : 4/11 83/4 62/7 8/2 0/19 
-Neighbours for side   7 : 15/2 0/12 66/7 
-Neighbours for side   8 : 0/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 0 3 12 9 
-
-Element index      64
-Element id         64
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          3 4 13 12 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 33/1 17/0 12/0 0/3 67/3 63/1 16/0 2/0 77/0 74/0 
-Neighbours for side   1 : 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 
-Neighbours for side   2 : 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 
-Neighbours for side   3 : 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 
-Neighbours for side   4 : 17/2 0/10 67/6 2/8 77/4 
-Neighbours for side   5 : 1/15 65/5 0/14 3/12 76/7 69/7 13/2 2/13 
-Neighbours for side   6 : 0/18 6/8 84/4 73/4 9/2 4/10 62/6 2/16 
-Neighbours for side   7 : 12/2 0/15 63/5 2/12 74/7 
-Neighbours for side   8 : 0/23 2/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 3 4 13 12 
-
-Element index      65
-Element id         65
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          1 4 13 10 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 27/0 18/1 14/0 0/1 67/1 66/1 19/1 1/0 72/0 71/0 
-Neighbours for side   1 : 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 
-Neighbours for side   2 : 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 
-Neighbours for side   3 : 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 
-Neighbours for side   4 : 18/2 0/9 67/5 1/11 72/7 
-Neighbours for side   5 : 0/14 3/12 76/7 69/7 13/2 2/13 64/5 1/15 
-Neighbours for side   6 : 0/17 5/11 85/4 68/7 10/2 4/9 62/5 1/19 
-Neighbours for side   7 : 14/2 0/13 66/5 1/12 71/7 
-Neighbours for side   8 : 0/22 1/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 1 4 13 10 
-
-Element index      66
-Element id         66
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          0 1 10 9 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 63/0 19/0 16/1 15/0 0/0 67/0 
-Neighbours for side   1 : 19/1 1/0 72/0 71/0 65/0 27/0 18/1 14/0 0/1 67/1 
-Neighbours for side   2 : 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 
-Neighbours for side   3 : 63/3 15/1 4/0 86/0 83/0 62/0 48/0 11/0 8/1 0/4 
-Neighbours for side   4 : 19/2 0/8 67/4 
-Neighbours for side   5 : 1/12 71/7 65/7 14/2 0/13 
-Neighbours for side   6 : 4/8 86/4 62/4 11/2 0/16 
-Neighbours for side   7 : 63/7 15/2 0/12 
-Neighbours for side   8 : 0/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 0 1 10 9 
-
-Element index      67
-Element id         67
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          0 1 4 3 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 66/0 63/0 19/0 16/1 15/0 0/0 
-Neighbours for side   1 : 66/1 19/1 1/0 72/0 71/0 65/0 27/0 18/1 14/0 0/1 
-Neighbours for side   2 : 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 
-Neighbours for side   3 : 63/1 16/0 2/0 77/0 74/0 64/0 33/1 17/0 12/0 0/3 
-Neighbours for side   4 : 66/4 19/2 0/8 
-Neighbours for side   5 : 1/11 72/7 65/4 18/2 0/9 
-Neighbours for side   6 : 2/8 77/4 64/4 17/2 0/10 
-Neighbours for side   7 : 63/4 16/2 0/11 
-Neighbours for side   8 : 0/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 0 1 4 3 
-
-Element index      68
-Element id         68
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          10 11 14 13 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 
-Neighbours for side   1 : 53/0 22/1 21/0 1/5 71/2 70/3 24/1 5/1 90/1 89/0 
-Neighbours for side   2 : 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 
-Neighbours for side   3 : 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 
-Neighbours for side   4 : 22/2 1/16 71/6 5/8 90/4 
-Neighbours for side   5 : 21/2 1/17 70/6 5/9 89/4 
-Neighbours for side   6 : 3/16 69/6 1/18 7/8 88/4 78/4 20/2 5/10 
-Neighbours for side   7 : 10/2 4/9 62/5 1/19 65/6 0/17 5/11 85/4 
-Neighbours for side   8 : 1/25 5/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 10 11 14 13 
-
-Element index      69
-Element id         69
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          4 5 14 13 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 
-Neighbours for side   1 : 40/0 25/1 23/0 1/2 72/2 70/1 26/1 3/1 81/1 80/0 
-Neighbours for side   2 : 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 
-Neighbours for side   3 : 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 
-Neighbours for side   4 : 25/2 1/10 72/6 3/8 81/4 
-Neighbours for side   5 : 23/2 1/14 70/5 3/13 80/7 
-Neighbours for side   6 : 1/18 7/8 88/4 78/4 20/2 5/10 68/6 3/16 
-Neighbours for side   7 : 13/2 2/13 64/5 1/15 65/5 0/14 3/12 76/7 
-Neighbours for side   8 : 1/23 3/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 4 5 14 13 
-
-Element index      70
-Element id         70
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          2 5 14 11 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 27/1 26/0 24/0 1/1 72/1 71/1 
-Neighbours for side   1 : 26/1 3/1 81/1 80/0 69/1 40/0 25/1 23/0 1/2 72/2 
-Neighbours for side   2 : 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 
-Neighbours for side   3 : 24/1 5/1 90/1 89/0 68/1 53/0 22/1 21/0 1/5 71/2 
-Neighbours for side   4 : 26/2 1/9 72/5 
-Neighbours for side   5 : 3/13 80/7 69/5 23/2 1/14 
-Neighbours for side   6 : 5/9 89/4 68/5 21/2 1/17 
-Neighbours for side   7 : 24/2 1/13 71/5 
-Neighbours for side   8 : 1/22 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 2 5 14 11 
-
-Element index      71
-Element id         71
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          1 2 11 10 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 65/0 27/0 18/1 14/0 0/1 67/1 66/1 19/1 1/0 72/0 
-Neighbours for side   1 : 70/0 27/1 26/0 24/0 1/1 72/1 
-Neighbours for side   2 : 70/3 24/1 5/1 90/1 89/0 68/1 53/0 22/1 21/0 1/5 
-Neighbours for side   3 : 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 
-Neighbours for side   4 : 27/2 1/8 72/4 
-Neighbours for side   5 : 70/7 24/2 1/13 
-Neighbours for side   6 : 5/8 90/4 68/4 22/2 1/16 
-Neighbours for side   7 : 65/7 14/2 0/13 66/5 1/12 
-Neighbours for side   8 : 1/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 1 2 11 10 
-
-Element index      72
-Element id         72
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          1 2 5 4 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 71/0 65/0 27/0 18/1 14/0 0/1 67/1 66/1 19/1 1/0 
-Neighbours for side   1 : 71/1 70/0 27/1 26/0 24/0 1/1 
-Neighbours for side   2 : 70/1 26/1 3/1 81/1 80/0 69/1 40/0 25/1 23/0 1/2 
-Neighbours for side   3 : 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 
-Neighbours for side   4 : 71/4 27/2 1/8 
-Neighbours for side   5 : 70/4 26/2 1/9 
-Neighbours for side   6 : 3/8 81/4 69/4 25/2 1/10 
-Neighbours for side   7 : 65/4 18/2 0/9 67/5 1/11 
-Neighbours for side   8 : 1/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 1 2 5 4 
-
-Element index      73
-Element id         73
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          12 13 16 15 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 
-Neighbours for side   1 : 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 
-Neighbours for side   2 : 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 
-Neighbours for side   3 : 57/0 29/1 28/0 2/7 75/3 74/2 31/1 6/3 93/0 92/1 
-Neighbours for side   4 : 9/2 4/10 62/6 2/16 64/6 0/18 6/8 84/4 
-Neighbours for side   5 : 3/19 76/6 2/17 7/11 94/4 78/7 30/2 6/9 
-Neighbours for side   6 : 29/2 2/18 75/6 6/10 93/4 
-Neighbours for side   7 : 28/2 2/19 74/6 6/11 92/4 
-Neighbours for side   8 : 2/25 6/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 12 13 16 15 
-
-Element index      74
-Element id         74
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          3 6 15 12 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 64/0 33/1 17/0 12/0 0/3 67/3 63/1 16/0 2/0 77/0 
-Neighbours for side   1 : 34/1 33/0 31/0 2/3 77/3 75/0 
-Neighbours for side   2 : 31/1 6/3 93/0 92/1 73/3 57/0 29/1 28/0 2/7 75/3 
-Neighbours for side   3 : 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 
-Neighbours for side   4 : 33/2 2/11 77/7 
-Neighbours for side   5 : 31/2 2/15 75/7 
-Neighbours for side   6 : 6/11 92/4 73/7 28/2 2/19 
-Neighbours for side   7 : 64/7 12/2 0/15 63/5 2/12 
-Neighbours for side   8 : 2/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 3 6 15 12 
-
-Element index      75
-Element id         75
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          6 7 16 15 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 74/1 34/1 33/0 31/0 2/3 77/3 
-Neighbours for side   1 : 34/0 3/3 81/3 79/0 76/1 39/1 35/0 32/0 2/2 77/2 
-Neighbours for side   2 : 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 
-Neighbours for side   3 : 74/2 31/1 6/3 93/0 92/1 73/3 57/0 29/1 28/0 2/7 
-Neighbours for side   4 : 34/2 2/10 77/6 
-Neighbours for side   5 : 3/15 79/7 76/5 32/2 2/14 
-Neighbours for side   6 : 6/10 93/4 73/6 29/2 2/18 
-Neighbours for side   7 : 74/5 31/2 2/15 
-Neighbours for side   8 : 2/23 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 6 7 16 15 
-
-Element index      76
-Element id         76
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          4 7 16 13 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 
-Neighbours for side   1 : 39/1 35/0 32/0 2/2 77/2 75/1 34/0 3/3 81/3 79/0 
-Neighbours for side   2 : 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 
-Neighbours for side   3 : 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 
-Neighbours for side   4 : 35/2 2/9 77/5 3/11 81/7 
-Neighbours for side   5 : 32/2 2/14 75/5 3/15 79/7 
-Neighbours for side   6 : 2/17 7/11 94/4 78/7 30/2 6/9 73/5 3/19 
-Neighbours for side   7 : 69/7 13/2 2/13 64/5 1/15 65/5 0/14 3/12 
-Neighbours for side   8 : 2/22 3/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 4 7 16 13 
-
-Element index      77
-Element id         77
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          3 4 7 6 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 74/0 64/0 33/1 17/0 12/0 0/3 67/3 63/1 16/0 2/0 
-Neighbours for side   1 : 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 81/0 76/0 69/0 35/1 25/0 13/0 2/1 
-Neighbours for side   2 : 75/1 34/0 3/3 81/3 79/0 76/1 39/1 35/0 32/0 2/2 
-Neighbours for side   3 : 75/0 74/1 34/1 33/0 31/0 2/3 
-Neighbours for side   4 : 64/4 17/2 0/10 67/6 2/8 
-Neighbours for side   5 : 3/11 81/7 76/4 35/2 2/9 
-Neighbours for side   6 : 75/4 34/2 2/10 
-Neighbours for side   7 : 74/4 33/2 2/11 
-Neighbours for side   8 : 2/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 3 4 7 6 
-
-Element index      78
-Element id         78
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          13 14 17 16 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 
-Neighbours for side   1 : 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 
-Neighbours for side   2 : 61/0 37/1 36/0 3/6 80/2 79/2 38/1 7/2 97/1 96/1 
-Neighbours for side   3 : 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 
-Neighbours for side   4 : 20/2 5/10 68/6 3/16 69/6 1/18 7/8 88/4 
-Neighbours for side   5 : 37/2 3/17 80/6 7/9 97/4 
-Neighbours for side   6 : 36/2 3/18 79/6 7/10 96/4 
-Neighbours for side   7 : 30/2 6/9 73/5 3/19 76/6 2/17 7/11 94/4 
-Neighbours for side   8 : 3/25 7/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 13 14 17 16 
-
-Element index      79
-Element id         79
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          7 8 17 16 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 76/1 39/1 35/0 32/0 2/2 77/2 75/1 34/0 3/3 81/3 
-Neighbours for side   1 : 40/1 39/0 38/0 3/2 81/2 80/1 
-Neighbours for side   2 : 38/1 7/2 97/1 96/1 78/2 61/0 37/1 36/0 3/6 80/2 
-Neighbours for side   3 : 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 
-Neighbours for side   4 : 39/2 3/10 81/6 
-Neighbours for side   5 : 38/2 3/14 80/5 
-Neighbours for side   6 : 7/10 96/4 78/6 36/2 3/18 
-Neighbours for side   7 : 76/5 32/2 2/14 75/5 3/15 
-Neighbours for side   8 : 3/23 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 7 8 17 16 
-
-Element index      80
-Element id         80
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          5 8 17 14 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 69/1 40/0 25/1 23/0 1/2 72/2 70/1 26/1 3/1 81/1 
-Neighbours for side   1 : 79/1 40/1 39/0 38/0 3/2 81/2 
-Neighbours for side   2 : 79/2 38/1 7/2 97/1 96/1 78/2 61/0 37/1 36/0 3/6 
-Neighbours for side   3 : 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 
-Neighbours for side   4 : 40/2 3/9 81/5 
-Neighbours for side   5 : 79/5 38/2 3/14 
-Neighbours for side   6 : 7/9 97/4 78/5 37/2 3/17 
-Neighbours for side   7 : 69/5 23/2 1/14 70/5 3/13 
-Neighbours for side   8 : 3/22 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 5 8 17 14 
-
-Element index      81
-Element id         81
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          4 5 8 7 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 76/0 69/0 35/1 25/0 13/0 2/1 77/1 64/1 17/1 1/3 72/3 65/1 18/0 0/2 67/2 3/0 
-Neighbours for side   1 : 80/0 69/1 40/0 25/1 23/0 1/2 72/2 70/1 26/1 3/1 
-Neighbours for side   2 : 80/1 79/1 40/1 39/0 38/0 3/2 
-Neighbours for side   3 : 79/0 76/1 39/1 35/0 32/0 2/2 77/2 75/1 34/0 3/3 
-Neighbours for side   4 : 69/4 25/2 1/10 72/6 3/8 
-Neighbours for side   5 : 80/4 40/2 3/9 
-Neighbours for side   6 : 79/4 39/2 3/10 
-Neighbours for side   7 : 76/4 35/2 2/9 77/5 3/11 
-Neighbours for side   8 : 3/20 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 4 5 8 7 
-
-Element index      82
-Element id         82
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          18 19 22 21 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 48/1 44/0 41/1 4/4 86/3 83/3 
-Neighbours for side   1 : 44/1 5/4 90/3 87/0 85/3 51/0 47/1 43/1 4/5 86/2 
-Neighbours for side   2 : 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 
-Neighbours for side   3 : 41/0 6/4 92/3 91/0 84/3 54/1 45/1 42/0 4/7 83/2 
-Neighbours for side   4 : 44/2 4/16 86/6 
-Neighbours for side   5 : 5/19 87/7 85/6 43/2 4/17 
-Neighbours for side   6 : 6/16 91/4 84/6 42/2 4/18 
-Neighbours for side   7 : 41/2 4/19 83/6 
-Neighbours for side   8 : 4/25 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 18 19 22 21 
-
-Element index      83
-Element id         83
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          9 12 21 18 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 62/0 48/0 11/0 8/1 0/4 66/3 63/3 15/1 4/0 86/0 
-Neighbours for side   1 : 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 84/0 73/0 45/0 28/1 9/0 4/3 
-Neighbours for side   2 : 82/3 41/0 6/4 92/3 91/0 84/3 54/1 45/1 42/0 4/7 
-Neighbours for side   3 : 82/0 48/1 44/0 41/1 4/4 86/3 
-Neighbours for side   4 : 62/7 8/2 0/19 63/6 4/11 
-Neighbours for side   5 : 6/12 92/7 84/7 45/2 4/15 
-Neighbours for side   6 : 82/7 41/2 4/19 
-Neighbours for side   7 : 48/2 4/12 86/7 
-Neighbours for side   8 : 4/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 9 12 21 18 
-
-Element index      84
-Element id         84
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          12 13 22 21 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 92/0 
-Neighbours for side   1 : 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 
-Neighbours for side   2 : 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 
-Neighbours for side   3 : 54/1 45/1 42/0 4/7 83/2 82/3 41/0 6/4 92/3 91/0 
-Neighbours for side   4 : 73/4 9/2 4/10 62/6 2/16 64/6 0/18 6/8 
-Neighbours for side   5 : 5/15 85/5 4/14 7/12 94/7 88/7 46/2 6/13 
-Neighbours for side   6 : 42/2 4/18 82/6 6/16 91/4 
-Neighbours for side   7 : 45/2 4/15 83/5 6/12 92/7 
-Neighbours for side   8 : 4/23 6/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 12 13 22 21 
-
-Element index      85
-Element id         85
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          10 13 22 19 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 
-Neighbours for side   1 : 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 
-Neighbours for side   2 : 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 
-Neighbours for side   3 : 51/0 47/1 43/1 4/5 86/2 82/1 44/1 5/4 90/3 87/0 
-Neighbours for side   4 : 68/7 10/2 4/9 62/5 1/19 65/6 0/17 5/11 
-Neighbours for side   5 : 4/14 7/12 94/7 88/7 46/2 6/13 84/5 5/15 
-Neighbours for side   6 : 43/2 4/17 82/5 5/19 87/7 
-Neighbours for side   7 : 47/2 4/13 86/5 5/12 90/7 
-Neighbours for side   8 : 4/22 5/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 10 13 22 19 
-
-Element index      86
-Element id         86
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          9 10 19 18 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 83/0 62/0 48/0 11/0 8/1 0/4 66/3 63/3 15/1 4/0 
-Neighbours for side   1 : 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 90/0 85/0 68/0 47/0 22/0 10/1 4/1 
-Neighbours for side   2 : 82/1 44/1 5/4 90/3 87/0 85/3 51/0 47/1 43/1 4/5 
-Neighbours for side   3 : 83/3 82/0 48/1 44/0 41/1 4/4 
-Neighbours for side   4 : 62/4 11/2 0/16 66/6 4/8 
-Neighbours for side   5 : 5/12 90/7 85/7 47/2 4/13 
-Neighbours for side   6 : 82/4 44/2 4/16 
-Neighbours for side   7 : 83/7 48/2 4/12 
-Neighbours for side   8 : 4/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 9 10 19 18 
-
-Element index      87
-Element id         87
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          19 20 23 22 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 85/3 51/0 47/1 43/1 4/5 86/2 82/1 44/1 5/4 90/3 
-Neighbours for side   1 : 53/1 51/1 50/0 5/5 90/2 89/3 
-Neighbours for side   2 : 50/1 7/5 97/3 95/1 88/2 60/0 52/1 49/1 5/6 89/2 
-Neighbours for side   3 : 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 
-Neighbours for side   4 : 51/2 5/16 90/6 
-Neighbours for side   5 : 50/2 5/17 89/6 
-Neighbours for side   6 : 7/16 95/4 88/6 49/2 5/18 
-Neighbours for side   7 : 85/6 43/2 4/17 82/5 5/19 
-Neighbours for side   8 : 5/25 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 19 20 23 22 
-
-Element index      88
-Element id         88
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          13 14 23 22 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 94/0 
-Neighbours for side   1 : 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 
-Neighbours for side   2 : 60/0 52/1 49/1 5/6 89/2 87/2 50/1 7/5 97/3 95/1 
-Neighbours for side   3 : 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 
-Neighbours for side   4 : 78/4 20/2 5/10 68/6 3/16 69/6 1/18 7/8 
-Neighbours for side   5 : 52/2 5/14 89/5 7/13 97/7 
-Neighbours for side   6 : 49/2 5/18 87/6 7/16 95/4 
-Neighbours for side   7 : 46/2 6/13 84/5 5/15 85/5 4/14 7/12 94/7 
-Neighbours for side   8 : 5/23 7/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 13 14 23 22 
-
-Element index      89
-Element id         89
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          11 14 23 20 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 68/1 53/0 22/1 21/0 1/5 71/2 70/3 24/1 5/1 90/1 
-Neighbours for side   1 : 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 97/0 88/1 78/1 52/0 37/0 20/1 5/2 
-Neighbours for side   2 : 87/2 50/1 7/5 97/3 95/1 88/2 60/0 52/1 49/1 5/6 
-Neighbours for side   3 : 87/1 53/1 51/1 50/0 5/5 90/2 
-Neighbours for side   4 : 68/5 21/2 1/17 70/6 5/9 
-Neighbours for side   5 : 7/13 97/7 88/5 52/2 5/14 
-Neighbours for side   6 : 87/5 50/2 5/17 
-Neighbours for side   7 : 53/2 5/13 90/5 
-Neighbours for side   8 : 5/22 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 11 14 23 20 
-
-Element index      90
-Element id         90
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          10 11 20 19 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 85/0 68/0 47/0 22/0 10/1 4/1 86/1 62/1 11/1 1/4 71/3 65/3 14/1 0/5 66/2 5/0 
-Neighbours for side   1 : 89/0 68/1 53/0 22/1 21/0 1/5 71/2 70/3 24/1 5/1 
-Neighbours for side   2 : 89/3 87/1 53/1 51/1 50/0 5/5 
-Neighbours for side   3 : 87/0 85/3 51/0 47/1 43/1 4/5 86/2 82/1 44/1 5/4 
-Neighbours for side   4 : 68/4 22/2 1/16 71/6 5/8 
-Neighbours for side   5 : 89/7 53/2 5/13 
-Neighbours for side   6 : 87/4 51/2 5/16 
-Neighbours for side   7 : 85/7 47/2 4/13 86/5 5/12 
-Neighbours for side   8 : 5/21 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 10 11 20 19 
-
-Element index      91
-Element id         91
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          21 22 25 24 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 84/3 54/1 45/1 42/0 4/7 83/2 82/3 41/0 6/4 92/3 
-Neighbours for side   1 : 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 94/3 88/3 56/1 49/0 46/1 6/5 
-Neighbours for side   2 : 55/0 7/7 96/3 95/3 94/2 59/1 58/1 56/0 6/6 93/2 
-Neighbours for side   3 : 57/1 55/1 54/0 6/7 93/3 92/2 
-Neighbours for side   4 : 84/6 42/2 4/18 82/6 6/16 
-Neighbours for side   5 : 7/19 95/7 94/6 56/2 6/17 
-Neighbours for side   6 : 55/2 6/18 93/6 
-Neighbours for side   7 : 54/2 6/19 92/6 
-Neighbours for side   8 : 6/25 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 21 22 25 24 
-
-Element index      92
-Element id         92
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          12 15 24 21 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 84/0 73/0 45/0 28/1 9/0 4/3 83/1 62/3 8/0 2/4 74/3 64/3 12/1 0/7 63/2 6/0 
-Neighbours for side   1 : 73/3 57/0 29/1 28/0 2/7 75/3 74/2 31/1 6/3 93/0 
-Neighbours for side   2 : 91/3 57/1 55/1 54/0 6/7 93/3 
-Neighbours for side   3 : 91/0 84/3 54/1 45/1 42/0 4/7 83/2 82/3 41/0 6/4 
-Neighbours for side   4 : 73/7 28/2 2/19 74/6 6/11 
-Neighbours for side   5 : 57/2 6/15 93/7 
-Neighbours for side   6 : 91/7 54/2 6/19 
-Neighbours for side   7 : 84/7 45/2 4/15 83/5 6/12 
-Neighbours for side   8 : 6/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 12 15 24 21 
-
-Element index      93
-Element id         93
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          15 16 25 24 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 92/1 73/3 57/0 29/1 28/0 2/7 75/3 74/2 31/1 6/3 
-Neighbours for side   1 : 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 94/1 78/3 58/0 36/1 30/0 6/2 
-Neighbours for side   2 : 91/2 55/0 7/7 96/3 95/3 94/2 59/1 58/1 56/0 6/6 
-Neighbours for side   3 : 92/2 91/3 57/1 55/1 54/0 6/7 
-Neighbours for side   4 : 73/6 29/2 2/18 75/6 6/10 
-Neighbours for side   5 : 7/15 96/7 94/5 58/2 6/14 
-Neighbours for side   6 : 91/6 55/2 6/18 
-Neighbours for side   7 : 92/5 57/2 6/15 
-Neighbours for side   8 : 6/23 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 15 16 25 24 
-
-Element index      94
-Element id         94
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          13 16 25 22 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 88/0 78/0 46/0 30/1 20/0 6/1 84/1 73/1 9/1 5/3 85/1 68/3 10/0 4/2 62/2 3/4 76/3 69/3 13/1 2/5 64/2 1/7 65/2 0/6 7/0 
-Neighbours for side   1 : 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 96/0 
-Neighbours for side   2 : 59/1 58/1 56/0 6/6 93/2 91/2 55/0 7/7 96/3 95/3 
-Neighbours for side   3 : 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 95/0 
-Neighbours for side   4 : 78/7 30/2 6/9 73/5 3/19 76/6 2/17 7/11 
-Neighbours for side   5 : 58/2 6/14 93/5 7/15 96/7 
-Neighbours for side   6 : 56/2 6/17 91/5 7/19 95/7 
-Neighbours for side   7 : 88/7 46/2 6/13 84/5 5/15 85/5 4/14 7/12 
-Neighbours for side   8 : 6/22 7/24 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 13 16 25 22 
-
-Element index      95
-Element id         95
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          22 23 26 25 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 94/3 88/3 56/1 49/0 46/1 6/5 91/1 84/2 42/1 5/7 87/3 85/2 43/0 4/6 82/2 7/4 
-Neighbours for side   1 : 88/2 60/0 52/1 49/1 5/6 89/2 87/2 50/1 7/5 97/3 
-Neighbours for side   2 : 61/1 60/1 59/0 7/6 97/2 96/2 
-Neighbours for side   3 : 94/2 59/1 58/1 56/0 6/6 93/2 91/2 55/0 7/7 96/3 
-Neighbours for side   4 : 88/6 49/2 5/18 87/6 7/16 
-Neighbours for side   5 : 60/2 7/17 97/6 
-Neighbours for side   6 : 59/2 7/18 96/6 
-Neighbours for side   7 : 94/6 56/2 6/17 91/5 7/19 
-Neighbours for side   8 : 7/25 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 22 23 26 25 
-
-Element index      96
-Element id         96
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          16 17 26 25 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 94/1 78/3 58/0 36/1 30/0 6/2 93/1 73/2 29/0 3/7 79/3 76/2 32/1 2/6 75/2 7/3 
-Neighbours for side   1 : 78/2 61/0 37/1 36/0 3/6 80/2 79/2 38/1 7/2 97/1 
-Neighbours for side   2 : 95/2 61/1 60/1 59/0 7/6 97/2 
-Neighbours for side   3 : 95/3 94/2 59/1 58/1 56/0 6/6 93/2 91/2 55/0 7/7 
-Neighbours for side   4 : 78/6 36/2 3/18 79/6 7/10 
-Neighbours for side   5 : 61/2 7/14 97/5 
-Neighbours for side   6 : 95/6 59/2 7/18 
-Neighbours for side   7 : 94/5 58/2 6/14 93/5 7/15 
-Neighbours for side   8 : 7/23 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 16 17 26 25 
-
-Element index      97
-Element id         97
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          14 17 26 23 
-Number of sides    9
-Material id        1
-no father
-no subelements
-Neighbours for side   0 : 88/1 78/1 52/0 37/0 20/1 5/2 89/1 68/2 21/1 3/5 80/3 69/2 23/1 1/6 70/2 7/1 
-Neighbours for side   1 : 96/1 78/2 61/0 37/1 36/0 3/6 80/2 79/2 38/1 7/2 
-Neighbours for side   2 : 96/2 95/2 61/1 60/1 59/0 7/6 
-Neighbours for side   3 : 95/1 88/2 60/0 52/1 49/1 5/6 89/2 87/2 50/1 7/5 
-Neighbours for side   4 : 78/5 37/2 3/17 80/6 7/9 
-Neighbours for side   5 : 96/5 61/2 7/14 
-Neighbours for side   6 : 95/5 60/2 7/17 
-Neighbours for side   7 : 88/5 52/2 5/14 89/5 7/13 
-Neighbours for side   8 : 7/22 
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 14 17 26 23 
-
-Element index      98
-Element id         98
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          27 28 29 30 
+Nodes indexes          12 13 14 15 
 Number of sides    9
 Material id        100
 no father
@@ -2340,32 +933,7 @@ Neighbours for side   8 : No neighbour
 Reference element pointer address: 0
 fNumInterfaces = 0
 fGeo:
-Nodeindices: 27 28 29 30 
-
-Element index      99
-Element id         99
-Is GeoBlend ? : false
-Is Linear Mapping ? : true
-Number of nodes    4
-Corner nodes       4
-Nodes indexes          31 32 33 34 
-Number of sides    9
-Material id        100
-no father
-no subelements
-Neighbours for side   0 : No neighbour
-Neighbours for side   1 : No neighbour
-Neighbours for side   2 : No neighbour
-Neighbours for side   3 : No neighbour
-Neighbours for side   4 : No neighbour
-Neighbours for side   5 : No neighbour
-Neighbours for side   6 : No neighbour
-Neighbours for side   7 : No neighbour
-Neighbours for side   8 : No neighbour
-Reference element pointer address: 0
-fNumInterfaces = 0
-fGeo:
-Nodeindices: 31 32 33 34 
+Nodeindices: 12 13 14 15 
 
 
 Interface materials : 

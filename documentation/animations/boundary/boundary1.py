@@ -40,20 +40,20 @@ yfinal = 5.0
 steps = int((yfinal-starty0)/step)
 steps += 1
 
-for i in range(steps):
-# for i in range(12,13):
+# for i in range(steps):
+for i in range(12,13):
     y0 = starty0 + i*step
     f = open(example,"w+")
     f.write(preamble)
-    f.write("\n\nFracture 0 4")
-    f.write(x0)
+    # f.write("\n\nFracture 0 4")
+    # f.write(x0)
     if y0 < 0 :
         y = ("\n%.2f %.2f %.2f %.2f" % (y0,y0,y0,y0))
     else:
         y = ("\n %.2f  %.2f  %.2f  %.2f" % (y0,y0,y0,y0))
-    f.write(y)
-    f.write(z0)
-    f.write("\n\nFracture 1 4")
+    # f.write(y)
+    # f.write(z0)
+    f.write("\n\nFracture 0 4")
     f.write(y)
     f.write(x1)
     f.write(z1)
