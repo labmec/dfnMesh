@@ -10,3 +10,4 @@ LOG
 */quicktests.cpp
 vtkmesh.vtk
 pzmesh.txt
+__py*

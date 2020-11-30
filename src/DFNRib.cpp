@@ -230,6 +230,7 @@ void DFNRib::AppendToNeighbourFaces(){
     TPZGeoElSide neig;
     for(neig=gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
         if(neig.Element()->Dimension() != 2) continue;
+        if(neig.Element()->HasSubElement()) continue;
         // if(neig.Element()->MaterialId() != DFNMaterial::Efracture && 
         //    neig.Element()->MaterialId() != DFNMaterial::Eskeleton) continue;
         int64_t neigindex = neig.Element()->Index();
@@ -284,7 +285,7 @@ inline REAL Distance(TPZManVector<REAL,3> &vector1, TPZManVector<REAL,3> &vector
 void DFNRib::Print(std::ostream &out) const
 {
     out<<"\nRib GeoEl index # "<<fGeoEl->Index();
-	out<<"\nSide intersected:"<<fStatus;
+	out<<"\nSide intersected : "<<fStatus;
 	out<<"\nIntersection Coord : "<< fCoord;
 	out<<"\nIntersection Node index: " << fIntersectionIndex;
     out<<"\nRib Nodes:\n";

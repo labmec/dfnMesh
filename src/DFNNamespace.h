@@ -200,6 +200,27 @@ operator<<(      std::ostream&      out,
 	return out;
 }
 
+// template <class T>
+// int printf(TPZVec<T> vec){
+//     for(auto& el : vec){
+//         printf(el);
+//     }
+//     return 1;
+// }
+
+// template <typename T1, typename T2>
+// std::string to_string(std::pair<T1,T2> pair){
+//     std::string buf = "";
+//     buf += std::to_string(pair.first);
+//     buf += '|';
+//     buf += std::to_string(pair.second);
+//     return buf;
+// }
+// template <typename T1, typename T2>
+// int printf(std::pair<T1,T2> pair){
+//     return std::printf(to_string(pair));
+// }
+
 // // TPZGeoElSideIndex &operator= (const TPZGeoElSideIndex &A );
 // TPZGeoElSide operator++(TPZGeoElSide& gelside,int){
 //     TPZGeoElSide pre = gelside;

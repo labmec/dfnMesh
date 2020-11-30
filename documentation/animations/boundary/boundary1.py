@@ -3,7 +3,21 @@
 # @date november 2020
 
 import subprocess
-import math
+# import math
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
+import animtools
+
+
+
+
+
+
+
+
 
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
@@ -17,16 +31,40 @@ msh = "no-msh-file"
 
 
 
-preamble = (
-"""Domain
-4.0 4.0 4.0
 
-Mesh
-EHexahedral
-2 2 2
 
-"""
-)
+# grid origin
+origin = [ 0.0,  0.0,  0.0]
+# domain dimensions
+domain = [ 4.0,  4.0,  4.0]
+# mesh partitions
+eltype = "EHexahedral"
+partitions = [2, 2, 2]
+
+# preamble
+preamble = ""
+if(msh == "no-msh-file"):
+    preamble += "Origin\n"+str(origin[0])+' '+str(origin[1])+' '+str(origin[2])+' '+"\n\n"
+    preamble += "Domain\n"+str(domain[0])+' '+str(domain[1])+' '+str(domain[2])+' '+"\n\n"
+    preamble += "Mesh\n"+eltype+"\n"+str(partitions[0])+' '+str(partitions[1])+' '+str(partitions[2])+' '+"\n\n"
+else:
+    preamble += "Mesh\n\""+msh+"\""
+
+preamble += "\n\n"
+
+# Fractures
+fracture0 = "Fracture 0\n"
+fracture0 = "Limit Etruncated\n"
+p0 = [[  0.1,  0.8,  0.8,  0.1],
+      [  7.0, -0.1, -0.1,  7.0],
+      [ -1.0, -1.0,  1.0,  1.0]]
+for i in range(3):
+    for j in range(len(p0[0])):
+        if(p0[i][j] >= 0.0): fracture0 += ' '
+        fracture0 += str(p0[i][j])+' '
+    fracture0 += "\n"
+
+
 x0 = "\n-1.50  5.00  5.00 -1.50"
 z0 = "\n-0.50 -0.50  5.00  5.00"
 x1 = "\n 1.50  5.00  5.00  1.50"

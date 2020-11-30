@@ -164,16 +164,22 @@ int main(int argc, char* argv[]){
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			fracture->MeshFractureSurface();
-			dfn.UpdatePolyhedra();
+			// dfn.UpdatePolyhedra();
 		}
-		fracture->RecoverFractureLimits();
 
 		std::ofstream logtest("LOG/dfnprint.log");
 		dfn.Print(logtest,argv[1]);
 	}
+	// Recover Limits
+	for(auto frac : dfn.FractureList()){
+		frac->RecoverFractureLimits();
+	}
+
 	// Mesh intersected volumes
     // dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
 		// dfn.GenerateSubMesh();
+	
+	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
@@ -181,8 +187,8 @@ int main(int argc, char* argv[]){
 		frac->Polygon().InsertGeomRepresentation(gmesh);
 	}
 	// dfn.PrintVTK("pzmesh.txt","skip");
-	dfn.PrintVTK();
-	// dfn.PrintVTKColorful();
+	// dfn.PrintVTK();
+	dfn.PrintVTKColorful();
 	std::cout<<"\n ...the end.\n\n\a";
 
 	gmsh::finalize();
@@ -210,6 +216,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 			DebugStop();
 		}
 	}
+	std::cout<<"input file: "<<example<<"\n";
 	gmesh = SetupExampleFromFile(example,polyg_stack,mshfile,toldist,tolangle,matid,limit_directives);
 	return gmesh;
 }
@@ -333,15 +340,16 @@ void ReadFile(	const std::string			& filename,
 	// Read file
 	ifstream file(filename);
 	if (!file){
-		std::cout << "\nCouldn't find file " << filename << std::endl;
+		std::cout << "\nCouldn't find file \"" << filename << "\""<< std::endl;
 		DebugStop();
 	}
 	// Go through it line by line
 	while (getline(file, line)){
-		while(line.length() == 0){getline(file, line);}
+		if(line.length() == 0) continue;
 		std::stringstream ss(line);
 		getline(ss, word, ' ');
 		while (word.length() == 0){getline(ss, word, ' ');}
+		if(word[0]=='#') continue; // comment
 		// Domain dimensions
 		if(word == "Domain"){
 			getline(file,line);
@@ -353,6 +361,7 @@ void ReadFile(	const std::string			& filename,
 				while (word.length() == 0){getline(ss, word, ' ');}
 				L[i] = std::stod(word);
 			}
+			continue;
 		}
 		// Grid origin position
 		else if(word == "Origin"){
@@ -364,6 +373,7 @@ void ReadFile(	const std::string			& filename,
 				while (word.length() == 0){getline(ss, word, ' ');}
 				x0[i] = std::stod(word);
 			}
+			continue;
 		}
 		// Mesh/grid definition
 		else if(word == "Mesh"){
@@ -393,6 +403,7 @@ void ReadFile(	const std::string			& filename,
 				PZError<<"\nMeshtypes should start with an uppercase E, and .msh file path should be written between quotes or double-quotes.\n";
 				DebugStop();
 			}
+			continue;
 		}
 		// Fracture reading
 		else if(word == "Fracture" || word == "fracture"){
@@ -458,20 +469,24 @@ void ReadFile(	const std::string			& filename,
 					break;
 				}
 			}
+			continue;
 		}
 		else if(word == "toldist" || word == "tolDist" || word == "TolDist" || word == "TolerableDistance"){
 			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
 			tol[0] = std::stod(word);
+			continue;
 		}
 		else if(word == "tolangle" || word == "tolAngle" || word == "TolAngle" || word == "TolerableAngle"){
 			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
 			getline(ss, word, ' ');
 			tol[1] = std::stod(word);
+			continue;
 		}
 		else if(word == "tolcos" || word == "tolCos" || word == "TolCos" || word == "TolerableCosine"){
 			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
 			getline(ss, word, ' ');
 			tol[1] = std::acos(std::stod(word));
+			continue;
 		}
 
 	}

@@ -1685,6 +1685,7 @@ void DFNMesh::UpdatePolyhedra(){
 				MeshPolyhedron(polyhedron);
 				ClearPolyhIndex(polyhedron);
 				this->SortFacesAroundEdges();
+				--ipolyh_local;
 			}else{
 				DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron);
 				fPolyhedra.push_back(new_polyhedron);
@@ -2078,7 +2079,7 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 
 void DFNMesh::SortFacesAroundEdges(){
 	// std::cout<<"\n\n Print rolodexes:\n\n";
-	fSortedFaces.clear();
+	// fSortedFaces.clear();
 	fSortedFaces.Resize(fGMesh->ElementVec().NElements());
 	std::cout<<"Sorting Rolodexes\r"<<std::flush;
 

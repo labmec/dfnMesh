@@ -177,7 +177,7 @@ void DFNFracture::FindFaces(){
         AddFace(face);
         std::cout<<"\r#Faces intersected = "<<fFaces.size()<<std::flush;
     }
-    if(fLimit != Etruncated) IsolateFractureLimits();
+    if(gmesh->Dimension() == 3 && fLimit != Etruncated) IsolateFractureLimits();
     std::cout<<std::endl;
 }
 
@@ -1141,7 +1141,7 @@ void DFNFracture::IsolateFractureLimits(){
 
 void DFNFracture::FindOffboundRibs(){
     // Maybe some consistency checks?
-    if(fdfnMesh->Polyhedra().size() < 2) {PZError<<"Uninitialized polyhedra"; DebugStop();}
+    if(fdfnMesh->Polyhedra().size() < 2) {PZError<<"\nError: Uninitialized polyhedra\n"; DebugStop();}
 
     TPZStack<TPZGeoEl*> edgelist(10,nullptr);
     TPZManVector<REAL,3> intersection(3,0.);
@@ -1349,34 +1349,41 @@ void DFNFracture::CreateOrthogonalFracture(DFNFracture& orthfracture, const int 
 
 void DFNFracture::UpdateFractureSurface(){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    TPZStack<TPZGeoEl*> to_add;
+    TPZStack<TPZGeoEl*> to_remove;
     for(int64_t index : fSurfaceFaces){
         TPZGeoEl* father = gmesh->Element(index);
-        if(father->Dimension() != 2) DebugStop();
         if(!father){
             fSurfaceFaces.erase(index);
             continue;
         }
+        if(father->Dimension() != 2) DebugStop();
         if(!father->HasSubElement()) continue;
-        TPZStack<TPZGeoEl*> children;
-        father->YoungestChildren(children);
-        for(TPZGeoEl* child : children){
-            AddToSurface(child);
-        }
+        father->YoungestChildren(to_add);
+        to_remove.push_back(father);
+    }
+    for(TPZGeoEl* gel : to_remove){
+        RemoveFromSurface(gel);
+    }
+    for(TPZGeoEl* gel : to_add){
+        AddToSurface(gel);
     }
 }
 
 void DFNFracture::RecoverFractureLimits(){
     // fLimit directive decides if this code should run
     if(this->fLimit != 2) return;
+    // Nothing to do for fractures that haven't intersected the mesh
+    if(fRibs.size() == 0) return;
 
-    // this->UpdateFractureSurface();
+    this->UpdateFractureSurface();
     this->GetEdgesInSurface(fSurfaceEdges);
 
     // Number of limit edges in this fracture's DFNPolygon
     int nlimits = fPolygon.NCornerNodes();
 
-    for(int ilimit=0; ilimit<nlimits; ++ilimit){
-    // for(int ilimit=0; ilimit<1; ++ilimit){
+    // for(int ilimit=0; ilimit<nlimits; ++ilimit){
+    for(int ilimit=nlimits-1; ilimit>=0; --ilimit){
         DFNFracture orthfracture;
         CreateOrthogonalFracture(orthfracture,ilimit);
         orthfracture.FindRibs(fSurfaceEdges);
@@ -1494,6 +1501,7 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
             }
         }
         int64_t lineinface_index = face.LineInFace();
+        if(lineinface_index < 0) continue;
         TPZGeoEl* lineinface = gmesh->Element(lineinface_index);
         lineinface->SetMaterialId(id_above);
     }
