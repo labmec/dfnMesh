@@ -1654,7 +1654,9 @@ void DFNMesh::UpdatePolyhedra(){
 	
 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
-	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
+	for(int64_t iel=0; iel < fGMesh->NElements(); iel++){
+	// for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
+		TPZGeoEl* initial_face = fGMesh->Element(iel);
 		if(!initial_face) continue;
 		if(initial_face->Dimension() != 2) continue;
 		if(initial_face->HasSubElement()) continue;
@@ -1664,11 +1666,11 @@ void DFNMesh::UpdatePolyhedra(){
 		
 		// look for polyhedron on each orientation of the initial_face
 		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
+			int orientation = ipolyh_local?-1:1;
 			// if the first has been found, continue to the next
-			if(fPolyh_per_face[initial_id][ipolyh_local] != -1) continue;
+			if(GetPolyhedralIndex({initial_id,orientation}) != -1) continue;
 			polyhedron.Fill({-1,0});
 			polyhedron.clear();
-			int orientation = ipolyh_local?-1:1;
 			std::pair<int64_t,int> initial_face_orient = {initial_id,orientation};
 			polyhedron.push_back({initial_id,orientation});
 			polyh_index = fPolyhedra.size();
@@ -1677,8 +1679,9 @@ void DFNMesh::UpdatePolyhedra(){
 			BuildVolume(initial_face_orient,IsConvex,polyhedron);
 
 			#ifdef PZDEBUG
-				// std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size();;
-				// std::cout << ":  " << polyhedron << std::endl;
+				std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size() << ":";
+				std::cout << " ("<<(IsConvex?"  convex  ":"non-convex")<<") ";
+				std::cout << ":  " << polyhedron << std::endl;
 			#endif //PZDEBUG
 
 			if(!IsConvex) {
@@ -1686,6 +1689,7 @@ void DFNMesh::UpdatePolyhedra(){
 				ClearPolyhIndex(polyhedron);
 				this->SortFacesAroundEdges();
 				--ipolyh_local;
+				// iel = 0;
 			}else{
 				DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron);
 				fPolyhedra.push_back(new_polyhedron);
@@ -1808,53 +1812,50 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 
 }
 
-// template<int Talloc>
-// void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
-// 	int polyh_index = GetPolyhedralIndex(initial_face_orient);
-// 	if(polyh_index == -1) DebugStop();
-// 	// Edges occupying the one dimensional sides
-// 	TPZManVector<int64_t,4> edges = GetEdgeIndices(initial_face_orient.first);
-// 	// Neighbour cards through the edges
-// 	TPZManVector<TRolodexCard,4> cards(edges.size());
-// 	// List the neighbour cards
-// 	for(int i=0; i<edges.size(); i++){
-// 		int64_t iedge = edges[i];
-// 		TRolodex& rolodex = fSortedFaces[iedge];
-// 		cards[i] = rolodex.Card(initial_face_orient.first);
-// 	}
-
-// 	// Determine orientation of neighbour cards
-// 	TPZManVector<std::pair<TRolodexCard, int>,4> facingcards(edges.size());
-// 	for(int i=0; i<edges.size(); i++){
-// 		int64_t iedge = edges[i];
-// 		TRolodex& rolodex = fSortedFaces[iedge];
-// 		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
-// 		REAL angle = 0.0;
-// 		facingcards[i] = rolodex.FacingCard(current_card,angle);
-// 		if(angle > M_PI+gDFN_SmallNumber){ IsConvex = false; }
-// 	}
-// 	// queue neighbour cards to verify
-// 	std::list<std::pair<int64_t, int>> to_verify;
-// 	for(int i=0; i<edges.size(); i++){
-// 		int64_t iedge = edges[i];
-// 		std::pair<int64_t,int> faceorient = {facingcards[i].first.fgelindex,facingcards[i].second};
-// 		int nextface_polyindex = GetPolyhedralIndex(faceorient);
-// 		if(nextface_polyindex == -1) {
-// 			to_verify.push_back(faceorient);
-// 			SetPolyhedralIndex(faceorient,polyh_index);
-// 			polyhedron.push_back(faceorient);
-// 		}else if(nextface_polyindex != polyh_index){
-// 			DebugStop();
-// 		}
-// 	}
-// 	// recursively verify cards that have been queued 
-// 	for(auto orientedface : to_verify){
-// 		BuildVolume(orientedface,IsConvex,polyhedron);
-// 	}
+/** Check neighbours to see if there are overlapping elements in the plane of this element
+ * We're looking for a pair of triangles overlapping a quadrilateral
+*/
+TPZStack<TPZGeoEl*,2> GetOverlappedElements(TPZGeoEl* gel){
+	DebugStop(); // Under construction
+	if(gel->Dimension() != 2){PZError << "\nCurrently limited to 2D elements\n"; DebugStop();}
+	TPZStack<TPZGeoEl*,2> overlapped;
 	
-// }
+	int nsides = gel->NSides();
+	TPZGeoElSide gelside(nullptr,0);
+	TPZGeoElSide neig(nullptr,0);
+	TPZGeoElSide otherneig(nullptr,0);
 
+	// Check for complete overlaps
+	gelside = {gel,nsides-1};
+	for(neig = gelside.Neighbour(); neig != gelside; ++neig){
+		if(neig.Element()->Dimension() == gelside.Element()->Dimension()){
+			overlapped.push_back(neig.Element());
+		}
+	}
 
+	// Check for partial overlaps
+	for(int iside = gel->NSides(0); gel->SideDimension(iside)==1; iside++){
+		gelside = {gel,iside};
+		for(neig=gelside.Neighbour(); neig!=gelside; ++neig){
+			if(neig.Element()->Dimension() != 2) continue;
+			// neig.
+		}
+	}
+	return overlapped;
+}
+
+template<int Talloc>
+void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
+	DebugStop(); // Under construction
+	// TPZStack<std::pair<int64_t,int>,Talloc> aux;
+	for(auto& orient_face : polyhedron){
+		TPZGeoEl* gel = fGMesh->Element(orient_face.first);
+		if(gel->HasSubElement()) DebugStop();
+		if(gel->Type() == MElementType::ETriangle) {continue;}
+
+		// TPZStack<TPZGeoEl*,2> children = GetOverlappedElements(gel);
+	}
+}
 
 
 template<int Talloc>
@@ -1953,6 +1954,9 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 	// gmsh::finalize();
 	CreateSkeletonElements(1);
 	CreateSkeletonElements(2);
+	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
+	// Refine quadrilaterals down to 2 triangles so not to depend on pyramids to mesh the polyhedron
+	RefineQuads(polyhedron);
 }
 
 

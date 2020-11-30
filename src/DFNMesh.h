@@ -212,6 +212,10 @@ public:
     template<int Talloc>
     void MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
 
+    /** @brief Break quadrilaterals down to 2 triangles each in a stack of oriented faces*/
+    template<int Talloc>
+    void RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+
     /**
      * @brief Reference to polyhedra stack
     */
