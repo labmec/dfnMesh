@@ -532,12 +532,12 @@ bool operator!=(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v
 	}
 	return false;
 }
-// fill vector with zeroes
-template< class T, int NumExtAlloc >
-void Zero(TPZManVector<T,NumExtAlloc> &vec){
-	int64_t size = vec.size();
-	for(int i=0; i<size; i++){vec[i]=0;}
-}
+// // fill vector with zeroes
+// template< class T, int NumExtAlloc >
+// void Zero(TPZManVector<T,NumExtAlloc> &vec){
+// 	int64_t size = vec.size();
+// 	for(int i=0; i<size; i++){vec[i]=0;}
+// }
 
 
 bool DFNFace::UpdateStatusVec(){

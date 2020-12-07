@@ -166,9 +166,10 @@ int main(int argc, char* argv[]){
 			fracture->MeshFractureSurface();
 			dfn.UpdatePolyhedra();
 		}
-
+#ifdef PZDEBUG
 		std::ofstream logtest("LOG/dfnprint.log");
 		dfn.Print(logtest,argv[1]);
+#endif //PZDEBUG
 	}
 	// Recover Limits
 	for(auto frac : dfn.FractureList()){
@@ -242,7 +243,7 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 
 	// Creating the Geo mesh
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
-	if(mshfile == "no-msh-file"){
+	if(eltype != MMeshType::ENoType){
 		if(!nels[2]){ // 2D mesh
 			TPZManVector<int, 2> ndiv(2);
 			ndiv[0] = nels[0];
@@ -330,7 +331,7 @@ void ReadFile(	const std::string			& filename,
 		0.000  -2.4495  0.000   2.4495
 	 */
 	string line, word;
-	bool create_mesh_Q = mshfile == "no-msh-file";
+	eltype = MMeshType::ENoType;
 	// const string Domain = "Domain";
 	// const string Mesh("Mesh"), Fractures("NumberOfFractures");
 	int i, j, nfractures, ifrac=0;
@@ -493,16 +494,18 @@ void ReadFile(	const std::string			& filename,
 	for(int i=0; i<3; i++) {xf[i] = x0[i] + L[i];}
 
 	// Test if informed element type matches grid definition
-	int dim = 3;
-	if(nels[2] == 0 || L[2] == 0.0 ||
-	   nels[1] == 0 || L[1] == 0.0 ||
-	   nels[0] == 0 || L[0] == 0.0)
-	{
-		dim = 2;
-	}
-	if(dim != MMeshType_Dimension(eltype)) {
-		PZError << "\n\nInvalid mesh type ("<<eltype<<") for a "<<dim<<"D domain.\n\n";
-		DebugStop();
+	if(eltype != MMeshType::ENoType){
+		int dim = 3;
+		if(nels[2] == 0 || L[2] == 0.0 ||
+		nels[1] == 0 || L[1] == 0.0 ||
+		nels[0] == 0 || L[0] == 0.0)
+		{
+			dim = 2;
+		}
+		if(dim != MMeshType_Dimension(eltype)) {
+			PZError << "\n\nInvalid mesh type ("<<eltype<<") for a "<<dim<<"D domain.\n\n";
+			DebugStop();
+		}
 	}
 	
 }

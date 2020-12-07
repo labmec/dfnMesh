@@ -156,6 +156,9 @@ namespace DFN{
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZManVector<int64_t,4> GetEdgeIndices(TPZGeoEl* face);
 
+    /// Creates a refinement pattern using a father element and a list of children, than associates that refpattern to father element
+    void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*> children);
+
 } /*namespace DFN*/
 
 
@@ -237,6 +240,33 @@ void Print(const std::set<T>& s, std::ostream& out = std::cout, std::string name
 //     return pre;
 // }
 
+
+// static const std::string RefQuad_2triang_1 = 
+// "4 3\n"
+// "\n"
+// "161601 noname\n"
+// "\n"
+// "-1 -1  0\n"
+// " 1 -1  0\n"
+// " 1  1  0\n"
+// "-1  1  0\n"
+// "\n"
+// "3 1 0 1 2 3\n"
+// "2 1 0 1 2\n"
+// "2 1 0 2 3";
+// static const std::string RefQuad_2triang_2 = 
+// "4 3\n"
+// "\n"
+// "161602 noname\n"
+// "\n"
+// "-1 -1  0\n"
+// " 1 -1  0\n"
+// " 1  1  0\n"
+// "-1  1  0\n"
+// "\n"
+// "3 1 0 1 2 3\n"
+// "2 1 1 2 3\n"
+// "2 1 1 3 0";
 
 #include "DFNNamespaceTemp.cpp"
 #endif /* DFNNamespace_h */

@@ -6,6 +6,7 @@
 
 
 #include "DFNNamespace.h"
+#include "TPZRefPattern.h"
 
 
 
@@ -270,5 +271,69 @@ namespace DFN{
         
         vector = coord1 - coord0;
     }
+
+
+
+
+
+
+    void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*> children){
+        TPZGeoMesh refmesh;
+        TPZGeoMesh* gmesh;
+        int nfathernodes = father->NCornerNodes();
+        TPZManVector<int64_t,4> nodeindices(nfathernodes,-1);
+        TPZManVector<REAL,3> coord(3,0.);
+        std::map<int64_t,int64_t> orig_to_copy;
+        // std::map<int64_t,int64_t> copy_to_orig;
+        // Copy nodes
+		for(int i=0; i<nfathernodes; i++){
+            nodeindices[i] = refmesh.NodeVec().AllocateNewElement();
+			father->Node(i).GetCoordinates(coord);
+			refmesh.NodeVec()[i].Initialize(coord,refmesh);
+
+            // map
+            orig_to_copy[father->NodeIndex(i)] = i;
+            // copy_to_orig[i] = father->NodeIndex(i);
+		}
+		// Copy father
+		MElementType etype = father->Type();
+		int64_t index = -1;
+		refmesh.CreateGeoElement(etype,nodeindices,1,index);
+        
+        // Copy children
+        int nchildren = children.size();
+        for(int ichild=0; ichild < nchildren; ichild++){
+            TPZGeoEl* child = children[ichild];
+            int nchildnodes = child->NCornerNodes();
+            nodeindices.resize(nchildnodes);
+            // gather children nodes that may be other than those of their father
+            for(int inode=0; inode < nchildnodes; inode++){
+                auto itr = orig_to_copy.find(child->NodeIndex(inode));
+                int64_t copyindex;
+                if(itr == orig_to_copy.end()){
+                    copyindex = orig_to_copy.insert({child->NodeIndex(inode),refmesh.NodeVec().AllocateNewElement()}).second;
+                    child->Node(copyindex).GetCoordinates(coord);
+			        refmesh.NodeVec()[copyindex].Initialize(coord,refmesh);
+                }else{
+                    copyindex = itr->second;
+                }
+                
+                nodeindices[inode] = copyindex;
+            }
+            etype = child->Type();
+            index = -1;
+            refmesh.CreateGeoElement(etype,nodeindices,1,index);
+        }
+
+        // create refpattern from refmesh
+        TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refmesh);
+	    father->SetRefPattern(refpat);
+    }
+
+
+
+
+
+
 
 } /* namespace DFN*/

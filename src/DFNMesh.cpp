@@ -97,7 +97,7 @@ void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 		if(gel->HasSubElement()) continue;
 		if(!gel->Father()) continue;
 		if(gel->MaterialId() == DFNMaterial::Efracture) continue;
-		if(gel->MaterialId() == DFNMaterial::Eintact) continue;
+		// if(gel->MaterialId() == DFNMaterial::Eintact) continue;
 		int subindex = gel->WhichSubel();
 		int matid = gel->MaterialId();
 		gel->SetMaterialId(DFNMaterial::Erefined+subindex);
@@ -1654,8 +1654,9 @@ void DFNMesh::UpdatePolyhedra(){
 	
 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
-	for(int64_t iel=0; iel < fGMesh->NElements(); iel++){
-	// for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
+	int debug_nelements = fGMesh->NElements();
+	for(int64_t iel=0; iel < debug_nelements; iel++){
+	// for(int64_t iel=0; iel < fGMesh->NElements(); iel++){
 		TPZGeoEl* initial_face = fGMesh->Element(iel);
 		if(!initial_face) continue;
 		if(initial_face->Dimension() != 2) continue;
@@ -1679,9 +1680,9 @@ void DFNMesh::UpdatePolyhedra(){
 			BuildVolume(initial_face_orient,IsConvex,polyhedron);
 
 			#ifdef PZDEBUG
-				std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size() << ":";
-				std::cout << " ("<<(IsConvex?"  convex  ":"non-convex")<<") ";
-				std::cout << ":  " << polyhedron << std::endl;
+				// std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size() << ":";
+				// std::cout << " ("<<(IsConvex?"  convex  ":"non-convex")<<") ";
+				// std::cout << ":  " << polyhedron << std::endl;
 			#endif //PZDEBUG
 
 			if(!IsConvex) {
@@ -1816,44 +1817,70 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
  * We're looking for a pair of triangles overlapping a quadrilateral
 */
 TPZStack<TPZGeoEl*,2> GetOverlappedElements(TPZGeoEl* gel){
-	DebugStop(); // Under construction
+	// DebugStop(); // Under construction
 	if(gel->Dimension() != 2){PZError << "\nCurrently limited to 2D elements\n"; DebugStop();}
 	TPZStack<TPZGeoEl*,2> overlapped;
 	
+	TPZGeoMesh* gmesh = gel->Mesh();
 	int nsides = gel->NSides();
-	TPZGeoElSide gelside(nullptr,0);
 	TPZGeoElSide neig(nullptr,0);
-	TPZGeoElSide otherneig(nullptr,0);
+	int dim = gel->Dimension();
 
-	// Check for complete overlaps
-	gelside = {gel,nsides-1};
-	for(neig = gelside.Neighbour(); neig != gelside; ++neig){
-		if(neig.Element()->Dimension() == gelside.Element()->Dimension()){
-			overlapped.push_back(neig.Element());
-		}
-	}
-
-	// Check for partial overlaps
+	// For every 2 consecutive sides, see if there's a common neighbour between them
 	for(int iside = gel->NSides(0); gel->SideDimension(iside)==1; iside++){
-		gelside = {gel,iside};
-		for(neig=gelside.Neighbour(); neig!=gelside; ++neig){
-			if(neig.Element()->Dimension() != 2) continue;
-			// neig.
+		TPZGeoElSide gelside1(gel,iside);
+		TPZGeoElSide gelside2(gel,(iside+1)%gel->NSides(1)+gel->NSides(1));
+		std::set<int64_t> neighbours1;
+		std::set<int64_t> neighbours2;
+		// gather neighbours for gelside1
+		for(neig = gelside1.Neighbour(); neig != gelside1; ++neig){
+			TPZGeoEl* neig_el = neig.Element();
+			if(neig_el->Dimension() != dim) continue;
+			// neighbours1.insert(neig_el);
+			neighbours1.insert(neig_el->Index());
 		}
+		if(neighbours1.size() < 1) continue;
+		// gather neighbours for gelside2
+		for(neig = gelside2.Neighbour(); neig != gelside2; ++neig){
+			TPZGeoEl* neig_el = neig.Element();
+			if(neig_el->Dimension() != dim) continue;
+			// neighbours2.insert(neig_el);
+			neighbours2.insert(neig_el->Index());
+		}
+		if(neighbours2.size() < 1) continue;
+
+		// get intersection
+		std::set<int64_t> common = DFN::set_intersection(neighbours1,neighbours2);
+		// a non-empty intersection means an overlapped element
+		if(common.size() == 0) continue;
+		if(common.size() >  1) {Print(common) ; DebugStop();}
+		
+		// overlapped.push_back(*(common.begin()));
+		overlapped.push_back(gmesh->Element(*(common.begin())));
+		iside++; // assuming the overlap is 2 triangles, we can skip a side if an overlap was found
 	}
+
 	return overlapped;
 }
 
+
+
 template<int Talloc>
 void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
-	DebugStop(); // Under construction
+	// DebugStop(); // Under construction
 	// TPZStack<std::pair<int64_t,int>,Talloc> aux;
 	for(auto& orient_face : polyhedron){
 		TPZGeoEl* gel = fGMesh->Element(orient_face.first);
 		if(gel->HasSubElement()) DebugStop();
 		if(gel->Type() == MElementType::ETriangle) {continue;}
 
-		// TPZStack<TPZGeoEl*,2> children = GetOverlappedElements(gel);
+		TPZStack<TPZGeoEl*,2> children = GetOverlappedElements(gel);
+		DFN::CreateRefPattern(gel,children);
+		for(int i=0; i<children.size(); i++){
+			gel->SetSubElement(i,children[i]);
+			children[i]->SetMaterialId(DFNMaterial::Erefined);
+			children[i]->SetFather(gel);
+		}
 	}
 }
 
@@ -1936,7 +1963,8 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 		}
 		gmsh::model::geo::addSurfaceLoop(surfaceloop,shelltag[0]);
 		gmsh::model::geo::addVolume(shelltag,shelltag[0]);
-		gmsh::model::addPhysicalGroup(3,shelltag,DFNMaterial::Eintact);
+		// gmsh::model::addPhysicalGroup(2,surfaceloop,DFNMaterial::Erefined);
+		gmsh::model::addPhysicalGroup(3,shelltag,DFNMaterial::Erefined);
 	}
 
 	// synchronize before meshing
@@ -1952,10 +1980,14 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 	gmsh::model::remove();
 	gmsh::clear();
 	// gmsh::finalize();
-	CreateSkeletonElements(1);
-	CreateSkeletonElements(2);
+
+	// New volumetrical elements should have skeleton elements
+	CreateSkeletonElements(1,DFNMaterial::Eintact);
+	CreateSkeletonElements(2,DFNMaterial::Eintact);
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
+
 	// Refine quadrilaterals down to 2 triangles so not to depend on pyramids to mesh the polyhedron
+	// I've written a code that does this at the end in order to give gmsh the freedom to optimize the volumetrical mesh as it sees fit
 	RefineQuads(polyhedron);
 }
 
