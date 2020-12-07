@@ -200,6 +200,15 @@ operator<<(      std::ostream&      out,
 	return out;
 }
 
+template<typename T>
+void Print(const std::set<T>& s, std::ostream& out = std::cout, std::string name = "no-name"){
+    out << "\nstd::set : "<<name<<"\n{ ";
+    for(auto& el : s){
+        out << el << ", ";
+    }
+    out << "\b\b }\n"<<std::endl;
+}
+
 // template <class T>
 // int printf(TPZVec<T> vec){
 //     for(auto& el : vec){

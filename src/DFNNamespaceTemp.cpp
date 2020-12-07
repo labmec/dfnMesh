@@ -211,8 +211,8 @@ namespace DFN{
     template<typename Ttype>
     std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2){
         std::set<Ttype> intersection;
-        std::set<int64_t>& smaller_set =  set1.size() > set2.size() ? set2 : set1;
-        std::set<int64_t>& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
+        std::set<Ttype>& smaller_set =  set1.size() > set2.size() ? set2 : set1;
+        std::set<Ttype>& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
 
         if(smaller_set.size() < 1) return intersection; //empty set
 
