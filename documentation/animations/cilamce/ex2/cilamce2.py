@@ -71,10 +71,11 @@ for i in range(steps):
     f.write(z)
     f.close()
     # run dfnMesh
-    print(y0)
     dfnMesh = ["build/src/dfnTest"
               ,example
+              ,"-m"
               ,msh
+              ,"-td"
               ,str(toldist)]
     subprocess.call(dfnMesh)
     # @todo exception handler to stop loop could go in here
