@@ -282,6 +282,8 @@ private:
     void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
+    /** @brief For a specific face, pass its polyhedral index to their children*/
+    void InheritPolyhedra(TPZGeoEl* father);
 
 };
 

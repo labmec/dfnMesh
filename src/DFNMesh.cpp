@@ -121,7 +121,8 @@ void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 
 void InwardNormal(const TPZGeoElSide& gelside, TPZManVector<REAL,3>& qsi, TPZManVector<REAL,3>& normal){
 	gelside.Normal(qsi,normal);
-	for(int dim=normal.size(), i=0; i<dim; i++){
+	int dim=normal.size();
+	for(int i=0; i<dim; i++){
 		normal[i] *= -1;
 	}
 }
@@ -1654,19 +1655,19 @@ void DFNMesh::UpdatePolyhedra(){
 	
 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
-	int debug_nelements = fGMesh->NElements();
-	for(int64_t iel=0; iel < debug_nelements; iel++){
-	// for(int64_t iel=0; iel < fGMesh->NElements(); iel++){
+	// int debug_nelements = fGMesh->NElements();
+	// for(int64_t iel=0; iel < debug_nelements; iel++){
+	for(int64_t iel=0; iel < fGMesh->NElements(); iel++){
 		TPZGeoEl* initial_face = fGMesh->Element(iel);
 		if(!initial_face) continue;
 		if(initial_face->Dimension() != 2) continue;
-		if(initial_face->HasSubElement()) continue;
 		// if(initial_face->MaterialId() != DFNMaterial::Eskeleton && 
 		// 	initial_face->MaterialId() != DFNMaterial::Efracture) continue;
 		int64_t initial_id = initial_face->Index();
 		
 		// look for polyhedron on each orientation of the initial_face
 		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
+			if(initial_face->HasSubElement()) break;
 			int orientation = ipolyh_local?-1:1;
 			// if the first has been found, continue to the next
 			if(GetPolyhedralIndex({initial_id,orientation}) != -1) continue;
@@ -1680,9 +1681,9 @@ void DFNMesh::UpdatePolyhedra(){
 			BuildVolume(initial_face_orient,IsConvex,polyhedron);
 
 			#ifdef PZDEBUG
-				// std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size() << ":";
-				// std::cout << " ("<<(IsConvex?"  convex  ":"non-convex")<<") ";
-				// std::cout << ":  " << polyhedron << std::endl;
+				std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size() << ":";
+				std::cout << " ("<<(IsConvex?"  convex  ":"non-convex")<<") ";
+				std::cout << ":  " << polyhedron << std::endl;
 			#endif //PZDEBUG
 
 			if(!IsConvex) {
@@ -1874,14 +1875,25 @@ void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
 		if(gel->HasSubElement()) DebugStop();
 		if(gel->Type() == MElementType::ETriangle) {continue;}
 
+		// Get index of the polyhedron on the other side of this gel to pass it to the children
+		int permut_orient = -orient_face.second;
+		int otherpolyh = GetPolyhedralIndex({gel->Index(),permut_orient});
+
+		// Get the elements overlapped by gmsh
 		TPZStack<TPZGeoEl*,2> children = GetOverlappedElements(gel);
+		// Create a refpattern
 		DFN::CreateRefPattern(gel,children);
+		// Setup refinement tree
 		for(int i=0; i<children.size(); i++){
 			gel->SetSubElement(i,children[i]);
 			children[i]->SetMaterialId(DFNMaterial::Erefined);
 			children[i]->SetFather(gel);
+			// It's important that children inherit the polyhedron on the other side
+			int child_orient = permut_orient*DFN::SubElOrientation(gel,i);
+			SetPolyhedralIndex({children[i]->Index(),child_orient},otherpolyh);
 		}
 	}
+	
 }
 
 
@@ -2198,7 +2210,12 @@ void DFNMesh::InheritPolyhedra(){
 	for(TPZGeoEl* father : fGMesh->ElementVec()){
 		if(!father) continue;
 		if(!father->HasSubElement()) continue;
+		InheritPolyhedra(father);
+	}
+}
 
+void DFNMesh::InheritPolyhedra(TPZGeoEl* father){
+	if(!father->HasSubElement()) return;
 		TPZGeoEl* child = nullptr;
 		int nchildren = father->NSubElements();
 		for(int i=0; i<2; i++){
@@ -2216,7 +2233,6 @@ void DFNMesh::InheritPolyhedra(){
 			polyhedron.SwapForChildren(father);
 		}
 	}
-}
 
 void DFNMesh::Print(std::ostream & out, char* name) const
 {

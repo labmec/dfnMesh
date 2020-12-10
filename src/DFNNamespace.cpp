@@ -330,9 +330,60 @@ namespace DFN{
 	    father->SetRefPattern(refpat);
     }
 
+    void ElementOrientation(TPZGeoEl* gel, TPZManVector<REAL,3>& orientvec){
 
+        switch(gel->Dimension()){
+            case  1:{
+                TPZGeoElSide gelside(gel,2);
+                DFN::GetSideVector(gelside,orientvec); break;
+            }
+            case  2:{
+                TPZGeoElSide edgeside1(gel,gel->FirstSide(1));
+                TPZGeoElSide edgeside2(gel,gel->FirstSide(1)+1);
+                TPZManVector<REAL,3> edgevec1(3,0.);
+                TPZManVector<REAL,3> edgevec2(3,0.);
+                DFN::GetSideVector(edgeside1,edgevec1);
+                DFN::GetSideVector(edgeside2,edgevec2);
+                orientvec = CrossProduct<REAL>(edgevec1,edgevec2);
+                REAL norm = Norm<REAL>(orientvec);
+                orientvec[0] /= norm;
+                orientvec[1] /= norm;
+                orientvec[2] /= norm;
+                break;
+            }
+            default: PZError << "\nTried to get orientation vector of element of dimension ="<<gel->Dimension()<<"\n";DebugStop();
+        }
+    }
 
+    int SubElOrientation(TPZGeoEl* father, int ichild){
+        if(!father->HasSubElement()) DebugStop();
 
+        TPZGeoEl* child = father->SubElement(ichild);
+        if(father->Dimension() != child->Dimension()){PZError<<"\n I don't see how this could be considered consistent\n";DebugStop();}
+
+        TPZGeoElSide fatherside(father,father->NSides()-1);
+        TPZGeoElSide childside(child,child->NSides()-1);
+        TPZManVector<REAL,3> qsi(fatherside.Dimension(),0.);
+        int orientation=0;
+        switch(father->Dimension()){
+            case  2:{
+                // TPZManVector<REAL,3> father_normal(3,0.);
+                // fatherside.Normal(qsi,father_normal);
+                // TPZManVector<REAL,3> child_normal(3,0.);
+                // childside.Normal(qsi,child_normal);
+                TPZManVector<REAL,3> father_normal(3,0.);
+                TPZManVector<REAL,3> child_normal(3,0.);
+                ElementOrientation(father,father_normal);
+                ElementOrientation(child,child_normal);
+                orientation = int(DFN::DotProduct<float>(father_normal,child_normal));
+                break;
+            }
+            default:{PZError<<"\nCurrently implemented for 2D els only\n";DebugStop();}
+        }
+
+        if(orientation != 1 && orientation != -1) DebugStop();
+        return orientation;
+    }
 
 
 
