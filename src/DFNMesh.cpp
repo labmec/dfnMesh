@@ -332,7 +332,7 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 
 
 
-void DFNMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes){
+void DFNMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<TPZGeoEl*>& newgels){
     // GMsh does not accept zero index entities
     const int shift = 1;
 
@@ -384,7 +384,7 @@ void DFNMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set
     int64_t nels = gmesh->NElements();
     std::vector<std::pair<int, int> > dim_to_physical_groups;
     gmsh::model::getPhysicalGroups(dim_to_physical_groups,dimension);
-   
+	int nnew = 0;
     /// inserting the elements
     for (auto group: dim_to_physical_groups) {
        
@@ -410,7 +410,7 @@ void DFNMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set
                 std::vector<int> node_identifiers(n_nodes);
                 int n_elements = group_element_identifiers[itype].size();
                 for (int iel = 0; iel < n_elements; iel++) {
-                    int el_identifier = group_element_identifiers[itype][iel]-1+nels;
+                    int el_identifier = group_element_identifiers[itype][iel]+nels-gmshshift;
 					// std::cout<<"\n"<<el_identifier<<"\n";
 
                     for (int inode = 0; inode < n_nodes; inode++) {
@@ -419,11 +419,10 @@ void DFNMesh::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set
                         node_identifiers[inode] = mapGMshToPZ[group_node_identifiers[itype][iel*n_nodes+inode]];
                     }
                     TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
-                    // int matid = DFNMaterial::Erefined;
-					// TPZGeoMeshBuilder::InsertElement(gmesh, matid, el_type, el_identifier, node_identifiers);
-					int64_t ntest = gmesh->NElements();
-					// std::cout<<"nelements = "<<ntest<<"\n";
-                }
+					nnew++;
+					newgels.resize(nnew);
+					newgels[nnew-1] = gmesh->Element(el_identifier);
+				}
             }
         }
     }
@@ -662,6 +661,252 @@ bool DFN::IsInterface(TPZGeoEl* gel){
 
 
 
+void DFNMesh::ExportGMshCAD_nodes(std::ofstream& out){
+
+    // write nodes
+    out<< "// POINTS DEFINITION \n\n";
+    int64_t nnodes = fGMesh->NNodes();
+    for (int64_t inode = 0; inode < nnodes; inode++){
+		if(fGMesh->NodeVec()[inode].Id() < 0) continue;
+        TPZManVector<REAL, 3> co(3,0.);
+        fGMesh->NodeVec()[inode].GetCoordinates(co);
+        out << "Point(" << inode+gmshshift << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << "};\n";
+    }
+}
+
+
+
+
+
+void DFNMesh::ExportGMshCAD_edges(std::ofstream& out){
+	out << "\n\n// LINES DEFINITION \n\n";
+	// declare lists to define physical groups
+	std::list<int64_t> groupFracture;
+
+	int64_t nels = fGMesh->NElements();
+
+	// iterate over all 1D elements
+	for (int64_t iel = 0; iel < nels; iel++){
+		TPZGeoEl *gel = fGMesh->Element(iel);
+		if(!gel) continue;
+		if(gel->Dimension() != 1) continue;
+		if(gel->HasSubElement()) continue;
+		
+		out << "Line(" << iel+gmshshift << ") = {" << gel->NodeIndex(0)+gmshshift << ',' << gel->NodeIndex(1)+gmshshift << "};\n";
+		// list it according to material
+		if(gel->MaterialId() == DFNMaterial::Efracture){groupFracture.push_back(iel+gmshshift);}
+	}
+	// write physical groups
+	if(fGMesh->Dimension() == 2){
+		out<<"\nPhysical Curve(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
+		for(auto itr = groupFracture.begin(); itr != groupFracture.end();/*Increment in next line*/){
+			out<<*itr<<(++itr!=groupFracture.end()? "," : "};\n");
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+void DFNMesh::ExportGMshCAD_faces(std::ofstream& out){
+	std::stringstream facestream;
+    facestream << "\n\n// FACES DEFINITION \n\n";
+	int64_t nels = fGMesh->NElements();
+	int mesh_dim = fGMesh->Dimension();
+	// declare lists to define physical groups
+	std::list<int64_t> groupFracture;
+	std::list<int64_t> groupTransition;
+	std::list<int64_t> groupIntact;
+
+	TPZManVector<int64_t,4> lineloop;
+	// iterate over all 2D elements
+	for (int64_t iel = 0; iel < nels; iel++){
+		TPZGeoEl *gel = fGMesh->Element(iel);
+		if(!gel) continue;
+		if(gel->Dimension() != 2) continue;
+		if(gel->HasSubElement()) continue;
+
+		// curve loop _______________________________________
+		facestream << "Curve Loop(" << iel+gmshshift << ") = {";
+		DFN::GetLineLoop(gel,lineloop,gmshshift);
+		int nedges = gel->NSides(1);
+		for(int i=0; i<nedges; i++){
+			facestream << lineloop[i] << ",";
+		}
+		facestream.seekp(facestream.str().length()-1);
+		facestream << "};\n";
+		// surface
+		facestream << "Surface("<<iel+gmshshift<<") = {"<<iel+gmshshift<<"};\n";
+
+		if(gel->MaterialId() == DFNMaterial::Efracture){groupFracture.push_back(iel+gmshshift);}
+		if(mesh_dim == 2){
+			if(gel->MaterialId() == DFNMaterial::Erefined){groupTransition.push_back(iel+gmshshift);}
+			else groupIntact.push_back(iel+gmshshift);
+		}
+	}
+	// write physical groups
+	if(groupTransition.size() > 0){
+		facestream<<"\nPhysical Surface("<<DFNMaterial::Erefined<<") = {";
+		for(auto index : groupTransition){
+			facestream<<index<<",";
+		}
+		facestream.seekp(facestream.str().length()-1);
+		facestream << "};\n";
+	}
+	if(groupFracture.size() > 0){
+		if(mesh_dim == 3) facestream<<"\nPhysical Surface(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
+		for(auto index : groupFracture){
+			facestream<<index<<",";
+		}
+		facestream.seekp(facestream.str().length()-1);
+		facestream << "};\n";
+	}
+	if(groupIntact.size() > 0){
+		facestream<<"\nPhysical Surface("<<DFNMaterial::Eintact<<") = {";
+		for(auto index : groupIntact){
+			facestream<<index<<",";
+		}
+		facestream.seekp(facestream.str().length()-1);
+		facestream << "};\n";
+	}
+	out << facestream.str() << std::endl;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
+	// We'll need a multimap to define physical tags for coarse elements
+	// maps <coarse index, polyh index>
+	std::multimap<int64_t,int> coarse_groups;
+
+	std::stringstream stream;
+	stream << "\n\n// VOLUMES DEFINITION \n\n";
+	// declare lists to define physical groups
+	std::list<int64_t> groupTransition;
+	std::list<int64_t> groupIntact;
+	int nels = fPolyhedra.size();
+	for(int ipolyh=1; ipolyh < nels; ipolyh++){
+		DFNPolyhedron& polyh = fPolyhedra[ipolyh];
+		if(polyh.IsRefined()) continue;
+
+		stream << "Surface Loop(" << polyh.Index()+gmshshift << ") = {";
+		for(auto& face_orient : polyh.Shell()){
+			stream << face_orient.first+gmshshift << ",";
+		}
+		stream.seekp(stream.str().length()-1);
+		stream << "};\n";
+		stream << "Volume(" << polyh.Index()+gmshshift << ") = {" << polyh.Index()+gmshshift << "};\n";
+
+		coarse_groups.insert({polyh.CoarseIndex(),ipolyh});
+	}
+
+	// Give physical tags to differenciate coarse element groups
+	stream << "\n\n// COARSE ELEMENTS GROUPING\n";
+	if(coarse_groups.size()){
+		int current_coarse = coarse_groups.begin()->first;
+		stream 	<< "\nPhysical Volume(\"c"
+				<< current_coarse+gmshshift
+				<< "\","
+				<< current_coarse+gmshshift
+				<<") = {";
+		for(auto& itr : coarse_groups){
+			if(itr.first != current_coarse){
+				current_coarse = itr.first;
+				stream.seekp(stream.str().length()-1);
+				stream << "};";
+				stream 	<< "\nPhysical Volume(\"c"
+						<< current_coarse+gmshshift
+						<< "\","
+						<< current_coarse+gmshshift
+						<<") = {";
+			}
+			stream << itr.second +gmshshift << ",";
+		}
+		stream.seekp(stream.str().length()-1);
+		stream << "};\n";
+	}
+	out << stream.str() << std::endl;
+	// iterate over all 3D elements
+	// for (int64_t iel = 0; iel < nels; iel++){
+	// 	TPZGeoEl *gel = fGMesh->Element(iel);
+	// 	if(!gel) continue;
+	// 	if(gel->Dimension() != 3) continue;
+	// 	// if(gel->HasSubElement()) continue; // redundant for now, but leaving it here just in case
+
+	// 	// Surface loop
+	// 	// gmsh doesn't accept zero index elements
+	// 	out << "Surface Loop(" << iel+gmshshift << ") = {";
+
+	// 	// iterate over 2D sides to look for faces that close the surface loop
+	// 	int nnodes = gel->NCornerNodes();
+	// 	int nsides = gel->NSides();
+	// 	bool volumeIsCut = false;
+	// 	for(int iside = nnodes; iside < nsides-1; iside++){
+	// 		if(gel->SideDimension(iside) != 2) continue;
+	// 		// find face element
+	// 		TPZGeoElSide gelside(gel,iside);
+	// 		TPZGeoElSide side = gelside.Neighbour();
+	// 		while(side.Element()->Dimension() != 2) {
+	// 			side = side.Neighbour();
+	// 			if(side == gelside){
+	// 				PZError << "3D element without 2D skeleton:\n\t index = " << gel->Index() << " side = "<<iside;
+	// 				DebugStop();
+	// 			}
+	// 		}
+	// 		out << side.Element()->Index()+gmshshift << (iside < nsides-2? "," : "};\n");
+	// 		if(side.Element()->HasSubElement()) volumeIsCut = true;
+	// 	}
+
+	// 	// volume
+	// 	out << "Volume("<< iel+gmshshift << ") = {"<< iel+gmshshift <<"};\n"; /* gmsh doesn't accept zero index elements */
+	// 	if(volumeIsCut){groupTransition.push_back(iel);}
+	// 	else groupIntact.push_back(iel);
+
+	// }
+	// // write physical groups
+	// if(groupTransition.size() != 0){
+	// 	out<<"\nrefinedvol[] = {";
+	// 	for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
+	// 		out<<*itr+gmshshift<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
+	// 	}
+	// }
+	// if(groupIntact.size() != 0){
+	// 	out<<"\nintactvol[] = {";
+	// 	for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
+	// 		out<<*itr+gmshshift<<(++itr!=groupIntact.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
+	// 	}
+	// 	out<<"\nTransfinite Volume {intactvol[]};\n";
+	// }
+	// for(int64_t iel=0;iel<fGMesh->NElements(); iel++){
+	// 	if(!fGMesh->Element(iel)) continue;
+	// 	if(fGMesh->Element(iel)->Dimension() == 3){
+	// 		out<<"\nPhysical Volume("<<iel+gmshshift<<") = {"<<iel+gmshshift<<"};";
+	// 	}
+	// }
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -669,364 +914,33 @@ bool DFN::IsInterface(TPZGeoEl* gel){
  * 	@brief Creates a .geo for the mesh
  */ 
 void DFNMesh::ExportGMshCAD(std::string filename){
-	DebugStop(); // @todo New Surface meshing has left this method faulty for 3D meshes. I'll have to refactor.
 	// gmsh doesn't accept index zero elements
-	const int shift = 1;
-	// materials
-	std::ofstream outfile(filename);
+	// const int shift = 1;
+	std::ofstream out(filename);
 
-    TPZGeoMesh *pzgmesh = this->Mesh();
-	// Number of elements in the mesh
-    int64_t nels = pzgmesh->NElements();
-	// Dimension of the mesh
-	int mesh_dim = pzgmesh->Dimension();
-
-    // Giving fGMesh another name for readability's sake
-    pzgmesh->BuildConnectivity();
-    CreateSkeletonElements(1,DFNMaterial::Erefined);
     // Title
-    outfile<<"//  Geo file generated by Discrete Fracture Network methods \n"
+    out<<"//  Geo file generated by Discrete Fracture Network methods \n"
             <<"// Fracture #1 \n\n";
-    
-    // write nodes
-    outfile<< "// POINTS DEFINITION \n\n";
-    int64_t nnodes = pzgmesh->NNodes();
-    // @ToDo Do we need physical groups for points too?
-    for (int64_t inode = 0; inode < nnodes; inode++){
-		if(pzgmesh->NodeVec()[inode].Id() < 0) continue;
-        TPZManVector<REAL, 3> co(3,0.);
-        pzgmesh->NodeVec()[inode].GetCoordinates(co);
-        outfile << "Point(" << inode+shift << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << "};\n";
-    }
-    
+	// write nodes
+    ExportGMshCAD_nodes(out);
     // write edges
-    outfile << "\n\n// LINES DEFINITION \n\n";
-    {
-        // declare lists to define physical groups
-        std::list<int64_t> groupSurface;
-        std::list<int64_t> groupTransition;
-        std::list<int64_t> groupIntact;
-        // iterate over all 1D elements
-        for (int64_t iel = 0; iel < nels; iel++){
-            TPZGeoEl *gel = pzgmesh->Element(iel);
-			if(!gel) continue;
-            if(gel->Dimension() != 1) continue;
-            if(gel->HasSubElement()) continue;
-            // Only 2 types of lines are needed:
-			// fracture lines
-			// i.e. lines with material id of fracture
-			bool entered_Q = false;
-			if(gel->MaterialId() == DFNMaterial::Efracture){
-				outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
-				entered_Q = true;
-			}
-			// edges of macro elements
-			// i.e. lines whose elder is an edge of an element with no father
-			if(entered_Q == false){
-				TPZGeoEl *elder = gel;
-				if(gel->Father()) {elder = gel->EldestAncestor();}
-				TPZGeoElSide elderside(elder,2);
-				TPZGeoElSide neighbour = elderside.Neighbour();
-				while(neighbour != elderside){
-					// if(neighbour.Element()->Dimension() == 3){ // @todo[see next line] this condition is great but won't work if we're in 2D
-					if(!neighbour.Element()->Father()){ // @todo this should fix it
-            			outfile << "Line(" << iel+shift << ") = {" << gel->NodeIndex(0)+shift << ',' << gel->NodeIndex(1)+shift << "};\n";
-						entered_Q = true;
-						break;
-					}
-					neighbour = neighbour.Neighbour();
-				}
-			// if(entered_Q) continue;
-			}
-			
-            // list it according to material
-			if(!entered_Q) continue;
-			if(mesh_dim == 2){
-				if(gel->MaterialId() == DFNMaterial::Erefined){groupTransition.push_back(iel+shift);}
-				else if(gel->MaterialId() == DFNMaterial::Efracture){groupSurface.push_back(iel+shift);}
-				else groupIntact.push_back(iel+shift);
-			}
-        }
-        // write physical groups
-		if(mesh_dim == 2){
-			outfile<<"\nPhysical Curve(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
-			for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
-				outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
-			}
-		}
-    }
+    ExportGMshCAD_edges(out);
     // write faces
-    outfile << "\n\n// FACES DEFINITION \n\n";
-    {
-        // declare lists to define physical groups
-        std::list<int64_t> groupSurface;
-        std::list<int64_t> groupTransition;
-        std::list<int64_t> groupIntact;
-        // iterate over all 2D elements
-        for (int64_t iel = 0; iel < nels; iel++){
-            TPZGeoEl *gel = pzgmesh->Element(iel);
-			if(!gel) continue;
-            if(gel->Dimension() != 2) continue;
-
-			// 2 types of faces should enter
-			int type = 0;
-
-			// faces of the fracture surface
-			do{//pseudo do-while just so I can use break to skip code
-				if(mesh_dim==2) break;
-				if(gel->HasSubElement()) break;
-				if(gel->MaterialId() != DFNMaterial::Efracture) break;
-				// if(gel->MaterialId() < DFNMaterial::Efracture) break;
-				TPZGeoEl *elder = gel;
-				if(gel->Father()) elder = gel->EldestAncestor();
-				int nsides = elder->NSides();
-				TPZGeoElSide elderside(elder,nsides-1);
-				TPZGeoElSide neighbour = elderside.Neighbour();
-				if(elderside == neighbour) type = 1;
-			} while (false); //pseudo do-while just so I can use break to skip code
-
-			// faces of coarse elements
-			do{//pseudo do-while just so I can use break to skip code
-				if(type == 1) break;
-				if(mesh_dim==2 && !gel->Father()){type = 2; break;}
-				if(gel->Father()) break;
-				// if(gel->MaterialId() == DFNMaterial::Eintact) {type = 2; break;}
-				int nsides = gel->NSides();
-				TPZGeoElSide gelside(gel,nsides-1);
-				TPZGeoElSide neighbour = gelside.Neighbour();
-				while(neighbour != gelside){
-					if(neighbour.Element()->Dimension() == 3){
-						type = 2;
-						break;
-					}
-					neighbour = neighbour.Neighbour();
-				} 
-			} while (false);//pseudo do-while just so I can use break to skip code
-
-            if(!type) continue;
-			bool planesurface_Q = false;
-            // curve loop _______________________________________
-            outfile << "Curve Loop(" << iel+shift << ") = {";
-            int nnodes = gel->NCornerNodes();
-            int nedges = nnodes; //for readability 
-            TPZManVector<int64_t,4> facenodevec(nnodes);
-            gel->GetNodeIndices(facenodevec);
-			int64_t reference_node = facenodevec[0];
-            // curve loops require a proper orientation of lines
-            for(int iside = nedges; iside < 2*nedges; iside++){
-                TPZGeoElSide gelside(gel,iside);
-                TPZGeoElSide side = gelside.Neighbour();
-                // find line element
-                while(side.Element()->Dimension() != 1) {side = side.Neighbour();}
-				TPZGeoEl *irib = side.Element();
-				TPZStack<TPZGeoEl*> children;
-				if(irib->HasSubElement()){
-					irib->YoungestChildren(children);
-				}else{
-					children.Push(irib);
-				}
-				int nchildren = children.NElements();
-				if(nchildren > 1) planesurface_Q = 1;
-				int children_added = 0;
-                int64_t index = 0;
-				// //@todo for an unfortunate quick improvisation I had ribs refined into a rib and a point when fractures pass through the node, but this will be fixed soon
-				// {// @todo temporary exception
-				// 	TPZStack<TPZGeoEl*> aux_children;
-				// 	for(auto child : children){
-				// 		if(child->Dimension() != 0){
-				// 			aux_children.Push(child);
-				// 		}else{nchildren--;}
-				// 	}
-				// 	children = aux_children;
-				// }
-				TPZManVector<bool> added_list(nchildren,false);
-				while(children_added < nchildren){
-					// find next child and check orientation
-					int orientation = 1;
-					for(int ichild = 0; ichild<nchildren; ichild++){
-						if(added_list[ichild]) continue;
-						TPZGeoEl *child = children[ichild];
-						if(child->NodeIndex(0) == reference_node){
-							orientation = 1;
-							reference_node = child->NodeIndex(1); // next node becomes reference
-							index = child->Index();
-							added_list[ichild] = true;
-							break;
-						}
-						else if(child->NodeIndex(1) == reference_node){
-							orientation = -1;
-							reference_node = child->NodeIndex(0); // next node becomes reference
-							index = child->Index();
-							added_list[ichild] = true;
-							break;
-						}
-					}
-					// add child
-					children_added++;
-					index = orientation*(index+shift);
-                	outfile << index <<(iside + children_added < 2*nedges-1 + nchildren ? "," : "};\n");
-				}
-            } // close curve loop _______________________________________
-            // surface
-			if(planesurface_Q) outfile << "Plane ";
-            outfile << "Surface("<<iel+shift<<") = {"<<iel+shift<<"};\n";
-            if(gel->MaterialId() == DFNMaterial::Erefined){groupTransition.push_back(iel+shift);}
-            else if(gel->MaterialId() == DFNMaterial::Efracture){groupSurface.push_back(iel+shift);}
-            else groupIntact.push_back(iel+shift);
-        }
-        // write physical groups
-        outfile<<"\nPhysical Surface("<<DFNMaterial::Erefined<<") = {";
-        for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-            outfile<<*itr<<(++itr!=groupTransition.end()? "," : "};\n");
-        }
-        if(mesh_dim == 3) outfile<<"\nPhysical Surface(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
-        for(auto itr = groupSurface.begin(); itr != groupSurface.end();/*Increment in next line*/){
-            outfile<<*itr<<(++itr!=groupSurface.end()? "," : "};\n");
-        }
-        outfile<<"\nPhysical Surface("<<DFNMaterial::Eintact<<") = {";
-        for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
-            outfile<<*itr<<(++itr!=groupIntact.end()? "," : "};\n");
-        }
-    }
-
-	// Line {x} In Surface {y}
-	{
-		outfile << "\n\n// EMBEDDED CURVES \n\n";
-		for(int iel = 0; iel < nels; iel++){
-			TPZGeoEl *gel = pzgmesh->Element(iel);
-			if(!gel) continue;
-			if(gel->Dimension() != 2) continue;
-			if(gel->Father()) continue;
-			if(!gel->HasSubElement()) continue;
-			if(mesh_dim == 3){
-				int nsides = gel->NSides();
-				TPZGeoElSide gelside(gel,nsides-1);
-				TPZGeoElSide neighbour = gelside.Neighbour();
-				if(neighbour == gelside) continue;
-			}
-
-			TPZStack<TPZGeoEl*> children;
-			gel->YoungestChildren(children);
-			// queue all possible ribs using youngest children
-			std::set<TPZGeoEl*> candidate_ribs;
-			for(TPZGeoEl* child : children){
-				int nribs = child->NCornerNodes();
-				for(int cside = nribs; cside < 2*nribs; cside++){
-					TPZGeoElSide childside(child,cside);
-					TPZGeoElSide neig = childside.Neighbour();
-					for(/*void*/; neig != childside; neig = neig.Neighbour()){
-						if(neig.Element()->Dimension() != 1) continue;
-						if(neig.Element()->MaterialId() != DFNMaterial::Efracture) continue;
-						candidate_ribs.insert(neig.Element());
-					}
-				}
-			}
-			outfile << "Curve{";
-			bool should_enter = true;
-			auto end = candidate_ribs.end();
-			for(auto it = candidate_ribs.begin(); it != end;/*void*/){
-				TPZGeoEl *rib = *it;
-				TPZGeoEl *elder = (rib->Father()? rib->EldestAncestor() : rib);
-				TPZGeoElSide elderside(elder,2);
-				TPZGeoElSide neig = elderside.Neighbour();
-				while(neig != elderside){
-					if(neig.Element()->Dimension() == mesh_dim && !neig.Element()->Father()){
-						should_enter = false;
-						break;
-					}
-					neig = neig.Neighbour();
-				}
-				if(!should_enter) {++it;continue;}
-				outfile<<rib->Index()+shift<<(++it != end?",":"}");
-			}
-			outfile << " In Surface{"<<iel+shift<<"};\n";
-		}
-
-	}
-	
-
+    ExportGMshCAD_faces(out);
     // write volumes
-    if(mesh_dim == 3){
-    	outfile << "\n\n// VOLUMES DEFINITION \n\n";
-        // declare lists to define physical groups
-        std::list<int64_t> groupSurface;
-        std::list<int64_t> groupTransition;
-        std::list<int64_t> groupIntact;
-        // iterate over all 3D elements
-        for (int64_t iel = 0; iel < nels; iel++){
-            TPZGeoEl *gel = pzgmesh->Element(iel);
-			if(!gel) continue;
-            if(gel->Dimension() != 3) continue;
-            // if(gel->HasSubElement()) continue; // redundant for now, but leaving it here just in case
-
-            // Surface loop
-            // gmsh doesn't accept zero index elements
-            outfile << "Surface Loop(" << iel+shift << ") = {";
-
-            // iterate over 2D sides to look for faces that close the surface loop
-            int nnodes = gel->NCornerNodes();
-            int nsides = gel->NSides();
-            bool volumeIsCut = false;
-            for(int iside = nnodes; iside < nsides-1; iside++){
-                if(gel->SideDimension(iside) != 2) continue;
-                // find face element
-                TPZGeoElSide gelside(gel,iside);
-                TPZGeoElSide side = gelside.Neighbour();
-                while(side.Element()->Dimension() != 2) {
-					side = side.Neighbour();
-					if(side == gelside){
-						PZError << "3D element without 2D skeleton:\n\t index = " << gel->Index() << " side = "<<iside;
-						DebugStop();
-					}
-				}
-				outfile << side.Element()->Index()+shift << (iside < nsides-2? "," : "};\n");
-				if(side.Element()->HasSubElement()) volumeIsCut = true;
-            }
-
-            // volume
-            outfile << "Volume("<< iel+shift << ") = {"<< iel+shift <<"};\n"; /* gmsh doesn't accept zero index elements */
-            if(volumeIsCut){groupTransition.push_back(iel);}
-            else groupIntact.push_back(iel);
-
-            if(volumeIsCut){
-                int nsurfaces = Volume(iel)->GetFacesInVolume().size();
-                TPZManVector<int64_t,6> enclosedSurfaces(nsurfaces);
-                enclosedSurfaces = Volume(iel)->GetFacesInVolume();
-
-                outfile << "Surface{";
-                for(int i = 0; i<nsurfaces; i++){
-                    outfile << enclosedSurfaces[i]+shift << (i<nsurfaces-1?",":"} ");
-                }
-                outfile << "In Volume{"<< iel+shift <<"};\n"; /* gmsh doesn't accept zero index elements */
-            }
-        }
-        // write physical groups
-		if(groupTransition.size() != 0){
-			outfile<<"\nrefinedvol[] = {";
-			for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-				outfile<<*itr+shift<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
-			}
-		}
-		if(groupIntact.size() != 0){
-			outfile<<"\nintactvol[] = {";
-			for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
-				outfile<<*itr+shift<<(++itr!=groupIntact.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
-			}
-    		outfile<<"\nTransfinite Volume {intactvol[]};\n";
-		}
-		for(int64_t iel=0;iel<fGMesh->NElements(); iel++){
-			if(!fGMesh->Element(iel)) continue;
-			if(fGMesh->Element(iel)->Dimension() == 3){
-				outfile<<"\nPhysical Volume("<<iel+shift<<") = {"<<iel+shift<<"};";
-			}
-		}
-    }
+    ExportGMshCAD_volumes(out);
     
-	// outfile<<"\nTransfinite Curve {:} = 2;";
-    outfile<<"\nTransfinite Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
-    outfile<<"\nRecombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
-    // outfile<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
-
+    
+	out << "\n// OPTIONS\n";
+	// out<<"\nTransfinite Curve {:} = 2;";
+    // out<<"\nTransfinite Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
+    // out<<"\nRecombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
+    // out<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
+	out << "\n// Transfinite Surface{:};";
+	out << "\n// Transfinite Volume{:};";
+	out << "\n// Recombine Surface{:};";
+	out << "\n// Recombine Volume{:};";
+	out.flush();
 }
 
 
@@ -1631,16 +1545,55 @@ void DFNMesh::InitializePolyhedra(){
 		shell.push_back({gel->Index(),orient});
 		SetPolyhedralIndex({gel->Index(),orient},0);
 	}
-	polyhedron.Initialize(this,ipolyh,shell);
+	polyhedron.Initialize(this,ipolyh,shell,-1);
 	// polyhedron.Print();
 	fPolyhedra.push_back(polyhedron);
 	shell.Fill({-1,0});
 	shell.clear();
 
 	// Then initialize the rest of the polyhedra
-	// BuildPolyhedra();
-	UpdatePolyhedra();
-	// @maybeTODO - Looping over 3D elements and matching a polyhedral index to their shell would be more efficient. But I have to pick my battles
+	// Looping over 3D elements and matching a polyhedral index to their shell
+	for(TPZGeoEl* vol : fGMesh->ElementVec()){
+		if(!vol) continue;
+		if(vol->Dimension() != 3) continue;
+		CreateGelPolyhedron(vol,vol->Index());
+		// ipolyh = fPolyhedra.size();
+		// for(int iside=vol->FirstSide(2); iside < vol->NSides()-1; iside++){
+		// 	TPZGeoElSide volside(vol,iside);
+		// 	TPZGeoEl* face = DFN::GetSkeletonNeighbour(vol,iside);
+		// 	int orient = -DFN::SkeletonOrientation(volside,face);
+		// 	std::pair<int64_t,int> face_orient = {face->Index(),orient};
+		// 	shell.push_back(face_orient);
+		// 	SetPolyhedralIndex(face_orient,ipolyh);
+		// }
+		// polyhedron.Initialize(this,ipolyh,shell,vol->Index());
+		// // polyhedron.Print();
+		// fPolyhedra.push_back(polyhedron);
+		// shell.Fill({-1,0});
+		// shell.clear();
+	}
+
+	// UpdatePolyhedra();
+}
+
+int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
+	if(vol->Dimension() != 3) return -1;
+	TPZStack<std::pair<int64_t,int>,6> shell(6,{-1,0});	///< oriented faces that enclose the polyhedron
+	shell.clear();
+	int ipolyh = fPolyhedra.size();
+	for(int iside=vol->FirstSide(2); iside < vol->NSides()-1; iside++){
+		TPZGeoElSide volside(vol,iside);
+		TPZGeoEl* face = DFN::GetSkeletonNeighbour(vol,iside);
+		int orient = -DFN::SkeletonOrientation(volside,face);
+		std::pair<int64_t,int> face_orient = {face->Index(),orient};
+		shell.push_back(face_orient);
+		SetPolyhedralIndex(face_orient,ipolyh);
+	}
+	DFNPolyhedron polyhedron(this,ipolyh,shell,coarseindex);
+	// polyhedron.Print();
+	fPolyhedra.push_back(polyhedron);
+	shell.Fill({-1,0});
+	return ipolyh;
 }
 
 void DFNMesh::UpdatePolyhedra(){
@@ -1678,22 +1631,24 @@ void DFNMesh::UpdatePolyhedra(){
 			polyh_index = fPolyhedra.size();
 			SetPolyhedralIndex(initial_face_orient,polyh_index);
 			bool IsConvex = true;
-			BuildVolume(initial_face_orient,IsConvex,polyhedron);
+			int coarseindex = -1;
+			BuildVolume(initial_face_orient,IsConvex,polyhedron,coarseindex);
 
 			#ifdef PZDEBUG
-				std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size() << ":";
-				std::cout << " ("<<(IsConvex?"  convex  ":"non-convex")<<") ";
-				std::cout << ":  " << polyhedron << std::endl;
+				if(coarseindex < 0) DebugStop();
+				// std::cout << "Polyh#"<< std::setw(4) << fPolyhedra.size() << ":";
+				// std::cout << " ("<<(IsConvex?"  convex  ":"non-convex")<<") ";
+				// std::cout << ":  " << polyhedron << std::endl;
 			#endif //PZDEBUG
 
 			if(!IsConvex) {
-				MeshPolyhedron(polyhedron);
+				MeshPolyhedron(polyhedron,coarseindex);
 				ClearPolyhIndex(polyhedron);
 				this->SortFacesAroundEdges();
 				--ipolyh_local;
 				// iel = 0;
 			}else{
-				DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron);
+				DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron,coarseindex);
 				fPolyhedra.push_back(new_polyhedron);
 			}
 		}
@@ -1771,7 +1726,7 @@ int DFNMesh::GetPolyhedralIndex(std::pair<int64_t,int> face_orient){
 }
 
 template<int Talloc>
-void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron){
+void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>, Talloc>& polyhedron, int& coarseindex){
 	int polyh_index = GetPolyhedralIndex(initial_face_orient);
 	if(polyh_index == -1) DebugStop();
 	// Edges occupying the one dimensional sides
@@ -1802,6 +1757,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 		std::pair<int64_t,int> faceorient = {facingcards[i].first.fgelindex,facingcards[i].second};
 		int nextface_polyindex = GetPolyhedralIndex(faceorient);
 		if(nextface_polyindex != polyh_index){
+			if(nextface_polyindex > 0) {coarseindex = fPolyhedra[nextface_polyindex].CoarseIndex();}
 			to_verify.push_back(faceorient);
 			SetPolyhedralIndex(faceorient,polyh_index);
 			polyhedron.push_back(faceorient);
@@ -1809,7 +1765,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 	}
 	// recursively try to add neighbours of cards that have been queued 
 	for(auto orientedface : to_verify){
-		BuildVolume(orientedface,IsConvex,polyhedron);
+		BuildVolume(orientedface,IsConvex,polyhedron,coarseindex);
 	}
 
 }
@@ -1874,7 +1830,7 @@ void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
 		TPZGeoEl* gel = fGMesh->Element(orient_face.first);
 		if(gel->HasSubElement()) DebugStop();
 		if(gel->Type() == MElementType::ETriangle) {continue;}
-
+		
 		// Get index of the polyhedron on the other side of this gel to pass it to the children
 		int permut_orient = -orient_face.second;
 		int otherpolyh = GetPolyhedralIndex({gel->Index(),permut_orient});
@@ -1898,7 +1854,7 @@ void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
 
 
 template<int Talloc>
-void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
+void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex){
 	// GMsh doesn't like zero index entities
     const int shift = 1;
 
@@ -1988,7 +1944,8 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 	#endif //PZDEBUG
 	// import meshed volume back into PZ geoMesh
 	std::set<int64_t>& old_nodes = nodes;
-	ImportElementsFromGMSH(fGMesh,3,old_nodes);
+	TPZStack<TPZGeoEl*> newgels;
+	ImportElementsFromGMSH(fGMesh,3,old_nodes,newgels);
 	gmsh::model::remove();
 	gmsh::clear();
 	// gmsh::finalize();
@@ -2001,6 +1958,11 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 	// Refine quadrilaterals down to 2 triangles so not to depend on pyramids to mesh the polyhedron
 	// I've written a code that does this at the end in order to give gmsh the freedom to optimize the volumetrical mesh as it sees fit
 	RefineQuads(polyhedron);
+
+	// Make sure these new 3D elements have corresponding polyhedra, and coarse index is inherited
+	for(TPZGeoEl* vol : newgels){
+		CreateGelPolyhedron(vol,coarseindex);
+	}
 }
 
 
@@ -2216,23 +2178,23 @@ void DFNMesh::InheritPolyhedra(){
 
 void DFNMesh::InheritPolyhedra(TPZGeoEl* father){
 	if(!father->HasSubElement()) return;
-		TPZGeoEl* child = nullptr;
-		int nchildren = father->NSubElements();
-		for(int i=0; i<2; i++){
-			int orient = i?-1:1;
-			int father_polyhindex = GetPolyhedralIndex({father->Index(),orient});
-			if(father_polyhindex<0) continue;
-			for(int jchild=0; jchild<nchildren; jchild++){
-				child = father->SubElement(jchild);
-				if(GetPolyhedralIndex({child->Index(),orient}) < 0){
-					SetPolyhedralIndex({child->Index(),orient},father_polyhindex);
-				}
+	TPZGeoEl* child = nullptr;
+	int nchildren = father->NSubElements();
+	for(int i=0; i<2; i++){
+		int orient = i?-1:1;
+		int father_polyhindex = GetPolyhedralIndex({father->Index(),orient});
+		if(father_polyhindex<0) continue;
+		for(int jchild=0; jchild<nchildren; jchild++){
+			child = father->SubElement(jchild);
+			if(GetPolyhedralIndex({child->Index(),orient}) < 0){
+				SetPolyhedralIndex({child->Index(),orient},father_polyhindex);
 			}
-			SetPolyhedralIndex({father->Index(),orient},-1); //< refined face doesn't need a polyhedral index
-			DFNPolyhedron& polyhedron = fPolyhedra[father_polyhindex];
-			polyhedron.SwapForChildren(father);
 		}
+		SetPolyhedralIndex({father->Index(),orient},-1); //< refined face doesn't need a polyhedral index
+		DFNPolyhedron& polyhedron = fPolyhedra[father_polyhindex];
+		polyhedron.SwapForChildren(father);
 	}
+}
 
 void DFNMesh::Print(std::ostream & out, char* name) const
 {

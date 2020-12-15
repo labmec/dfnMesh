@@ -8,6 +8,7 @@ DFNPolyhedron &DFNPolyhedron::operator=(const DFNPolyhedron &copy){
     fShell = copy.fShell;
     fIndex = copy.fIndex;
     fDFN = copy.fDFN;
+    fCoarseIndex = copy.fCoarseIndex;
     return *this;
 }
 
@@ -62,7 +63,7 @@ void DFNPolyhedron::RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack)
 bool DFNPolyhedron::IsRefined(){
     std::pair<const int64_t,int>& firstface = *(fShell.begin());
     int firstface_polyh = fDFN->GetPolyhedralIndex(firstface);
-    return firstface_polyh != this->fIndex;
+    return firstface_polyh != this->fIndex || firstface_polyh == -1;
 }
 
 /** @brief Remove father from shell and add its subelements */

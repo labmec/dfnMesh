@@ -104,7 +104,8 @@ namespace DFN{
 
     /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
     /// @param shift: indices will get shifted by a constant 
-    void GetLineLoop(TPZGeoEl* face_el, std::vector<int>& lineloop, const int shift=0);
+    template<class Tcontainer>
+    void GetLineLoop(TPZGeoEl* face_el, Tcontainer& lineloop, const int shift=0);
 
     /**
      * @brief Generates the best fitting plane to approximate a point cloud in R3 using least squares
@@ -162,8 +163,16 @@ namespace DFN{
     /// Return 1 if subel's normal vector matches its father's, and -1 otherwise
     int SubElOrientation(TPZGeoEl* father, int ichild);
 
+    // Get a vector normal to a 2D element that matches its orientation
     void ElementOrientation(TPZGeoEl* gel, TPZManVector<REAL,3>& orientvec);
 
+    /// Given a volume and a face occupying a side of a volume, check if the face is oriented inwards or outwards the volume
+    int SkeletonOrientation(TPZGeoElSide volside, TPZGeoEl* face);
+
+    // Get the sign of a number
+    template <typename T> int sgn(T val) {
+        return (T(0) < val) - (val < T(0));
+    }
 } /*namespace DFN*/
 
 

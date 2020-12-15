@@ -235,26 +235,7 @@ namespace DFN{
         return (neig1.SideNodeIndex(0) == neig2.SideNodeIndex(0));
     }
 
-    /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
-    /// @param shift: indices will get shifted by a constant 
-    void GetLineLoop(TPZGeoEl* face_el, std::vector<int>& lineloop, const int shift){
-        if(face_el->Dimension() != 2) DebugStop();
-        int nsides = face_el->NSides();
-        TPZManVector<int,4> lineloop_debug(4,gDFN_NoIndex);
-        lineloop.resize(face_el->NSides(1));
-        for(int iside = face_el->NSides(0); iside<nsides-1; iside++){
-            TPZGeoElSide gelside(face_el,iside);
-            TPZGeoElSide neig;
-            for(neig = gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
-                if(neig.Element()->Dimension()!=1) continue;
-                int orientation = OrientationMatch(gelside,neig)?1:-1;
-                lineloop[iside-face_el->NSides(1)] = orientation*(neig.Element()->Index()+shift);
-                lineloop_debug[iside-face_el->NSides(1)] = orientation*neig.Element()->Index();
-                break;
-            }
-        }
-        return;
-    }
+
 
     /**
      * @brief Get a vector from node 0 to node 1 of a 1D side
@@ -331,7 +312,8 @@ namespace DFN{
     }
 
     void ElementOrientation(TPZGeoEl* gel, TPZManVector<REAL,3>& orientvec){
-
+        // @todo This could be done using gram-schimidt orthogonalization
+        // gel->Jacobian()
         switch(gel->Dimension()){
             case  1:{
                 TPZGeoElSide gelside(gel,2);
@@ -386,5 +368,21 @@ namespace DFN{
     }
 
 
+
+    int SkeletonOrientation(TPZGeoElSide volside, TPZGeoEl* face){
+        TPZGeoElSide faceside(face,face->NSides()-1);
+        // Get transformation from volume to skeleton face
+        TPZTransform<REAL> transf = volside.NeighbourSideTransform(faceside);
+        // Compute matrix determinant
+        TPZFMatrix<REAL> inverse;
+        REAL det = 0.;
+        transf.Mult().DeterminantInverse(det,inverse);
+        // positive determinant means skeleton's orientation matches volume's faceside orientation
+        int neig_side_orientation = sgn(det);
+        // get 2D side orientation
+        int sideorientation = (PZOutwardPointingFace(volside)?1:-1);
+        // return their product
+        return sideorientation * neig_side_orientation;
+    }
 
 } /* namespace DFN*/

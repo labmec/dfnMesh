@@ -111,6 +111,10 @@ public:
     
     /// Exports a .geo file for this mesh
     void ExportGMshCAD(std::string filename);
+    void ExportGMshCAD_nodes(std::ofstream& out);
+    void ExportGMshCAD_edges(std::ofstream& out);
+    void ExportGMshCAD_faces(std::ofstream& out);
+    void ExportGMshCAD_volumes(std::ofstream& out);
     
     // /// Uses gmsh API to tetrahedralize a DFNVolume
     // void Tetrahedralize(DFNVolume *volume);
@@ -159,7 +163,7 @@ public:
      * @param oldnodes: A set of indices of the old nodes that were used to define the geometry in 
      * GMsh (so that new nodes may be identified)
      */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes);
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<TPZGeoEl*>& newgels);
     
     int Dimension(){return fGMesh->Dimension();}
     
@@ -201,7 +205,7 @@ public:
      * @note This method is called by DFNMesh::BuildPolyhedra to assemble all polyhedral volumes in the mesh
     */
     template<int Talloc>
-    void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int& coarseindex);
     /// set a polyhedral index for a face in the structure fPolyh_per_face
     void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
     /// get the polyhedral index for a face from the structure fPolyh_per_face
@@ -210,7 +214,7 @@ public:
      * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
     */
     template<int Talloc>
-    void MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    void MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex);
 
     /** @brief Break quadrilaterals down to 2 triangles each in a stack of oriented faces*/
     template<int Talloc>
@@ -238,7 +242,9 @@ public:
     DFNPolyhedron& Polyhedron(int i){return fPolyhedra[i];}
 
 private:
-    
+    /// Gather oriented faces around a 3D element to define a shell, then create a new polyhedron in the polyhedra vec DFNMesh::fPolyhedra
+    int CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex);
+
     /**
      * @brief Navigate through neighbours of first level, than second level, and so on, until an element of a specific material id is found
      * @returns Index of eldest ancestor of such element

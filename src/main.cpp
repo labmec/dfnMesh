@@ -5,6 +5,7 @@
 	#endif
 	
 	#include "TPZGenGrid2D.h"
+	#include "TPZGenGrid3D.h"
 	#include "TPZExtendGridDimension.h"
 	#include "TPZRefPatternDataBase.h"
 	#include "TPZGmshReader.h"
@@ -129,10 +130,14 @@ int main(int argc, char* argv[]){
     /// Constructor of DFNMesh initializes the skeleton mesh
 	time.start();
 	DFNMesh dfn(gmesh);
-	// dfn.PrintPolyhedra();
 	dfn.SetTolerances(tol_dist,tol_angle);
 	// Loop over fractures and refine mesh around them
 	DFNFracture *fracture = nullptr;
+
+
+	dfn.PrintPolyhedra();
+
+
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
 		gmesh->BuildConnectivity();//@todo There is a proper buildconnectivity missing... this is a temporary patching until I find out where it's actually supposed to be
         // a polygon represents a set of points in a plane
@@ -147,10 +152,7 @@ int main(int argc, char* argv[]){
 		fracture->SnapIntersections_ribs(tol_dist);
 		// Find intersected faces
 		fracture->FindFaces();
-		// 
-		// fracture->IsolateFractureLimits();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
-		// fracture->Polygon().PlotNodesAbove_n_Below(gmesh);
 
 #ifdef LOG4CXX
         if(logger->isDebugEnabled()){
@@ -176,9 +178,8 @@ int main(int argc, char* argv[]){
 		frac->RecoverFractureLimits();
 	}
 
-	// Mesh intersected volumes
-    // dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
-		// dfn.GenerateSubMesh();
+	// Generate submesh
+    dfn.ExportGMshCAD("dfnExport.geo");
 	
 	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
@@ -223,7 +224,6 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 }
 
 
-#include "TPZGenGrid3D.h"
 
 
 

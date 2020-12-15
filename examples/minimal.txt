@@ -5,9 +5,8 @@ Mesh
 EHexahedral
 1 1 1
 
-NumberOfFractures 1
-
 Fracture 0 4
+Limit Etruncated
  0.95  0.95  0.95  0.95
  2.50 -0.50 -0.50  2.50
 -0.50 -0.50  2.50  2.50

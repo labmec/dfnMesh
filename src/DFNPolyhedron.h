@@ -30,6 +30,10 @@ class DFNPolyhedron
 
 		// Pointer to the dfn this polyhedron belongs
 		DFNMesh* fDFN = nullptr;
+
+		// Index of the coarse element where this polyhedron is contained
+		int fCoarseIndex = -1;
+		
     public:
 		/// Empty constructor
 		DFNPolyhedron(){};
@@ -37,8 +41,7 @@ class DFNPolyhedron
 		~DFNPolyhedron(){};
 
 		// Initialize a polyhedron's datastructure
-		template<int t_NAlloc>
-		void Initialize(DFNMesh* dfn, int id, const TPZStack<std::pair<int64_t,int>,t_NAlloc>& oriented_shell)
+		void Initialize(DFNMesh* dfn, int id, const TPZVec<std::pair<int64_t,int>>& oriented_shell, const int coarseindex)
 		{
 			fDFN = dfn;
 			fIndex = id;
@@ -46,16 +49,17 @@ class DFNPolyhedron
 			for(auto& orientedface : oriented_shell){
 				fShell.insert(orientedface);
 			}
+			fCoarseIndex = coarseindex;
 		}
 		
 		/// Constructor from a container
-		template<int t_NAlloc>
 		DFNPolyhedron(
 					DFNMesh* dfn, 
 					int id, 
-					const TPZStack<std::pair<int64_t,int>,t_NAlloc>& oriented_shell)
+					const TPZVec<std::pair<int64_t,int>>& oriented_shell, 
+					const int coarseindex)
 		{
-			this->Initialize(dfn,id,oriented_shell);
+			this->Initialize(dfn,id,oriented_shell,coarseindex);
 		}
 		
 		/// Copy constructor
@@ -69,6 +73,9 @@ class DFNPolyhedron
 
 		// Index of polyhedron
 		int Index(){return fIndex;}
+
+		// Index of coarse element to which this polyhedron is a subset
+		int CoarseIndex(){return fCoarseIndex;}
 
 		// Get number of faces around this polyhedron
 		int NElements(){return fShell.size();}
