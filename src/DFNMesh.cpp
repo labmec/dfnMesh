@@ -36,6 +36,13 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 		InitializePolyhedra();
 		// BuildPolyhedra_firstrun();
 	}
+	// @todo delete this after a robust decision is made on how to handle custom material ids (previously set boundary conditions, skeleton with id -1, etc...)
+#ifdef PZDEBUG
+	// Small flags so I won't forget to undo any debug tests
+	if(DFNMaterial::Eintact != 1
+		||DFNMaterial::Efracture != 2
+		||DFNMaterial::Erefined != 3){std::cout<<"\nWarning: custom DFNMaterial ids\n";}
+#endif //PZDEBUG
 }
 
 
@@ -662,15 +669,21 @@ bool DFN::IsInterface(TPZGeoEl* gel){
 
 
 void DFNMesh::ExportGMshCAD_nodes(std::ofstream& out){
-
+	const float meshsize = 0.0;
     // write nodes
     out<< "// POINTS DEFINITION \n\n";
+    out<< "h = " << meshsize << ";\n\n";
     int64_t nnodes = fGMesh->NNodes();
     for (int64_t inode = 0; inode < nnodes; inode++){
 		if(fGMesh->NodeVec()[inode].Id() < 0) continue;
         TPZManVector<REAL, 3> co(3,0.);
         fGMesh->NodeVec()[inode].GetCoordinates(co);
-        out << "Point(" << inode+gmshshift << ") = {" << co[0] << ',' << co[1] << ',' << co[2] << "};\n";
+        out << "Point(" << inode+gmshshift << ") = {" 
+		    << co[0] << ',' 
+			<< co[1] << ',' 
+			<< co[2] 
+			<< ", h"
+			<<"};\n";
     }
 }
 
@@ -790,6 +803,18 @@ void DFNMesh::ExportGMshCAD_faces(std::ofstream& out){
 
 
 void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
+	/** @note: There's a seemingly strange behaviour which should be remembered in the future.
+	 * If element of index zero is a coarse volume, the entry for its coarse grouping in the exported .geo is likely going to be
+	 * Physical Volume("c1",1) = {2};
+	 * This is the desired behaviour. This is the third time I've had to re-explain it to myself so I might aswell write it down.
+	 * c1 = coarse element of index zero + gmshshift
+	 * 1  = coarse element of index zero + gmshshift
+	 * 2  = the polyhedral index + gmshshift
+	 * polyhedral index is not zero because zero is reserved for the 'boundary polyhedron'
+	 * Keeping gmshshift for every index, regardless of its necessity or lack of it, makes the code less error-prone since we know that everything needs to gmshshift back later
+	 **/
+
+
 	// We'll need a multimap to define physical tags for coarse elements
 	// maps <coarse index, polyh index>
 	std::multimap<int64_t,int> coarse_groups;
@@ -841,63 +866,6 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
 		stream << "};\n";
 	}
 	out << stream.str() << std::endl;
-	// iterate over all 3D elements
-	// for (int64_t iel = 0; iel < nels; iel++){
-	// 	TPZGeoEl *gel = fGMesh->Element(iel);
-	// 	if(!gel) continue;
-	// 	if(gel->Dimension() != 3) continue;
-	// 	// if(gel->HasSubElement()) continue; // redundant for now, but leaving it here just in case
-
-	// 	// Surface loop
-	// 	// gmsh doesn't accept zero index elements
-	// 	out << "Surface Loop(" << iel+gmshshift << ") = {";
-
-	// 	// iterate over 2D sides to look for faces that close the surface loop
-	// 	int nnodes = gel->NCornerNodes();
-	// 	int nsides = gel->NSides();
-	// 	bool volumeIsCut = false;
-	// 	for(int iside = nnodes; iside < nsides-1; iside++){
-	// 		if(gel->SideDimension(iside) != 2) continue;
-	// 		// find face element
-	// 		TPZGeoElSide gelside(gel,iside);
-	// 		TPZGeoElSide side = gelside.Neighbour();
-	// 		while(side.Element()->Dimension() != 2) {
-	// 			side = side.Neighbour();
-	// 			if(side == gelside){
-	// 				PZError << "3D element without 2D skeleton:\n\t index = " << gel->Index() << " side = "<<iside;
-	// 				DebugStop();
-	// 			}
-	// 		}
-	// 		out << side.Element()->Index()+gmshshift << (iside < nsides-2? "," : "};\n");
-	// 		if(side.Element()->HasSubElement()) volumeIsCut = true;
-	// 	}
-
-	// 	// volume
-	// 	out << "Volume("<< iel+gmshshift << ") = {"<< iel+gmshshift <<"};\n"; /* gmsh doesn't accept zero index elements */
-	// 	if(volumeIsCut){groupTransition.push_back(iel);}
-	// 	else groupIntact.push_back(iel);
-
-	// }
-	// // write physical groups
-	// if(groupTransition.size() != 0){
-	// 	out<<"\nrefinedvol[] = {";
-	// 	for(auto itr = groupTransition.begin(); itr != groupTransition.end();/*Increment in next line*/){
-	// 		out<<*itr+gmshshift<<(++itr!=groupTransition.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
-	// 	}
-	// }
-	// if(groupIntact.size() != 0){
-	// 	out<<"\nintactvol[] = {";
-	// 	for(auto itr = groupIntact.begin(); itr != groupIntact.end();/*Increment in next line*/){
-	// 		out<<*itr+gmshshift<<(++itr!=groupIntact.end()? "," : "};\n"); /* gmsh doesn't accept zero index elements */
-	// 	}
-	// 	out<<"\nTransfinite Volume {intactvol[]};\n";
-	// }
-	// for(int64_t iel=0;iel<fGMesh->NElements(); iel++){
-	// 	if(!fGMesh->Element(iel)) continue;
-	// 	if(fGMesh->Element(iel)->Dimension() == 3){
-	// 		out<<"\nPhysical Volume("<<iel+gmshshift<<") = {"<<iel+gmshshift<<"};";
-	// 	}
-	// }
 }
 
 
@@ -929,6 +897,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     ExportGMshCAD_faces(out);
     // write volumes
     ExportGMshCAD_volumes(out);
+
+	ExportGMshCAD_boundaryconditions(out);
     
     
 	out << "\n// OPTIONS\n";
@@ -936,6 +906,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     // out<<"\nTransfinite Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
     // out<<"\nRecombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
     // out<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
+	// out << "\nCoherence;";
+	out << "\nCoherence Mesh;";
 	out << "\n// Transfinite Surface{:};";
 	out << "\n// Transfinite Volume{:};";
 	out << "\n// Recombine Surface{:};";
@@ -944,6 +916,43 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 }
 
 
+void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
+	std::multimap<int, int64_t> physicalgroups;
+	DFNPolyhedron& boundary = fPolyhedra[0];
+	for(auto orientedface : boundary.Shell()){
+		int64_t index = orientedface.first;
+		int matid = fGMesh->Element(index)->MaterialId();
+		physicalgroups.insert({matid,index});
+	}
+
+	// Give physical tags to differenciate coarse element groups
+	std::stringstream stream;
+	stream << "\n\n// BOUNDARY CONDITIONS\n";
+	if(physicalgroups.size()){
+		int current_bc = physicalgroups.begin()->first;
+		stream 	<< "\nPhysical Surface(\"bc"
+				<< current_bc
+				<< "\","
+				<< current_bc
+				<<") = {";
+		for(auto& itr : physicalgroups){
+			if(itr.first != current_bc){
+				current_bc = itr.first;
+				stream.seekp(stream.str().length()-1);
+				stream << "};";
+				stream 	<< "\nPhysical Surface(\"bc"
+						<< current_bc
+						<< "\","
+						<< current_bc
+						<<") = {";
+			}
+			stream << itr.second +gmshshift << ",";
+		}
+		stream.seekp(stream.str().length()-1);
+		stream << "};\n";
+	}
+	out << stream.str() << std::endl;
+}
 
 
 

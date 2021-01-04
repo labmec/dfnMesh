@@ -1,6 +1,10 @@
-NumberOfFractures 1
+Mesh
+"examples/flemisch_benchmark/flemisch_case1.msh"
 
 Fracture 0 4
 -20  120  120  -20
 -20  -20  120  120
  92    8    8   92
+
+
+toldist   5.0

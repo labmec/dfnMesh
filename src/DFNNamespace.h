@@ -184,7 +184,7 @@ enum DFNMaterial{
     Eintact = 1, 
     Efracture = 2, 
     // Esurface = 2, 
-    Erefined = 3, 
+    Erefined = 1, //@todo default used to be 3, I've changed this for a test 
     // Etransition = 3
 };
 

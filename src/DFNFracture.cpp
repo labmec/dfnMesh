@@ -1372,7 +1372,7 @@ void DFNFracture::UpdateFractureSurface(){
 
 void DFNFracture::RecoverFractureLimits(){
     // fLimit directive decides if this code should run
-    if(this->fLimit != 2) return;
+    if(this->fLimit != FracLimit::Erecovered) return;
     // Nothing to do for fractures that haven't intersected the mesh
     if(fRibs.size() == 0) return;
 

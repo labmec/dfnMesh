@@ -135,7 +135,7 @@ int main(int argc, char* argv[]){
 	DFNFracture *fracture = nullptr;
 
 
-	dfn.PrintPolyhedra();
+	// dfn.PrintPolyhedra();
 
 
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
