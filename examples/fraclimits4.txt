@@ -5,11 +5,12 @@ Mesh
 EHexahedral
 3 3 1
 
-NumberOfFractures 1
 
 Fracture 0 4
+Limit Erecovered
 2.908 1.624 0.092 1.376
 1.383 2.890 1.617 0.110
 0.552 0.269 0.448 0.731
 
-tolDist 0.00001
+tolDist  0.05
+tolAngle 0.333

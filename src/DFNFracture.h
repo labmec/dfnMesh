@@ -174,6 +174,10 @@ private:
     void RemoveFromSurface(TPZGeoEl* gel);
     void AddToSurface(TPZGeoEl* gel);
 
+    /** @brief Check if face is above or below fracture surface
+     * @param use_face_centroid: true -> check using the centroid of the face; false -> check using centroid of the edges of the face.
+    */
+    bool CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid);
 
 public:
 
@@ -251,6 +255,10 @@ public:
      * @details its polygon plane is a triangle with the nodes of the specified edge and a node above the real fracture
     */
     void CreateOrthogonalFracture(DFNFracture& orthfracture, const int edgeindex);
+
+    /** @brief Clears material ids that might have been changed by other fractures and updates fracture surface list of elements
+     * @note Because limit recovery is done after all fractures have been inserted, some cleaning is necessary*/
+    void CleanUp();
 
     /** @} */
 

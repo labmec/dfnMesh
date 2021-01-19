@@ -89,7 +89,7 @@ DFNFace* DFNFracture::AddFace(DFNFace &face){
         std::stringstream sout;
         sout << "Adding face\n";
         res.first->second.Print(sout,true);
-        logger->setAdditivity(true);
+        // logger->setAdditivity(true);
         LOGPZ_DEBUG(logger,sout.str());
     }
 #endif
@@ -1347,6 +1347,7 @@ void DFNFracture::CreateOrthogonalFracture(DFNFracture& orthfracture, const int 
     orthfracture.Initialize(dummypolygon,fdfnMesh,fLimit);
 }
 
+/// @todo There's a good room for improvement on this method. I feel like I'm doing 1 or more unnecessary binary searches.
 void DFNFracture::UpdateFractureSurface(){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     TPZStack<TPZGeoEl*> to_add;
@@ -1382,8 +1383,8 @@ void DFNFracture::RecoverFractureLimits(){
     // Number of limit edges in this fracture's DFNPolygon
     int nlimits = fPolygon.NCornerNodes();
 
-    // for(int ilimit=0; ilimit<nlimits; ++ilimit){
-    for(int ilimit=nlimits-1; ilimit>=0; --ilimit){
+    for(int ilimit=0; ilimit<nlimits; ++ilimit){
+    // for(int ilimit=nlimits-1; ilimit>=0; --ilimit){
         DFNFracture orthfracture;
         CreateOrthogonalFracture(orthfracture,ilimit);
         orthfracture.FindRibs(fSurfaceEdges);
@@ -1455,6 +1456,7 @@ void DFNFracture::InsertFaceInSurface(int64_t elindex){
 
 void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    fPolygon.SortNodes(gmesh);
     for(auto& it : fFaces){
         DFNFace& face = it.second;
         // This classification is only useful for faces with 2 intersected ribs
@@ -1469,7 +1471,7 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
         }else{
             children.push_back(father);
         }
-        // If I remove the father regardless, it'll get add back in case it shouldn't have been deleted
+        // If I remove the father regardless, it'll get added back in case it shouldn't have been deleted
         realfracture.RemoveFromSurface(father);
         edgeindices = DFN::GetEdgeIndices(father);
         for(int64_t index : edgeindices){
@@ -1478,13 +1480,15 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
         }
 
         for(TPZGeoEl* child : children){
-            TPZManVector<REAL,2> centroid(3,0.);
-            TPZGeoElSide childside(child,child->NSides()-1);
-            childside.CenterX(centroid);
-            edgeindices = DFN::GetEdgeIndices(child);
-            if(fPolygon.Compute_PointAbove(centroid)){
+            
+            // TPZManVector<REAL,3> centroid(3,0.);
+            // TPZGeoElSide childside(child,child->NSides()-1);
+            // childside.CenterX(centroid);
+            // edgeindices = DFN::GetEdgeIndices(child);
+            // if(fPolygon.Compute_PointAbove(centroid)){
+            if(this->CheckFaceAbove(child,false)){
                 realfracture.AddToSurface(child);
-                // edgeindices = DFN::GetEdgeIndices(child);
+                edgeindices = DFN::GetEdgeIndices(child);
                 for(int64_t index : edgeindices){
                     TPZGeoEl* edge = gmesh->Element(index);
                     realfracture.AddToSurface(edge);
@@ -1500,16 +1504,67 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
                 // realfracture.RemoveFromSurface(child);
             }
         }
-        int64_t lineinface_index = face.LineInFace();
-        if(lineinface_index < 0) continue;
-        TPZGeoEl* lineinface = gmesh->Element(lineinface_index);
-        lineinface->SetMaterialId(id_above);
+        // // Keep father's lineInFace
+        // int64_t lineinface_index = face.LineInFace();
+        // if(lineinface_index < 0) continue;
+        // TPZGeoEl* lineinface = gmesh->Element(lineinface_index);
+        // lineinface->SetMaterialId(id_above);
+    }
+}
+
+void DFNFracture::CleanUp(){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    TPZStack<TPZGeoEl*> to_add;
+    TPZStack<TPZGeoEl*> to_remove;
+    for(int64_t index : fSurfaceFaces){
+        TPZGeoEl* father = gmesh->Element(index);
+        if(!father){
+            fSurfaceFaces.erase(index);
+            continue;
+        }
+        if(father->Dimension() != 2) DebugStop();
+        if(!father->HasSubElement()){
+            DFN::SetEdgesMaterialId(father,this->fmatid);
+            continue;
+        }
+        father->YoungestChildren(to_add);
+        to_remove.push_back(father);
+    }
+    for(TPZGeoEl* gel : to_remove){
+        fSurfaceEdges.erase(gel->Index());
+    }
+    for(TPZGeoEl* gel : to_add){
+        AddToSurface(gel);
+        DFN::SetEdgesMaterialId(gel,this->fmatid);
     }
 }
 
 
+bool DFNFracture::CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid){
+    /// @note If you can guarantee use_face_centroid = true won't lead to errors, go ahead and use it. Else, keep use_face_centroid = false
 
-
+    TPZManVector<REAL,3> centroid(3,0.);
+    TPZGeoMesh* gmesh = face->Mesh();
+    // This can be done (less robustly but often cheaper) by checking if centroid of face is above the DFNPolygon that originally defined the fracture
+    if(use_face_centroid){
+        TPZGeoElSide faceside(face,face->NSides()-1);
+        faceside.CenterX(centroid);
+        return fPolygon.Compute_PointAbove(centroid);
+    // Or it can be done (robust but often costly) by checking the centroid of each edge of the face
+    }else{// use_edges_centroid
+        TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(face);
+        int count=0;
+        for(int64_t index : edgeindices){
+            TPZGeoEl* edge = gmesh->Element(index);
+            TPZGeoElSide edgeside(edge,2);
+            edgeside.CenterX(centroid);
+            count += fPolygon.Compute_PointAbove(centroid);
+        }
+        return count > 1; // 2 edges above the polygon plane is condition enough for a face to be above the fracture surface even after snap
+    }
+    DebugStop(); // this shouldn't be reached
+    return false;
+}
 
 
 

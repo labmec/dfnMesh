@@ -6,16 +6,16 @@ EHexahedral
 4 4 2
 
 Fracture 0
-Limit Erecovered
-1.5 3.5 3.5 1.5
-1.7 1.7 1.7 1.7
-0.3 0.3 1.5 1.5
+Limit Eextended
+1.50 3.55 3.55 1.50
+1.70 1.70 1.70 1.70
+0.30 0.30 1.50 1.50
 
 Fracture 1
-Limit Eextended
+Limit Erecovered
 1.5    2.38388    2.75   2.38388   1.5    0.616117   0.25   0.616117
 0.25   0.616117   1.5    2.38388   2.75   2.38388    1.5    0.616117
 0.7    0.7        0.7    0.7       0.7    0.7        0.7    0.7
 
-TolDist 0.17
+TolDist  0.1
 TolAngle 0.001

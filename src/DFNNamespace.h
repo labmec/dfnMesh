@@ -169,6 +169,8 @@ namespace DFN{
     /// Given a volume and a face occupying a side of a volume, check if the face is oriented inwards or outwards the volume
     int SkeletonOrientation(TPZGeoElSide volside, TPZGeoEl* face);
 
+    void SetEdgesMaterialId(TPZGeoEl* gel, int matid);
+
     // Get the sign of a number
     template <typename T> int sgn(T val) {
         return (T(0) < val) - (val < T(0));
@@ -184,7 +186,7 @@ enum DFNMaterial{
     Eintact = 1, 
     Efracture = 2, 
     // Esurface = 2, 
-    Erefined = 1, //@todo default used to be 3, I've changed this for a test 
+    Erefined = 3, //@todo default used to be 3, I've changed it for a test 
     // Etransition = 3
 };
 

@@ -159,7 +159,7 @@ Extrude {0, 100, 0} {
     Layers{5}; 
     Recombine;
 }
-Physical Volume(1) = Volume{:};
+// Physical Volume(1) = Volume{:};
 
 Physical Surface("outlet",5) = {1, 2, 3, 4};
 Physical Surface("inlet",4) = {422};

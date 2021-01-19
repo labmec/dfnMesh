@@ -158,6 +158,7 @@ bool DFNRib::SnapIntersection_try(REAL tolDist){
     return false;
 }
 
+/// @todo extract a CanBeSnapped function from this to rewrite SnapIntersection_force and SnapIntersection_try
 bool DFNRib::NeedsSnap(int64_t& closestnode, REAL tolDist){
     if(!this->NeedsRefinement()) return false;
     

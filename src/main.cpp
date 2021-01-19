@@ -139,7 +139,7 @@ int main(int argc, char* argv[]){
 
 
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
-		gmesh->BuildConnectivity();//@todo There is a proper buildconnectivity missing... this is a temporary patching until I find out where it's actually supposed to be
+		// gmesh->BuildConnectivity();//@todo There is a proper buildconnectivity missing... this is a temporary patching until I find out where it's actually supposed to be
         // a polygon represents a set of points in a plane
 		DFNPolygon polygon(polyg_stack[iplane], gmesh);
         // Initialize the basic data of fracture
@@ -177,6 +177,11 @@ int main(int argc, char* argv[]){
 	for(auto frac : dfn.FractureList()){
 		frac->RecoverFractureLimits();
 	}
+	// Surface cleanup
+	for(auto frac : dfn.FractureList()){
+		frac->CleanUp();
+	}
+
 
 	// Generate submesh
     dfn.ExportGMshCAD("dfnExport.geo");

@@ -373,10 +373,15 @@ namespace DFN{
         TPZGeoElSide faceside(face,face->NSides()-1);
         // Get transformation from volume to skeleton face
         TPZTransform<REAL> transf = volside.NeighbourSideTransform(faceside);
+        if(transf.Mult().Rows() != 2 || transf.Mult().Cols() != 2) {PZError<<"\n[Error] Shouldn't an affine transformation between 2D parametric spaces be 2x2?\n";DebugStop();}
         // Compute matrix determinant
-        TPZFMatrix<REAL> inverse;
         REAL det = 0.;
-        transf.Mult().DeterminantInverse(det,inverse);
+        // TPZFMatrix<REAL> test = {{0,1},{-1,-1}};
+        // TPZFMatrix<REAL> inverse;
+        // test.InitializePivot();
+        // test.DeterminantInverse(det,inverse);
+        // transf.Mult().DeterminantInverse(det,inverse); //(@note Can't use this because LUDecomposition sometimes changes the sign of the determinant)
+        det = transf.Mult()(0,0)*transf.Mult()(1,1) - transf.Mult()(0,1)*transf.Mult()(1,0);
         // positive determinant means skeleton's orientation matches volume's faceside orientation
         int neig_side_orientation = sgn(det);
         // get 2D side orientation
@@ -385,4 +390,11 @@ namespace DFN{
         return sideorientation * neig_side_orientation;
     }
 
+    void SetEdgesMaterialId(TPZGeoEl* gel, int matid){
+        TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(gel);
+        TPZGeoMesh* gmesh = gel->Mesh();
+        for(int64_t index : edgeindices){
+            gmesh->Element(index)->SetMaterialId(matid);
+        }
+    }
 } /* namespace DFN*/

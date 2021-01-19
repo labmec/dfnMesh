@@ -11,7 +11,7 @@
 #include "pzlog.h"
 
 #ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
 #endif
 
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
@@ -34,7 +34,16 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 
 	if(fGMesh->Dimension() == 3){
 		InitializePolyhedra();
-		// BuildPolyhedra_firstrun();
+#ifdef LOG4CXX
+		if(logger->isDebugEnabled())
+		{
+			std::stringstream sout;
+			sout << "[Polyhedra initialization]\n";
+			this->PrintPolyhedra(sout);
+			sout << "\n\n";
+			LOGPZ_DEBUG(logger,sout.str());
+		}
+#endif // LOG4CXX
 	}
 	// @todo delete this after a robust decision is made on how to handle custom material ids (previously set boundary conditions, skeleton with id -1, etc...)
 #ifdef PZDEBUG
@@ -1596,6 +1605,7 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 		int orient = -DFN::SkeletonOrientation(volside,face);
 		std::pair<int64_t,int> face_orient = {face->Index(),orient};
 		shell.push_back(face_orient);
+		if(GetPolyhedralIndex(face_orient) > -1) DebugStop();
 		SetPolyhedralIndex(face_orient,ipolyh);
 	}
 	DFNPolyhedron polyhedron(this,ipolyh,shell,coarseindex);

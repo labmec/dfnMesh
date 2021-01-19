@@ -461,10 +461,11 @@ void DFNPolygon::Print(std::ostream & out) const
 
 
 void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
-    fNodesAbove.Resize(gmesh->NNodes(),false);
+    int64_t i = fNodesAbove.size();
+    const int64_t nnodes = gmesh->NNodes();
+    fNodesAbove.Resize(nnodes,false);
     TPZManVector<REAL,3> coord(3,0.0);
-    int nnodes = gmesh->NNodes();
-    for(int i=0; i<nnodes; i++){
+    for(/*void*/; i<nnodes; i++){
         TPZGeoNode& node = gmesh->NodeVec()[i];
         if(node.Id() < 0) continue;
         node.GetCoordinates(coord);
