@@ -55,7 +55,7 @@ private:
 	DFNPolygon fPolygon;
 	
     /// A material id for this fracture elements
-    int fmatid = Efracture;
+    int fmatid = DFNMaterial::Efracture;
 
     /// Directive for determining if this fracture limits are truncated, extended or recovered
     FracLimit fLimit = Eextended;
@@ -91,6 +91,13 @@ public:
     DFNPolygon &Polygon();
     
     DFNMesh* dfnMesh() const{return fdfnMesh;}
+
+
+	std::set<int64_t>& Surface(){return fSurfaceFaces;}
+
+    int MaterialId() const{return fmatid;}
+
+    int NSurfElements() const{return fSurfaceFaces.size();}
     
 private:
 
@@ -265,6 +272,37 @@ public:
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
 
+    /** @brief This is a draft to find the boundary conditions for fractures. I had the idea and quickly wrote down... but have not tested yet.
+     * Supposedly, the way it's written, it should allow a user to essentially merge 2 or more fractures into one.
+     * Meaning, they would have a continuous boundary 
+    */
+    void GetFractureBC(int matid){
+        DebugStop(); // this is an unreviewed draft
+        // TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+        // int fracdim = gmesh->Dimension()-1;
+        // int bcdim = fracdim-1;
+        // for(TPZGeoEl* gel : gmesh->ElementVec()){
+        //     if(!gel) continue;
+        //     if(gel->Dimension() != fracdim) continue;
+        //     int nsides = gel->NSides();
+        //     for(int iside = gel->FirstSide(bcdim); iside < nsides-1; iside++){
+        //         TPZGeoElSide gelside(gel,iside);
+        //         bool IsBoundarySide = true;
+        //         for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
+        //             if(neig.Element()->Dimension() != 2) continue;
+        //             if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
+        //                 IsBoundarySide = false;
+        //                 break;
+        //             }
+        //         }
+        //         if(!IsBoundarySide) continue;
+        //         TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
+        //         gelbc->SetMaterialId(matid);
+        //         //@todo maybe add to a set?
+        //         //@todo maybe the user would want the material id to match neighbour faces ids? this way we would have multiple subsets of the boundary for a fracture, which is likely to come handy
+        //     }
+        // }
+    }
 };
 
 

@@ -87,7 +87,7 @@ DFNFace* DFNFracture::AddFace(DFNFace &face){
     if(logger->isDebugEnabled())
     {
         std::stringstream sout;
-        sout << "Adding face\n";
+        sout << "[Adding face]\n";
         res.first->second.Print(sout,true);
         // logger->setAdditivity(true);
         LOGPZ_DEBUG(logger,sout.str());
@@ -105,7 +105,7 @@ DFNRib* DFNFracture::AddRib(DFNRib &rib){
     if(logger->isDebugEnabled())
     {
         std::stringstream sout;
-        sout << "Adding rib\n";
+        sout << "[Adding rib]\n";
         res.first->second.Print(sout);
         LOGPZ_DEBUG(logger,sout.str())
     }
@@ -131,6 +131,9 @@ DFNFace * DFNFracture::Face(int64_t index){
 
 
 void DFNFracture::FindFaces(){
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[Start][Searching faces]")
+#endif // LOG4CXX
     std::cout<<"\r#Faces intersected = 0";
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
     TPZGeoEl *gel;
@@ -179,6 +182,9 @@ void DFNFracture::FindFaces(){
     }
     if(gmesh->Dimension() == 3 && fLimit != Etruncated) IsolateFractureLimits();
     std::cout<<std::endl;
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[End][Searching faces]")
+#endif // LOG4CXX
 }
 
 
@@ -204,6 +210,9 @@ void DFNFracture::FindFaces(){
 
 
 void DFNFracture::FindRibs(){
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[Start][Searching ribs]")
+#endif // LOG4CXX
     std::cout<<"\r\n#Ribs intersected = 0";
     //search gmesh for intersected ribs
     int64_t Nels = fdfnMesh->Mesh()->NElements();
@@ -225,15 +234,15 @@ void DFNFracture::FindRibs(){
             DFNRib rib(gel, this,2);
             rib.SetIntersectionCoord(intpoint);
             // if this 1D element is not part of a previous fracture, change its material to Erefined
-            // @TODO I understand that the material id of the skeleton elements is (-1)
-            // hardcoded (?) Therefore the only 1d elements would be the ones with
-            // material id (-1)?
-            if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
+            // if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
             AddRib(rib);
             std::cout<<"\r#Ribs intersected = "<<fRibs.size()<<std::flush;
         }
     }
     std::cout<<std::endl;
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[End][Searching ribs]")
+#endif // LOG4CXX
 }
 
 
@@ -243,7 +252,7 @@ void DFNFracture::SetFracMaterial_2D(){
         DFNFace& face = itr.second;
         int64_t iline = face.LineInFace();
         if(iline < 0) continue;
-        fdfnMesh->Mesh()->Element(iline)->SetMaterialId(DFNMaterial::Efracture);
+        fdfnMesh->Mesh()->Element(iline)->SetMaterialId(fmatid);
     }
 }
 
@@ -265,7 +274,7 @@ void DFNFracture::RefineFaces(){
             face->Print(sout,true);
             LOGPZ_DEBUG(logger, sout.str())
         }
-#endif
+#endif // LOG4CXX
         face->Refine();
     }
     fdfnMesh->CreateSkeletonElements(1);
@@ -728,7 +737,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 
     if(!common_neig) return nullptr;
 
-    common_neig->SetMaterialId(DFNMaterial::Efracture);
+    // common_neig->SetMaterialId(fmatid);
     return common_neig;
 }
 
@@ -759,7 +768,7 @@ void DFNFracture::MeshFractureSurface(){
             int inletside = initial_face.FirstRibSide();
             SetPolygonIndex(initialface_orient,polygon_counter,Polygon_per_face);
             BuildSubPolygon(Polygon_per_face,initialface_orient,inletside,subpolygon);
-            DFN::BulkSetMaterialId(fdfnMesh->Mesh(),subpolygon,DFNMaterial::Efracture);
+            // DFN::BulkSetMaterialId(fdfnMesh->Mesh(),subpolygon,this->fmatid);
             
             if(DFN::IsValidPolygon(subpolygon) == false) continue;
             polygon_counter++;
@@ -925,7 +934,8 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
     }else{
         gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
     }
-    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Efracture);
+    // gmsh::model::addPhysicalGroup(2,wiretag,this->fmatid);
+    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Eintact);
 
 	
 	// synchronize before meshing
@@ -973,7 +983,8 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
         case 2: DebugStop();
         case 3:             
         case 4: if(isplane){
-                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Efracture); 
+                    // TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,this->fmatid); 
+                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Eintact); 
                     newelements[0] = newel->Index();
                     break;
                 }
@@ -1158,7 +1169,7 @@ void DFNFracture::FindOffboundRibs(){
             DFNRib rib(edge,this,2);
             rib.SetIntersectionCoord(intersection);
             rib.FlagOffbound(true);
-            if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
+            // if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
             // edge->SetMaterialId(-5);
             DFNRib* ribptr = AddRib(rib);
             ribptr->AppendToNeighbourFaces();
@@ -1392,7 +1403,7 @@ void DFNFracture::RecoverFractureLimits(){
         orthfracture.SnapIntersections_faces(fdfnMesh->TolDist(),fdfnMesh->TolAngle());
         orthfracture.RefineRibs();
         orthfracture.RefineFaces();
-        orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Erefined,*this);
+        orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Eintact,*this);
     }
 }
 
@@ -1423,7 +1434,7 @@ void DFNFracture::FindRibs(const std::set<int64_t>& ribset){
 
 
 void DFNFracture::RemoveFromSurface(TPZGeoEl* gel){
-    gel->SetMaterialId(DFNMaterial::Erefined);
+    // gel->SetMaterialId(DFNMaterial::Erefined);
     switch (gel->Dimension()){
         case 1: fSurfaceEdges.erase(gel->Index()); break;
         case 2: fSurfaceFaces.erase(gel->Index()); break;
@@ -1431,7 +1442,7 @@ void DFNFracture::RemoveFromSurface(TPZGeoEl* gel){
     }
 }
 void DFNFracture::AddToSurface(TPZGeoEl* gel){
-    gel->SetMaterialId(fmatid);
+    // gel->SetMaterialId(fmatid);
     switch (gel->Dimension()){
         case 1: fSurfaceEdges.insert(gel->Index()); break;
         case 2: fSurfaceFaces.insert(gel->Index()); break;
@@ -1449,7 +1460,7 @@ void DFNFracture::InsertFaceInSurface(int64_t elindex){
         children.push_back(gel);
     }
     for(TPZGeoEl* gel : children){
-        gel->SetMaterialId(fmatid);
+        // gel->SetMaterialId(fmatid);
         fSurfaceFaces.insert(gel->Index());
     }
 }
@@ -1495,11 +1506,13 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
                 }
             }
             else{
-                child->SetMaterialId(id_below);
+                // child->SetMaterialId(id_below);
+                child->SetMaterialId(father->MaterialId());
                 edgeindices = DFN::GetEdgeIndices(child);
                 for(int64_t index : edgeindices){
                     TPZGeoEl* edge = gmesh->Element(index);
-                    edge->SetMaterialId(id_below);
+                    // edge->SetMaterialId(id_below);
+                    edge->SetMaterialId(father->MaterialId());
                 }
                 // realfracture.RemoveFromSurface(child);
             }
@@ -1524,6 +1537,7 @@ void DFNFracture::CleanUp(){
         }
         if(father->Dimension() != 2) DebugStop();
         if(!father->HasSubElement()){
+            father->SetMaterialId(this->fmatid);
             DFN::SetEdgesMaterialId(father,this->fmatid);
             continue;
         }
@@ -1535,6 +1549,7 @@ void DFNFracture::CleanUp(){
     }
     for(TPZGeoEl* gel : to_add){
         AddToSurface(gel);
+        gel->SetMaterialId(this->fmatid);
         DFN::SetEdgesMaterialId(gel,this->fmatid);
     }
 }

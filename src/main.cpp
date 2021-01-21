@@ -181,6 +181,7 @@ int main(int argc, char* argv[]){
 	for(auto frac : dfn.FractureList()){
 		frac->CleanUp();
 	}
+	dfn.UpdatePolyhedra();
 
 
 	// Generate submesh
@@ -193,8 +194,6 @@ int main(int argc, char* argv[]){
 	for(auto frac : dfn.FractureList()){
 		frac->Polygon().InsertGeomRepresentation(gmesh);
 	}
-	// dfn.PrintVTK("pzmesh.txt","skip");
-	// dfn.PrintVTK();
 	dfn.PrintVTKColorful();
 	std::cout<<"\n ...the end.\n\n\a";
 

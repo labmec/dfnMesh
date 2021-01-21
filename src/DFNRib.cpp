@@ -118,15 +118,15 @@ void DFNRib::CreateRefPattern(){
         // insert father
         TPZManVector<int64_t,2> cornerindices({0,1});
         int64_t elindex = 0;
-        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
         
         // insert children
         cornerindices = {0,2};
         elindex = 1;
-        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
         cornerindices = {2,1};
         elindex = 2;
-        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
                     
         // define refPattern
         refPatternMesh.BuildConnectivity(); 

@@ -239,7 +239,7 @@ public:
 
     /// @brief Make children of this element inherit its polyhedral indices
     /// @note: Does nothing if mesh is not 3D
-    void InheritPolyhedra();
+    // void InheritPolyhedra();
 
     int NIntersectedRibs();
 

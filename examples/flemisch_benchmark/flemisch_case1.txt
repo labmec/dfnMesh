@@ -1,5 +1,5 @@
 Mesh
-"examples/flemisch_benchmark/flemisch_case1.msh"
+"examples/flemisch_benchmark/flemisch_case1c.msh"
 
 Fracture 0 4
 -20  120  120  -20

@@ -21,7 +21,7 @@
 class DFNMesh{
 private:
     // A set of fractures
-    std::list<DFNFracture *> fFractures;
+    std::vector<DFNFracture *> fFractures;
     
     // Minimum acceptable distance/length for point insertion
     REAL fTolDist = 1e-5;
@@ -67,7 +67,7 @@ public:
     DFNMesh &operator=(const DFNMesh &copy);
 
     /// Add new fracture
-    void AddFracture(DFNFracture *fracture){std::cout<<"\nFracture #"<<fFractures.size();fFractures.push_back(fracture);}
+    void AddFracture(DFNFracture *fracture);
     
     /// Pointer to volume of index 'index'
     DFNVolume *Volume(int64_t index){return &fVolumes[index];}
@@ -98,7 +98,7 @@ public:
     const REAL TolAngle_cos(){return fTolAngle_cos;}
 
     /// Return reference to list of fractures
-    std::list<DFNFracture *>& FractureList(){return fFractures;}
+    std::vector<DFNFracture *>& FractureList(){return fFractures;}
     
     /** 
      * @brief Insert intersection elements of lower dimension in the geometric mesh.
@@ -115,6 +115,7 @@ public:
     void ExportGMshCAD_edges(std::ofstream& out);
     void ExportGMshCAD_faces(std::ofstream& out);
     void ExportGMshCAD_volumes(std::ofstream& out);
+    void ExportGMshCAD_fractures(std::ofstream& out);
     void ExportGMshCAD_boundaryconditions(std::ofstream& out);
     
     // /// Uses gmsh API to tetrahedralize a DFNVolume
@@ -140,7 +141,7 @@ public:
      * @param MaterialIDs...
      * @todo this method is unfinished
      */
-    void PrintVTK(std::string pzmesh = "pzmesh.txt"
+    void PrintVTK(std::string pzmesh = "LOG/pzmesh.txt"
                ,std::string vtkmesh = "vtkmesh.vtk"
                ,int fracture = 2
                ,int transition = 3
@@ -150,7 +151,7 @@ public:
      * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
      * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
      */
-    void PrintVTKColorful(std::string pzmesh = "pzmesh.txt"
+    void PrintVTKColorful(std::string pzmesh = "LOG/pzmesh.txt"
                        ,std::string vtkmesh = "vtkmesh.vtk");
     
     /**
@@ -242,6 +243,14 @@ public:
 
     DFNPolyhedron& Polyhedron(int i){return fPolyhedra[i];}
 
+    /// Get number of fractures in the fracture vector of this DFN
+    int NFractures(){return fFractures.size();}
+
+    /// Get number of fractures that have at least 1 surface element
+    int RealNFractures();
+
+    /** @brief For a specific face, pass its polyhedral index to its children*/
+    void InheritPolyhedra(TPZGeoEl* father);
 private:
     /// Gather oriented faces around a 3D element to define a shell, then create a new polyhedron in the polyhedra vec DFNMesh::fPolyhedra
     int CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex);
@@ -289,8 +298,6 @@ private:
     void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
-    /** @brief For a specific face, pass its polyhedral index to their children*/
-    void InheritPolyhedra(TPZGeoEl* father);
 
 };
 

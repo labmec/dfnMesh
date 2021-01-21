@@ -21,7 +21,7 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
     fTolAngle_cos = std::cos(tolAngle);
 
 	// create a copy of the mesh because materials will be reset afterwards @todo
-	this->ClearMaterials();
+	// this->ClearMaterials();
 	for (int i = 1; i < fGMesh->Dimension(); i++){
 		CreateSkeletonElements(i,1);
 	}
@@ -112,6 +112,8 @@ void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 		if(gel->Dimension() != 2) continue;
 		if(gel->HasSubElement()) continue;
 		if(!gel->Father()) continue;
+		// @todo-maybe if there will be a unique material id for each fracture, we might want to create an std::set<int> with all the material ids of fractures and do the next if as a binary search
+		// if(idset.find(gel->MaterialId()) != idset.end()) continue;
 		if(gel->MaterialId() == DFNMaterial::Efracture) continue;
 		// if(gel->MaterialId() == DFNMaterial::Eintact) continue;
 		int subindex = gel->WhichSubel();
@@ -344,7 +346,15 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 // }
 
 
-
+void DFNMesh::AddFracture(DFNFracture *fracture){
+#ifdef LOG4CXX
+	std::stringstream sout;
+	sout << "\n[Start][Fracture " << fFractures.size() << "]";
+    if(logger->isInfoEnabled()) LOGPZ_INFO(logger, sout.str());
+#endif // LOG4CXX
+	std::cout<<"\nFracture #"<<fFractures.size();
+	fFractures.push_back(fracture);
+}
 
 
 
@@ -547,6 +557,22 @@ void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue
 
 
 
+int DFNMesh::RealNFractures(){
+	int counter=0;
+	for(auto frac : fFractures){
+		counter += (frac->NSurfElements() > 0);
+	}
+	return counter;
+}
+
+
+
+
+
+
+
+
+
 
 bool DFN::IsInterface(TPZGeoEl* gel){
 	// gel can only be an interface if it is (d-1)-dimensional
@@ -703,7 +729,7 @@ void DFNMesh::ExportGMshCAD_nodes(std::ofstream& out){
 void DFNMesh::ExportGMshCAD_edges(std::ofstream& out){
 	out << "\n\n// LINES DEFINITION \n\n";
 	// declare lists to define physical groups
-	std::list<int64_t> groupFracture;
+	// std::list<int64_t> groupFracture;
 
 	int64_t nels = fGMesh->NElements();
 
@@ -716,15 +742,15 @@ void DFNMesh::ExportGMshCAD_edges(std::ofstream& out){
 		
 		out << "Line(" << iel+gmshshift << ") = {" << gel->NodeIndex(0)+gmshshift << ',' << gel->NodeIndex(1)+gmshshift << "};\n";
 		// list it according to material
-		if(gel->MaterialId() == DFNMaterial::Efracture){groupFracture.push_back(iel+gmshshift);}
+		// if(gel->MaterialId() == DFNMaterial::Efracture){groupFracture.push_back(iel+gmshshift);}
 	}
 	// write physical groups
-	if(fGMesh->Dimension() == 2){
-		out<<"\nPhysical Curve(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
-		for(auto itr = groupFracture.begin(); itr != groupFracture.end();/*Increment in next line*/){
-			out<<*itr<<(++itr!=groupFracture.end()? "," : "};\n");
-		}
-	}
+	// if(fGMesh->Dimension() == 2){
+	// 	out<<"\nPhysical Curve(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
+	// 	for(auto itr = groupFracture.begin(); itr != groupFracture.end();/*Increment in next line*/){
+	// 		out<<*itr<<(++itr!=groupFracture.end()? "," : "};\n");
+	// 	}
+	// }
 }
 
 
@@ -737,14 +763,14 @@ void DFNMesh::ExportGMshCAD_edges(std::ofstream& out){
 
 
 void DFNMesh::ExportGMshCAD_faces(std::ofstream& out){
-	std::stringstream facestream;
-    facestream << "\n\n// FACES DEFINITION \n\n";
+	std::stringstream stream;
+    stream << "\n\n// FACES DEFINITION \n\n";
 	int64_t nels = fGMesh->NElements();
 	int mesh_dim = fGMesh->Dimension();
-	// declare lists to define physical groups
-	std::list<int64_t> groupFracture;
-	std::list<int64_t> groupTransition;
-	std::list<int64_t> groupIntact;
+	// // declare lists to define physical groups
+	// std::list<int64_t> groupFracture;
+	// std::list<int64_t> groupTransition;
+	// std::list<int64_t> groupIntact;
 
 	TPZManVector<int64_t,4> lineloop;
 	// iterate over all 2D elements
@@ -755,49 +781,52 @@ void DFNMesh::ExportGMshCAD_faces(std::ofstream& out){
 		if(gel->HasSubElement()) continue;
 
 		// curve loop _______________________________________
-		facestream << "Curve Loop(" << iel+gmshshift << ") = {";
+		stream << "Curve Loop(" << iel+gmshshift << ") = {";
 		DFN::GetLineLoop(gel,lineloop,gmshshift);
 		int nedges = gel->NSides(1);
 		for(int i=0; i<nedges; i++){
-			facestream << lineloop[i] << ",";
+			stream << lineloop[i] << ",";
 		}
-		facestream.seekp(facestream.str().length()-1);
-		facestream << "};\n";
+		stream.seekp(stream.str().length()-1);
+		stream << "};\n";
 		// surface
-		facestream << "Surface("<<iel+gmshshift<<") = {"<<iel+gmshshift<<"};\n";
+		stream << "Surface("<<iel+gmshshift<<") = {"<<iel+gmshshift<<"};\n";
 
-		if(gel->MaterialId() == DFNMaterial::Efracture){groupFracture.push_back(iel+gmshshift);}
-		if(mesh_dim == 2){
-			if(gel->MaterialId() == DFNMaterial::Erefined){groupTransition.push_back(iel+gmshshift);}
-			else groupIntact.push_back(iel+gmshshift);
-		}
+		// if(gel->MaterialId() == DFNMaterial::Efracture){groupFracture.push_back(iel+gmshshift);}
+		// if(mesh_dim == 2){
+		// 	if(gel->MaterialId() == DFNMaterial::Erefined){groupTransition.push_back(iel+gmshshift);}
+		// 	else groupIntact.push_back(iel+gmshshift);
+		// }
 	}
-	// write physical groups
-	if(groupTransition.size() > 0){
-		facestream<<"\nPhysical Surface("<<DFNMaterial::Erefined<<") = {";
-		for(auto index : groupTransition){
-			facestream<<index<<",";
-		}
-		facestream.seekp(facestream.str().length()-1);
-		facestream << "};\n";
-	}
-	if(groupFracture.size() > 0){
-		if(mesh_dim == 3) facestream<<"\nPhysical Surface(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
-		for(auto index : groupFracture){
-			facestream<<index<<",";
-		}
-		facestream.seekp(facestream.str().length()-1);
-		facestream << "};\n";
-	}
-	if(groupIntact.size() > 0){
-		facestream<<"\nPhysical Surface("<<DFNMaterial::Eintact<<") = {";
-		for(auto index : groupIntact){
-			facestream<<index<<",";
-		}
-		facestream.seekp(facestream.str().length()-1);
-		facestream << "};\n";
-	}
-	out << facestream.str() << std::endl;
+
+
+
+	
+	// if(groupTransition.size() > 0){
+	// 	stream<<"\nPhysical Surface("<<DFNMaterial::Erefined<<") = {";
+	// 	for(auto index : groupTransition){
+	// 		stream<<index<<",";
+	// 	}
+	// 	stream.seekp(stream.str().length()-1);
+	// 	stream << "};\n";
+	// }
+	// if(groupFracture.size() > 0){
+	// 	if(mesh_dim == 3) stream<<"\nPhysical Surface(\"Fractures\","<<DFNMaterial::Efracture<<") = {";
+	// 	for(auto index : groupFracture){
+	// 		stream<<index<<",";
+	// 	}
+	// 	stream.seekp(stream.str().length()-1);
+	// 	stream << "};\n";
+	// }
+	// if(groupIntact.size() > 0){
+	// 	stream<<"\nPhysical Surface("<<DFNMaterial::Eintact<<") = {";
+	// 	for(auto index : groupIntact){
+	// 		stream<<index<<",";
+	// 	}
+	// 	stream.seekp(stream.str().length()-1);
+	// 	stream << "};\n";
+	// }
+	out << stream.str() << std::endl;
 }
 
 
@@ -906,7 +935,9 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     ExportGMshCAD_faces(out);
     // write volumes
     ExportGMshCAD_volumes(out);
-
+	// write fractures
+    ExportGMshCAD_fractures(out);
+	// boundary conditions
 	ExportGMshCAD_boundaryconditions(out);
     
     
@@ -924,15 +955,73 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	out.flush();
 }
 
+void DFNMesh::ExportGMshCAD_fractures(std::ofstream& out){
+	if(this->RealNFractures() == 0) return;
+	std::stringstream stream;
 
+	stream << "\n\n // FRACTURES\n";
+	// write physical groups for fractures
+	int ifrac = 0;
+	std::multimap<int,int> fracturegroups;
+	// loop over fractures and list the elements on their surface
+	for(DFNFracture* frac : this->fFractures){
+		ifrac++;
+		if(frac->Surface().size() == 0) continue;
+		stream << "\nfrac" << ifrac << "[] = {";
+		for(int64_t gelindex : frac->Surface()){
+			stream << gelindex+gmshshift << ",";
+		}
+		stream.seekp(stream.str().length()-1);
+		stream << "};";
+		fracturegroups.insert({frac->MaterialId(),ifrac});
+		// stream<<"Physical Surface(\"Fracture "<< ifrac << "\","<<frac->MaterialId()<<") = frac" << ifrac <<"[];\n";
+	}
+	// If fractures share a material id, we can (must?) merge their listings into the same physical group
+	int igroup = fracturegroups.begin()->first;
+	stream 	<< "\n\nPhysical Surface(\"Fracture"
+			<< igroup
+			<< "\","
+			<< igroup
+			<<") = {";
+	for(auto& itr : fracturegroups){
+		if(itr.first != igroup){
+			igroup = itr.first;
+			stream.seekp(stream.str().length()-2);
+			stream << "};";
+			stream 	<< "\nPhysical Surface(\"Fracture"
+					<< igroup
+					<< "\","
+					<< igroup
+					<<") = {";
+		}
+		stream << "frac" << itr.second  << "[], ";
+	}
+	stream.seekp(stream.str().length()-2);
+	stream << "};\n";
+	
+	
+	out << stream.str() << std::endl;
+}
 void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 	std::multimap<int, int64_t> physicalgroups;
+	// @todo this should always work but it is failling sometimes and I have to figure out why.
+	// tip: when faces get refined, somehow the outter polyhedron (the boundary) is not updating 1 or 2 arbitrary faces. Go over every time faces get refined and find out where this might be failing.
+	// example: Octagon + Rectangle
 	DFNPolyhedron& boundary = fPolyhedra[0];
 	for(auto orientedface : boundary.Shell()){
 		int64_t index = orientedface.first;
 		int matid = fGMesh->Element(index)->MaterialId();
 		physicalgroups.insert({matid,index});
 	}
+	// @todo this is a non-robust temporary patch. It will fail whenever a non-convex polyhedron is generated and corrected. The actual robust solution is above but it has a bug which I'm yet to solve
+	// for(TPZGeoEl* gel : Mesh()->ElementVec()){
+	// 	if(!gel) continue;
+	// 	if(gel->Dimension() != 2) continue;
+	// 	TPZGeoEl* ancestor = (gel->Father() ? gel->EldestAncestor() : gel);
+	// 	TPZGeoElSide gelside(ancestor, ancestor->NSides()-1);
+	// 	if(gelside.NNeighbours(3) != 1) continue;
+	// 	physicalgroups.insert({gel->MaterialId(),gel->Index()});
+	// }
 
 	// Give physical tags to differenciate coarse element groups
 	std::stringstream stream;
@@ -1468,7 +1557,7 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
             {
                 if(matid == -1) matid = gel->MaterialId();
                 // TPZGeoElBC(gelside, matid);
-                if(gel->MaterialId() == DFNMaterial::Efracture) TPZGeoElBC(gelside, DFNMaterial::Efracture);
+                // if(gel->MaterialId() == DFNMaterial::Efracture) TPZGeoElBC(gelside, DFNMaterial::Efracture);
                 else TPZGeoElBC(gelside, matid);
             }
         }
@@ -1559,7 +1648,7 @@ void DFNMesh::InitializePolyhedra(){
 		}
 		if(nneighbours > 1) continue;
 		// Faces don't have guaranteed positive orientation, since they were created using CreateBCGeoEl(). @see  DFN::CreateSkeletonElements()
-		int orient = DFN::PZOutwardPointingFace(volneig) ? 1 : -1; 
+		int orient = DFN::SkeletonOrientation(volneig,gel);
 		shell.push_back({gel->Index(),orient});
 		SetPolyhedralIndex({gel->Index(),orient},0);
 	}
@@ -1616,6 +1705,9 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 }
 
 void DFNMesh::UpdatePolyhedra(){
+#ifdef LOG4CXX
+	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"\n[Start][Updating Polyhedra]");
+#endif // LOG4CXX
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
 	std::cout<<"Updating polyhedral volumes\r"<<std::flush;
@@ -1673,6 +1765,14 @@ void DFNMesh::UpdatePolyhedra(){
 		}
 	}
 	std::cout<<"                             \r"<<std::flush;
+#ifdef LOG4CXX
+	if(logger->isInfoEnabled()){
+		stringstream sout;
+		sout << "\n[End][Updating Polyhedra]";
+		// sout << "\n[End][Fracture " << fFractures.size() <<"]";
+		LOGPZ_INFO(logger,sout.str());
+	} 
+#endif // LOG4CXX
 }
 
 void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
@@ -1861,7 +1961,7 @@ void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
 		// Setup refinement tree
 		for(int i=0; i<children.size(); i++){
 			gel->SetSubElement(i,children[i]);
-			children[i]->SetMaterialId(DFNMaterial::Erefined);
+			children[i]->SetMaterialId(gel->MaterialId());
 			children[i]->SetFather(gel);
 			// It's important that children inherit the polyhedron on the other side
 			int child_orient = permut_orient*DFN::SubElOrientation(gel,i);
@@ -1951,7 +2051,7 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 		gmsh::model::geo::addSurfaceLoop(surfaceloop,shelltag[0]);
 		gmsh::model::geo::addVolume(shelltag,shelltag[0]);
 		// gmsh::model::addPhysicalGroup(2,surfaceloop,DFNMaterial::Erefined);
-		gmsh::model::addPhysicalGroup(3,shelltag,DFNMaterial::Erefined);
+		gmsh::model::addPhysicalGroup(3,shelltag,DFNMaterial::Eintact);
 	}
 
 	// synchronize before meshing

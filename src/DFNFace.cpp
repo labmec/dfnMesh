@@ -94,6 +94,7 @@ void DFNFace::UpdateRefMesh(){
     
 	int ncornersfather = fGeoEl->NCornerNodes();
 	int nchildren = child.size();
+	int matid = fGeoEl->MaterialId();
 	TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
 	
@@ -121,7 +122,7 @@ void DFNFace::UpdateRefMesh(){
 		TPZManVector<int64_t,4> cornerindices(ncornersfather);
 		for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
 		int64_t index = 0;
-		fRefMesh.CreateGeoElement(elemtype, cornerindices, DFNMaterial::Erefined, index);
+		fRefMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
 	}
 	// insert children
 	for (int i = 0; i < nchildren; i++)
@@ -136,7 +137,7 @@ void DFNFace::UpdateRefMesh(){
 		// int64_t index = i;
 		TPZManVector<int64_t,4> refchild(ncorners);
 		for(int k = 0; k<ncorners; k++) refchild[k] = child[i][k];
-		fRefMesh.CreateGeoElement(elemtype, refchild, DFNMaterial::Erefined, index);
+		fRefMesh.CreateGeoElement(elemtype, refchild, matid, index);
 	}
 	fRefMesh.BuildConnectivity(); 
 }
@@ -399,7 +400,7 @@ void DFNFace::FillChildrenAndNewNodes(
 /// Check if should be refined and generate the subelements of material id matID
 void DFNFace::Refine(){
 	if(!this->NeedsRefinement()) return;
-	if(fGeoEl->MaterialId()!=DFNMaterial::Efracture) fGeoEl->SetMaterialId(DFNMaterial::Erefined);
+	// if(fGeoEl->MaterialId()!=DFNMaterial::Efracture) fGeoEl->SetMaterialId(DFNMaterial::Erefined);
 	// define refPattern
 	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(fRefMesh);
 	fGeoEl->SetRefPattern(refpat);
@@ -407,8 +408,13 @@ void DFNFace::Refine(){
 	// refine
 	fGeoEl->Divide(children);
 
-	// // let children inherit polyhedral indices
-	// InheritPolyhedra();
+	// let children inherit polyhedral indices
+	/** @note I thought this would be done more efficiently if we updated all polyhedra at the same moment, so I wrote the method DFNMesh::InheritPolyhedra() (no parameters). 
+	I'm trying to avoid excessive dynamic memmory allocation in the vector DFNMesh::fPolyh_per_face, which would be increased every time a face gets refined 
+	and its subelements inherit the polyhedral index. 
+	This could also be approached with a chunk vector, but I've also tried and failed to employ PZChunkVector in these classes. Maybe in the future.*/
+	// DFNMesh* dfn = fFracture->dfnMesh();
+	// dfn->InheritPolyhedra(fGeoEl);
 
 	// update internal node index
 	int splitcase = GetSplitPattern(fStatus);
@@ -617,6 +623,7 @@ bool DFNFace::FindInPlanePoint(){
 }
 
 void DFNFace::UpdateMaterial(){
+	DebugStop(); // deprecated
 	if(fGeoEl->MaterialId() == DFNMaterial::Efracture) return;
 
 	bool two_in_a_row = false;

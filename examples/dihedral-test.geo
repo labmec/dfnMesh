@@ -1,3 +1,5 @@
+/// @brief Geometry definition for a mesh of to surfaces connected by an edge. This was created to test the computation of the oriented angle between faces
+/// @author Pedro Lima
 x = -1.;
 y5 = 0.;
 y6 = 1.;
