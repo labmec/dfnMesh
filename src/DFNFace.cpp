@@ -824,9 +824,19 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 	}
 
 	if(print_refmesh){
-		out<<"Start of Refinement Mesh:_________________________________\n\n";
+		// int nels = fGeoEl->Mesh()->NElements();
+		// int w = (int) std::log10(nels)+1;
+		out << "\n[Start][Refinement Mesh][Face Index " 
+			// << std::setw(w) 
+			// << std::right 
+			<< fGeoEl->Index()
+			<< "]\n\n";
 		fRefMesh.Print(out);
-		out<<"\nEnd  of  Refinement Mesh:_________________________________\n\n";
+		out << "\n[End][Refinement Mesh][Face Index " 
+			// << std::setw(w) 
+			// << std::right 
+			<< fGeoEl->Index()
+			<< "]\n\n";
 	}
 	out<<"\n";
 }

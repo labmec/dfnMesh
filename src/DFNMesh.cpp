@@ -346,14 +346,16 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 // }
 
 
-void DFNMesh::AddFracture(DFNFracture *fracture){
+DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling){
+	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling);
 #ifdef LOG4CXX
 	std::stringstream sout;
-	sout << "\n[Start][Fracture " << fFractures.size() << "]";
+	sout << "\n[Start][Fracture " << fracture->Index() << "]";
     if(logger->isInfoEnabled()) LOGPZ_INFO(logger, sout.str());
 #endif // LOG4CXX
-	std::cout<<"\nFracture #"<<fFractures.size();
+	std::cout<<"\nFracture #"<<fracture->Index();
 	fFractures.push_back(fracture);
+	return fracture;
 }
 
 
@@ -1050,6 +1052,17 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 		stream << "};\n";
 	}
 	out << stream.str() << std::endl;
+	
+	for(DFNFracture* fracture : fFractures){
+		int bcindex = 10;
+		fracture->ExportFractureBC(bcindex+fracture->Index(),out);
+		out << "Physical Curve(\"BCfrac" 
+			<< fracture->Index() 
+			<< "\", " << fracture->Index() + bcindex
+			<< ") = {BCfrac"
+			<< fracture->Index()
+			<< "[]};\n";
+	}
 }
 
 

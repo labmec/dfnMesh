@@ -144,8 +144,7 @@ int main(int argc, char* argv[]){
 		DFNPolygon polygon(polyg_stack[iplane], gmesh);
         // Initialize the basic data of fracture
 		// fracture = new DFNFracture(polygon,&dfn,FracLimit::Etruncated);
-		fracture = new DFNFracture(polygon,&dfn,limit_directives[iplane]);
-		dfn.AddFracture(fracture);
+		fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
         
 		// Find intersected ribs and impose tolerance
 		fracture->FindRibs();
@@ -181,7 +180,7 @@ int main(int argc, char* argv[]){
 	for(auto frac : dfn.FractureList()){
 		frac->CleanUp();
 	}
-	dfn.UpdatePolyhedra();
+	
 
 
 	// Generate submesh

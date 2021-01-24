@@ -190,7 +190,8 @@ enum DFNMaterial{
     // Etransition = 3
 };
 
-
+// Options for handling the limits of the fracture {Truncated, Extended, Recovered}
+enum FracLimit{Etruncated=0,Eextended=1,Erecovered=2};
 
 // Set Material ID for element and its children
 static void SetMaterialIDChildren(int id, TPZGeoEl* gel){

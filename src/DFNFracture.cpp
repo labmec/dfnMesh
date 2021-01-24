@@ -29,6 +29,7 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limith
 {
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
+    fIndex = dfnMesh->NFractures();
 }
 
 void DFNFracture::Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling)
@@ -1192,7 +1193,44 @@ void DFNFracture::FindOffboundFaces(){
 
 
 
-
+void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
+    // DebugStop(); // this is an unreviewed draft
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    int fracdim = gmesh->Dimension()-1;
+    int bcdim = fracdim-1;
+    std::stringstream stream;
+    stream << "\nBCfrac" << this->fIndex << "[] = {";
+    // for(TPZGeoEl* gel : gmesh->ElementVec()){
+    TPZGeoEl* gel = nullptr;
+    for(int64_t index : this->fSurfaceFaces){
+        gel = gmesh->Element(index);
+        if(!gel) continue;
+        if(gel->Dimension() != fracdim) continue;
+        int nsides = gel->NSides();
+        for(int iside = gel->FirstSide(bcdim); iside < nsides-1; iside++){
+            TPZGeoElSide gelside(gel,iside);
+            bool IsBoundarySide = true;
+            for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
+                if(neig.Element()->Dimension() != 2) continue;
+                if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
+                    IsBoundarySide = false;
+                    break;
+                }
+            }
+            if(!IsBoundarySide) continue;
+            TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
+            gelbc->SetMaterialId(matid);
+            stream << gelbc->Index()+gmshshift << ",";
+            /** @todo maybe add to a set?
+              * @todo maybe the user would want the material id to match a chosen neighbour? 
+              *       this way we would have multiple subsets of the boundary for a fracture, which is likely to come handy
+              */
+        }
+    }
+    stream.seekp(stream.str().length()-1);
+    stream << "};";
+    out << stream.str() << std::endl;
+}
 
 
 
@@ -1412,6 +1450,7 @@ void DFNFracture::RecoverFractureLimits(){
         orthfracture.RefineFaces();
         orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Eintact,*this);
     }
+    fdfnMesh->UpdatePolyhedra();
 }
 
 
@@ -1468,6 +1507,7 @@ void DFNFracture::InsertFaceInSurface(int64_t elindex){
     }
     for(TPZGeoEl* gel : children){
         // gel->SetMaterialId(fmatid);
+        if(gel->Dimension() !=2) DebugStop();
         fSurfaceFaces.insert(gel->Index());
     }
 }
@@ -1559,6 +1599,7 @@ void DFNFracture::CleanUp(){
         gel->SetMaterialId(this->fmatid);
         DFN::SetEdgesMaterialId(gel,this->fmatid);
     }
+    // fdfnMesh->UpdatePolyhedra();
 }
 
 

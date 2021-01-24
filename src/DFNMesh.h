@@ -105,6 +105,9 @@ public:
      * @note matid = -1 will use the material id of first that is found. Set it if you want to force
      */
     void CreateSkeletonElements(int dimension, int matid = -1);
+
+    /** @brief Standard command to create a DFNFracture */
+    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended);
     
     // /// Setup datastructure for fractured volumes (including finding fracture elements enclosed by them)
     // void CreateVolumes();

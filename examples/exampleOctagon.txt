@@ -6,7 +6,7 @@ EHexahedral
 4 4 2
 
 Fracture 0
-Limit Eextended
+Limit Erecovered
 1.50 3.55 3.55 1.50
 1.70 1.70 1.70 1.70
 0.30 0.30 1.50 1.50
