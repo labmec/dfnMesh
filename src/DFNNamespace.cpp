@@ -337,17 +337,26 @@ namespace DFN{
         }
     }
 
+    /// @todo Rewrite this using the determinant of the matrix of the transformation between parametric space of father-child, so it won't be limited to 2D elements
     int SubElOrientation(TPZGeoEl* father, int ichild){
         if(!father->HasSubElement()) DebugStop();
 
         TPZGeoEl* child = father->SubElement(ichild);
-        if(father->Dimension() != child->Dimension()){PZError<<"\n I don't see how this could be considered consistent\n";DebugStop();}
+        int dim = father->Dimension();
+        if(dim != child->Dimension()){PZError<<"\n I don't see how this could be considered consistent\n";DebugStop();}
+        
+        
+        // TPZTransform<REAL> transf = father->GetTransform(child->NSides()-1,ichild);
+        // REAL det = 1.;
+        // TPZFMatrix<REAL> inverse(dim,dim);
+        // transf.Mult().DeterminantInverse(det,inverse);
+        // return DFN::sgn(det);
 
         TPZGeoElSide fatherside(father,father->NSides()-1);
         TPZGeoElSide childside(child,child->NSides()-1);
         TPZManVector<REAL,3> qsi(fatherside.Dimension(),0.);
         int orientation=0;
-        switch(father->Dimension()){
+        switch(dim){
             case  2:{
                 // TPZManVector<REAL,3> father_normal(3,0.);
                 // fatherside.Normal(qsi,father_normal);
