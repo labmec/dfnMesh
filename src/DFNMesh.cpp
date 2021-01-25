@@ -1719,7 +1719,7 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 
 void DFNMesh::UpdatePolyhedra(){
 #ifdef LOG4CXX
-	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"\n[Start][Updating Polyhedra]");
+	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"\n[Start][Update Polyhedra]");
 #endif // LOG4CXX
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
@@ -1779,7 +1779,13 @@ void DFNMesh::UpdatePolyhedra(){
 	}
 	std::cout<<"                             \r"<<std::flush;
 #ifdef LOG4CXX
-	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[End][Updating Polyhedra]");
+	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[End][Update Polyhedra]");
+	if(logger->isDebugEnabled()){
+		std::stringstream stream;
+		stream << "[Result][Update Polyhedra]\n";
+		PrintPolyhedra(stream);
+		LOGPZ_DEBUG(logger,stream.str());
+	}
 #endif // LOG4CXX
 }
 
