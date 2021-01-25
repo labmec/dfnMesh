@@ -1779,12 +1779,7 @@ void DFNMesh::UpdatePolyhedra(){
 	}
 	std::cout<<"                             \r"<<std::flush;
 #ifdef LOG4CXX
-	if(logger->isInfoEnabled()){
-		stringstream sout;
-		sout << "\n[End][Updating Polyhedra]";
-		// sout << "\n[End][Fracture " << fFractures.size() <<"]";
-		LOGPZ_INFO(logger,sout.str());
-	} 
+	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[End][Updating Polyhedra]");
 #endif // LOG4CXX
 }
 

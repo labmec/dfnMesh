@@ -286,18 +286,78 @@ void DFNFracture::RefineFaces(){
 
 
 
-void DFNFracture::SnapIntersections_ribs(REAL tolDist){
+void DFNFracture::SnapIntersections_ribs(REAL tolDist)
+{
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()){
+        std::stringstream stream;
+        stream <<"[Start][Snapping intersections Ribs]";
+        if(fIndex < 0 && logger->isDebugEnabled())
+            {stream << "[Orthogonal plane]";}
+        else
+            {stream << "[Fracture " << fIndex << "]";}
+        LOGPZ_INFO(logger,stream.str());
+    }
+#endif // LOG4CXX
+
+
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
         DFNRib* rib = &itr->second;
         rib->SnapIntersection_try(tolDist);
     }
+
+
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()){
+        std::stringstream stream;
+        stream <<"[End][Snapping intersections Ribs]";
+        if(fIndex < 0 && logger->isDebugEnabled())
+            {stream << "[Orthogonal plane]";}
+        else
+            {stream << "[Fracture " << fIndex << "]";}
+        LOGPZ_INFO(logger,stream.str());
+    }
+#endif // LOG4CXX
 }
+
+
+
+
+
+
+
 void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()){
+        std::stringstream stream;
+        stream <<"[Start][Snapping intersections Faces]";
+        if(fIndex < 0 && logger->isDebugEnabled())
+            {stream << "[Orthogonal plane]";}
+        else
+            {stream << "[Fracture " << fIndex << "]";}
+        LOGPZ_INFO(logger,stream.str());
+    }
+#endif // LOG4CXX
+    
+    
     tolAngle = std::cos(tolAngle);
     for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
         DFNFace* face = &itr->second;
         face->SnapIntersection_try(tolDist, tolAngle);
     }
+
+
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()){
+        std::stringstream stream;
+        stream <<"[End][Snapping intersections Faces]";
+        if(fIndex < 0 && logger->isDebugEnabled())
+            {stream << "[Orthogonal plane]";}
+        else
+            {stream << "[Fracture " << fIndex << "]";}
+        LOGPZ_INFO(logger,stream.str());
+    }
+#endif // LOG4CXX
 }
 
 
@@ -1368,6 +1428,17 @@ void DFNFracture::GetEdgesInSurface(std::set<int64_t>& edges){
 
 
 void DFNFracture::CreateOrthogonalFracture(DFNFracture& orthfracture, const int edgeindex){
+    
+
+#ifdef LOG4CXX
+    if(logger->isDebugEnabled()){
+        std::stringstream stream;
+        stream << "[Start][Recover limit "<<edgeindex<<"][Fracture " << fIndex << "]";
+        LOGPZ_DEBUG(logger,stream.str());
+    }
+#endif // LOG4CXX
+
+    
     // consistency checks
     if(edgeindex < 0) DebugStop();
     if(edgeindex >= this->fPolygon.NEdges()) DebugStop();
@@ -1433,6 +1504,16 @@ void DFNFracture::RecoverFractureLimits(){
     // Nothing to do for fractures that haven't intersected the mesh
     if(fRibs.size() == 0) return;
 
+
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()){
+        std::stringstream stream;
+        stream << "[Start][Recover fracture limits][Fracture " << fIndex << "]";
+        LOGPZ_INFO(logger,stream.str());
+    }
+#endif // LOG4CXX
+
+
     this->UpdateFractureSurface();
     this->GetEdgesInSurface(fSurfaceEdges);
 
@@ -1449,8 +1530,30 @@ void DFNFracture::RecoverFractureLimits(){
         orthfracture.RefineRibs();
         orthfracture.RefineFaces();
         orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Eintact,*this);
+
+
+#ifdef LOG4CXX
+        if(logger->isDebugEnabled()){
+            std::stringstream stream;
+            stream << "[End][Recover limit "<<ilimit<<"][Fracture " << fIndex << "]";
+            LOGPZ_DEBUG(logger,stream.str());
+        }
+#endif // LOG4CXX
+
+
     }
     fdfnMesh->UpdatePolyhedra();
+
+
+#ifdef LOG4CXX
+    if(logger->isInfoEnabled()){
+        std::stringstream stream;
+        stream << "[End][Recover fracture limits][Fracture " << fIndex << "]";
+        LOGPZ_INFO(logger,stream.str());
+    }
+#endif // LOG4CXX
+
+
 }
 
 
