@@ -1389,12 +1389,11 @@ void DFNFracture::ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std:
                         // Use mapGMshToPZ to translate from GMsh node index to PZ nodeindex
                         node_identifiers[inode] = mapGMshToPZ[group_node_identifiers[itype][iel*n_nodes+inode]];
                     }
-                    TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
-                    newelements.push_back(el_identifier);
+                    TPZGeoEl* newel = TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
+                    newelements.push_back(newel->Index());
                     #ifdef PZDEBUG
-                        int testdim = gmesh->Element(el_identifier)->Dimension();
-                        if(testdim != dimension){ 
-                            PZError << "\nGmsh tried to group a " << testdim << "D element as " << dimension << "D.\n";
+                        if(newel->Dimension() != dimension){ 
+                            PZError << "\nGmsh tried to group a " << newel->Dimension() << "D element as " << dimension << "D.\n";
                             gmesh->Element(el_identifier)->Print(PZError);
                             DebugStop();
                         }
