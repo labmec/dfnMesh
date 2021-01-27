@@ -214,7 +214,12 @@ public:
     /// set a polyhedral index for a face in the structure fPolyh_per_face
     void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
     /// get the polyhedral index for a face from the structure fPolyh_per_face
-    int GetPolyhedralIndex(std::pair<int64_t,int> face_orient);
+    int GetPolyhedralIndex(const std::pair<int64_t,int>& face_orient) const;
+    
+    int __attribute_noinline__ GetPolyhedralIndex(int64_t faceindex, int orientation) const{
+        const std::pair<int64_t,int> face_orient({faceindex,orientation});
+        return GetPolyhedralIndex(face_orient);
+    }
     /**
      * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
     */
@@ -250,13 +255,22 @@ public:
     DFNPolyhedron& Polyhedron(int i){return fPolyhedra[i];}
 
     /// Get number of fractures in the fracture vector of this DFN
-    int NFractures(){return fFractures.size();}
+    int NFractures() const{return fFractures.size();}
 
     /// Get number of fractures that have at least 1 surface element
-    int RealNFractures();
+    int RealNFractures() const;
 
     /** @brief For a specific face, pass its polyhedral index to its children*/
     void InheritPolyhedra(TPZGeoEl* father);
+    
+    /// Set all material ids to 1
+    void ClearMaterials();
+
+    /// At any point in the code, dump a colored VTK file for graphical debugging 
+    void DumpVTK(bool clearmaterials = true);
+
+
+
 private:
     /// Gather oriented faces around a 3D element to define a shell, then create a new polyhedron in the polyhedra vec DFNMesh::fPolyhedra
     int CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex);
@@ -286,9 +300,6 @@ private:
      */
     
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
-    
-    /// Set all material ids to 1
-    void ClearMaterials();
     
     // @todo
     void RestoreMaterials(TPZGeoMesh *originalmesh);

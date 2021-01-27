@@ -258,7 +258,7 @@ namespace DFN{
 
 
 
-    void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*> children){
+    void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*>& children){
         TPZGeoMesh refmesh;
         TPZGeoMesh* gmesh;
         int nfathernodes = father->NCornerNodes();

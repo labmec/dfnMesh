@@ -33,6 +33,11 @@ class DFNPolyhedron
 
 		// Index of the coarse element where this polyhedron is contained
 		int fCoarseIndex = -1;
+
+		/** A flag for convexity. Polyhedra can only be non-convex if they have been refined into convex subsets.
+		 * @note We weren't going to need this, but I noticed creating instances of this class for non-convex is the more elegant way to keep a continuous inheritance of fCoarseIndex as these polyhedra get refined. That's the only reason I'm keeping it.
+		 */
+		int fIsConvex = true;
 		
     public:
 		/// Empty constructor
@@ -69,7 +74,7 @@ class DFNPolyhedron
 		DFNPolyhedron &operator=(const DFNPolyhedron &copy);
 
 		/** @brief Print method for logging */
-		void Print(std::ostream& out = std::cout);
+		void Print(std::ostream& out = std::cout, bool detailed = true);
 
 		// Index of polyhedron
 		int Index(){return fIndex;}

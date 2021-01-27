@@ -30,7 +30,7 @@ void DFNPolyhedron::SwapIndex(const int newid){
 
 
 /** @brief Print method for logging */
-void DFNPolyhedron::Print(std::ostream& out){
+void DFNPolyhedron::Print(std::ostream& out, bool detailed){
     int nelements = this->fDFN->Mesh()->NElements();
     int width = 2 + int(std::log10(nelements)+1);
     out << "\nPolyh#"<<std::setw(width-1)<<fIndex<<":";
@@ -39,7 +39,9 @@ void DFNPolyhedron::Print(std::ostream& out){
         // out << std::setw(5) << std::showpos << oriented_face << " ";
         out << std::setw(width) << oriented_face;
     }
-    // if(IsRefined()) out << "\t [Refined]";
+    if(!detailed) return;
+    out << "\n\tCoarseIndex = " << std::setw(width-1) << fCoarseIndex
+        << "\n\tConvex      = " << std::setw(width-1) << (fIsConvex?"true":"false");
 }
 
 void DFNPolyhedron::ListDFNFaces(DFNFracture* fracture, TPZStack<DFNFace*> facelist){

@@ -134,7 +134,6 @@ int main(int argc, char* argv[]){
 	// Loop over fractures and refine mesh around them
 	DFNFracture *fracture = nullptr;
 
-
 	// dfn.PrintPolyhedra();
 
 

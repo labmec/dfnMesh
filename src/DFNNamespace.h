@@ -158,7 +158,7 @@ namespace DFN{
     TPZManVector<int64_t,4> GetEdgeIndices(TPZGeoEl* face);
 
     /// Creates a refinement pattern using a father element and a list of children, than associates that refpattern to father element
-    void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*> children);
+    void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*>& children);
 
     /// Return 1 if subel's normal vector matches its father's, and -1 otherwise
     int SubElOrientation(TPZGeoEl* father, int ichild);
@@ -166,7 +166,10 @@ namespace DFN{
     // Get a vector normal to a 2D element that matches its orientation
     void ElementOrientation(TPZGeoEl* gel, TPZManVector<REAL,3>& orientvec);
 
-    /// Given a volume and a face occupying a side of a volume, check if the face is oriented inwards or outwards the volume
+    /** @brief Given a volume and a face occupying a side of a volume, check if the face is oriented inwards or outwards the volume
+     * @return +1 if skeleton is pointing outwards;
+     * @return -1 if skeleton is pointing inwards;
+    */
     int SkeletonOrientation(TPZGeoElSide volside, TPZGeoEl* face);
 
     void SetEdgesMaterialId(TPZGeoEl* gel, int matid);

@@ -559,7 +559,7 @@ void DFNMesh::QueueNeighbours(TPZGeoEl* gel, std::list<int64_t> &candidate_queue
 
 
 
-int DFNMesh::RealNFractures(){
+int DFNMesh::RealNFractures() const{
 	int counter=0;
 	for(auto frac : fFractures){
 		counter += (frac->NSurfElements() > 0);
@@ -1585,6 +1585,7 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
 
 
 void DFNMesh::ClearMaterials(){
+	std::cout << "\n\n[WARNING] Boundary conditions were erased.\n\n";
 	for(auto el : fGMesh->ElementVec()){
 		if(!el) continue;
 		el->SetMaterialId(DFNMaterial::Eintact);
@@ -1678,7 +1679,7 @@ void DFNMesh::InitializePolyhedra(){
 
 	// Gather mesh boundary first
 	shell.clear();
-	DFNPolyhedron polyhedron;
+	// DFNPolyhedron polyhedron;
 	TPZGeoElSide gelside;
 	TPZGeoElSide neig;
 	for(TPZGeoEl* gel : fGMesh->ElementVec()){
@@ -1699,9 +1700,10 @@ void DFNMesh::InitializePolyhedra(){
 		shell.push_back({gel->Index(),orient});
 		SetPolyhedralIndex({gel->Index(),orient},0);
 	}
-	polyhedron.Initialize(this,ipolyh,shell,-1);
+	// polyhedron.Initialize(this,ipolyh,shell,-1);
 	// polyhedron.Print();
-	fPolyhedra.push_back(polyhedron);
+	// fPolyhedra.push_back(polyhedron);
+	CreatePolyhedron(shell,-1);
 	shell.Fill({-1,0});
 	shell.clear();
 
@@ -1735,18 +1737,23 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 	TPZStack<std::pair<int64_t,int>,6> shell(6,{-1,0});	///< oriented faces that enclose the polyhedron
 	shell.clear();
 	int ipolyh = fPolyhedra.size();
+	// Loop over 2D sides
 	for(int iside=vol->FirstSide(2); iside < vol->NSides()-1; iside++){
+		// Get oriented face in that side
 		TPZGeoElSide volside(vol,iside);
 		TPZGeoEl* face = DFN::GetSkeletonNeighbour(vol,iside);
 		int orient = -DFN::SkeletonOrientation(volside,face);
 		std::pair<int64_t,int> face_orient = {face->Index(),orient};
 		shell.push_back(face_orient);
-		if(GetPolyhedralIndex(face_orient) > -1) DebugStop();
+		// Set polyhedral index to that oriented face
+		int currentface_polyh_index = GetPolyhedralIndex(face_orient);
+		if(currentface_polyh_index > -1 && currentface_polyh_index != ipolyh) DebugStop();
 		SetPolyhedralIndex(face_orient,ipolyh);
 	}
-	DFNPolyhedron polyhedron(this,ipolyh,shell,coarseindex);
+	// DFNPolyhedron polyhedron(this,ipolyh,shell,coarseindex);
 	// polyhedron.Print();
-	fPolyhedra.push_back(polyhedron);
+	// fPolyhedra.push_back(polyhedron);
+	CreatePolyhedron(shell,coarseindex);
 	shell.Fill({-1,0});
 	return ipolyh;
 }
@@ -1757,7 +1764,7 @@ void DFNMesh::UpdatePolyhedra(){
 #endif // LOG4CXX
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
-	std::cout<<"Updating polyhedral volumes\r"<<std::flush;
+	std::cout<<" -Updating polyhedral volumes\r"<<std::flush;
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 	// Refined faces pass down their polyh index to their subelements
 	InheritPolyhedra();
@@ -1776,6 +1783,9 @@ void DFNMesh::UpdatePolyhedra(){
 		// 	initial_face->MaterialId() != DFNMaterial::Efracture) continue;
 		int64_t initial_id = initial_face->Index();
 		
+		char loading[4] = {'\\','|','/','-'};
+		int buffering = 0;
+
 		// look for polyhedron on each orientation of the initial_face
 		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
 			if(initial_face->HasSubElement()) break;
@@ -1790,6 +1800,9 @@ void DFNMesh::UpdatePolyhedra(){
 			SetPolyhedralIndex(initial_face_orient,polyh_index);
 			bool IsConvex = true;
 			int coarseindex = -1;
+
+			std::cout<< ' ' << loading[(buffering++%4)] << '\r' << std::flush;
+			
 			BuildVolume(initial_face_orient,IsConvex,polyhedron,coarseindex);
 
 			#ifdef PZDEBUG
@@ -1811,7 +1824,7 @@ void DFNMesh::UpdatePolyhedra(){
 			}
 		}
 	}
-	std::cout<<"                             \r"<<std::flush;
+	std::cout<<"                               \r"<<std::flush;
 #ifdef LOG4CXX
 	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[End][Update Polyhedra]");
 	if(logger->isDebugEnabled()){
@@ -1882,7 +1895,7 @@ void DFNMesh::SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_i
 		default: DebugStop();
 	}
 }
-int DFNMesh::GetPolyhedralIndex(std::pair<int64_t,int> face_orient){
+int DFNMesh::GetPolyhedralIndex(const std::pair<int64_t,int>& face_orient) const{
 	int polyh_index = -1;
 	switch(face_orient.second){
 		case  1: polyh_index = fPolyh_per_face[face_orient.first][0]; break;
@@ -1918,7 +1931,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 		if(angle > M_PI+gDFN_SmallNumber){ IsConvex = false; }
 	}
 	// queue neighbour cards to verify
-	std::list<std::pair<int64_t, int>> to_verify;
+	TPZStack<std::pair<int64_t, int>> to_verify;
 	for(int i=0; i<edges.size(); i++){
 		int64_t iedge = edges[i];
 		std::pair<int64_t,int> faceorient = {facingcards[i].first.fgelindex,facingcards[i].second};
@@ -1951,7 +1964,7 @@ TPZStack<TPZGeoEl*,2> GetOverlappedElements(TPZGeoEl* gel){
 	int dim = gel->Dimension();
 
 	// For every 2 consecutive sides, see if there's a common neighbour between them
-	for(int iside = gel->NSides(0); gel->SideDimension(iside)==1; iside++){
+	for(int iside = gel->NSides(0); iside < nsides-1; iside++){
 		TPZGeoElSide gelside1(gel,iside);
 		TPZGeoElSide gelside2(gel,(iside+1)%gel->NSides(1)+gel->NSides(1));
 		std::set<int64_t> neighbours1;
@@ -1981,7 +1994,7 @@ TPZStack<TPZGeoEl*,2> GetOverlappedElements(TPZGeoEl* gel){
 		
 		// overlapped.push_back(*(common.begin()));
 		overlapped.push_back(gmesh->Element(*(common.begin())));
-		iside++; // assuming the overlap is 2 triangles, we can skip a side if an overlap was found
+		// iside++; // assuming the overlap is 2 triangles, we can skip a side if an overlap was found
 	}
 
 	return overlapped;
@@ -2125,6 +2138,11 @@ void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron
 	// Refine quadrilaterals down to 2 triangles so not to depend on pyramids to mesh the polyhedron
 	// I've written a code that does this at the end in order to give gmsh the freedom to optimize the volumetrical mesh as it sees fit
 	RefineQuads(polyhedron);
+
+	// /// @todo remove this. This is debugging
+	// if(coarseindex >= 303){
+	// 	DumpVTK();
+	// }
 
 	// Make sure these new 3D elements have corresponding polyhedra, and coarse index is inherited
 	for(TPZGeoEl* vol : newgels){
@@ -2411,7 +2429,7 @@ void DFNMesh::PrintPolyhedra(std::ostream & out) const{
 		out << "\n- No polyhedra in this mesh\n"; 
 		return;
 	}
-	out <<"\n\nPOLYHEDRA BY FACE:_________________\n";
+	out <<"\n\nPOLYHEDRA BY FACE:\n";
 	{
 		out<<"                 (+)  |  (-)";
 		// int npolyhedra=0;
@@ -2429,8 +2447,21 @@ void DFNMesh::PrintPolyhedra(std::ostream & out) const{
 		// out<<"\n\nNumber of polyhedra found: "<<npolyhedra+1;
 		out<<"\n\nNumber of polyhedra found: "<<fPolyhedra.size();
 		for(auto& polyh : fPolyhedra){
-			polyh.Print(out);
+			polyh.Print(out,false);
 		}
 	}
 	out.flush();
+}
+
+
+
+
+
+void DFNMesh::DumpVTK(bool clearmaterials){
+	if(clearmaterials) ClearMaterials();
+	for(auto frac : FractureList()){
+		frac->CleanUp();
+		frac->Polygon().InsertGeomRepresentation(fGMesh);
+	}
+	PrintVTKColorful();
 }
