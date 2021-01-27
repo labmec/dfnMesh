@@ -121,7 +121,7 @@ int main(int argc, char* argv[]){
 	TPZStack<TPZFMatrix<REAL>> polyg_stack;
 	TPZGeoMesh *gmesh = nullptr;
 	REAL tol_dist = 1.e-4;
-	REAL tol_angle = 1.e-3; 
+	REAL tol_angle = 1.e-6; 
 	TPZManVector<int> matid;
 	TPZManVector<FracLimit> limit_directives;
 	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle,matid,limit_directives);
@@ -163,6 +163,7 @@ int main(int argc, char* argv[]){
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			fracture->MeshFractureSurface();
+			// if(fracture->Index() == 2) dfn.DumpVTK();
 			dfn.UpdatePolyhedra();
 		}
 #ifdef PZDEBUG
@@ -188,10 +189,11 @@ int main(int argc, char* argv[]){
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
-	for(auto frac : dfn.FractureList()){
-		frac->Polygon().InsertGeomRepresentation(gmesh);
-	}
-	dfn.PrintVTKColorful();
+	dfn.DumpVTK();
+	// for(auto frac : dfn.FractureList()){
+	// 	frac->Polygon().InsertGeomRepresentation(gmesh);
+	// }
+	// dfn.PrintVTKColorful();
 	std::cout<<"\n ...the end.\n\n\a";
 
 	gmsh::finalize();

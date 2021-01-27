@@ -189,6 +189,14 @@ private:
     */
     bool CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid);
 
+    /** @brief Search for quadrilaterals that violate our general criterion for refinement*/
+    void SearchForSpecialQuadrilaterals();
+    /** @brief A special quadrilateral is one that should be refined because of a special exception.
+     * @details It has 3 or more neighbour ribs (some of them NOT occupying its 1D sides) whose intersection nodes were snapped toward this quadrilateral.
+     * If this quadrilateral is not refined, it'll (sometimes) induce a non-convex polyhedron with overlapped faces that GMSH can't mesh.
+    */
+    bool IsSpecialQuadrilateral(TPZGeoEl* gel);
+
 public:
 
     /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim

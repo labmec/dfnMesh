@@ -143,6 +143,9 @@ public:
         return false;
     }
 
+    /// Check if intersections were snapped to the same node
+    bool AllSnapsWentToSameNode() const;
+
     /**
      * @brief Checks if face is intersected by one of the fracture edges
      * @note A face on the fracture boundary will only have one node/edge intersected

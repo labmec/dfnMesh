@@ -358,14 +358,46 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
         LOGPZ_INFO(logger,stream.str());
     }
 #endif // LOG4CXX
+    SearchForSpecialQuadrilaterals();
 }
 
 
 
 
+bool DFNFracture::IsSpecialQuadrilateral(TPZGeoEl* gel){
+    if(gel->Type() != MElementType::EQuadrilateral) return false;
+
+    // If this DFNFracture has already found me, and has decided I'm not special, you can move on to the next quadrilateral
+    DFNFace* dfnface = Face(gel->Index());
+    if(dfnface){
+        if(dfnface->NeedsRefinement()) return false;
+        if(!dfnface->AllSnapsWentToSameNode()) return false;
+    }
 
 
 
+    DebugStop();
+    return false;
+}
+
+
+void DFNFracture::SearchForSpecialQuadrilaterals(){
+    return;
+    // This is only a problem in 3D
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    if(gmesh->Dimension() != 3) return;
+    if(fRibs.size() == 0) return;
+
+    // Loop over quadrilaterals
+    for(TPZGeoEl* gel : gmesh->ElementVec()){
+        if(!gel) continue;
+        if(gel->Type() != MElementType::EQuadrilateral) continue;
+        if(gel->HasSubElement()) continue;
+
+        if(!IsSpecialQuadrilateral(gel)) continue;
+        DebugStop();
+    }
+}
 
 
 

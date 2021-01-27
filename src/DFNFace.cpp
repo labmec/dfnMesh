@@ -718,6 +718,21 @@ bool DFNFace::CanBeSnapped(){
 
 
 
+
+
+bool DFNFace::AllSnapsWentToSameNode() const{
+	const int nsides = fGeoEl->NSides();
+	int sumAll = 0;
+	for(int i=0; i<nsides; i++){
+		sumAll += fStatus[i];
+	}
+	int sumNodes = fStatus[0]+fStatus[1]+fStatus[2]+(fGeoEl->NCornerNodes()==4)*fStatus[3];
+	return (sumNodes==1 && sumAll==1);
+}
+
+
+
+
 bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 	if(!this->NeedsRefinement()) {return false;}
 	int nels = fRefMesh.NElements();

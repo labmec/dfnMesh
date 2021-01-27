@@ -187,6 +187,7 @@ void DFNRib::UpdateNeighbours(int iside){
     TPZGeoEl *gel;
     for(/*void*/; neighbour != gelside; neighbour = neighbour.Neighbour()){
         gel = neighbour.Element();
+        if(!gel) break;
         if(gel->HasSubElement()) continue;
         int neig_side = neighbour.Side();
 
