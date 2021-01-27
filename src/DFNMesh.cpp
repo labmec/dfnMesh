@@ -1800,8 +1800,8 @@ void DFNMesh::UpdatePolyhedra(){
 			#endif //PZDEBUG
 
 			if(!IsConvex) {
-				MeshPolyhedron(polyhedron,coarseindex);
 				ClearPolyhIndex(polyhedron);
+				MeshPolyhedron(polyhedron,coarseindex);
 				this->SortFacesAroundEdges();
 				--ipolyh_local;
 				// iel = 0;
