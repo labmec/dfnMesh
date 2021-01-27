@@ -1633,6 +1633,40 @@ void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
 // 	return true;
 // }
 
+
+
+
+
+
+
+
+
+
+DFNPolyhedron* DFNMesh::CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex){
+	int ipolyh = fPolyhedra.size();
+	fPolyhedra.resize(ipolyh+1);
+	DFNPolyhedron& newpolyhedron = fPolyhedra[ipolyh];
+	newpolyhedron.Initialize(this,ipolyh,shell,coarseindex);
+#ifdef LOG4CXX
+	if(logger->isDebugEnabled()){
+		std::stringstream stream;
+		stream << "\n[Adding Polyhedron]";
+		newpolyhedron.Print(stream);
+		LOGPZ_DEBUG(logger,stream.str());
+	}
+#endif // LOG4CXX
+	return &newpolyhedron;
+}
+
+
+
+
+
+
+
+
+
+
 void DFNMesh::InitializePolyhedra(){
 	// Clear data structure
 	fPolyhedra.clear();

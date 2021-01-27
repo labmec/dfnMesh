@@ -241,6 +241,9 @@ public:
      * @attention It isolates the boundary as the polyhedron of index 0.*/
     void InitializePolyhedra();
 
+    /// Create a new polyhedron at the end of the polyhedra vector of this mesh
+    DFNPolyhedron* CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex);
+
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZVec<int64_t> GetEdgeIndices(int64_t face_index){return DFN::GetEdgeIndices(fGMesh->Element(face_index));}
 
