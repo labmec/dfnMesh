@@ -1458,6 +1458,29 @@ void DFNFracture::GetEdgesInSurface(std::set<int64_t>& edges){
 }
 
 
+
+
+void Move(TPZFMatrix<REAL>& cornercoord, const TPZManVector<REAL,3>& centroid, REAL percent){
+    int nrows = cornercoord.Rows();
+    int ncols = cornercoord.Cols();
+    if(nrows != 3) DebugStop();
+
+    percent /= 100.0;
+
+    for(int icoord=0; icoord < 3; icoord++){
+        for(int jpoint=0; jpoint < ncols; jpoint++){
+            // REAL delta = (cornercoord(icoord,jpoint)-centroid[icoord])*percent;
+            // cornercoord(icoord,jpoint) += MIN(tolDist,delta);
+            cornercoord(icoord,jpoint) += (cornercoord(icoord,jpoint)-centroid[icoord])*percent;
+        }
+    }
+}
+
+
+
+
+
+
 void DFNFracture::CreateOrthogonalFracture(DFNFracture& orthfracture, const int edgeindex){
     
 
@@ -1498,7 +1521,11 @@ void DFNFracture::CreateOrthogonalFracture(DFNFracture& orthfracture, const int 
     cornercoord(1,2) = cornercoord(1,1)+realnormal[1];
     cornercoord(2,2) = cornercoord(2,1)+realnormal[2];
 
-    
+    // BugFix. When corners of polygon coincide perfectly with nodes in the mesh, orthogonal fractures may fail to perfectly recover a limit. Slightly expanding the fracture (by, say, 0.1%), then letting snap algorithms handle it, worked on all tests I did.
+    TPZManVector<REAL,3> centroid(3,0.);
+    fPolygon.ComputeCentroid(centroid);
+    Move(cornercoord,centroid,0.1);
+
     TPZGeoMesh* gmesh = this->fdfnMesh->Mesh();
     DFNPolygon dummypolygon(cornercoord,gmesh);
 
@@ -1665,12 +1692,22 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
         }
         // If I remove the father regardless, it'll get added back in case it shouldn't have been deleted
         realfracture.RemoveFromSurface(father);
+        // And remove father edges that are off plane limits
         edgeindices = DFN::GetEdgeIndices(father);
         for(int64_t index : edgeindices){
             TPZGeoEl* edge = gmesh->Element(index);
-            realfracture.RemoveFromSurface(edge);
+            if(edge->HasSubElement()){
+                realfracture.RemoveFromSurface(edge);
+                continue;
+            }
+            TPZGeoElSide edgeside(edge,2);
+            TPZManVector<REAL,3> centroid(3,0.);
+            edgeside.CenterX(centroid);
+            if(!fPolygon.Compute_PointAbove(centroid))
+                {realfracture.RemoveFromSurface(edge);}
         }
 
+        // Now add back children that are within the limits of fracture surface
         for(TPZGeoEl* child : children){
             
             // TPZManVector<REAL,3> centroid(3,0.);
