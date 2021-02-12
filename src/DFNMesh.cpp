@@ -11,7 +11,7 @@
 #include "pzlog.h"
 
 #ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
+static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 #endif
 
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
@@ -349,9 +349,10 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling){
 	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling);
 #ifdef LOG4CXX
-	std::stringstream sout;
-	sout << "\n[Start][Fracture " << fracture->Index() << "]";
-    if(logger->isInfoEnabled()) LOGPZ_INFO(logger, sout.str());
+	// std::stringstream sout;
+	// sout << "\n[Start][Fracture " << fracture->Index() << "]";
+    // if(logger->isInfoEnabled()) LOGPZ_INFO(logger, sout.str());
+    LOGPZ_INFO(logger, "\n[Start][Fracture " << fracture->Index() << "]");
 #endif // LOG4CXX
 	std::cout<<"\nFracture #"<<fracture->Index();
 	fFractures.push_back(fracture);

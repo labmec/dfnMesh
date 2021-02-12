@@ -70,7 +70,16 @@ private:
 	std::set<int64_t> fSurfaceEdges;
 
 public:
-    
+
+#ifdef LOG4CXX
+    log4cxx::LoggerPtr fLogger = nullptr;
+
+    /** @brief Creates a logger for this object and fills pointer to this->fLogger
+      * @note A method to create a separate logger + appender for each DFNFracture. (as opposed to the main logger which logs everything from the DFNMesh)*/
+    log4cxx::LoggerPtr CreateLogger(std::string filename="default", std::string layout_convpattern = "default");
+#endif // LOG4CXX
+
+
     /// Empty constructor
     DFNFracture();
 

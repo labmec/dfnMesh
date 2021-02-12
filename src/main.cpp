@@ -92,7 +92,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 
 
 #ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
+static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 #endif
 
 
@@ -167,7 +167,7 @@ int main(int argc, char* argv[]){
 			dfn.UpdatePolyhedra();
 		}
 #ifdef PZDEBUG
-		std::ofstream logtest("LOG/dfnprint.log");
+		std::ofstream logtest("LOG/dfn.summary.log");
 		dfn.Print(logtest,argv[1]);
 #endif //PZDEBUG
 	}

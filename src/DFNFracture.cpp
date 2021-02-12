@@ -15,9 +15,12 @@
 #include "DFNNamespace.h"
 
 #ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
+    #include "log4cxx/fileappender.h"
+    #include "log4cxx/patternlayout.h"
+
+    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 #endif
-// const float _2PI = 6.2831853071795865;
+
 
 // Empty Constructor
 DFNFracture::DFNFracture(){
@@ -30,6 +33,9 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limith
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
     fIndex = dfnMesh->NFractures();
+// #ifdef LOG4CXX
+//     fLogger = CreateLogger();
+// #endif // LOG4CXX
 }
 
 void DFNFracture::Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling)
@@ -133,7 +139,7 @@ DFNFace * DFNFracture::Face(int64_t index){
 
 void DFNFracture::FindFaces(){
 #ifdef LOG4CXX
-    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[Start][Searching faces]")
+    LOGPZ_INFO(logger, "\n[Start][Searching faces]")
 #endif // LOG4CXX
     std::cout<<"\r#Faces intersected = 0";
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
@@ -184,7 +190,7 @@ void DFNFracture::FindFaces(){
     if(gmesh->Dimension() == 3 && fLimit != Etruncated) IsolateFractureLimits();
     std::cout<<std::endl;
 #ifdef LOG4CXX
-    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[End][Searching faces]")
+    LOGPZ_INFO(logger, "\n[End][Searching faces]")
 #endif // LOG4CXX
 }
 
@@ -212,7 +218,7 @@ void DFNFracture::FindFaces(){
 
 void DFNFracture::FindRibs(){
 #ifdef LOG4CXX
-    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[Start][Searching ribs]")
+    LOGPZ_INFO(logger, "\n[Start][Searching ribs]");
 #endif // LOG4CXX
     std::cout<<"\r\n#Ribs intersected = 0";
     //search gmesh for intersected ribs
@@ -242,7 +248,7 @@ void DFNFracture::FindRibs(){
     }
     std::cout<<std::endl;
 #ifdef LOG4CXX
-    if(logger->isInfoEnabled()) LOGPZ_DEBUG(logger, "\n[End][Searching ribs]")
+    LOGPZ_INFO(logger, "\n[End][Searching ribs]")
 #endif // LOG4CXX
 }
 
@@ -1829,3 +1835,51 @@ void DFNFracture::Print(std::ostream & out) const
     // todo?
     // SubPolygons
 }
+
+
+
+#ifdef LOG4CXX
+    /** @brief Creates a logger for this object and fills pointer to this->fLogger
+      * @note A method to create a separate logger + appender for each DFNFracture. (as opposed to the main logger which logs everything from the DFNMesh)*/
+    log4cxx::LoggerPtr DFNFracture::CreateLogger(std::string filename, std::string layout_convpattern){
+        using namespace log4cxx;
+        // Default parameters
+        if(filename == "default") filename = "LOG/dfn.fracture" + to_string(fIndex) + ".log";
+        if(layout_convpattern == "default") layout_convpattern = "%m%n";
+
+        // Create logger
+        std::string loggername = "dfn.mesh.frac" + to_string(fIndex);
+        LoggerPtr fLogger = log4cxx::Logger::getLogger(loggername);
+        
+        // Create appender
+        std::string appendername = "appender_frac" + to_string(fIndex);
+        FileAppender* appender = new FileAppender();
+        appender->setAppend(false);
+        appender->setName(appendername);
+        appender->setFile(filename);
+
+        // Setup layout
+        PatternLayout* layOut = new PatternLayout();
+        layOut->setConversionPattern(layout_convpattern);
+                // "%m%n");
+                // "[%-5p] %c{1}:%L - %m%n");
+                // "%d{yyyyf-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n");
+        appender->setLayout(LayoutPtr(layOut));
+
+        // Activate options and open log file
+        log4cxx::helpers::Pool p;
+        appender->activateOptions(p);
+        
+        // Add appender
+        fLogger->addAppender(log4cxx::AppenderPtr(appender));
+
+        // Set level and additivity
+        fLogger->setAdditivity(false);
+        fLogger->setLevel(log4cxx::Level::getInfo());
+
+        // LOG4CXX_INFO(fLogger,"test1");
+        // LOG4CXX_INFO(fLogger,"test2");
+
+        return fLogger;
+    }
+#endif
