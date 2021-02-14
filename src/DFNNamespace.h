@@ -209,7 +209,13 @@ enum DFNMaterial{
     // Etransition = 3
 };
 
-// Options for handling the limits of the fracture {Truncated, Extended, Recovered}
+/** @brief Options for handling the limits of the fracture 
+  * {
+  *  0 = Truncated, 
+  *  1 = Extended, 
+  *  2 = Recovered
+  * } 
+  */
 enum FracLimit{Etruncated=0,Eextended=1,Erecovered=2};
 
 // Set Material ID for element and its children

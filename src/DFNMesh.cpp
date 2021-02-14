@@ -923,6 +923,10 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
  * 	@brief Creates a .geo for the mesh
  */ 
 void DFNMesh::ExportGMshCAD(std::string filename){
+	// Surface cleanup (necessary if limit recovery is done after all fractures have been inserted to the mesh)
+	for(auto frac : FractureList()){
+		frac->CleanUp();
+	}
 	// gmsh doesn't accept index zero elements
 	// const int shift = 1;
 	std::ofstream out(filename);
@@ -2405,9 +2409,7 @@ void DFNMesh::Print(std::ostream & out, char* name) const
 	
 	out << "\n\tFRACTURES INFO:\n";
 
-	int ifrac = -1;
 	for(auto frac : fFractures){
-		out << "\n Fracture #" << ++ifrac << "\n";
 		frac->Print(out);
 	}
 

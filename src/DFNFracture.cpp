@@ -842,9 +842,9 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 
 void DFNFracture::MeshFractureSurface(){
     std::cout<<"\r#SubPolygons meshed = 0";
+    fdfnMesh->CreateSkeletonElements(1);
     // SubPolygons are subsets of the fracture surface contained by a polyhedral volume
     // A subpolygon is formed whenever (at least) 2 DFNFaces, are refined and part of the same polyhedron
-    fdfnMesh->CreateSkeletonElements(1);
     TPZVec<std::array<int, 2>> Polygon_per_face(fdfnMesh->Mesh()->NElements(),{-1,-1});
     TPZStack<int64_t> subpolygon(10,gDFN_NoIndex);
     int polygon_counter = 0;
@@ -854,24 +854,38 @@ void DFNFracture::MeshFractureSurface(){
         if(initial_face.NInboundRibs() < 1) continue;
 
         for(int i=0; i<2; i++){
-            int orientation = 1 - 2*i; // (i==0?1:-1)
+            // Setup initial face
+            int orientation = 1 - 2*i; // branchless way to do (i==0?1:-1)
             std::pair<int64_t,int> initialface_orient = {initial_face.Index(),orientation};
+
             // skip 'boundary polyhedron'
             int polyhindex = fdfnMesh->GetPolyhedralIndex(initialface_orient);
             if(polyhindex==0) continue;
-            if(!fLimit && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
             if(polyhindex< 0) DebugStop();
+            
+            // Skip polyhedra on Fracture limits if limit directive is Etruncated
+            if(!fLimit && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
+            
+            // Skip if subpolygon has already been built
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
+
+            // Clear container
             subpolygon.Fill(gDFN_NoIndex);
             subpolygon.clear();
+            
+            // Get entry side
             int inletside = initial_face.FirstRibSide();
             SetPolygonIndex(initialface_orient,polygon_counter,Polygon_per_face);
+            
+            // Recursively search for next face until subpolygon loop is closed
             BuildSubPolygon(Polygon_per_face,initialface_orient,inletside,subpolygon);
             // DFN::BulkSetMaterialId(fdfnMesh->Mesh(),subpolygon,this->fmatid);
             
+            // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
             if(DFN::IsValidPolygon(subpolygon) == false) continue;
             polygon_counter++;
-            // Check if would-be polygon already exists in the mesh
+            
+            // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
                 InsertFaceInSurface(ExistingGel->Index());
@@ -881,13 +895,15 @@ void DFNFracture::MeshFractureSurface(){
             std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
-    std::cout<<std::endl;
-    std::cout<<"Building connectivity\r";
+
+    // Update connectivity and skeleton of new surface elements, after surface mesh is complete
+    std::cout << std::endl;
+    std::cout << "Building connectivity\r";
     fdfnMesh->Mesh()->BuildConnectivity();
-    std::cout<<"                     \r";
-    std::cout<<"Creating 1D skeletons on fracture surface\r";
+    std::cout << "                     \r";
+    std::cout << "Creating 1D skeletons on fracture surface\r";
     fdfnMesh->CreateSkeletonElements(1);
-    std::cout<<"                                         \r";
+    std::cout << "                                         \r";
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
@@ -1811,6 +1827,7 @@ bool DFNFracture::CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid){
 
 void DFNFracture::Print(std::ostream & out) const
 {
+    out << "\nFracture #" << fIndex << "\n";
     fPolygon.Print(out);
 	out << "\n\nDFNRibs:__________\n";
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){

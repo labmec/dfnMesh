@@ -163,7 +163,7 @@ int main(int argc, char* argv[]){
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			fracture->MeshFractureSurface();
-			// if(fracture->Index() == 2) dfn.DumpVTK();
+			// dfn.DumpVTK();
 			dfn.UpdatePolyhedra();
 		}
 #ifdef PZDEBUG
@@ -174,10 +174,6 @@ int main(int argc, char* argv[]){
 	// Recover Limits
 	for(auto frac : dfn.FractureList()){
 		frac->RecoverFractureLimits();
-	}
-	// Surface cleanup
-	for(auto frac : dfn.FractureList()){
-		frac->CleanUp();
 	}
 	
 
@@ -190,11 +186,7 @@ int main(int argc, char* argv[]){
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
 	dfn.DumpVTK();
-	// for(auto frac : dfn.FractureList()){
-	// 	frac->Polygon().InsertGeomRepresentation(gmesh);
-	// }
-	// dfn.PrintVTKColorful();
-	std::cout<<"\n ...the end.\n\n\a";
+	std::cout<<"\n ...the end.\n\n";
 
 	gmsh::finalize();
 	return 0;
