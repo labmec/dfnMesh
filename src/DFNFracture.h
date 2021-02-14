@@ -122,18 +122,7 @@ private:
     bool FindEndFracturePoint(DFNFace &face, TPZManVector<REAL,3> &ipoint);
     
 
-    /**
-     * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, 
-     * and imported elements are pushed to the back of TPZGeoMesh::ElementVector 
-     * (Must be called between the pair gmsh::initialize and gmsh::finalize of 
-     * the model from which elements should be read).
-     * @param gmsh: Pointer to geometric mesh where elements should be inserted.
-     * @param dimension of elements to be imported
-     * @param oldnodes: a set of old nodes that don't require importing
-     * @param newelements: a vector with the indices of imported elements
-     * @note If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
-    */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
+    // void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
 
     /**
      * @name Surface Meshing auxiliar methods

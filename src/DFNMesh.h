@@ -157,18 +157,7 @@ public:
     void PrintVTKColorful(std::string pzmesh = "LOG/pzmesh.txt"
                        ,std::string vtkmesh = "vtkmesh.vtk");
     
-    /**
-     * @brief Imports d-dimensional elements from a GMsh::model to a TPZGeoMesh. Imported 
-     * elements are pushed to the back of TPZGeoMesh::ElementVector.
-     * @note (1) Must be called between the pair gmsh::initialize and gmsh::finalize of the
-     * model from which new elements should be read.
-     * @note (2) If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
-     * @param gmesh: Pointer to TPZGeoMesh
-     * @param dimension: Dimension of elements that should be imported
-     * @param oldnodes: A set of indices of the old nodes that were used to define the geometry in 
-     * GMsh (so that new nodes may be identified)
-     */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<TPZGeoEl*>& newgels);
+    // void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<TPZGeoEl*>& newgels);
     
     int Dimension(){return fGMesh->Dimension();}
     

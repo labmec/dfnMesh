@@ -1,6 +1,7 @@
 /*! 
  *  @authors   Pedro Lima
  *  @date      2020.10
+ *  @brief     Namespace DFN definitions
  */
 
 
@@ -406,4 +407,114 @@ namespace DFN{
             gmesh->Element(index)->SetMaterialId(matid);
         }
     }
+
+
+
+
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements){
+        // GMsh does not accept zero index entities
+        const int shift = 1;
+
+        // First, if GMsh has created new nodes, these should be inserted in PZGeoMesh
+        // create a map <node,point>
+        std::map<int,int> mapGMshToPZ;
+
+        for(int64_t pznode : oldnodes){
+            std::vector<size_t> node_identifiers;
+            std::vector<double> coord;
+            std::vector<double> parametricCoord;
+            gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord,0,pznode+shift,true);
+            int gmshnode = (int) node_identifiers[0];
+            // insert with hint (since oldnodes is an already sorted set, these nodes will all go in the end)
+            mapGMshToPZ.insert(mapGMshToPZ.end(),{gmshnode,pznode+shift});
+        }
+
+        // add new nodes into PZGeoMesh
+        {
+            // get all nodes from GMsh
+                std::vector<size_t> node_identifiers;
+                std::vector<double> coord;
+                std::vector<double> parametricCoord;
+                gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord);
+            // iterate over node_identifiers
+            int nnodes = node_identifiers.size();
+            for(int i = 0; i < nnodes; i++){
+                int gmshnode = node_identifiers[i];
+                // check if it is contained in the map
+                if(mapGMshToPZ.find(gmshnode) == mapGMshToPZ.end()){
+                    // New node -> add to PZGeoMesh
+                    int pznode = (int) gmesh->NodeVec().AllocateNewElement();
+                    TPZManVector<REAL,3> newnodeX(3);
+                    newnodeX[0] = coord[3*i];
+                    newnodeX[1] = coord[3*i+1];
+                    newnodeX[2] = coord[3*i+2];
+                    gmesh->NodeVec()[pznode].Initialize(newnodeX,*gmesh);
+                    // int pznode = (int) gmesh->NNodes();
+                    // gmesh->NodeVec().resize(pznode+1);
+                    // insert it in map
+                    mapGMshToPZ.insert({gmshnode,pznode+shift});
+                }
+
+            }
+        }
+        
+
+        
+        int64_t nels = gmesh->NElements();
+        std::vector<std::pair<int, int> > dim_to_physical_groups;
+        gmsh::model::getPhysicalGroups(dim_to_physical_groups,dimension);
+        
+        /// inserting the elements
+        for (auto group: dim_to_physical_groups) {
+        
+            int dim = group.first;
+            // only want elements of a given dimension
+            if(dim != dimension) continue;
+            int physical_identifier = group.second;
+        
+            std::vector< int > entities;
+            gmsh::model::getEntitiesForPhysicalGroup(dim, physical_identifier, entities);
+
+            for (auto tag: entities) {
+            // std::cout<<"______________________test - tag = "<<tag;
+            
+                std::vector<int> group_element_types;
+                std::vector<std::vector<std::size_t> > group_element_identifiers;
+                std::vector<std::vector<std::size_t> > group_node_identifiers;
+                gmsh::model::mesh::getElements(group_element_types,group_element_identifiers,group_node_identifiers, dim, tag);
+                int n_types = group_element_types.size();
+                for (int itype = 0; itype < n_types; itype++){
+                    int el_type = group_element_types[itype];
+                    int n_nodes = TPZGeoMeshBuilder::GetNumberofNodes(el_type);
+                    std::vector<int> node_identifiers(n_nodes);
+                    int n_elements = group_element_identifiers[itype].size();
+                    for (int iel = 0; iel < n_elements; iel++) {
+                        // int el_identifier = group_element_identifiers[itype][iel]+nels;
+                        int el_identifier = gmesh->CreateUniqueElementId()+gmshshift;
+                        // std::cout<<"\n"<<el_identifier<<"\n";
+
+                        for (int inode = 0; inode < n_nodes; inode++) {
+                            // Use mapGMshToPZ to translate from GMsh node index to PZ nodeindex
+                            node_identifiers[inode] = mapGMshToPZ[group_node_identifiers[itype][iel*n_nodes+inode]];
+                        }
+                        TPZGeoEl* newel = TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
+                        newelements.push_back(newel->Index());
+                        #ifdef PZDEBUG
+                            if(newel->Dimension() != dimension){ 
+                                PZError << "\nGmsh tried to group a " << newel->Dimension() << "D element as " << dimension << "D.\n";
+                                gmesh->Element(el_identifier)->Print(PZError);
+                                DebugStop();
+                            }
+                        #endif // PZDEBUG
+                        // int64_t ntest = gmesh->NElements();
+                        // std::cout<<"nelements = "<<ntest<<"\n";
+                    }
+                }
+            }
+        }
+        gmesh->BuildConnectivity();
+    }
+
+
+
 } /* namespace DFN*/
