@@ -302,6 +302,7 @@ private:
 
     /** @brief set polyh index -1 for every face in a stack*/
     void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);
+// public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
 
