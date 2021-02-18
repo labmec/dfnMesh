@@ -816,6 +816,7 @@ TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide&
 TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
 
+    // Get 3 edges of this polygon (skip if polygon still has zero dimensional edges i.e. index == -1)
     int i=0;
     while(polygon[i]<0) i++;
     TPZGeoEl* gel1 = gmesh->Element(polygon[i]);
@@ -831,7 +832,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     TPZGeoElSide gelside1(gel1,2);
     TPZGeoElSide gelside2(gel2,2);
     TPZGeoElSide gelside3(gel3,2);
-
+    // A 2D neighbour, common to 3 edges is an existing face
     TPZGeoEl* common_neig = FindCommonNeighbour(gelside1,gelside2,gelside3,2);
 
     if(!common_neig) return nullptr;

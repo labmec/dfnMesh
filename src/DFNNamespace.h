@@ -201,7 +201,9 @@ namespace DFN{
 /// The robustness of these material ids is dependant upon the method DFNMesh::ClearMaterials()
 /// Leaving Erefined as the biggest material id is important for better graphics, but isn't mandatory for the code to work. 
 /// The choice of ids is, otherwise, arbitrary.
+/// @note I dropped the material ID Eskeleton = -1 idea. Phill has found a demand for submeshes to be conformal through (beyond?) coarse elements, which turns dependance on matID to not as useful. For example, boundary condition surfaces have to be conformal to fine meshes, so they'll have to be refined anyway, which means we should use BCGeoEls as skeleton elements (when they exist) and should conserve their material ID.
 enum DFNMaterial{
+    // Eskeleton = -1,
     Eintact = 1, 
     Efracture = 2, 
     // Esurface = 2, 

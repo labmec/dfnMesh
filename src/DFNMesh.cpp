@@ -31,9 +31,14 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 	fPolyhedra.clear();
 	fFractures.clear();
 	fVolumes.clear();
-
 	if(fGMesh->Dimension() == 3){
-		InitializePolyhedra();
+		try{InitializePolyhedra();}
+		catch(...){
+			DumpVTK();
+			PZError << "\nFailed to initialize polyhedra. VTK representation written to vtkmesh.vtk\n";
+			throw std::bad_exception();
+		}
+		
 #ifdef LOG4CXX
 		if(logger->isDebugEnabled())
 		{
@@ -1561,6 +1566,7 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
         if(!gel) continue;
         // Elements can't have a skeleton of higher dimension than itself
         if(gel->Dimension() <= dimension) continue;
+		if(gel->HasSubElement()) continue;
         
         int nsides = gel->NSides();
         int ncorners = gel->NCornerNodes();
@@ -1689,6 +1695,7 @@ void DFNMesh::InitializePolyhedra(){
 	TPZGeoElSide neig;
 	for(TPZGeoEl* gel : fGMesh->ElementVec()){
 		if(gel->Dimension() != 2) continue;
+		// if(gel->Type() != EQuadrilateral) continue; //testing
 		// if(gel->MaterialId() != DFNMaterial::Eskeleton) continue;
 
 		gelside = {gel,gel->NSides()-1};
@@ -1699,7 +1706,7 @@ void DFNMesh::InitializePolyhedra(){
 			nneighbours += neig.Element()->Dimension() > 2;
 			volneig = neig; //< catch a volume in case there's a boundary condition 
 		}
-		if(nneighbours > 1) continue;
+		if(nneighbours != 1) continue;
 		// Faces don't have guaranteed positive orientation, since they were created using CreateBCGeoEl(). @see  DFN::CreateSkeletonElements()
 		int orient = DFN::SkeletonOrientation(volneig,gel);
 		shell.push_back({gel->Index(),orient});
@@ -1709,7 +1716,9 @@ void DFNMesh::InitializePolyhedra(){
 	// polyhedron.Print();
 	// fPolyhedra.push_back(polyhedron);
 	CreatePolyhedron(shell,-1);
+#ifdef PZDEBUG
 	shell.Fill({-1,0});
+#endif //PZDEBUG
 	shell.clear();
 
 	// Then initialize the rest of the polyhedra
@@ -1807,7 +1816,7 @@ void DFNMesh::UpdatePolyhedra(){
 			int coarseindex = -1;
 
 			std::cout<< ' ' << loading[(buffering++%4)] << '\r' << std::flush;
-			
+				
 			BuildVolume(initial_face_orient,IsConvex,polyhedron,coarseindex);
 
 			#ifdef PZDEBUG

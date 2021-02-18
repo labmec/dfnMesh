@@ -9,6 +9,9 @@
 #include "DFNNamespace.h"
 #include "TPZRefPattern.h"
 
+#ifdef LOG4CXX
+static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif
 
 
 namespace DFN{
@@ -271,10 +274,10 @@ namespace DFN{
 		for(int i=0; i<nfathernodes; i++){
             nodeindices[i] = refmesh.NodeVec().AllocateNewElement();
 			father->Node(i).GetCoordinates(coord);
-			refmesh.NodeVec()[i].Initialize(coord,refmesh);
+			refmesh.NodeVec()[nodeindices[i]].Initialize(coord,refmesh);
 
             // map
-            orig_to_copy[father->NodeIndex(i)] = i;
+            orig_to_copy[father->NodeIndex(i)] = nodeindices[i];
             // copy_to_orig[i] = father->NodeIndex(i);
 		}
 		// Copy father
@@ -293,8 +296,9 @@ namespace DFN{
                 auto itr = orig_to_copy.find(child->NodeIndex(inode));
                 int64_t copyindex;
                 if(itr == orig_to_copy.end()){
-                    copyindex = orig_to_copy.insert({child->NodeIndex(inode),refmesh.NodeVec().AllocateNewElement()}).second;
-                    child->Node(copyindex).GetCoordinates(coord);
+                    copyindex = refmesh.NodeVec().AllocateNewElement();
+                    orig_to_copy.insert({child->NodeIndex(inode),copyindex});
+                    child->Node(inode).GetCoordinates(coord);
 			        refmesh.NodeVec()[copyindex].Initialize(coord,refmesh);
                 }else{
                     copyindex = itr->second;
@@ -306,6 +310,9 @@ namespace DFN{
             index = -1;
             refmesh.CreateGeoElement(etype,nodeindices,1,index);
         }
+        // std::stringstream stream;
+        // refmesh.Print(stream);
+        // LOG4CXX_DEBUG(logger,stream.str());
 
         // create refpattern from refmesh
         TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refmesh);
