@@ -28,6 +28,7 @@
 	#include "DFNMesh.h"
 
 	#include <gmsh.h>
+	#include "util/json.hpp"
 //includes
 
 MMeshType StringToMeshtype(const std::string& name){
@@ -72,6 +73,17 @@ void ReadFile(	const std::string			& filename,
 				TPZManVector<int>			& matid,
 				TPZManVector<FracLimit>		& limit_directives
 				);
+void ReadFileJSON(const std::string			& filename, 
+				TPZStack<TPZFMatrix<REAL>>	& polygonmatrices, 
+				std::string 				& mshfile,
+				TPZManVector<REAL,3> 		& x0,
+				TPZManVector<REAL,3> 		& xf,
+				TPZManVector<int,3> 		& nels,
+				MMeshType					& eltype,
+				TPZManVector<REAL,2>		& tol,
+				TPZManVector<int>			& matid,
+				TPZManVector<FracLimit>		& limit_directives
+				);
 
 
 
@@ -89,6 +101,7 @@ void PrintPreamble(){
 }
 
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives);
+// TPZGeoMesh* ReadInputJSON(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives);
 
 
 #ifdef LOG4CXX
@@ -253,8 +266,23 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
 	TPZManVector<int,3> nels(3,0);
 	TPZManVector<REAL,2> tol = {toldist,tolangle};
+
+	// Choose extension and read file
+	std::string extension;
+	try{extension = filename.substr(filename.find_last_of('.'));}
+	catch(std::out_of_range){extension = '?';}
+	if(extension == ".txt")	
+		{ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives);}
+	else if(extension == ".json" || extension == ".jsonc")
+		{ReadFileJSON(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives);}
+	else{
+		PZError << "\nUnrecognized file extension:"
+				<< "\nFile = " << filename
+				<< "\nExtension = " << extension << std::endl;
+		DebugStop();
+	}
 	
-	ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives);
+	// Get tolerances
 	toldist = tol[0];
 	tolangle = tol[1];
 
@@ -321,6 +349,7 @@ void ReadFile(	const std::string			& filename,
 
 		Fracture 0							// Fracture keyword and index
 		Limit directive						// (optional) Directive for limit handling (options are limited to enums available in FracLimit)
+		MatID m (int)						// (optional) Material id of this fracture. If not provided, defaults to DFNMaterial::Efracture
 		[x0] [x1] ... [xj]					// Corner coordinates matrix
 		[y0] [y1] ... [yj]
 		[z0] [z1] ... [zj]
@@ -526,4 +555,139 @@ void ReadFile(	const std::string			& filename,
 		}
 	}
 	
+}
+
+
+
+
+
+
+
+void ReadFileJSON(const std::string			& filename, 
+				TPZStack<TPZFMatrix<REAL>>	& polygonmatrices, 
+				std::string 				& mshfile,
+				TPZManVector<REAL,3> 		& x0,
+				TPZManVector<REAL,3> 		& xf,
+				TPZManVector<int,3> 		& nels,
+				MMeshType					& eltype,
+				TPZManVector<REAL,2>		& tol,
+				TPZManVector<int>			& matid,
+				TPZManVector<FracLimit>		& limit_directives
+				)
+{
+	using json = nlohmann::json;
+
+
+	// Read file
+	std::ifstream file(filename);
+	if (!file){
+		std::cout << "\nCouldn't find file \"" << filename << "\""<< std::endl;
+		DebugStop();
+	}
+
+	// Parse json
+	json input;
+	// file >> input;
+	input = json::parse(file,nullptr,true,true);
+
+
+	// Coarse Mesh
+	if(input.find("PZGenGrid") != input.end()){
+		if(input.find("Mesh") != input.end()){
+			PZError << "\nInput file has a PZGenGrid and a .msh file. Choose one.\n"; DebugStop();
+		}
+		auto& gengrid = input["PZGenGrid"];
+
+		// minX
+		x0.Resize(3,0.0);
+		json minX;
+		if(gengrid.find("Origin")!= gengrid.end())
+			{minX = gengrid["Origin"];}
+		else if(gengrid.find("x0") != gengrid.end())
+			{minX = gengrid["x0"];}
+		else if(gengrid.find("minX") != gengrid.end())
+			{minX = gengrid["minX"];}
+		else
+			{minX = {0.0,0.0,0.0};}
+		for(int i=0; i<3; i++){x0[i] = minX[i];}
+		
+		// maxX
+		xf.Resize(3,1.0);
+		json maxX;
+		if(gengrid.find("Endpoint")!= gengrid.end())
+			{maxX = gengrid["Endpoint"];}
+		else if(gengrid.find("xf") != gengrid.end())
+			{maxX = gengrid["xf"];}
+		else if(gengrid.find("maxX") != gengrid.end())
+			{maxX = gengrid["maxX"];}
+		else
+			{maxX = {1.0,1.0,1.0};}
+		for(int i=0; i<3; i++){xf[i] = maxX[i];}
+
+		// Dimensions
+		if(gengrid.find("Dimensions") != gengrid.end()){
+			for(int i=0; i<3; i++){xf[i] = x0[i] + gengrid["Dimensions"][i];}
+		}
+
+		// Number of grid divisions
+		if(gengrid.find("Nels")!= gengrid.end())
+			for(int i=0; i<3; i++){nels[i] = gengrid["Nels"][i];}
+		else if(gengrid.find("nelDiv")!= gengrid.end())
+			for(int i=0; i<3; i++){nels[i] = gengrid["nelDiv"][i];}
+
+		// MMeshType
+		if(gengrid.find("MMeshType") != gengrid.end())
+			{eltype = StringToMeshtype((std::string)gengrid["MMeshType"]);}
+		else
+			{eltype = MMeshType::ENoType;}
+	}
+	else if(input.find("Mesh") != input.end()){
+		mshfile = (std::string)input["Mesh"];
+	}
+	else{
+		PZError << "\nMissing coarse mesh definition.\n"; DebugStop();
+	}
+
+	// Tolerances
+	if(input.find("TolDist") != input.end())
+		{tol[0] = input["TolDist"];}
+	else if(input.find("toldist") != input.end())
+		{tol[0] = input["toldist"];}
+	else if(input.find("Tolerable Distance") != input.end())
+		{tol[0] = input["Tolerable Distance"];}
+	
+	if(input.find("TolAngle") != input.end())
+		{tol[1] = input["TolAngle"];}
+	else if(input.find("tolangle") != input.end())
+		{tol[1] = input["tolangle"];}
+	else if(input.find("Tolerable Angle") != input.end())
+		{tol[1] = input["Tolerable Angle"];}
+	
+	// Fractures
+	int nfractures = input["Fractures"].size();
+	matid.Resize(nfractures,DFNMaterial::Efracture);
+	limit_directives.Resize(nfractures,FracLimit::Etruncated);
+	polygonmatrices.Resize(nfractures);
+	for(auto& fracture : input["Fractures"]){
+		int i = fracture["Index"];
+		if(polygonmatrices[i].Cols() != 0){
+			PZError << "\nInput file has fractures with repeated indices. Index = " << i << "\n"; DebugStop();
+		}
+		if(fracture.find("MaterialID") != fracture.end()){
+			matid[i] = (int)fracture["MaterialID"];
+		}
+		if(fracture.find("Limit") != fracture.end()){
+			limit_directives[i] = DFN::StringToFracLimit((std::string)fracture["Limit"]);
+		}
+		int npoints = fracture["Nodes"].size();
+		polygonmatrices[i].Resize(3,npoints);
+		for(int j=0; j<npoints; j++){
+			for(int k=0; k<3; k++){
+				polygonmatrices[i](k,j) = (REAL)fracture["Nodes"][j][k];
+			}
+		}
+		// polygonmatrices[i].Print(std::cout);
+		// std::cout.flush();
+	}
+
 }
