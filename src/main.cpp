@@ -575,6 +575,78 @@ void ReadFileJSON(const std::string			& filename,
 				TPZManVector<FracLimit>		& limit_directives
 				)
 {
+		/*_______________________________________________________________
+						JSON OPTIONS 
+	{												// <Don't forget opening brace>
+		"PZGenGrid": {								// To create a PZGenGrid
+			"Origin": [x, y, z], 		<double>	// (optional) for the origin point of the grid. Assumes [0,0,0] if not provided
+			// "x0": 								// (alias for "Origin")
+			// "minX": 								// (alias for "Origin")
+			"Endpoint": [x, y, z], 		<double>	// (optional) for the end point of the grid. Uses "Dimensions" + "Origin" if not provided
+			// "xf": 								// (alias for "Endpoint")
+			// "maxX": 								// (alias for "Endpoint")
+			"Dimensions": [Lx, Ly, Lz],	<double>	// (optional) for the dimensions of the grid. Uses "Endpoint" - "Origin" if not provided
+			"MMeshType": "type",		<string>	// Mesh type (EHexahedral, ETetrahedral, ...)
+			"Nels": [Nx, Ny, Nz],		<int>		// Number of subdivisions of each direction of the grid
+			// "nelDiv": 							// (alias for "Nels")
+		},
+		"Mesh": "path",					<string>	// Path for .msh file
+		"TolDist": value,				<double>	// Tolerable distance (optional). Assumes 1e-4 if not provided
+		"TolAngle": value,				<double>	// Tolerable angle (optional). Assumes 1e-4 if not provided
+		"Fractures":[
+			{
+				"Index": i,				<int>		// Fracture index
+				"Limit": "directive",	<string>	// Limit handling directive for this fracture {Etruncated, Eextended, Erecovered}
+				"MaterialID": id, 		<int>		// Material id. Assumes DFNMaterial::Efracture if not provided
+				"Nodes":[				<double>	// Node coordinates for this fracture
+					[x0, y0, z0],
+					[    ...   ],
+					[xN, yN, zN]
+				]
+			}
+			,{
+				<Next fracture>
+			}
+		]
+	}												// <Don't forget closing brace>
+	______________________________________________________________
+						EXAMPLE
+	{
+		"PZGenGrid":{
+			"minX": [0.0, 0.0, 0.0],
+			"Dimensions": [2.0, 2.0, 2.0],
+			"MMeshType": "EHexahedral",
+			"Nels": [1,1,1]
+		},
+		// "Mesh" : "examples/cube.msh",
+		"TolDist": 1e-4,
+		"TolAngle": 1e-2,
+		"Fractures":[
+			{ //Fracture 0
+				"Index": 0,
+				"Limit": "Etruncated",
+				"MaterialID": 5,
+				"Nodes":[
+					[0.95, 2.50,-0.50],
+					[0.95,-0.50,-0.50],
+					[0.95,-0.50, 2.50],
+					[0.95, 2.50, 2.50]
+				]
+			}
+			,{//Fracture 1
+				"Index": 1,
+				"Limit": "Etruncated",
+				"MaterialID": 5,
+				"Nodes":[
+					[0.45, 2.50,-0.50],
+					[0.45,-0.50,-0.50],
+					[0.45,-0.50, 2.50],
+					[0.45, 2.50, 2.50]
+				]
+			}
+		]
+	}
+	 */
 	using json = nlohmann::json;
 
 
@@ -588,7 +660,7 @@ void ReadFileJSON(const std::string			& filename,
 	// Parse json
 	json input;
 	// file >> input;
-	input = json::parse(file,nullptr,true,true);
+	input = json::parse(file,nullptr,true,true); // to ignore comments in json file
 
 
 	// Coarse Mesh
