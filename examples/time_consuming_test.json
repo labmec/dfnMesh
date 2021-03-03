@@ -1,0 +1,22 @@
+{
+    "PZGenGrid":{
+        "minX": [-1.0, -1.0, -1.0],
+        "maxX": [1.0, 1.0, 1.0],
+        "MMeshType": "EHexahedral",
+        "Nels": [20,20,20]  // Time running will grow exponentially with grid subdivisions
+    },
+    "TolDist": 1e-2,
+    "TolAngle": 1e-1,
+    "Fractures":[
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+            "MaterialID": 4,
+            "Nodes":[
+                [ 1.05,-1.10, 1.05],
+                [ 1.15, 1.05,-1.20],
+                [-1.20, 1.05, 1.15]
+            ]
+        }
+    ]
+}
