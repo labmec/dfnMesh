@@ -64,7 +64,7 @@ namespace DFN{
         }
 
         // Singular Value Decomposition (SVD): A = U*SIGMA*VT
-        #ifdef USING_MKL
+#ifdef USING_MKL
         {
             // using MKL dgvesd()
             // U (3x3)
@@ -79,17 +79,17 @@ namespace DFN{
             normal[1] = U(1,2);
             normal[2] = U(2,2);
         }
-        #else
+#else
             PZError << "\nThis method needs NeoPZ compiled with MKL\n"<<__PRETTY_FUNCTION__;
             DebugStop();
-        #endif // USING_MKL
+#endif // USING_MKL
 
-        #ifdef PZDEBUG
+#ifdef PZDEBUG
         {
             float norm = Norm_f(normal);
             if(std::fabs(1.-norm) > gDFN_SmallNumber) DebugStop();
         }
-        #endif //PZDEBUG
+#endif //PZDEBUG
     }
 
 

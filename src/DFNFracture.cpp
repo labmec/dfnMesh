@@ -232,12 +232,17 @@ void DFNFracture::FindRibs(){
         // skip all elements that have been cut by a previous fracture
         if(gel->HasSubElement()){continue;}
 
-        // Check rib
+        // Check rib and return the coordinate of the intersection point
+        // @pedro : please specify if there are tolerance involved here?
+        // will the intersection point be snapped to an endpoint
+        // when will the result be true???
         TPZManVector<REAL,3> intpoint(3,0);
         bool result = fPolygon.IsCutByPolygon(gel, intpoint);
 
         // Add rib
         if (result == true){
+            // @pedro : what is the meaning of the parameters here - why : 2?
+            // what happens if the intersection point is really close to a node
             DFNRib rib(gel, this,2);
             rib.SetIntersectionCoord(intpoint);
             // if this 1D element is not part of a previous fracture, change its material to Erefined
@@ -865,7 +870,7 @@ void DFNFracture::MeshFractureSurface(){
             if(polyhindex< 0) DebugStop();
             
             // Skip polyhedra on Fracture limits if limit directive is Etruncated
-            if(!fLimit && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
+            if(!(fLimit==Etruncated) && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
             
             // Skip if subpolygon has already been built
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;

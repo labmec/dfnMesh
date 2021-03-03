@@ -32,6 +32,7 @@ private:
 	TPZGeoEl *fGeoEl = nullptr;
 
 	/// Contains the side of this element that has been intersected
+    // @pedro : is fStatus an appropriate name?
 	int fStatus = -1;
 
     /// Anticipated coordinates of an intersection point initialy found for this DFNRib and a DFNPolygon. 

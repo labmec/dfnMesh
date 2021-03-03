@@ -205,7 +205,8 @@ public:
     /// get the polyhedral index for a face from the structure fPolyh_per_face
     int GetPolyhedralIndex(const std::pair<int64_t,int>& face_orient) const;
     
-    int __attribute_noinline__ GetPolyhedralIndex(int64_t faceindex, int orientation) const{
+    // aqui tirei no inline
+    int GetPolyhedralIndex(int64_t faceindex, int orientation) const{
         const std::pair<int64_t,int> face_orient({faceindex,orientation});
         return GetPolyhedralIndex(face_orient);
     }

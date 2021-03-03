@@ -24,6 +24,7 @@ DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh)
 		DebugStop();
 	}
 	ComputeArea();
+    // initialize the fNodesAbove data structure
     SortNodes(gmesh);
 }
 
@@ -167,6 +168,8 @@ bool DFNPolygon::IsCutByPlane(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection)
     }
 }
 
+// @pedro : please explain what this is doing!!!
+// what is the meaning of IsPointInPolygon (we are looking at ribs here, not polygons)
 bool DFNPolygon::IsCutByPolygon(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
     return IsCutByPlane(gel,intersection) && IsPointInPolygon(intersection);
 }

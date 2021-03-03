@@ -166,20 +166,22 @@ int main(int argc, char* argv[]){
 	time.start();
 	DFNMesh dfn(gmesh);
 	dfn.SetTolerances(tol_dist,tol_angle);
-	// Loop over fractures and refine mesh around them
-	DFNFracture *fracture = nullptr;
 
 	// dfn.PrintPolyhedra();
 
 
+    // Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
         // a polygon represents a set of points in a plane
+        // poly_stack[iplane] is a matrix 3xn where n is the number of points 
 		DFNPolygon polygon(polyg_stack[iplane], gmesh);
         // Initialize the basic data of fracture
 		// fracture = new DFNFracture(polygon,&dfn,FracLimit::Etruncated);
-		fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
+        // initialize an empty DFNFracture object
+		DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
         
 		// Find intersected ribs and impose tolerance
+        // @predro document what this method does
 		fracture->FindRibs();
 		fracture->SnapIntersections_ribs(tol_dist);
 		// Find intersected faces
@@ -203,7 +205,7 @@ int main(int argc, char* argv[]){
 			dfn.UpdatePolyhedra();
 		}
 #ifdef PZDEBUG
-		std::ofstream logtest("LOG/dfn.summary.log");
+		std::ofstream logtest("LOG/dfn.summary.txt");
 		dfn.Print(logtest,argv[1]);
 #endif //PZDEBUG
 	}
@@ -261,7 +263,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives){
 
 
-	MMeshType eltype;
+	MMeshType eltype = MMeshType::ENoType;
 	TPZStack<Matrix> planestack;
 	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
 	TPZManVector<int,3> nels(3,0);
@@ -291,6 +293,7 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
 	if(eltype != MMeshType::ENoType){
 		if(!nels[2]){ // 2D mesh
+            if(nels[0]==0 || nels[1] == 0) DebugStop();
 			TPZManVector<int, 2> ndiv(2);
 			ndiv[0] = nels[0];
 			ndiv[1] = nels[1];
@@ -698,7 +701,9 @@ void ReadFileJSON(const std::string			& filename,
 
 		// Dimensions
 		if(gengrid.find("Dimensions") != gengrid.end()){
-			for(int i=0; i<3; i++){xf[i] = x0[i] + gengrid["Dimensions"][i];}
+			for(int i=0; i<3; i++){
+                xf[i] = x0[i] + (double)gengrid["Dimensions"][i];
+            }
 		}
 
 		// Number of grid divisions

@@ -1019,6 +1019,11 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 	// @todo this should always work but it is failling sometimes and I have to figure out why.
 	// tip: when faces get refined, somehow the outter polyhedron (the boundary) is not updating 1 or 2 arbitrary faces. Go over every time faces get refined and find out where this might be failing.
 	// example: Octagon + Rectangle
+    if(fPolyhedra.size() == 0)
+    {
+        std::cout << __PRETTY_FUNCTION__ << "does not contain a boundary polyhedron\n";
+        return;
+    }
 	DFNPolyhedron& boundary = fPolyhedra[0];
 	for(auto orientedface : boundary.Shell()){
 		int64_t index = orientedface.first;

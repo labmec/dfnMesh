@@ -44,7 +44,8 @@ class DFNPolygon
 	/// If nodes of this polygon have been added to a geometric mesh, this vector holds GeoNodes indices
 	TPZManVector<int64_t> fPointsIndex;
 
-    /// Tracks which nodes are above this Polygon
+    /// Tracks which nodes are above this Polygon - for each node of the geometric mesh, indicates whether the node is above the plane
+    // @pedro - shouldn't this be a temporary data structure?
     TPZVec<bool> fNodesAbove;
 	
   public:

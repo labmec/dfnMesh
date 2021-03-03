@@ -27,7 +27,7 @@
 namespace DFN{
 
     /// 2*3.1415...
-    static const float _2PI = 6.2831853071795865;
+static const double _2PI = 2.*M_PI;//6.2831853071795865;
     // A small number for geometric tolerances
     // static const double gSmallNumber = 1.e-4;
 
@@ -218,6 +218,8 @@ enum DFNMaterial{
   *  2 = Recovered
   * } 
   */
+/// @pedro : I HAVE NO IDEA WHAT TRUNCATED - EXTENDED OR RECOVERED MEANS
+/// @pedro - insert a descriptive text here
 enum FracLimit{Etruncated=0,Eextended=1,Erecovered=2};
 
 // Set Material ID for element and its children
@@ -238,6 +240,7 @@ operator<<(      std::ostream&      out,
            const std::pair<T1,T2>&  pair )
 {
     out << pair.first << "|";
+    // @pedro : please document this
     if(std::is_convertible<T2,int>::value){
         out << (pair.second < 0 ? "":" ");
     }
@@ -247,6 +250,7 @@ operator<<(      std::ostream&      out,
 	return out;
 }
 
+// @pedro please comment what this is used for
 template<typename T>
 void Print(const std::set<T>& s, std::ostream& out = std::cout, std::string name = "no-name"){
     out << "\nstd::set : "<<name<<"\n{ ";
