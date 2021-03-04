@@ -166,22 +166,20 @@ int main(int argc, char* argv[]){
 	time.start();
 	DFNMesh dfn(gmesh);
 	dfn.SetTolerances(tol_dist,tol_angle);
+	// Loop over fractures and refine mesh around them
+	DFNFracture *fracture = nullptr;
 
 	// dfn.PrintPolyhedra();
 
 
-    // Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
         // a polygon represents a set of points in a plane
-        // poly_stack[iplane] is a matrix 3xn where n is the number of points 
 		DFNPolygon polygon(polyg_stack[iplane], gmesh);
         // Initialize the basic data of fracture
 		// fracture = new DFNFracture(polygon,&dfn,FracLimit::Etruncated);
-        // initialize an empty DFNFracture object
-		DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
+		fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
         
 		// Find intersected ribs and impose tolerance
-        // @predro document what this method does
 		fracture->FindRibs();
 		fracture->SnapIntersections_ribs(tol_dist);
 		// Find intersected faces
@@ -189,11 +187,11 @@ int main(int argc, char* argv[]){
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
 #ifdef LOG4CXX
-        if(logger->isDebugEnabled()){
-            std::stringstream sout;
-            fracture->Print(sout);
-            LOGPZ_DEBUG(logger,sout.str());
-        }
+        // if(logger->isDebugEnabled()){
+        //     std::stringstream sout;
+        //     fracture->Print(sout);
+        //     LOGPZ_DEBUG(logger,sout.str());
+        // }
 #endif
 		fracture->RefineRibs();
 		fracture->RefineFaces();
@@ -205,8 +203,8 @@ int main(int argc, char* argv[]){
 			dfn.UpdatePolyhedra();
 		}
 #ifdef PZDEBUG
-		std::ofstream logtest("LOG/dfn.summary.txt");
-		dfn.Print(logtest,argv[1]);
+// 		std::ofstream logtest("LOG/dfn.summary.log");
+// 		dfn.Print(logtest,argv[1]);
 #endif //PZDEBUG
 	}
 	// Recover Limits
@@ -217,7 +215,7 @@ int main(int argc, char* argv[]){
 
 
 	// Generate submesh
-    dfn.ExportGMshCAD("dfnExport.geo");
+    // dfn.ExportGMshCAD("dfnExport.geo");
 	
 	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
@@ -235,7 +233,7 @@ int main(int argc, char* argv[]){
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives){
 	TPZGeoMesh* gmesh = nullptr;
-	std::string default_example("examples/two-hex-and-a-frac.txt");
+	std::string default_example("/home/projetos/dfnMesh/examples/time_consuming_test.json");
 	std::string example = default_example;
 	std::string mshfile = "no-msh-file";
 	for(int iarg=1; iarg < argc; ++iarg){
@@ -263,7 +261,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives){
 
 
-	MMeshType eltype = MMeshType::ENoType;
+	MMeshType eltype;
 	TPZStack<Matrix> planestack;
 	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
 	TPZManVector<int,3> nels(3,0);
@@ -293,7 +291,6 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
 	if(eltype != MMeshType::ENoType){
 		if(!nels[2]){ // 2D mesh
-            if(nels[0]==0 || nels[1] == 0) DebugStop();
 			TPZManVector<int, 2> ndiv(2);
 			ndiv[0] = nels[0];
 			ndiv[1] = nels[1];
@@ -765,4 +762,5 @@ void ReadFileJSON(const std::string			& filename,
 		// std::cout.flush();
 	}
 
+	std::cout << "\nNels = [" << nels << "]\n";
 }

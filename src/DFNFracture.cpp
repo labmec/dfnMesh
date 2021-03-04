@@ -291,6 +291,7 @@ void DFNFracture::RefineFaces(){
     }
     fdfnMesh->CreateSkeletonElements(1);
     if(fdfnMesh->Dimension() < 3){SetFracMaterial_2D();}
+
 }
 
 
@@ -726,7 +727,7 @@ std::pair<int64_t,int> DFNFracture::PolyhNeighbour(std::pair<int64_t,int>& curre
     for(/*void*/; neig != gelside; neig = neig.Neighbour()){
         if(neig.Element()->Dimension() != 2) continue;
         int64_t neigindex = neig.Element()->Index();
-        if(!Face(neigindex)) continue;
+        // if(!Face(neigindex)) continue;
         neig_side = neig.Side();
         // To share the same subpolygon, they have to share the same polyhedron
         if(      polyh_index == fdfnMesh->GetPolyhedralIndex({neigindex,+1})){
@@ -848,7 +849,8 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 
 void DFNFracture::MeshFractureSurface(){
     std::cout<<"\r#SubPolygons meshed = 0";
-    fdfnMesh->CreateSkeletonElements(1);
+    // fdfnMesh->CreateSkeletonElements(1);
+    fdfnMesh->ExpandPolyhPerFace();
     // SubPolygons are subsets of the fracture surface contained by a polyhedral volume
     // A subpolygon is formed whenever (at least) 2 DFNFaces, are refined and part of the same polyhedron
     TPZVec<std::array<int, 2>> Polygon_per_face(fdfnMesh->Mesh()->NElements(),{-1,-1});
@@ -930,7 +932,9 @@ void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
     int outlet_side = current_dfnface->OtherRibSide(inlet_side);
     int nextinlet_side = -1;
     std::pair<int64_t,int> nextface_orient = PolyhNeighbour(currentface_orient, outlet_side, nextinlet_side);
-
+#ifdef PZDEBUG
+    if(!Face(nextface_orient.first)){ std::cout<<"\nPolyhNeighbour returned a next face that was not intersected by the fracture\n"; DebugStop();}
+#endif // PZDEBUG
     // Check if its set to polygon
     int nextface_polyg_index = GetPolygonIndex(nextface_orient,Polygon_per_face);
     if(nextface_polyg_index < 0){

@@ -236,6 +236,9 @@ public:
      * @attention It isolates the boundary as the polyhedron of index 0.*/
     void InitializePolyhedra();
 
+    void ExpandPolyhPerFace()
+        {fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});}
+
     /// Create a new polyhedron at the end of the polyhedra vector of this mesh
     DFNPolyhedron* CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex);
 

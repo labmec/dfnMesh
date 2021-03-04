@@ -153,7 +153,7 @@ public:
     /** @brief Adds a pointer of this rib into the corresponding position of its neighbour faces ribvectors*/
     void AppendToNeighbourFaces();
 
-    const bool IsOffbound(){return fOffbound;}
+    bool IsOffbound() const{return fOffbound;}
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
