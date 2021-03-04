@@ -129,7 +129,11 @@ endif()
 
 include_directories(${GMSH_INC})
 
-
+# Copy 'examples' into build directory. 
+# @WARNING this is only triggered during configure time.
+# I've added it as a request from Phil, but we gotta remember this duplicated file-tree can potentially lead to confusion since now the developer has to mind which example they are editing and which example the CLI is calling.
+# Notice that 'build/examples' will only get updated when calling 'cmake' command, and this also means that, if developer was editing 'build/examples' instead of 'source/examples', the former will get overwritten in an acidental/automatic call of 'cmake' command
+file(COPY "examples" DESTINATION .)
 
 add_subdirectory(src)
 
