@@ -31,6 +31,7 @@ private:
      *  each vector entry corresponds to a side, which may contain 
      *  an intersection node with the fracture
      * @TODO phil : what is the meaning if the status vector is entirely ZERO
+     * @pedro what is the size of fStatus, what do the entries mean?
      */
 	TPZManVector<int> fStatus;
 
@@ -53,6 +54,9 @@ private:
 public:
     /// Empty constructor
     DFNFace() : fGeoEl(nullptr), fStatus(9,0), fRibs(0), fCoord(0){};
+    
+    /// Default constructor takes a pointer to geometric element and a fracture
+    DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec);
     
     /// Default constructor takes a pointer to geometric element and a fracture
     DFNFace(TPZGeoEl *gel, DFNFracture *fracture);

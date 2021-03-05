@@ -180,11 +180,13 @@ int main(int argc, char* argv[]){
         // initialize an empty DFNFracture object
 		DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
         
-		// Find intersected ribs and impose tolerance
+		// Find intersected ribs and create a corresponding DFNRib object (administered by DFNFracture)
         // @predro document what this method does
 		fracture->FindRibs();
+        // For the rib object whose intersection point is closer than toldist to an endnode,
+        // snap the intersection point to the nearest node
 		fracture->SnapIntersections_ribs(tol_dist);
-		// Find intersected faces
+		// create DFNFace objects - these are faces that have intersected ribs (always 2)
 		fracture->FindFaces();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 

@@ -14,15 +14,28 @@
 
 
 //Constructor
-DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
+DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec) :
 	fGeoEl(gel),
 	fFracture(fracture),
 	fCoord(0)
 {
 	int nsides = gel->NSides();
 	fStatus.Resize(nsides,0);
-	int nedges = gel->NCornerNodes();
-	fRibs.Resize(nedges,nullptr);
+//	int nedges = gel->NCornerNodes();
+//	fRibs.Resize(nedges,nullptr);
+    SetRibs(ribvec);
+}
+
+//Constructor
+DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
+    fGeoEl(gel),
+    fFracture(fracture),
+    fCoord(0)
+{
+    int nsides = gel->NSides();
+    fStatus.Resize(nsides,0);
+    int nedges = gel->NCornerNodes();
+    fRibs.Resize(nedges,nullptr);
 }
 
 /// Copy constructor
@@ -74,6 +87,8 @@ bool DFNFace::IsOnBoundary(){
 
 
 void DFNFace::UpdateRefMesh(){
+    // this call is deceiving. NeedsRefinement will actually create a refinement mesh
+    // @pedro : divide in two calls : one for NeedsRefinement and another for generating the mesh
 	if(!this->NeedsRefinement()) return;
 	TPZManVector<TPZManVector<int64_t,4>,6> child(0); 
 	TPZManVector<TPZManVector<REAL,3>> newnode(0);
@@ -147,6 +162,8 @@ void DFNFace::FillChildrenAndNewNodes(
 	TPZManVector<TPZManVector<REAL,3>> &newnode)
 {
 	if(!this->NeedsRefinement()) return;
+    // this method will determine how a face needs to be refined
+    // most complex operation of fracture insertion!!
 	int splitcase = GetSplitPattern(fStatus);
 	int nodeA = fGeoEl->NCornerNodes();
 	int nodeB = fGeoEl->NCornerNodes()+1;
@@ -566,7 +583,9 @@ bool DFNFace::UpdateStatusVec(){
 		// else{fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1;}
 		switch(rib->Status()){
 			case 2: fStatus[i+nnodes] = 1; break;
-			case 1: 
+			case 1:
+                // @pedro : this is typical code : write once, read never
+                // please explain
 			case 0: fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1; break;
 			default: DebugStop();
 		}
@@ -705,10 +724,12 @@ int64_t DFNFace::LineInFace(){
 	return -1;
 }
 
-
+// method returns true is a side has been divided in two
 bool DFNFace::CanBeSnapped(){
 	const int ncorners = fGeoEl->NCornerNodes();
 	const int nsides = fGeoEl->NSides();
+    // @pedro : I dont understand the logic of this?
+    // if fStatus = 0 or 1, it is already snapped, isnt it?
 	for(int iside = ncorners; iside<nsides; iside++){
 		if(fStatus[iside]) break;
 		if(iside==nsides-1) return false;
@@ -734,6 +755,7 @@ bool DFNFace::AllSnapsWentToSameNode() const{
 
 
 bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
+    //@pedro : wouldn't it be better to check if the mesh has elements?
 	if(!this->NeedsRefinement()) {return false;}
 	int nels = fRefMesh.NElements();
 	if(nels < 1) {PZError<<"\n\n"<<__PRETTY_FUNCTION__<<"\nSnap face refinements requires a proper refinement mesh to describe the refinement\n";DebugStop();}
@@ -744,6 +766,7 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 	// If intersections have already been snapped to corners, there's nothing else to snap
 	if(!this->CanBeSnapped()) return false;
 
+    // this stretch of code determines if an element has a bad angle or aspect ratio
 	for(int iel=1; iel <nels; iel++){
 		TPZGeoEl* gel = fRefMesh.Element(iel);
 		// Check if any angle violates the tolerable angle
@@ -764,19 +787,31 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 
 
 bool DFNFace::SnapIntersection_try(REAL tolDist, REAL tolAngle_cos){
-	if(this->NeedsSnap(tolDist, tolAngle_cos)) 
-		return this->SnapIntersection_force();
+    // this method determines if the mesh has elements with bad aspect ratio
+	if(this->NeedsSnap(tolDist, tolAngle_cos))
+    {
+        // @pedro : how are you sure that "all" sides need to be snapped?
+        // can it not be that a single rib needs to be snapped?
+		this->SnapIntersection_force();
+        return true;
+    }
 	else
+    {
 		return false;
+    }
 }
 
+// this method will snap the nodes of all ribs
 bool DFNFace::SnapIntersection_force(){
 	int nribs = fGeoEl->NSides(1);
+    int ncorner = fGeoEl->NCornerNodes();
 	for(int irib=0; irib<nribs; irib++){
 		DFNRib* rib = fRibs[irib];
 		if(!rib) continue;
+        // will snap the node to a closest point
 		rib->SnapIntersection_force();
-		UpdateNeighbours(irib+nribs);
+        // adjust the neighbouring faces to acount for the snapped node
+		UpdateNeighbours(irib+ncorner);
 	}
 	UpdateStatusVec();
 	UpdateRefMesh();
@@ -792,6 +827,7 @@ void DFNFace::UpdateNeighbours(int iside){
 		//@todo skeletonMesh material would enter here
 		neig_face = fFracture->Face(neig.Element()->Index());
 		if(!neig_face) continue;
+        // this probably changes the values of the undocumented fStatus vector
 		if(!neig_face->UpdateStatusVec()) continue;
 		neig_face->UpdateRefMesh();
 		REAL tolDist = fFracture->dfnMesh()->TolDist();

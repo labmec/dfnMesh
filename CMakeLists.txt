@@ -136,5 +136,6 @@ include_directories(${GMSH_INC})
 file(COPY "examples" DESTINATION .)
 
 add_subdirectory(src)
+add_subdirectory(testcollapsed)
 
 

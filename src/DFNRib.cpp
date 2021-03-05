@@ -149,9 +149,11 @@ bool DFNRib::SnapIntersection_try(REAL tolDist){
     // If there's an intersection at the 1D side of this DFNRib, check if 
     // that intersection violates the tolerable distance and, if necessary, snap it down to a lower-dimensional side
     int64_t closestnode = -1;
+    // NeedsSnap will modify closestnode to zero or one if Snapping is required
     if(this->NeedsSnap(closestnode,tolDist)){
         fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
         fStatus = closestnode;
+        // @pedro : what does this method do? Why is it called here?
         UpdateNeighbours(closestnode);
         return true;
     }
@@ -208,6 +210,8 @@ void DFNRib::UpdateNeighbours(int iside){
                 // rib_ptr->StatusVec()[neig_side] = fStatus[iside];
                 // rib_ptr->SnapIntersection_try();
                 // if(rib_ptr->NeedsRefinement()) {rib_ptr->SnapIntersection_try();}
+                
+                // @pedro : when does a rib need refinement?
                 if(rib_ptr->NeedsRefinement()) {rib_ptr->SnapIntersection_force();}
                 break;
             }

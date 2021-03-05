@@ -145,6 +145,7 @@ void DFNFracture::FindFaces(){
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
     TPZGeoEl *gel;
  
+    // @pedro : why not iterate over the DFNRibs objects?
     // iterate over 2D elements and check their 1D neighbours for intersections
     int64_t nel = gmesh->NElements();
     for(int iel=0; iel<nel; iel++){
@@ -168,22 +169,28 @@ void DFNFracture::FindFaces(){
                 // @TODO shouldn't you check on the material id? It has to be a skeleton matid
                 rib_index[iedge] = neig.Element()->Index();
             }
+            // rib_index contains the 1D geometric element index (of the skeleton mesh)
             if(rib_index[iedge] == -1) DebugStop(); //Missing 1D skeleton
+            // rib_index contains the geometric element index of the edge elements
+            // Rib returns the pointer to the DFNRib object IF IT EXISTS
             rib_vec[iedge] = Rib(rib_index[iedge]);
+            // the face has at least one rib intersecting
             if(rib_vec[iedge]) is_intersected = true;
         }
         if(!is_intersected) continue;
         
         // build face
-        DFNFace face(gel,this);
-        // @TODO why not include the rib_index in the constructor?
-        face.SetRibs(rib_vec);
+        DFNFace face(gel,this,rib_vec);
+        // each intersected rib corresponds to de 1 dimensional side of face
+        // for these sides we store 0, 1, or 2 depending on the intersection
         face.UpdateStatusVec();
         // if(face.IsOnBoundary()){
         //     face.FindInPlanePoint();
         // }
-        // Setup a refinement mesh whose quality measures are checked in DFNFace::NeedsSnap()
+        // create a mesh representing the division of the face
         face.UpdateRefMesh();
+        // Setup a refinement mesh whose quality measures are checked in DFNFace::NeedsSnap()
+        // insert the face in the DFNFracture data structure. A copy of DFNFace is created
         AddFace(face);
         std::cout<<"\r#Faces intersected = "<<fFaces.size()<<std::flush;
     }
@@ -353,8 +360,8 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
     
     
     tolAngle = std::cos(tolAngle);
-    for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
-        DFNFace* face = &itr->second;
+    for(auto itr : fFaces){
+        DFNFace* face = &itr.second;
         face->SnapIntersection_try(tolDist, tolAngle);
     }
 
