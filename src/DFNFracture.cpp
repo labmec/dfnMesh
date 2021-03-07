@@ -879,7 +879,7 @@ void DFNFracture::MeshFractureSurface(){
             if(polyhindex< 0) DebugStop();
             
             // Skip polyhedra on Fracture limits if limit directive is Etruncated
-            if(!(fLimit==Etruncated) && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
+            if(fLimit==Etruncated && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
             
             // Skip if subpolygon has already been built
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
