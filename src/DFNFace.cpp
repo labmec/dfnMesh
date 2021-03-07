@@ -82,13 +82,41 @@ bool DFNFace::IsOnBoundary(){
 	return n_intersections == 1;
 }
 
+bool DFNFace::NeedsRefinement() const{
+	int nsides = fGeoEl->NSides();
+	if(fStatus[nsides-1]) return true;
+	int nnodes = fGeoEl->NCornerNodes();
+	int nedges = nnodes;
+	int cutedges = 0;
+	int cutnodes = 0;
+	bool consecutive_nodes = false;
+	// Basically return False if only one node or only two consecutive nodes have been intersected
+	for(int i=0; i<nedges; i++){
+		// Count number of nodes toward the intersection was snapped
+		cutnodes += fStatus[i];
+		// Count number of non-snapped intersections
+		cutedges += fStatus[i+nnodes];
+		// Check if snaps were made down to 2 consecutive nodes
+		if(fStatus[i]&&fStatus[(i+1)%nnodes]){
+			// check anterior and posterior edges for intersection
+			consecutive_nodes = true;
+			// consecutive_nodes = (fStatus[i-1+nnodes]==0)&&(fStatus[(i+1)%nnodes+nnodes]==0);
+			// //                             anterior edge                   posterior edge
+		}
+	}
+	if(cutnodes > 2){ consecutive_nodes = false; DebugStop();}
 
+	if(consecutive_nodes) return false;
+	if(cutnodes == 1 && cutedges == 0) return false;
+	return true;
+}
 
 
 
 void DFNFace::UpdateRefMesh(){
     // this call is deceiving. NeedsRefinement will actually create a refinement mesh
     // @pedro : divide in two calls : one for NeedsRefinement and another for generating the mesh
+	// @reply : DFNFace::NeedsRefinement doesn't create a refinement mesh. Maybe you mixed the names? I don't understand. NeedsRefinement has been set as a const method for a while now.
 	if(!this->NeedsRefinement()) return;
 	TPZManVector<TPZManVector<int64_t,4>,6> child(0); 
 	TPZManVector<TPZManVector<REAL,3>> newnode(0);
@@ -573,20 +601,25 @@ bool DFNFace::UpdateStatusVec(){
 	TPZManVector<int> old_fStatus = fStatus;
     fStatus.Fill(0);
 
-	int orientation = 0;
-	// loop through ribs and match their intersection into DFNFace::fStatus
+	// loop through ribs and match their intersection side index into DFNFace::fStatus
 	for(int i=0; i<nribs; i++){
-		rib = fRibs[i];
+		int irib = i;
+		rib = fRibs[irib];
 		if(!rib) continue;
-		orientation = (rib->GeoEl()->NodeIndex(0) == fGeoEl->NodeIndex(i) ? 0 : 1);
-		// if(rib->Status() == 2){fStatus[i+nnodes] = 1;}
-		// else{fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1;}
-		switch(rib->Status()){
-			case 2: fStatus[i+nnodes] = 1; break;
-			case 1:
-                // @pedro : this is typical code : write once, read never
-                // please explain
-			case 0: fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1; break;
+		switch(rib->IntersectionSide()){													// Get index of side through which fracture passes (before or after snap)
+			// If through side 2, simply mark that side in the status vector
+			case 2: fStatus[i+nnodes] = 1; break;											
+			// If it was snapped to a node, use rib orientation to permute accordingly
+			case 1:																			
+			case 0:{ /* fStatus[(i+(!orientation+rib->IntersectionSide())%2)%nnodes] = 1; break; */
+					// Check if orientation of rib matches orientation of the faceside it occupies. If node0 of the i-th rib matches the i-th node of the face, then their orientation match.
+					int orientation = rib->GeoEl()->NodeIndex(0) == fGeoEl->NodeIndex(i);
+					int permuted_rib_node = (rib->IntersectionSide() + !orientation) % 2;	// Note the ! (not operator) that swaps orientation before sum
+					int face_node_index = (permuted_rib_node + irib) % nnodes;				// This line is basically the opposite of TPZGeoEl::SideNodeLocIndex()
+					int old = (i+(!orientation+rib->IntersectionSide())%2)%nnodes;
+					fStatus[face_node_index] = 1;
+					break;
+			}
 			default: DebugStop();
 		}
 	}
@@ -728,10 +761,10 @@ int64_t DFNFace::LineInFace(){
 bool DFNFace::CanBeSnapped(){
 	const int ncorners = fGeoEl->NCornerNodes();
 	const int nsides = fGeoEl->NSides();
-    // @pedro : I dont understand the logic of this?
-    // if fStatus = 0 or 1, it is already snapped, isnt it?
+	// If fStatus indicates an intersection that wasn't snapped, then it could potentially be snapped, so it returns true.
+	// If all intersections were already snapped, there's nothing else to snap and method returns false.
 	for(int iside = ncorners; iside<nsides; iside++){
-		if(fStatus[iside]) break;
+		if(fStatus[iside]) break;			// if this condition evaluates to true, there's an intersection that was not snapped yet.
 		if(iside==nsides-1) return false;
 	}
 	return true;
@@ -756,6 +789,7 @@ bool DFNFace::AllSnapsWentToSameNode() const{
 
 bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
     //@pedro : wouldn't it be better to check if the mesh has elements?
+	// @reply: I don't understand this question. Two lines down from here I check for elements in this face's refinement mesh. Did you mean before NeedsRefinement()? That method relies only on the StatusVector, so there is no need for a refinement mesh before calling it.
 	if(!this->NeedsRefinement()) {return false;}
 	int nels = fRefMesh.NElements();
 	if(nels < 1) {PZError<<"\n\n"<<__PRETTY_FUNCTION__<<"\nSnap face refinements requires a proper refinement mesh to describe the refinement\n";DebugStop();}
@@ -792,6 +826,7 @@ bool DFNFace::SnapIntersection_try(REAL tolDist, REAL tolAngle_cos){
     {
         // @pedro : how are you sure that "all" sides need to be snapped?
         // can it not be that a single rib needs to be snapped?
+		// @reply: I agree, this was a mistake of mine, I'll rewrite the method.
 		this->SnapIntersection_force();
         return true;
     }
@@ -906,6 +941,9 @@ int DFNFace::OtherRibSide(int inletside){
 		if(outedge == inletedge) continue;
 		if(fRibs[outedge]) return outedge + nnodes;
 	}
+	#ifdef PZDEBUG
+	fFracture->dfnMesh()->DumpVTK();
+	#endif // PZDEBUG
 	DebugStop();
 	return -1;
 }

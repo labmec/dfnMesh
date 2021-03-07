@@ -23,7 +23,7 @@
 typedef TPZFMatrix<REAL> Matrix;
 
 /*! 
- *  @brief     Describes a planar convex polygon from it's corner points.
+ *  @brief     Describes a planar convex polygon from it's corner points. (not to be confused with DFNPolyhedron)
  *  @details Enumeration of corner points should follow standard PZ topology, where 
  *  corner nodes are numbered counter-clockwise (clockwise should work as well) from
  *  zero to N. (This condition will automatically be met for triangles, but not 
@@ -46,6 +46,7 @@ class DFNPolygon
 
     /// Tracks which nodes are above this Polygon - for each node of the geometric mesh, indicates whether the node is above the plane
     // @pedro - shouldn't this be a temporary data structure?
+	/// @reply : This data structure needs to exist up until DFNFracture::IsolateFractureLimits is called
     TPZVec<bool> fNodesAbove;
 	
   public:

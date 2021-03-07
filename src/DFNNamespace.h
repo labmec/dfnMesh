@@ -211,15 +211,12 @@ enum DFNMaterial{
     // Etransition = 3
 };
 
-/** @brief Options for handling the limits of the fracture 
-  * {
-  *  0 = Truncated, 
-  *  1 = Extended, 
-  *  2 = Recovered
-  * } 
-  */
-/// @pedro : I HAVE NO IDEA WHAT TRUNCATED - EXTENDED OR RECOVERED MEANS
-/// @pedro - insert a descriptive text here
+/**
+ * @brief Directives for fracture limit recovery.
+ * @enum Etruncated = Fracture limits will be ignored by only using faces that have 2 InBound ribs (see DFNRib::fOffbound for explanation) during the construction of the fracture surface;
+ * @enum Eextended = Fracture limits will be extended to the bounds of the polyhedral volume that contains them;
+ * @enum Erecovered = Fracture limits will be extended, then an attempt will be made to recover the limits by refining its surface with orthogonal planes where limits would have been. Recovery may not be perfect due to snapping algorithms and imposition of geometrical tolerances.
+*/
 enum FracLimit{Etruncated=0,Eextended=1,Erecovered=2};
 
 // Set Material ID for element and its children
@@ -240,7 +237,7 @@ operator<<(      std::ostream&      out,
            const std::pair<T1,T2>&  pair )
 {
     out << pair.first << "|";
-    // @pedro : please document this
+    // if the second element of the pair is a number, this aligns columns by leaving a blank space for the sign of positive numbers (since negative numbers always have the symbol)
     if(std::is_convertible<T2,int>::value){
         out << (pair.second < 0 ? "":" ");
     }
@@ -250,7 +247,7 @@ operator<<(      std::ostream&      out,
 	return out;
 }
 
-// @pedro please comment what this is used for
+// I used this a few times to debug some sets. Is not a part of the code really... just an utility.
 template<typename T>
 void Print(const std::set<T>& s, std::ostream& out = std::cout, std::string name = "no-name"){
     out << "\nstd::set : "<<name<<"\n{ ";
@@ -259,6 +256,10 @@ void Print(const std::set<T>& s, std::ostream& out = std::cout, std::string name
     }
     out << "\b\b }\n"<<std::endl;
 }
+
+#ifdef WIN32
+    #define __PRETTY_FUNCTION__ __FUNCTION__
+#endif //WIN32
 
 // template <class T>
 // int printf(TPZVec<T> vec){

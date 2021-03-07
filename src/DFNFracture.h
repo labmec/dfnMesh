@@ -226,7 +226,9 @@ public:
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);
     
-    /// Find intersected ribs, create DFNRib objects
+    /** @brief Search for intersected 1D elements and create DFNRib objects for them;
+     *  @details Loop over all 1D elements in the mesh; use DFNPolygon::fNodesAbove to check if an edge has nodes on opposite sides of the plane that contains the DFNPolygon; and check if the intersection is within the DFNPolygon bounds.
+     **/
     void FindRibs();
     /// Find and intersect ribs within the element indices in a set.
     /// @attention Unlike DFNFracture::FindRibs(), this method won't check if intersection point is within fPolygon limits. Since ribs are already limited to a set, intersection search is done with the unbounded plane that contains fPolygon
@@ -257,6 +259,7 @@ public:
     */
     /** @brief Identify Ribs, Faces and Polyhedra that are affected by the limits of the fracture
      * @note Should be called after DFNFracture::FindFaces()
+     * @details This method is a preparation for the actual recovery of fracture limits, which happens during DFNFracture::RecoverFractureLimits
     */
     void IsolateFractureLimits();
     /** @brief Find Ribs that lie out of the bounds of this fracture but are still influenced by its limits */

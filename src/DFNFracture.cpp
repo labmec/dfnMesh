@@ -145,7 +145,8 @@ void DFNFracture::FindFaces(){
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
     TPZGeoEl *gel;
  
-    // @pedro : why not iterate over the DFNRibs objects?
+    // @pedro : why not iterate over the DFNRibs objects? 
+    // @reply : I've written it both ways. I'm yet to test which is more efficient in which case, than we'll keep the winner.
     // iterate over 2D elements and check their 1D neighbours for intersections
     int64_t nel = gmesh->NElements();
     for(int iel=0; iel<nel; iel++){
@@ -243,17 +244,15 @@ void DFNFracture::FindRibs(){
         // @pedro : please specify if there are tolerance involved here?
         // will the intersection point be snapped to an endpoint
         // when will the result be true???
+        // DFNPolygon::IsCutByPolygon checks if a rib intersects the polygon by looking if its nodes are on opposite sides of the plane and also checking if intersection point is within bounds of the polygon.
+        // There is a SmallNumber tolerance check to handle machine precision, but no 'geometrical tolerance' as its defined in DFNMesh::fTolDist for example.
         TPZManVector<REAL,3> intpoint(3,0);
         bool result = fPolygon.IsCutByPolygon(gel, intpoint);
 
         // Add rib
         if (result == true){
-            // @pedro : what is the meaning of the parameters here - why : 2?
-            // what happens if the intersection point is really close to a node
-            DFNRib rib(gel, this,2);
+            DFNRib rib(gel, this);
             rib.SetIntersectionCoord(intpoint);
-            // if this 1D element is not part of a previous fracture, change its material to Erefined
-            // if(gel->MaterialId() != DFNMaterial::Efracture) {gel->SetMaterialId(DFNMaterial::Erefined);}
             AddRib(rib);
             std::cout<<"\r#Ribs intersected = "<<fRibs.size()<<std::flush;
         }
@@ -1298,7 +1297,7 @@ void DFNFracture::FindOffboundRibs(){
         for(TPZGeoEl* edge : edgelist){
             if(!fPolygon.IsCutByPlane(edge,intersection)) continue;
             if(Rib(edge->Index())) continue;
-            DFNRib rib(edge,this,2);
+            DFNRib rib(edge,this);
             rib.SetIntersectionCoord(intersection);
             rib.FlagOffbound(true);
             // if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
@@ -1670,7 +1669,7 @@ void DFNFracture::FindRibs(const std::set<int64_t>& ribset){
 
         TPZManVector<REAL,3> intpoint(3,0.);
         if(fPolygon.IsCutByPlane(gel,intpoint)){
-            DFNRib rib(gel,this,2);
+            DFNRib rib(gel,this);
             rib.SetIntersectionCoord(intpoint);
             DFNRib* newrib = AddRib(rib);
             newrib->AppendToNeighbourFaces();

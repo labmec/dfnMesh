@@ -17,7 +17,7 @@ class DFNMesh;
 // class DFNFracture;
 
 /*! 
- *  @brief      Describes a convex polyhedral volume as a set of oriented faces that enclose the shell around it.
+ *  @brief      Describes a convex polyhedral volume as a set of oriented faces that enclose the shell around it. (not to be confused with DFNPolygon)
  */
 class DFNPolyhedron
 {

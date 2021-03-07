@@ -13,7 +13,8 @@
 #include "pzmatrix.h"
 
 /*! 
- *  @brief      Describes a volume within the DFN scope of application.
+ * @deprecated WE ARE NOT USING THIS CLASS. IT WAS CONCEIVED AS A TRACKER FOR COARSE ELEMENT AND SUB-MESH
+ * @brief      Describes a volume within the DFN scope of application.
  *  @details    Has information on the planes it encloses and the children volumes
  *  @author     Pedro Lima
  *  @date       2019
@@ -41,7 +42,7 @@ class DFNVolume
 
   public:
     /// Empty constructor
-    DFNVolume();
+    DFNVolume(){DebugStop();/*[DEPRECATED]*/}
     /// Empty destructor
     ~DFNVolume(){};
     

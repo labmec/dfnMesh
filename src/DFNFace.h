@@ -29,11 +29,17 @@ private:
 
 	/** A status vector describes the topology of the intersection
      *  each vector entry corresponds to a side, which may contain 
-     *  an intersection node with the fracture
-     * @TODO phil : what is the meaning if the status vector is entirely ZERO
-     * @pedro what is the size of fStatus, what do the entries mean?
+     *  an intersection node with the fracture.
+     * @details The vector usually starts with 1 entries on its 1D sides (4~7 for quads and 3~5 for triangles), then snapping algorithms may move them to the nodes. If a face starts with nodes set to 1, then that means a tolerance was verified at the rib level before the face was created.
+     * For example: 
+     * {1,0,1,0,0,0,0,0,0} is a quadrilateral face intersected by a fracture, whose intersection nodes have been snapped to nodes 0 and 2;
+     * {0,0,0,0,1,0,1,0,0} is a quadrilateral face intersected by a fracture passing through sides 4 and 6 (the 1st and 3rd edges), where no snap was performed;
+     * {1,0,0,0,1,0,0} is a triangular face intersected by a fracture passing through sides 0 and 2. Meaning one intersection was snapped to node 0 and the other wasn't snapped;
+     * {0,0,0,0,0,0,0} is an uninitialized Status vector of a triangle;
+     * @attention As it currently stands, our methodology doesn't have a Status Vector with more than two entries == 1; If you find this ever to be violated, it's a bug;
+     * @note @phil if you are seeing an entirely zero StatusVector, you probably printed it before calling DFNFace::UpdateStatusVector, where faces build their status vector by analyzing their ribs.
      */
-	TPZManVector<int> fStatus;
+	TPZManVector<int,9> fStatus;
 
 	/// Anticipated coordinates of an in-plane intersection node (if any has beeen found)
     /// This vector is only filled if this face intersects the limits of the fracture polygon
@@ -114,29 +120,7 @@ public:
      * @brief Check if element should be refined
      * @return False if only one node or only two consecutive nodes have been intersected
     */
-    bool NeedsRefinement() const{
-        int nsides = fGeoEl->NSides();
-        if(fStatus[nsides-1]) return true;
-        int nnodes = fGeoEl->NCornerNodes();
-        int nedges = nnodes;
-        int cutedges = 0;
-        int cutnodes = 0;
-        bool consecutive_nodes = false;
-        for(int i=0; i<nedges; i++){
-            cutnodes += fStatus[i];
-            cutedges += fStatus[i+nnodes];
-            if(fStatus[i]&&fStatus[(i+1)%nnodes]){
-                // check anterior and posterior edges for intersection
-                consecutive_nodes = (fStatus[i-1+nnodes]==0)&&(fStatus[(i+1)%nnodes+nnodes]==0);
-                //                             anterior edge                   posterior edge
-            }
-        }
-        if(cutnodes==3) consecutive_nodes = false;
-
-        if(consecutive_nodes && cutedges<=1) return false;
-        if(cutnodes == 1 && cutedges == 0) return false;
-        return true;
-    }
+    bool NeedsRefinement() const;
 
     /// Return true if this face is in contact at all with the fracture
     bool IsIntersected() const{
