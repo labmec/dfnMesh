@@ -34,6 +34,8 @@ class DFNVolume
     /// Index of in-volume intersection EPoint
     int64_t fIntersection = -1;
     
+    // @pedro there is no such thing as a "plane" in the datastructure, do you mean 2d geometric
+    // elements that form the volume boundary
     /// Indices of planes enclosed by volume
     TPZManVector<int64_t> fEnclosedFaces;
 

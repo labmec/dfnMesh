@@ -827,6 +827,7 @@ bool DFNFace::SnapIntersection_try(REAL tolDist, REAL tolAngle_cos){
         // @pedro : how are you sure that "all" sides need to be snapped?
         // can it not be that a single rib needs to be snapped?
 		// @reply: I agree, this was a mistake of mine, I'll rewrite the method.
+        // thanks!!
 		this->SnapIntersection_force();
         return true;
     }

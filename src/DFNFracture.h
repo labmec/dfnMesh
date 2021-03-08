@@ -111,8 +111,27 @@ public:
 
     int NSurfElements() const{return fSurfaceFaces.size();}
     
+    // return the indices of all polyhedra intersected by the fracture
+    // @pedro - please implement
+    void IdentifyIntersectedPolyhedra(std::set<int64_t> &polyset);
+    
+    // return the indices of the geometric elements that belong to the discretized fracture
+    // through snapping AND were in the original mesh
+    // @pedro please implement - based on the ribs and their snap status
+    void IdentifySnapRibs(std::set<int64_t> &gelindices);
+    
+    // facet set of 2d elements with the same normal direction
+    // divide facets of polyhedra that have non-colinear snap-ribs
+    // loop over polyhedra
+    // identify the snap-ribs the belong to the polyhedra
+    // verify if the snap-ribs require meshing of a facet (hard)
+    // divide the facet (hard part)
+    // @pedro - please implement me
+    void MeshSnapPlanes();
+    
 private:
 
+    
     void Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended);
         
     /// Checks neighbour's dimension and returns true if it is equal

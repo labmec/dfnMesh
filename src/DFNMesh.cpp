@@ -1820,7 +1820,8 @@ void DFNMesh::UpdatePolyhedra(){
 			bool IsConvex = true;
 			int coarseindex = -1;
 
-			std::cout<< ' ' << loading[(buffering++%4)] << '\r' << std::flush;
+            // @pedro commented this line - didnt understand this output
+//			std::cout<< ' ' << loading[(buffering++%4)] << '\r' << std::flush;
 				
 			BuildVolume(initial_face_orient,IsConvex,polyhedron,coarseindex);
 

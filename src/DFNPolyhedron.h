@@ -17,8 +17,10 @@ class DFNMesh;
 // class DFNFracture;
 
 /*! 
- *  @brief      Describes a convex polyhedral volume as a set of oriented faces that enclose the shell around it. (not to be confused with DFNPolygon)
+ *  @brief Describes a convex polyhedral volume as a set of oriented faces that enclose the shell around it. (not to be confused with DFNPolygon)
  */
+// @pedro - what is the difference/relation between a DFNPolyhedron and a DFNVolume?
+// looked at DFNVolume that is deprecated...
 class DFNPolyhedron
 {
     private:

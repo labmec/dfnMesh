@@ -376,6 +376,7 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
         LOGPZ_INFO(logger,stream.str());
     }
 #endif // LOG4CXX
+    // @pedro - what is the purpose of this method?
     SearchForSpecialQuadrilaterals();
 }
 
@@ -383,7 +384,8 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
 
 
 bool DFNFracture::IsSpecialQuadrilateral(TPZGeoEl* gel){
-    if(gel->Type() != MElementType::EQuadrilateral) return false;
+    // @pedro - some methods should be called for a purpose
+    if(gel->Type() != MElementType::EQuadrilateral) DebugStop();
 
     // If this DFNFracture has already found me, and has decided I'm not special, you can move on to the next quadrilateral
     DFNFace* dfnface = Face(gel->Index());
@@ -902,7 +904,9 @@ void DFNFracture::MeshFractureSurface(){
             // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
-                InsertFaceInSurface(ExistingGel->Index());
+                TPZGeoElSide gelside(ExistingGel);
+                TPZGeoElBC gbc(gelside,this->fIndex+10);
+                InsertFaceInSurface(gbc.CreatedElement()->Index());
                 continue;
             }
             MeshPolygon(subpolygon);
@@ -1066,7 +1070,9 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
         gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
     }
     // gmsh::model::addPhysicalGroup(2,wiretag,this->fmatid);
-    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Eintact);
+    // @pedro mudei aqui
+//    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Eintact);
+    gmsh::model::addPhysicalGroup(2,wiretag,this->fIndex+10);
 
 	
 	// synchronize before meshing
@@ -1105,6 +1111,9 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 	}
     
     SetLoopOrientation(polygon);
+    nedges = polygon.size();
+//    std::cout << "Polygon coords\n";
+//    for(auto no : nodes) gmesh->NodeVec()[no].Print();
     // std::cout<<"SubPolygon# "<<polygon_counter<<": "<<polygon<<std::endl;
     // If polygon is planar quadrilateral or triangle, we can skip gmsh
     bool isplane = DFN::AreCoPlanar(gmesh,nodes);
@@ -1115,7 +1124,7 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
         case 3:             
         case 4: if(isplane){
                     // TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,this->fmatid); 
-                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Eintact); 
+                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,fIndex+10);
                     newelements[0] = newel->Index();
                     break;
                 }

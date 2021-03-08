@@ -34,6 +34,8 @@ private:
     TPZGeoMesh *fGMesh = nullptr;
 
     /// For each edge, a vector of sorted faces around that edge
+    // @pedro this is a necessary data structure for building the polyhedra
+    // but does it need to be permanent?
     TPZVec<TRolodex> fSortedFaces;
 
     /** 
