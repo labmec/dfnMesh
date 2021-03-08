@@ -206,9 +206,12 @@ private:
     */
     bool CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid);
 
-    /** @brief Search for quadrilaterals that violate our general criterion for refinement*/
+    /** @brief Search for quadrilaterals that violate our general criterion for refinement
+     *  @note this is a draft which I commited by accident, it does nothing for now
+    */
     void SearchForSpecialQuadrilaterals();
     /** @brief A special quadrilateral is one that should be refined because of a special exception.
+     *  @note this is a draft which I commited by accident, it does nothing for now
      * @details It has 3 or more neighbour ribs (some of them NOT occupying its 1D sides) whose intersection nodes were snapped toward this quadrilateral.
      * If this quadrilateral is not refined, it'll (sometimes) induce a non-convex polyhedron with overlapped faces that GMSH can't mesh.
     */
@@ -234,9 +237,6 @@ public:
     DFNRib* AddRib(DFNRib &rib);
     
     DFNFace* AddFace(DFNFace &face);
-
-    /// Insert new volume in data structure
-    void AddVolume(DFNVolume volume);
 
     /// Pointer to rib corresponding to geometric element with index
     // return NULL if the geometric element is not intersected

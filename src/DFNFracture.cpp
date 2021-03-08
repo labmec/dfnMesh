@@ -145,8 +145,6 @@ void DFNFracture::FindFaces(){
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
     TPZGeoEl *gel;
  
-    // @pedro : why not iterate over the DFNRibs objects? 
-    // @reply : I've written it both ways. I'm yet to test which is more efficient in which case, than we'll keep the winner.
     // iterate over 2D elements and check their 1D neighbours for intersections
     int64_t nel = gmesh->NElements();
     for(int iel=0; iel<nel; iel++){
@@ -241,10 +239,7 @@ void DFNFracture::FindRibs(){
         if(gel->HasSubElement()){continue;}
 
         // Check rib and return the coordinate of the intersection point
-        // @pedro : please specify if there are tolerance involved here?
-        // will the intersection point be snapped to an endpoint
-        // when will the result be true???
-        // DFNPolygon::IsCutByPolygon checks if a rib intersects the polygon by looking if its nodes are on opposite sides of the plane and also checking if intersection point is within bounds of the polygon.
+        // DFNPolygon::IsCutByPolygon checks if a rib intersects the FracturePolygon by looking if its nodes are on opposite sides of the plane and also checking if intersection point is within bounds of the polygon.
         // There is a SmallNumber tolerance check to handle machine precision, but no 'geometrical tolerance' as its defined in DFNMesh::fTolDist for example.
         TPZManVector<REAL,3> intpoint(3,0);
         bool result = fPolygon.IsCutByPolygon(gel, intpoint);
@@ -376,7 +371,7 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
         LOGPZ_INFO(logger,stream.str());
     }
 #endif // LOG4CXX
-    // @pedro - what is the purpose of this method?
+    /// @note this is a draft which I commited by accident, it does nothing for now
     SearchForSpecialQuadrilaterals();
 }
 
@@ -384,7 +379,6 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
 
 
 bool DFNFracture::IsSpecialQuadrilateral(TPZGeoEl* gel){
-    // @pedro - some methods should be called for a purpose
     if(gel->Type() != MElementType::EQuadrilateral) DebugStop();
 
     // If this DFNFracture has already found me, and has decided I'm not special, you can move on to the next quadrilateral
@@ -803,9 +797,9 @@ TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide&
     if(neighbours3.size() < 1) return nullptr;
 
     std::set<int64_t> common = DFN::set_intersection(neighbours1,neighbours3);
-    /* @warning: you may feel tempted to use:
-        if(common.size() == 1) return gmesh->Element(*(common.begin()));
-        but a common neighbour of 2 faces is not a condition for an existing face. It has to be neighbour of 3.
+    /** @warning: you may feel tempted to use:
+     *  if(common.size() == 1) return gmesh->Element(*(common.begin()));
+     *  but a common neighbour of 2 faces is not a condition for an existing face. It has to be neighbour of 3.
     */
     if(common.size() < 1) return nullptr;
     common = DFN::set_intersection(common,neighbours2);
@@ -1071,9 +1065,8 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
         gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
     }
     // gmsh::model::addPhysicalGroup(2,wiretag,this->fmatid);
-    // @pedro mudei aqui
 //    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Eintact);
-    gmsh::model::addPhysicalGroup(2,wiretag,this->fIndex+10);
+    gmsh::model::addPhysicalGroup(2,wiretag,this->fmatid);
 
 	
 	// synchronize before meshing

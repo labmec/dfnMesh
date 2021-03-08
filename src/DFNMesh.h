@@ -33,9 +33,7 @@ private:
     // Pointer to geometric mesh
     TPZGeoMesh *fGMesh = nullptr;
 
-    /// For each edge, a vector of sorted faces around that edge
-    // @pedro this is a necessary data structure for building the polyhedra
-    // but does it need to be permanent?
+    /// For each edge, a vector of sorted faces around that edge. For efficiency, this structure should live through the life of every DFNMesh object
     TPZVec<TRolodex> fSortedFaces;
 
     /** 
@@ -47,12 +45,6 @@ private:
     
     // A set of polyhedral volumes
     TPZStack<DFNPolyhedron,20> fPolyhedra;
-
-    /** 
-     * @brief A set of volumes 
-     * @todo this is probably getting deprecated soon
-     */
-    std::map<int64_t, DFNVolume> fVolumes;
 
 public:
     
@@ -70,9 +62,6 @@ public:
 
     /// Add new fracture
     void AddFracture(DFNFracture *fracture);
-    
-    /// Pointer to volume of index 'index'
-    DFNVolume *Volume(int64_t index){return &fVolumes[index];}
     
     /// Pointer to geometric mesh
     TPZGeoMesh *Mesh(){return fGMesh;}

@@ -168,9 +168,6 @@ bool DFNPolygon::IsCutByPlane(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection)
     }
 }
 
-// @pedro : please explain what this is doing!!!
-// what is the meaning of IsPointInPolygon (we are looking at ribs here, not polygons)
-// @reply : Phil, maybe you're confusing polyhedron vs polygon? polyhedron is a volume enclosed by faces (which has nothing to do with this code), and polygon is a limited plane, bounded by edges. Every fracture has a DFNPolygon which is constructed from the coordinates of its corner nodes;
 bool DFNPolygon::IsCutByPolygon(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
     return IsCutByPlane(gel,intersection) && IsPointInPolygon(intersection);
 }

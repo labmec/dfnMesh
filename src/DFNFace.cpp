@@ -114,24 +114,17 @@ bool DFNFace::NeedsRefinement() const{
 
 
 void DFNFace::UpdateRefMesh(){
-    // this call is deceiving. NeedsRefinement will actually create a refinement mesh
-    // @pedro : divide in two calls : one for NeedsRefinement and another for generating the mesh
-	// @reply : DFNFace::NeedsRefinement doesn't create a refinement mesh. Maybe you mixed the names? I don't understand. NeedsRefinement has been set as a const method for a while now.
 	if(!this->NeedsRefinement()) return;
 	TPZManVector<TPZManVector<int64_t,4>,6> child(0); 
 	TPZManVector<TPZManVector<REAL,3>> newnode(0);
 	FillChildrenAndNewNodes(child,newnode);
     
 #ifdef PZDEBUG
-    {
-        for(int in=0; in<newnode.size(); in++)
-        {
-            if(newnode[in].size() != 3)
-            {
-                DebugStop();
-            }
-        }
-    }
+	for(int in=0; in<newnode.size(); in++){
+		if(newnode[in].size() != 3){
+			DebugStop();
+		}
+	}
 #endif
     
     
@@ -788,8 +781,7 @@ bool DFNFace::AllSnapsWentToSameNode() const{
 
 
 bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
-    //@pedro : wouldn't it be better to check if the mesh has elements?
-	// @reply: I don't understand this question. Two lines down from here I check for elements in this face's refinement mesh. Did you mean before NeedsRefinement()? That method relies only on the StatusVector, so there is no need for a refinement mesh before calling it.
+    // Consistency checks
 	if(!this->NeedsRefinement()) {return false;}
 	int nels = fRefMesh.NElements();
 	if(nels < 1) {PZError<<"\n\n"<<__PRETTY_FUNCTION__<<"\nSnap face refinements requires a proper refinement mesh to describe the refinement\n";DebugStop();}

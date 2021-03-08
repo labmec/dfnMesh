@@ -1,9 +1,13 @@
 /*! 
  *	DFNVolume.cpp
- *  @author     Pedro Lima
- *  @date       2019
+ *  @brief     Describes a volume within DFN scope of application.
+ *  @details   
+ *  @author    Pedro Lima
+ *  @date      2019
+ *  @deprecated WE ARE NOT USING THIS CLASS. IT WAS CONCEIVED AS A TRACKER FOR COARSE ELEMENT AND SUB-MESH
  */
 
+/*
 #include "DFNVolume.h"
 
 
@@ -20,7 +24,6 @@ DFNVolume &DFNVolume::operator=(const DFNVolume &copy){
     return *this;
 }
 
-/*
 // Empty constructor
 DFNVolume::DFNVolume(){
     fVolumeIndex = -1;

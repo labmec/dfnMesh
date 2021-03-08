@@ -45,8 +45,6 @@ class DFNPolygon
 	TPZManVector<int64_t> fPointsIndex;
 
     /// Tracks which nodes are above this Polygon - for each node of the geometric mesh, indicates whether the node is above the plane
-    // @pedro - shouldn't this be a temporary data structure?
-	/// @reply : This data structure needs to exist up until DFNFracture::IsolateFractureLimits is called
     TPZVec<bool> fNodesAbove;
 	
   public:

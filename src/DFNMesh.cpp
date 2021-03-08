@@ -30,7 +30,7 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 	fPolyh_per_face.clear();
 	fPolyhedra.clear();
 	fFractures.clear();
-	fVolumes.clear();
+	// fVolumes.clear();
 	if(fGMesh->Dimension() == 3){
 		try{InitializePolyhedra();}
 		catch(...){
@@ -75,7 +75,7 @@ DFNMesh &DFNMesh::operator=(const DFNMesh &copy){
 	fSortedFaces = 		copy.fSortedFaces;
     fPolyh_per_face = 	copy.fPolyh_per_face;
 	fPolyhedra = 		copy.fPolyhedra;
-	fVolumes = 			copy.fVolumes;
+	// fVolumes = 			copy.fVolumes;
     return *this;
 }
 
@@ -928,6 +928,7 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
  * 	@brief Creates a .geo for the mesh
  */ 
 void DFNMesh::ExportGMshCAD(std::string filename){
+	std::cout<<" -Exporting Gmsh CAD file\r"<<std::flush;
 	// Surface cleanup (necessary if limit recovery is done after all fractures have been inserted to the mesh)
 	for(auto frac : FractureList()){
 		frac->CleanUp();
@@ -965,6 +966,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	out << "\n// Recombine Surface{:};";
 	out << "\n// Recombine Volume{:};";
 	out.flush();
+	std::cout<<"                         \r"<<std::flush;
 }
 
 void DFNMesh::ExportGMshCAD_fractures(std::ofstream& out){
@@ -1601,7 +1603,7 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
 
 
 void DFNMesh::ClearMaterials(){
-	std::cout << "\n\n[WARNING] Boundary conditions were erased.\n\n";
+	std::cout << "\n\n[WARNING] Boundary conditions were erased to print VTK graphics.\n\n" << std::flush;
 	for(auto el : fGMesh->ElementVec()){
 		if(!el) continue;
 		el->SetMaterialId(DFNMaterial::Eintact);
@@ -1692,10 +1694,10 @@ void DFNMesh::InitializePolyhedra(){
 	int ipolyh=0; 											///< index of polyhedron
 	TPZStack<std::pair<int64_t,int>,20> shell(20,{-1,0});	///< oriented faces that enclose the polyhedron
 
+	std::cout<<" -Initializing polyhedral volumes\r"<<std::flush;
 
 	// Gather mesh boundary first
 	shell.clear();
-	// DFNPolyhedron polyhedron;
 	TPZGeoElSide gelside;
 	TPZGeoElSide neig;
 	for(TPZGeoEl* gel : fGMesh->ElementVec()){
@@ -1717,9 +1719,6 @@ void DFNMesh::InitializePolyhedra(){
 		shell.push_back({gel->Index(),orient});
 		SetPolyhedralIndex({gel->Index(),orient},0);
 	}
-	// polyhedron.Initialize(this,ipolyh,shell,-1);
-	// polyhedron.Print();
-	// fPolyhedra.push_back(polyhedron);
 	CreatePolyhedron(shell,-1);
 #ifdef PZDEBUG
 	shell.Fill({-1,0});
@@ -1732,23 +1731,9 @@ void DFNMesh::InitializePolyhedra(){
 		if(!vol) continue;
 		if(vol->Dimension() != 3) continue;
 		CreateGelPolyhedron(vol,vol->Index());
-		// ipolyh = fPolyhedra.size();
-		// for(int iside=vol->FirstSide(2); iside < vol->NSides()-1; iside++){
-		// 	TPZGeoElSide volside(vol,iside);
-		// 	TPZGeoEl* face = DFN::GetSkeletonNeighbour(vol,iside);
-		// 	int orient = -DFN::SkeletonOrientation(volside,face);
-		// 	std::pair<int64_t,int> face_orient = {face->Index(),orient};
-		// 	shell.push_back(face_orient);
-		// 	SetPolyhedralIndex(face_orient,ipolyh);
-		// }
-		// polyhedron.Initialize(this,ipolyh,shell,vol->Index());
-		// // polyhedron.Print();
-		// fPolyhedra.push_back(polyhedron);
-		// shell.Fill({-1,0});
-		// shell.clear();
 	}
 
-	// UpdatePolyhedra();
+	std::cout<<"                                 \r"<<std::flush;
 }
 
 int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
@@ -1820,7 +1805,7 @@ void DFNMesh::UpdatePolyhedra(){
 			bool IsConvex = true;
 			int coarseindex = -1;
 
-            // @pedro commented this line - didnt understand this output
+            // If you're runing this on a terminal, this will draw a cool buffering 'animation'
 //			std::cout<< ' ' << loading[(buffering++%4)] << '\r' << std::flush;
 				
 			BuildVolume(initial_face_orient,IsConvex,polyhedron,coarseindex);
@@ -2417,7 +2402,7 @@ void DFNMesh::Print(std::ostream & out, char* name) const
 	out << "Number of free elements       = " << fGMesh->ElementVec().NFreeElements() << "\n\n";
 
 	out << "Number of fractures           = " << fFractures.size() << "\n";
-	out << "Number of DFNVolumes          = " << fVolumes.size() << "\n";
+	// out << "Number of DFNVolumes          = " << fVolumes.size() << "\n";
 	out << "Tolerable distance            = " << fTolDist << "\n";
 	out << "Tolerable angle            	  = " << fTolAngle << "\n";
 	out << "Tolerable cos(angle)          = " << fTolAngle_cos << "\n";
@@ -2482,9 +2467,11 @@ void DFNMesh::PrintPolyhedra(std::ostream & out) const{
 
 void DFNMesh::DumpVTK(bool clearmaterials){
 	if(clearmaterials) ClearMaterials();
+	std::cout<<" -Dumping VTK graphics\r"<<std::flush;
 	for(auto frac : FractureList()){
 		frac->CleanUp();
 		frac->Polygon().InsertGeomRepresentation(fGMesh);
 	}
 	PrintVTKColorful();
+	std::cout<<"                      \r"<<std::flush;
 }
