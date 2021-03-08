@@ -1,6 +1,8 @@
 ########### next target ###############
 
-# add_subdirectory(util)
+include_directories(.)
+include_directories(util)
+add_subdirectory(util)
 
 file(GLOB headers *.h *.tpp *Temp.cpp)
 file(GLOB sources *.cpp)
