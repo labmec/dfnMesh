@@ -904,9 +904,10 @@ void DFNFracture::MeshFractureSurface(){
             // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
-                TPZGeoElSide gelside(ExistingGel);
-                TPZGeoElBC gbc(gelside,this->fIndex+10);
-                InsertFaceInSurface(gbc.CreatedElement()->Index());
+                // TPZGeoElSide gelside(ExistingGel);
+                // TPZGeoElBC gbc(gelside,this->fIndex+10);
+                // InsertFaceInSurface(gbc.CreatedElement()->Index());
+                InsertFaceInSurface(ExistingGel->Index());
                 continue;
             }
             MeshPolygon(subpolygon);
