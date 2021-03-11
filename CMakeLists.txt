@@ -46,9 +46,6 @@ MESSAGE( STATUS "PZ_DIR:                  " ${PZ_DIR} )
 # Location to search files or libraries
 set(SEARCH_DIRS ENV PATH /usr/local/opt/ /usr/local/opt/qt5/lib/cmake/ /usr/include /usr/local/include /usr/local/include/boost /usr/local/include/log4cxx /usr/local/include/tbb /usr/lib /usr/lib64 /usr/local/lib ./. ./.. ./../libs ./../libs/fad ./../libs/metis ./../libs/metis/include ./../libs/metis/lib ./../externallibs ./../externallibs/fad ./../externallibs/pthread ./../externallibs/metis ./../externallibs/metis/include ./../externallibs/metis/lib ./..metis ./../metis/include ./../metis/lib ./externallibs/lib ./externallibs/include ./../externallibs/lib ./../externallibs/include)
 
-# linking std threads
-find_package(Threads REQUIRED)
-
 #enabling pthread library
 # find_path(PTHREAD_INCLUDE NAMES PThread.h pthread.h PATHS ${SEARCH_DIRS} D:/Projetos/externallibs/include )
 # find_library(PTHREAD_LIB NAMES libpthread.dylib pthread.lib pthreadVC2.lib libPThread.so libPThread.a libpthread.so libpthread.a PATHS ${SEARCH_DIRS} D:/Projetos/externallibs/lib  ${PROJECT_SOURCE_DIR}/../pthread/lib)
@@ -66,6 +63,8 @@ find_package(Threads REQUIRED)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(PZDEBUG True)
 	add_definitions(-DPZDEBUG)
+else() # Debug
+	# file(MAKE_DIRECTORY "release")
 endif()
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(NODEBUG NODEBUG)
@@ -130,6 +129,10 @@ if(NOT GMSH_INC)
   message(FATAL_ERROR "Could not find gmsh.h")
 endif()
 include_directories(${GMSH_INC})
+
+
+# linking std threads
+find_package(Threads REQUIRED)
 
 # Copy 'examples' into build directory. 
 # @WARNING this is only triggered during configure time.

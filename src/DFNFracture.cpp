@@ -137,7 +137,7 @@ DFNFace * DFNFracture::Face(int64_t index){
 }
 
 
-void DFNFracture::FindFaces(){
+void DFNFracture::CreateFaces(){
 #ifdef LOG4CXX
     LOGPZ_INFO(logger, "\n[Start][Searching faces]")
 #endif // LOG4CXX
@@ -222,7 +222,7 @@ void DFNFracture::FindFaces(){
 
 
 
-void DFNFracture::FindRibs(){
+void DFNFracture::CreateRibs(){
 #ifdef LOG4CXX
     LOGPZ_INFO(logger, "\n[Start][Searching ribs]");
 #endif // LOG4CXX

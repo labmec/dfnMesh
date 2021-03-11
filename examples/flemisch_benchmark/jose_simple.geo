@@ -95,9 +95,12 @@ Physical Surface("Fracture2",2) = {frac1[]};
 // BOUNDARY CONDITIONS
 
 // Physical Surface("bc1",1) = {15,17,28,29,30,31,32,33,34,35};
-Physical Surface("inlet") = {31, 30};
-Physical Surface("outlet") = {32, 33};
-Physical Surface("noflux") = {28, 29, 15, 35, 34, 17};
+// Physical Surface("inlet") = {31, 30};
+// Physical Surface("outlet") = {32, 33};
+// Physical Surface("noflux") = {28, 29, 15, 35, 34, 17};
+Physical Surface("inlet") = {17};
+Physical Surface("outlet") = {15};
+Physical Surface("noflux") = {29, 28, 31, 30, 35, 34, 33, 32};
 
 
 BCfrac0[] = {36,37,39,38};

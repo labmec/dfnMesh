@@ -168,10 +168,10 @@ int main(int argc, char* argv[]){
 		fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
         
 		// Find intersected ribs and impose tolerance
-		fracture->FindRibs();
+		fracture->CreateRibs();
 		fracture->SnapIntersections_ribs(tol_dist);
 		// Find intersected faces
-		fracture->FindFaces();
+		fracture->CreateFaces();
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
 #ifdef LOG4CXX
