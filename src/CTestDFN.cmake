@@ -1,4 +1,5 @@
-# Code testing. Please run these before commiting to search for bugs
+# Code testing. Please run these before Pushing or PR
+enable_testing()
 
 # Simple
 add_test(NAME Minimal COMMAND dfnTest "examples/minimal.jsonc" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -25,4 +26,3 @@ add_test(NAME Octagon COMMAND dfnTest "examples/exampleOctagon.txt" WORKING_DIRE
 # Frac 3D benchmarks
 add_test(NAME Fl_Benchmark_1 COMMAND dfnTest "examples/flemisch_benchmark/flemisch_case1.txt" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Fl_Benchmark_2 COMMAND dfnTest "examples/flemisch_benchmark/fl_case2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-enable_testing()
