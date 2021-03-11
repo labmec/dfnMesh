@@ -182,8 +182,7 @@ int main(int argc, char* argv[]){
         {
             std::ofstream logtest("LOG/dfn.summary.txt");
             dfn.Print(logtest,argv[1]);
-            std::ofstream out("gmesh.vtk");
-            TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out);
+			dfn.DumpVTK(false,true,"LOG/gmesh.vtk");
         }
 #endif //PZDEBUG
 	}
@@ -201,7 +200,7 @@ int main(int argc, char* argv[]){
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
-	dfn.DumpVTK();
+	dfn.DumpVTK(true);
 	std::cout<<"\n ...the end.\n\n";
 
 	gmsh::finalize();

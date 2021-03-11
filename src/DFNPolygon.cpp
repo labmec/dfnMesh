@@ -407,7 +407,7 @@ void DFNPolygon::ComputeCentroid(TPZVec<REAL>& centroid){
     centroid[2] /= nnodes;
 }
 /**
- * @brief Inserts a geometric mesh to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
+ * @brief Inserts a few geometrical elements to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
 */
 TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid){
     int nnodes = this->NCornerNodes();

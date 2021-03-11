@@ -1612,6 +1612,7 @@ void DFNFracture::RecoverFractureLimits(){
     }
 #endif // LOG4CXX
 
+    // int buggylimit = -1;
 
     this->UpdateFractureSurface();
     this->GetEdgesInSurface(fSurfaceEdges);
@@ -1621,6 +1622,7 @@ void DFNFracture::RecoverFractureLimits(){
 
     for(int ilimit=0; ilimit<nlimits; ++ilimit){
     // for(int ilimit=nlimits-1; ilimit>=0; --ilimit){
+    // try{
         DFNFracture orthfracture;
         CreateOrthogonalFracture(orthfracture,ilimit);
         orthfracture.FindRibs(fSurfaceEdges);
@@ -1629,7 +1631,13 @@ void DFNFracture::RecoverFractureLimits(){
         orthfracture.RefineRibs();
         orthfracture.RefineFaces();
         orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Eintact,*this);
-
+    // }catch(...){
+    //     if(ilimit == buggylimit) DebugStop();
+    //     else buggylimit = ilimit;
+    //     fdfnMesh->UpdatePolyhedra();
+    //     ilimit--;
+    //     // Try again with updated polyhedra
+    // }
 
 #ifdef LOG4CXX
         if(logger->isDebugEnabled()){
@@ -1641,15 +1649,13 @@ void DFNFracture::RecoverFractureLimits(){
 
 
     }
+
+    // @todo I'm not sure if Updating Polyhedra after all limits is a robust decision. Maybe it should be called after each limit. Although, it hasn't broken yet, so maybe we'll just leave it here until we find an example of this breaking. I've left a TryCatch approach commented above.
     fdfnMesh->UpdatePolyhedra();
 
 
 #ifdef LOG4CXX
-    if(logger->isInfoEnabled()){
-        std::stringstream stream;
-        stream << "[End][Recover fracture limits][Fracture " << fIndex << "]";
-        LOGPZ_INFO(logger,stream.str());
-    }
+    LOGPZ_INFO(logger,"[End][Recover fracture limits][Fracture " << fIndex << "]");
 #endif // LOG4CXX
 
 

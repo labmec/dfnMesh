@@ -79,11 +79,8 @@ DFNMesh &DFNMesh::operator=(const DFNMesh &copy){
     return *this;
 }
 
-void DFNMesh::PrintVTK(std::string pzmesh
-                    ,std::string vtkmesh
-                    ,int fracture
-                    ,int transition
-                    ,int intact)
+void DFNMesh::PrintVTK(std::string vtkmesh
+                    ,std::string pzmesh)
 {
 	TPZGeoMesh *gmesh = this->fGMesh;
 	if(pzmesh != "skip"){
@@ -103,13 +100,20 @@ void DFNMesh::PrintVTK(std::string pzmesh
 
 
 
-void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
-	// mesh.txt doesn't gain much... so print it normal first
-	this->PrintVTK(pzmesh,"skip");
+void DFNMesh::PrintVTKColorful(std::string vtkmesh,std::string pzmesh){
+	// mesh.txt doesn't gain much from coloring... so print it normal first
+	this->PrintVTK("skip",pzmesh);
 	TPZGeoMesh *gmesh = this->fGMesh;
 	int64_t nels = gmesh->NElements();
 	int64_t iel;
 	TPZGeoEl *gel;
+
+	// Gather set of material ids for DFNFractures
+	std::set<int> frac_material;
+	for(auto frac : fFractures){
+		frac_material.insert(frac->MaterialId());
+	}
+
 	// shift material ids
 	for(iel = 0; iel < nels; iel++){
 		gel = gmesh->Element(iel);
@@ -117,28 +121,28 @@ void DFNMesh::PrintVTKColorful(std::string pzmesh,std::string vtkmesh){
 		if(gel->Dimension() != 2) continue;
 		if(gel->HasSubElement()) continue;
 		if(!gel->Father()) continue;
-		// @todo-maybe if there will be a unique material id for each fracture, we might want to create an std::set<int> with all the material ids of fractures and do the next if as a binary search
-		// if(idset.find(gel->MaterialId()) != idset.end()) continue;
-		if(gel->MaterialId() == DFNMaterial::Efracture) continue;
+		// if there will be a unique material id for each fracture, we might want to create an std::set<int> with all the material ids of fractures and do the next if as a binary search
+		if(frac_material.find(gel->MaterialId()) != frac_material.end()) continue;
+		// if(gel->MaterialId() == DFNMaterial::Efracture) continue;
 		// if(gel->MaterialId() == DFNMaterial::Eintact) continue;
 		int subindex = gel->WhichSubel();
 		int matid = gel->MaterialId();
 		gel->SetMaterialId(DFNMaterial::Erefined+subindex);
 	}
 	// print vtk only, since txt has already been print
-	this->PrintVTK("skip",vtkmesh);
+	this->PrintVTK(vtkmesh,"skip");
 
 	// then, restore original mat ids
-	for(iel = 0; iel < nels; iel++){
-		gel = gmesh->Element(iel);
-		if(!gel) continue;
-		if(gel->Dimension() != 2) continue;
-		if(gel->HasSubElement()) continue;
-		if(!gel->Father()) continue;
-		int subindex = gel->WhichSubel();
-		int matid = gel->MaterialId();
-		gel->SetMaterialId(matid-subindex);
-	}
+	// for(iel = 0; iel < nels; iel++){
+	// 	gel = gmesh->Element(iel);
+	// 	if(!gel) continue;
+	// 	if(gel->Dimension() != 2) continue;
+	// 	if(gel->HasSubElement()) continue;
+	// 	if(!gel->Father()) continue;
+	// 	int subindex = gel->WhichSubel();
+	// 	int matid = gel->MaterialId();
+	// 	gel->SetMaterialId(matid-subindex);
+	// }
 }
 
 
@@ -2465,13 +2469,16 @@ void DFNMesh::PrintPolyhedra(std::ostream & out) const{
 
 
 
-void DFNMesh::DumpVTK(bool clearmaterials){
+void DFNMesh::DumpVTK(bool polygon_representation, bool clearmaterials, std::string filename){
 	if(clearmaterials) ClearMaterials();
 	std::cout<<" -Dumping VTK graphics\r"<<std::flush;
 	for(auto frac : FractureList()){
 		frac->CleanUp();
-		frac->Polygon().InsertGeomRepresentation(fGMesh);
+		if(polygon_representation) frac->Polygon().InsertGeomRepresentation(fGMesh);
 	}
-	PrintVTKColorful();
+	if(clearmaterials) 
+		PrintVTKColorful(filename,"skip");
+	else
+		PrintVTK(filename,"skip");
 	std::cout<<"                      \r"<<std::flush;
 }
