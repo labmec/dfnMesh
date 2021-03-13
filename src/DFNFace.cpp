@@ -24,6 +24,8 @@ DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec)
 //	int nedges = gel->NCornerNodes();
 //	fRibs.Resize(nedges,nullptr);
     SetRibs(ribvec);
+	UpdateStatusVec();
+	// UpdateRefMesh();
 }
 
 //Constructor

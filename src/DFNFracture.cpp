@@ -178,14 +178,8 @@ void DFNFracture::CreateFaces(){
         }
         if(!is_intersected) continue;
         
-        // build face
+        // build face. Status vector is initialized in the constructor when given a rib_vec
         DFNFace face(gel,this,rib_vec);
-        // each intersected rib corresponds to de 1 dimensional side of face
-        // for these sides we store 0, 1, or 2 depending on the intersection
-        face.UpdateStatusVec();
-        // if(face.IsOnBoundary()){
-        //     face.FindInPlanePoint();
-        // }
         // create a mesh representing the division of the face
         face.UpdateRefMesh();
         // Setup a refinement mesh whose quality measures are checked in DFNFace::NeedsSnap()
@@ -270,14 +264,17 @@ void DFNFracture::SetFracMaterial_2D(){
 }
 
 void DFNFracture::RefineRibs(){
+    std::cout << " -Refining ribs\r" << std::flush;
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
         DFNRib &rib = itr->second;
         rib.Refine();
     }
+    std::cout << "               \r" << std::flush;
 }
 
 
 void DFNFracture::RefineFaces(){
+    std::cout << " -Refining faces\r" << std::flush;
     for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
         DFNFace *face = &itr->second;
 #ifdef LOG4CXX
@@ -290,6 +287,7 @@ void DFNFracture::RefineFaces(){
 #endif // LOG4CXX
         face->Refine();
     }
+    std::cout << "                \r" << std::flush;
     fdfnMesh->CreateSkeletonElements(1);
     if(fdfnMesh->Dimension() < 3){SetFracMaterial_2D();}
 
@@ -911,12 +909,10 @@ void DFNFracture::MeshFractureSurface(){
 
     // Update connectivity and skeleton of new surface elements, after surface mesh is complete
     std::cout << std::endl;
-    std::cout << "Building connectivity\r";
+    std::cout << " -Building connectivity\r" << std::flush;
     fdfnMesh->Mesh()->BuildConnectivity();
-    std::cout << "                     \r";
-    std::cout << "Creating 1D skeletons on fracture surface\r";
+    std::cout << "                       \r" << std::flush;
     fdfnMesh->CreateSkeletonElements(1);
-    std::cout << "                                         \r";
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,

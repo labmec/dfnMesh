@@ -1570,6 +1570,7 @@ bool DFNMesh::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
 
 void DFNMesh::CreateSkeletonElements(int dimension, int matid)
 {
+	std::cout << " -Creating skeleton elements\r" << std::flush;
     int nel = fGMesh->NElements();
     for (int iel = 0; iel < nel; iel++)
     {
@@ -1597,6 +1598,7 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
             }
         }
     }
+	std::cout << "                            \r" << std::flush;
 }
 
 
