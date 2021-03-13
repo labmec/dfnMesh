@@ -71,7 +71,7 @@ class DFNPolygon
     void ComputeAxis();
 
 	/// Define corner coordinates
-	void SetCornersX(Matrix &CornerPoints);
+	void SetCornersX(const Matrix &CornerPoints);
 
 	/// axis(i, j) returns component i of axis j
 	REAL axis(int row, int col){return fAxis(row,col);}
@@ -81,9 +81,6 @@ class DFNPolygon
 
 	/// Return corner coordinates
 	const Matrix& GetCornersX() const;
-
-	/// Return corner coordinates matching indices of corner nodes that have been added to GeoMesh
-	Matrix& GetRealCornersX(TPZGeoMesh* gmesh) const;
 
 	/// Return area of polygon
 	double area() const { return fArea; }

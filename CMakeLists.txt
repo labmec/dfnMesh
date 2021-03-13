@@ -7,6 +7,8 @@ cmake_minimum_required (VERSION 3.6)
 set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE STRING  INTERNAL FORCE )
 
 project (DFNMesh)
+add_compile_definitions("PROJECT_ROOT=\"${PROJECT_SOURCE_DIR}\"")
+
 
 IF (WIN32)
 	# Prevents timespec redefinition problem with Visual Studio 2015

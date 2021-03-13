@@ -10,6 +10,12 @@
 #include <math.h>
 #include "DFNMesh.h"
 
+
+#ifdef LOG4CXX
+    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif
+
+
 //Constructor
 DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) 
 :   fPointsIndex(CornerPoints.Cols(),-1), 
@@ -125,6 +131,15 @@ const Matrix& DFNPolygon::GetCornersX() const{
     return fCornerPoints;
 }
 
+void DFNPolygon::SetCornersX(const Matrix &CornerPoints){
+    if(fCornerPoints.Cols() != 0) LOG_DFN_WARN("Corners of a DFNPolygon were reset. You need to re-sort nodes above and below.\n");
+    fCornerPoints.Resize(CornerPoints.Rows(),CornerPoints.Cols());
+    fCornerPoints = CornerPoints;
+    ComputeAxis();
+    Check_Data_Consistency();
+    ComputeArea();
+    fNodesAbove.clear();
+}
 
 
 /**
@@ -462,6 +477,10 @@ void DFNPolygon::Print(std::ostream & out) const
 
 
 void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
+#ifdef  LOG4CXX
+    LOGPZ_INFO(logger,"[Start][Sorting nodes to either side of the plane]");
+#endif // LOG4CXX
+    std::cout << " -Sorting nodes to either side of the plane\r" << std::flush;
     int64_t i = fNodesAbove.size();
     const int64_t nnodes = gmesh->NNodes();
     fNodesAbove.Resize(nnodes,false);
@@ -472,6 +491,10 @@ void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
         node.GetCoordinates(coord);
         fNodesAbove[i] = Compute_PointAbove(coord);
     }
+    std::cout << "                                           \r" << std::flush;
+#ifdef  LOG4CXX
+    LOGPZ_INFO(logger,"[End][Sorting nodes to either side of the plane]");
+#endif // LOG4CXX
 }
 
 void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){

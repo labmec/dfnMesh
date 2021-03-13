@@ -96,8 +96,9 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 #ifdef LOG4CXX
-    InitializePZLOG();
-#endif
+	std::string configpath = PROJECT_ROOT "/src/util/DFNlog4cxx.cfg";
+	log4cxx::PropertyConfigurator::configure(configpath);
+#endif // LOG4CXX
 	TPZTimer time("DFNMesh");
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
@@ -136,7 +137,6 @@ int main(int argc, char* argv[]){
         // snap the intersection point to the nearest node
 		fracture->SnapIntersections_ribs(tol_dist);
 		// create DFNFace objects - these are faces that have intersected ribs (always 2)
-        // @pedro - please change the name to create face objects
 		fracture->CreateFaces();
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
