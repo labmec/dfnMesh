@@ -131,14 +131,14 @@ public:
      * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
      * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
      */
-    void PrintVTK(std::string vtkmesh = "LOG/vtkmesh.txt"
-                ,std::string pzmesh = "LOG/pzmesh.vtk");
+    void PrintVTK(std::string vtkmesh = "LOG/vtkmesh.vtk"
+                ,std::string pzmesh = "LOG/pzmesh.txt");
     /**
      * @brief Prints DFN Geometric Mesh and material ids are renumbered for VTK colorful print of refinement of 2D elements :) 
      * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
      * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
      */
-    void PrintVTKColorful(std::string vtkmesh = "LOG/vtkmesh.txt"
+    void PrintVTKColorful(std::string vtkmesh = "LOG/vtkmesh.vtk"
                         ,std::string pzmesh = "skip");
     
     
@@ -248,7 +248,7 @@ public:
     /// @param polygon_representation Set true to insert elements that represent the original definition for each fracture. (this will likely break the code downstream and should only be used if you plan to stop the execution soon. It is only meant for graphical debugging);
     /// @param clearmaterials Will set every element's material id in the mesh to 1, before changing again fractures to DFNMaterial::Efracture and also coloring refined faces
     /// @param filename A string with the relative path to the file where to dump the vtk graphics.
-    void DumpVTK(bool polygon_representation = false, bool clearmaterials = true, std::string filename = "LOG/vtkmesh.txt");
+    void DumpVTK(bool polygon_representation = false, bool clearmaterials = true, std::string filename = "LOG/vtkmesh.vtk");
 
 
 
