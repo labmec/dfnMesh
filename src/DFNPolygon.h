@@ -92,27 +92,27 @@ class DFNPolygon
     void SortNodes(const TPZGeoMesh* gmesh);
 
 	/// Check if the segment that conects 2 coordinates has intersection with this polygon
-	bool Check_pair(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2, TPZManVector<REAL,3> &intersection);
+	bool Check_pair(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2, TPZManVector<REAL,3> &intersection) const;
 
 	/** @brief Return true if the rib intersects the polygon by also checking if intersection point is within bounds of the polygon
 	 * @attention If you want to skip check on polygon limits, use DFNPolygon::IsCutByPlane()
 	 * @param intersection [out] If intersected, fills vector with intersection coordinates
 	*/
-	bool IsCutByPolygon(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection);
+	bool IsCutByPolygon(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection) const;
 	/** @brief Return true if the rib intersects the plane that contains the polygon
 	 * @attention This doesn't check if intersection is in the bounds of the polygon. If you want to check on polygon limits, use DFNPolygon::IsCutByPolygon()
 	 * @param intersection [out] If intersected, fills vector with intersection coordinates
 	*/
-	bool IsCutByPlane(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection);
+	bool IsCutByPlane(TPZGeoEl *rib, TPZManVector<REAL,3> &intersection) const;
 
 	/// Return true if a point is above the polygon plane
    	bool Compute_PointAbove(const TPZVec<REAL> &point) const;
 
    	/// Check whether the point coordinates are within the polygon region
-   	bool IsPointInPolygon(TPZVec<REAL> &point);
+   	bool IsPointInPolygon(const TPZVec<REAL> &point) const;
 	
 	/// Computes the intersection point with the polygon
-	TPZManVector<REAL,3> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2);
+	TPZManVector<REAL,3> CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) const;
    
 
 	/**
@@ -133,7 +133,7 @@ class DFNPolygon
 	/**
 	 * @brief Takes a set of coordinates in 3D and returns its projection onto the polygon
 	*/
-	TPZManVector<REAL, 3> GetProjectedX(TPZManVector<REAL, 3> &point);
+	TPZManVector<REAL, 3> GetProjectedX(const TPZManVector<REAL, 3> &point) const;
 
 	/// Fill a 3D vector with the components of the normal direction of this polygon
 	void GetNormal(TPZManVector<REAL,3>& normal_vec){
@@ -164,12 +164,12 @@ class DFNPolygon
 	void PlotNodesAbove_n_Below(TPZGeoMesh* gmesh);
 
 	/** @brief Check if node is above plane by checking fNodesAbove */
-	bool IsPointAbove(int64_t index){return fNodesAbove[index];}
+	bool IsPointAbove(int64_t index) const{return fNodesAbove[index];}
 
 	/// Compute the length of an edge
-	REAL EdgeLength(int edgeindex);
+	REAL EdgeLength(int edgeindex) const;
 	/// Compute a vector from the first to last nodes of an edge
-	void GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector);
+	void GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector) const;
 
   private:
 	/// Checks consistency and initializes the datastructure of the object

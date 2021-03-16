@@ -89,7 +89,7 @@ public:
      * @brief Return pointer to i-th DFNrib.
      * @returns nullptr if rib isn't in Fracture's rib map
     */
-    DFNRib *Rib(int i);
+    DFNRib *Rib(int i) const;
     
     /// Set index of in-plane intersection node
     void SetIntersectionIndex(int64_t index){fIntersectionIndex = index;}
@@ -200,7 +200,7 @@ public:
     bool NeedsSnap(REAL tolDist = 1e-4, REAL tolAngle_cos = 0.9);
 
     /// Return false if all intersections have already been snapped
-    bool CanBeSnapped();
+    bool CanBeSnapped() const;
 
     /// Check if should be refined and generate the subelements of material id matID
     void Refine();
@@ -212,11 +212,17 @@ public:
      * @brief If intersection of fracture with this face results in a 1D element, get its index.
      * @return Index of 1D element, -1 if non existant or if line has not been created yet
      */ 
-    int64_t LineInFace();
+    int64_t LineInFace() const;
+    
+    /**
+     * @brief If the intersections of this face were snapped to 2 consecutive nodes, get the local side index for the 1D side that connects those nodes.
+     * @return Side Index, if there exists an assimilated side, get -1 if non existent;
+     */ 
+    int CheckAssimilatedSide() const;
 
     
     /// @brief Returns the first 1D side that contains a DFNRib 
-    int FirstRibSide(){
+    int FirstRibSide() const{
         int nedges = fGeoEl->NSides(1);
         for(int iedge=0; iedge<nedges; iedge++){
             if(fRibs[iedge]) return iedge + fGeoEl->NSides(0);
@@ -226,16 +232,16 @@ public:
     }
 
     /// @brief Returns the other 1D side with a DFNRib
-    int OtherRibSide(int inletside);
+    int OtherRibSide(int inletside) const;
 
     /// @brief Make children of this element inherit its polyhedral indices
     /// @note: Does nothing if mesh is not 3D
     // void InheritPolyhedra();
 
-    int NIntersectedRibs();
+    int NIntersectedRibs() const;
 
     /** @return Number of ribs whose intersection point is within the fracture limits*/
-    int NInboundRibs();
+    int NInboundRibs() const;
 private: 
 
     /**

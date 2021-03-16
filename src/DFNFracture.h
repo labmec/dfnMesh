@@ -26,6 +26,7 @@
 #include <gmsh.h>
 
 class DFNMesh;
+class DFNPolyhedron;
 typedef TPZFMatrix<REAL> Matrix;
 
 
@@ -132,7 +133,7 @@ public:
 private:
 
     
-    void Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended);
+    void Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture);
         
     /// Checks neighbour's dimension and returns true if it is equal
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
@@ -255,8 +256,7 @@ public:
     
     /// verify proximity of rib intersection node
     /// Coalesce intersected ribs
-    // @TODO change the name of this method
-    void SnapIntersections_ribs(REAL tolDist);
+    void SnapIntersections_ribs(REAL tolDist = -1.0);
     
     /// Set Refinement Patterns and create sub elements
     void RefineRibs();
@@ -264,7 +264,7 @@ public:
     /// Find intersected faces
     void CreateFaces();
     /// Coalesce intersected faces
-    void SnapIntersections_faces(REAL tolDist = 1e-4, REAL tolAngle = 0.1);
+    void SnapIntersections_faces(REAL tolDist = -1.0, REAL tolAngle = -1.0);
     /// Set Refinement Patterns and create sub elements
     void RefineFaces();
 

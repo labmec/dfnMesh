@@ -38,12 +38,12 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limith
 // #endif // LOG4CXX
 }
 
-void DFNFracture::Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling)
+void DFNFracture::Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid)
 {
     fPolygon = Polygon;
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
-    // fmatid = matid;
+    fmatid = matid;
     fRibs.clear();
     fFaces.clear();
     fSurfaceFaces.clear();
@@ -303,7 +303,7 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
     if(logger->isInfoEnabled()){
         std::stringstream stream;
         stream <<"[Start][Snapping intersections Ribs]";
-        if(fIndex < 0 && logger->isDebugEnabled())
+        if(fIndex < 0)
             {stream << "[Orthogonal plane]";}
         else
             {stream << "[Fracture " << fIndex << "]";}
@@ -311,7 +311,7 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
     }
 #endif // LOG4CXX
 
-
+    if(tolDist < 0.) tolDist = fdfnMesh->TolDist();
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
         DFNRib* rib = &itr->second;
         rib->SnapIntersection_try(tolDist);
@@ -322,7 +322,7 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
     if(logger->isInfoEnabled()){
         std::stringstream stream;
         stream <<"[End][Snapping intersections Ribs]";
-        if(fIndex < 0 && logger->isDebugEnabled())
+        if(fIndex < 0)
             {stream << "[Orthogonal plane]";}
         else
             {stream << "[Fracture " << fIndex << "]";}
@@ -342,7 +342,7 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
     if(logger->isInfoEnabled()){
         std::stringstream stream;
         stream <<"[Start][Snapping intersections Faces]";
-        if(fIndex < 0 && logger->isDebugEnabled())
+        if(fIndex < 0)
             {stream << "[Orthogonal plane]";}
         else
             {stream << "[Fracture " << fIndex << "]";}
@@ -350,7 +350,9 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
     }
 #endif // LOG4CXX
     
-    
+    // Negative entries default to fdfnMesh tolerances
+    if(tolDist < 0.) tolDist = fdfnMesh->TolDist();
+    if(tolAngle < 0.) tolAngle = fdfnMesh->TolAngle();
     tolAngle = std::cos(tolAngle);
     for(auto itr : fFaces){
         DFNFace* face = &itr.second;
@@ -362,7 +364,7 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
     if(logger->isInfoEnabled()){
         std::stringstream stream;
         stream <<"[End][Snapping intersections Faces]";
-        if(fIndex < 0 && logger->isDebugEnabled())
+        if(fIndex < 0)
             {stream << "[Orthogonal plane]";}
         else
             {stream << "[Fracture " << fIndex << "]";}
@@ -1284,7 +1286,9 @@ void DFNFracture::FindOffboundRibs(){
     // Maybe some consistency checks?
     if(fdfnMesh->Polyhedra().size() < 2) {PZError<<"\nError: Uninitialized polyhedra\n"; DebugStop();}
 
-    TPZStack<TPZGeoEl*> edgelist(10,nullptr);
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    // TPZStack<TPZGeoEl*> edgelist(10,nullptr);
+    // std::set<int64_t> edgelist;
     TPZManVector<REAL,3> intersection(3,0.);
     int npolyh = fdfnMesh->Polyhedra().size();
     // Loop over polyhedra that intersect fracture limits (start at 1 to skip boundary)
@@ -1292,8 +1296,10 @@ void DFNFracture::FindOffboundRibs(){
         DFNPolyhedron& polyhedron = fdfnMesh->Polyhedron(ipoly);
         if(polyhedron.IsRefined()) continue;
         if(!polyhedron.IntersectsFracLimit(*this)) continue;
-        polyhedron.GetEdges(edgelist);
-        for(TPZGeoEl* edge : edgelist){
+        // Check each edge of this polyhedron for an intersection with the fracture plane
+        std::set<int64_t> edgelist = polyhedron.GetEdges();
+        for(int64_t index : edgelist){
+            TPZGeoEl* edge = gmesh->Element(index);
             if(!fPolygon.IsCutByPlane(edge,intersection)) continue;
             if(Rib(edge->Index())) continue;
             DFNRib rib(edge,this);

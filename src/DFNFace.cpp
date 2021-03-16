@@ -59,7 +59,7 @@ DFNFace &DFNFace::operator=(const DFNFace &copy){
 
 
 
-DFNRib* DFNFace::Rib(int i){return fRibs[i];}
+DFNRib* DFNFace::Rib(int i) const {return fRibs[i];}
 
 
 
@@ -113,7 +113,13 @@ bool DFNFace::NeedsRefinement() const{
 	return true;
 }
 
-
+int DFNFace::CheckAssimilatedSide() const{
+	int nnodes = fGeoEl->NSides(0);
+	for(int i=0; i<nnodes; i++){
+		if(fStatus[i] && fStatus[ (i+1)%nnodes ]) return i + nnodes;
+	}
+	return -1;
+}
 
 void DFNFace::UpdateRefMesh(){
 	if(!this->NeedsRefinement()) return;
@@ -687,7 +693,7 @@ void DFNFace::UpdateMaterial(){
 	else {fGeoEl->SetMaterialId(DFNMaterial::Erefined);}
 }
 
-int64_t DFNFace::LineInFace(){
+int64_t DFNFace::LineInFace() const{
 	// if(!fGeoEl->HasSubElement()) return -1;
 	int nsides = fGeoEl->NSides();
 	int nintersections=0;
@@ -753,7 +759,7 @@ int64_t DFNFace::LineInFace(){
 }
 
 // method returns true is a side has been divided in two
-bool DFNFace::CanBeSnapped(){
+bool DFNFace::CanBeSnapped() const{
 	const int ncorners = fGeoEl->NCornerNodes();
 	const int nsides = fGeoEl->NSides();
 	// If fStatus indicates an intersection that wasn't snapped, then it could potentially be snapped, so it returns true.
@@ -925,7 +931,7 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 
 
 /// @brief Returns the other 1D side with a DFNRib
-int DFNFace::OtherRibSide(int inletside){
+int DFNFace::OtherRibSide(int inletside) const{
 	if(fGeoEl->SideDimension(inletside) != 1) DebugStop();
 	int nnodes = fGeoEl->NSides(0);
 	int inletedge = inletside-nnodes;
@@ -943,14 +949,14 @@ int DFNFace::OtherRibSide(int inletside){
 	return -1;
 }
 
-int DFNFace::NIntersectedRibs(){
+int DFNFace::NIntersectedRibs() const{
 	int n=0;
 	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {
 		n += fRibs[i]!=nullptr;
 	}
 	return n;
 }
-int DFNFace::NInboundRibs(){
+int DFNFace::NInboundRibs() const{
 	int n=0;
 	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {
 		n += fRibs[i]!=nullptr && !fRibs[i]->IsOffbound();

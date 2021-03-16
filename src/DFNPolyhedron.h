@@ -13,6 +13,7 @@
 // #include "DFNFracture.h"
 #include "DFNFace.h"
 
+// class DFNFace;
 class DFNMesh;
 // class DFNFracture;
 
@@ -79,13 +80,13 @@ class DFNPolyhedron
 		void Print(std::ostream& out = std::cout, bool detailed = true);
 
 		// Index of polyhedron
-		int Index(){return fIndex;}
+		int Index() const{return fIndex;}
 
 		// Index of coarse element to which this polyhedron is a subset
-		int CoarseIndex(){return fCoarseIndex;}
+		int CoarseIndex() const{return fCoarseIndex;}
 
 		// Get number of faces around this polyhedron
-		int NElements(){return fShell.size();}
+		int NElements() const{return fShell.size();}
 
 		// Set a new index for this polyhedron
 		void SwapIndex(const int newid);
@@ -100,21 +101,23 @@ class DFNPolyhedron
 		void RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack);
 
 		/** @brief Checks if this polyhedron was split in 2 smaller polyhedra*/
-		bool IsRefined();
+		bool IsRefined()const;
 
 		/** @brief Remove father from shell and add its subelements */
 		void SwapForChildren(TPZGeoEl* father);
 
-		/** @brief Fills a vector with the indices of the 1D skeleton elements around the faces of this polyhedron */
-		void GetEdges(TPZVec<TPZGeoEl*>& edgelist);
+		/** @brief Get a set with the indices of the 1D skeleton elements around the faces of this polyhedron */
+		std::set<int64_t> GetEdges() const;
+		/** @brief Get the indices of edges around this volume that are elements of a set. This returns the intersection between DFNPolyhedron::GetEdges and the argument 'SuperSet' */
+		std::set<int64_t> GetEdges_InSet(const std::set<int64_t>& SuperSet) const;
 
 		/** @brief Checks if this polyhedron was intersected by a fracture
 		 * @todo(maybe) - This method could be made more restrictive if we wished to do so. I'll leave it returning true if any face of fShell is intersected, but we could potentially want it to return true only if the intersection would actually lead to the polyhedron being split. This, of course, would cost some extra computations, and I don't really see a need for this more restrictive version yet.
 		*/
-		bool IsIntersected(DFNFracture& fracture);
+		bool IsIntersected(DFNFracture& fracture)const;
 
 		/** @brief Returns true if any of the faces in this polyhedron's shell contains only one Inbound rib*/
-		bool IntersectsFracLimit(DFNFracture& fracture);
+		bool IntersectsFracLimit(DFNFracture& fracture)const;
 };
 
 

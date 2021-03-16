@@ -206,7 +206,7 @@ public:
     /**
      * @brief Reference to polyhedra stack
     */
-    TPZStack<DFNPolyhedron,20>& Polyhedra(){return fPolyhedra;}
+    const TPZStack<DFNPolyhedron,20>& Polyhedra() const{return fPolyhedra;}
     // template<int Talloc>
 
     /** @brief adds geoels for graphics that illustrate the tolerance*/

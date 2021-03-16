@@ -63,8 +63,8 @@ void DFNPolyhedron::RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack)
 }
 
 /** @brief Checks if this polyhedron was refined*/
-bool DFNPolyhedron::IsRefined(){
-    std::pair<const int64_t,int>& firstface = *(fShell.begin());
+bool DFNPolyhedron::IsRefined()const{
+    const auto& firstface = *(fShell.begin());
     int firstface_polyh = fDFN->GetPolyhedralIndex(firstface);
     return firstface_polyh != this->fIndex || firstface_polyh == -1;
 }
@@ -90,7 +90,7 @@ void DFNPolyhedron::SwapForChildren(TPZGeoEl* father){
 }
 
 /** @brief Checks if this polyhedron was intersected by a fracture*/
-bool DFNPolyhedron::IsIntersected(DFNFracture& fracture){
+bool DFNPolyhedron::IsIntersected(DFNFracture& fracture)const{
     for(auto& face_orient : fShell){
         int64_t index = face_orient.first;
         DFNFace* face = fracture.Face(index);
@@ -100,7 +100,7 @@ bool DFNPolyhedron::IsIntersected(DFNFracture& fracture){
 }
 
 /** @brief Returns true if any of the faces in this polyhedron's shell contains only one Inbound rib*/
-bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture){
+bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture)const{
     for(auto& face_orient : fShell){
         int64_t index = face_orient.first;
         DFNFace* face = fracture.Face(index);
@@ -110,8 +110,8 @@ bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture){
     return false;
 }
 
-void DFNPolyhedron::GetEdges(TPZVec<TPZGeoEl*>& edgelist){
-    // Throw every edge of every face from fShell into an std::set then copy into edgelist
+std::set<int64_t> DFNPolyhedron::GetEdges() const{
+    // Throw every edge of every face from fShell into an std::set
     std::set<int64_t> edge_set;
     TPZGeoMesh* gmesh = fDFN->Mesh();
     for(auto& face_orient : fShell){
@@ -121,7 +121,8 @@ void DFNPolyhedron::GetEdges(TPZVec<TPZGeoEl*>& edgelist){
             edge_set.insert(iedge);
         }
     }
-    edgelist.resize(edge_set.size());
+    return edge_set; // move semantics or RVO will handle this. Right?
+}
     int i=0;
     for(int64_t iedge : edge_set){
         edgelist[i] = gmesh->Element(iedge);

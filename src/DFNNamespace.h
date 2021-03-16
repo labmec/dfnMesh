@@ -160,6 +160,7 @@ static const double _2PI = 2.*M_PI;//6.2831853071795865;
     TPZManVector<int64_t,4> GetEdgeIndices(TPZGeoEl* face);
 
     /// Creates a refinement pattern using a father element and a list of children, than associates that refpattern to father element
+    /// @note This method is almost the same as TPZRefPatternTools::GetRefPatternBasedOnRealMeshElements. I didn't find it when I was implementing it.
     void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*>& children);
 
     /// Return 1 if subel's normal vector matches its father's, and -1 otherwise
