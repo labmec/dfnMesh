@@ -196,12 +196,12 @@ public:
     /**
      * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
     */
-    template<int Talloc>
-    void MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex);
+    // template<int Talloc>
+    void MeshPolyhedron(TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex);
 
     /** @brief Break quadrilaterals down to 2 triangles each in a stack of oriented faces*/
-    template<int Talloc>
-    void RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    // template<int Talloc>
+    void RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron);
 
     /**
      * @brief Reference to polyhedra stack

@@ -2017,8 +2017,9 @@ TPZStack<TPZGeoEl*,2> GetOverlappedElements(TPZGeoEl* gel){
 
 
 
-template<int Talloc>
-void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
+// template<int Talloc>
+// void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
+void DFNMesh::RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron){
 	// DebugStop(); // Under construction
 	// TPZStack<std::pair<int64_t,int>,Talloc> aux;
 	for(auto& orient_face : polyhedron){
@@ -2048,8 +2049,9 @@ void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
 }
 
 
-template<int Talloc>
-void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex){
+// template<int Talloc>
+// void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex){
+void DFNMesh::MeshPolyhedron(TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex){
 	// GMsh doesn't like zero index entities
     const int shift = 1;
 
