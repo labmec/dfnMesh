@@ -141,6 +141,13 @@ int main(int argc, char* argv[]){
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
+		fracture->Handle_SnapInducedOverlap();
+		// std::set<int64_t> SnapRibs;
+		// fracture->IdentifySnapRibs(SnapRibs);
+		// for(int64_t index : SnapRibs){
+		// 	gmesh->Element(index)->SetMaterialId(20);
+		// }
+
 #ifdef LOG4CXX
         if(logger->isDebugEnabled()){
             std::stringstream sout;
@@ -168,6 +175,7 @@ int main(int argc, char* argv[]){
         
         
 		fracture->RefineFaces();
+		// dfn.PrintVTKColorful();
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			// dfn.InheritPolyhedra();

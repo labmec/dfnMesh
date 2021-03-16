@@ -112,14 +112,26 @@ public:
 
     int NSurfElements() const{return fSurfaceFaces.size();}
     
-    // return the indices of all polyhedra intersected by the fracture
-    // @pedro - please implement
-    void IdentifyIntersectedPolyhedra(std::set<int64_t> &polyset);
+    /// return the indices of all polyhedra intersected by the fracture
+    std::set<int> IdentifyIntersectedPolyhedra();
+
+    /** @brief Given an intersected polyhedron, check if it could lead to undesirable features due to the fracture intersecting it. Use only the SnapRibs.
+     * this method should return false when all the snap ribs loop around a TPZGeoEl
+     * @return False if volume has N_SnapRibs == 0
+     * @return False if there are no pairs of neighbour SnapRibs
+     * @return False if all pairs of neighbour SnapRibs are co-linear (same EldestAncestor)
+     * @return True(?) if there are 2 non-colinear neighbour SnapRibs (?). Not really, take the following construction: Triangulate a sphere, cut through it with a plane perfectly splitting it in 2 halfs. Let all intersections be snapped. That is not a problem volume, but this condition would return true.
+     */
+    bool IsProblemVolume(const std::set<int64_t>& SnapRibs, const DFNPolyhedron& IntersectedVolume);
     
     // return the indices of the geometric elements that belong to the discretized fracture
     // through snapping AND were in the original mesh
-    // @pedro please implement - based on the ribs and their snap status
-    void IdentifySnapRibs(std::set<int64_t> &gelindices);
+    /** @brief Fill a set with all SnapRibs due to this Fracture
+     *  @pre Should be called after DFNFracture::SnapIntersections_faces. The set will often be empty if you fail to do so. It will ALWAYS be empty if called before DFNFracture::SnapIntersections_ribs
+     *  @details SnapRibs are the 1D elements that previously existed in the mesh and this DFNFracture will try to incorporate to its surface. Not to be confused with DFNRibs (which are the 1D elements that were intersected).
+     *  @note This new 'SnapRibs' set is a subset of DFNFracture::fSurfaceEdges which is temporarily assembled during the limit recovery of this fracture. So there's some work being done twice, which we could optimize later.
+    */
+    std::set<int64_t> IdentifySnapRibs();
     
     // facet set of 2d elements with the same normal direction
     // divide facets of polyhedra that have non-colinear snap-ribs
@@ -129,6 +141,11 @@ public:
     // divide the facet (hard part)
     // @pedro - please implement me
     void MeshSnapPlanes();
+
+    /**
+     * @brief Temporary name until I get a better idea
+    */
+    void Handle_SnapInducedOverlap();
     
 private:
 

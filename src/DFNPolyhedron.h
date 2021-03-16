@@ -118,6 +118,11 @@ class DFNPolyhedron
 
 		/** @brief Returns true if any of the faces in this polyhedron's shell contains only one Inbound rib*/
 		bool IntersectsFracLimit(DFNFracture& fracture)const;
+
+		/** @brief Call on gmsh to refine itself 
+		 * @details Any quadrilateral in the shell will get refined to at least 2 triangles
+		*/
+		void Refine();
 };
 
 

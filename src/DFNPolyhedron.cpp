@@ -123,9 +123,28 @@ std::set<int64_t> DFNPolyhedron::GetEdges() const{
     }
     return edge_set; // move semantics or RVO will handle this. Right?
 }
+
+std::set<int64_t> DFNPolyhedron::GetEdges_InSet(const std::set<int64_t>& SuperSet) const{
+    std::set<int64_t> result;
+    TPZGeoMesh* gmesh = fDFN->Mesh();
+    const auto& end = SuperSet.end();
+    for(auto& face_orient : fShell){
+        TPZGeoEl* face = gmesh->Element(face_orient.first);
+        TPZManVector<int64_t,4> face_edges = DFN::GetEdgeIndices(face);
+        for(int64_t iedge : face_edges){
+            if(SuperSet.find(iedge) != end)
+                {result.insert(iedge);}
+        }
+    }
+    return result; // move semantics or RVO will handle this. Right?
+}
+
+void DFNPolyhedron::Refine(){
+    TPZStack<std::pair<int64_t,int>> Shell(fShell.size(),{-1,0});
     int i=0;
-    for(int64_t iedge : edge_set){
-        edgelist[i] = gmesh->Element(iedge);
+    for(const auto& oriented_face : fShell){
+        Shell[i] = oriented_face;
         i++;
     }
+    fDFN->MeshPolyhedron(Shell, fCoarseIndex);
 }

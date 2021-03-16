@@ -1926,4 +1926,71 @@ void DFNFracture::Print(std::ostream & out) const
 
         return fLogger;
     }
-#endif
+#endif // LOG4CXX
+
+
+
+std::set<int64_t> DFNFracture::IdentifySnapRibs(){
+    // Loop over DFNFaces, check if it was intersected through 2 consecutive nodes, if true, get the index of the 1D skeleton connecting those consecutive nodes.
+    std::set<int64_t> SnapRibs;
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    // Loop over DFNFaces using fancy C++17 syntax
+    for(auto const& [faceindex, face] : fFaces){
+        // check if it was intersected through 2 consecutive nodes
+        int snapside = face.CheckAssimilatedSide();
+        if(snapside < 0) continue;
+        // if true, get the index of the 1D skeleton connecting those consecutive nodes
+        TPZGeoEl* facegel = gmesh->Element(faceindex);
+        TPZGeoEl* SnapRibGel = DFN::GetSkeletonNeighbour(facegel,snapside);
+
+        if(!SnapRibGel){PZError << "\n You may have non-built connectivities or haven't created a necessary skeleton on TPZGeoElSide = {" << facegel << ", " << snapside << "};"; DebugStop();}
+
+        int64_t SnapRibIndex = SnapRibGel->Index();
+        SnapRibs.insert(SnapRibIndex);
+    }
+    return SnapRibs;
+}
+
+std::set<int> DFNFracture::IdentifyIntersectedPolyhedra(){
+    std::set<int> IntersectedPolyh;
+    for(const auto& volume : fdfnMesh->Polyhedra()){
+        if(!volume.IsIntersected(*this)) continue;
+        IntersectedPolyh.insert(volume.Index());
+    }
+    return IntersectedPolyh;
+}
+
+void DFNFracture::Handle_SnapInducedOverlap(){
+    std::set<int64_t> SnapRibs = this->IdentifySnapRibs();
+    auto IntersectedPolyh = this->IdentifyIntersectedPolyhedra();
+    
+    // Gather problematic volumes
+    TPZStack<int> problem_volumes;
+    for(int vol_index : IntersectedPolyh){
+        const DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
+        if(IsProblemVolume(SnapRibs,volume)){
+            problem_volumes.push_back(vol_index);
+        }
+    }
+
+    // Mesh problematic volumes
+    if(problem_volumes.size() == 0) return;
+    for(int vol_index : problem_volumes){
+        DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
+        volume.Refine();
+    }
+
+    // Update DFNFracture data
+    fdfnMesh->UpdatePolyhedra();
+    this->CreateRibs();
+    this->CreateFaces();
+    this->SnapIntersections_faces();
+
+    // Continue recursively until there are none problematic volumes
+    this->Handle_SnapInducedOverlap();
+}
+
+bool DFNFracture::IsProblemVolume(const std::set<int64_t>& SnapRibs, const DFNPolyhedron& IntersectedVolume){
+    DebugStop();
+    return true;
+}
