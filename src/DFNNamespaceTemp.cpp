@@ -174,7 +174,7 @@ namespace DFN{
         
         TPZManVector<REAL,3> vec0 = p[0] - p[1];
         TPZManVector<REAL,3> vec2 = p[2] - p[1];
-        TPZManVector<REAL,3> vecj = {0., 0., 0.};
+        TPZManVector<REAL,3> vecj {0., 0., 0.};
 
         TPZManVector<REAL,3> normal = CrossProduct<REAL>(vec0,vec2);
         REAL norm = DFN::Norm<REAL>(normal);
@@ -187,7 +187,7 @@ namespace DFN{
         normal[1] /= norm;
         normal[2] /= norm;
 
-        TPZManVector<REAL,3> pj = {0., 0., 0.};
+        TPZManVector<REAL,3> pj {0., 0., 0.};
         for(int64_t inode : nodeindices){
             if(j<3) {j++;continue;}
             gmesh->NodeVec()[inode].GetCoordinates(pj);

@@ -1,0 +1,16 @@
+{
+    "Mesh": "examples/flemisch_benchmark/fl_case1.msh",
+    "TolDist":  5.0,
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+            "Nodes": [
+                [-20, -20, 92],
+                [120, -20,  8],
+                [120, 120,  8],
+                [-20, 120, 92]
+            ]
+        }
+    ]
+}

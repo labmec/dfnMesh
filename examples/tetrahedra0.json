@@ -1,0 +1,17 @@
+{
+    "Mesh": "examples/tetrahedra0.msh",
+    "TolDist": 0.01,
+    "Fractures":[
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+            "MaterialID": 4,
+            "Nodes":[
+                [-2.27,-0.65,-1.50],
+                [ 1.67, 0.05,-1.50],
+                [ 1.67, 0.05, 1.50],
+                [-2.27,-0.65, 1.50]
+            ]
+        }
+    ]
+}

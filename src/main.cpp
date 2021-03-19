@@ -41,7 +41,7 @@
  * @brief information and assumptions
 */
 void PrintPreamble(){
-	std::string neopzversion = "/commit/bb94d514"; // https://github.com/labmec/neopz/commit/...
+	std::string neopzversion = "/commit/eb88bc8"; // https://github.com/labmec/neopz/commit/...
 	std::string gmshversion = "4.5.6";
 	std::cout<<"\n";
 	std::cout<<"\nNeoPZ assumed version: " << neopzversion;
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]){
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
-		fracture->Handle_SnapInducedOverlap();
+		// fracture->Handle_SnapInducedOverlap();
 		// std::set<int64_t> SnapRibs;
 		// fracture->IdentifySnapRibs(SnapRibs);
 		// for(int64_t index : SnapRibs){
@@ -220,7 +220,7 @@ int main(int argc, char* argv[]){
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives){
 	TPZGeoMesh* gmesh = nullptr;
-	std::string default_example("examples/two-hex-and-a-frac.txt");
+	std::string default_example("examples/two-hex-and-a-frac.json");
 	std::string example = default_example;
 	std::string mshfile = "no-msh-file";
 	for(int iarg=1; iarg < argc; ++iarg){
