@@ -120,9 +120,10 @@ public:
      * @return False if volume has N_SnapRibs == 0
      * @return False if there are no pairs of neighbour SnapRibs
      * @return False if all pairs of neighbour SnapRibs are co-linear (same EldestAncestor)
+     * @return False if VolumeSnapRibs perfectly cover (no more, no less) their eldest ancestors AND the set of rib elders form a closed loop of 3 or 4 edges (which means we've snapped onto a mesh face which will latter be incorporated during DFNFracture::MeshFractureSurface)
      * @return True(?) if there are 2 non-colinear neighbour SnapRibs (?). Not really, take the following construction: Triangulate a sphere, cut through it with a plane perfectly splitting it in 2 halfs. Let all intersections be snapped. That is not a problem volume, but this condition would return true.
      */
-    bool IsProblemVolume(const std::set<int64_t>& SnapRibs, const DFNPolyhedron& IntersectedVolume);
+    bool IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DFNPolyhedron& IntersectedVolume) const;
     
     // return the indices of the geometric elements that belong to the discretized fracture
     // through snapping AND were in the original mesh
@@ -147,6 +148,16 @@ public:
     */
     void Handle_SnapInducedOverlap();
     
+    // /** @briefUpdates DFNFracture's DFNFace list, swapping elements of a given polyhedron for their children
+    //  * @param polyh : A polyhedron from where to get refined DFNFaces
+    //  * @ATTENTION this method will fail if you call it after DFNPolyhedron::SwapForChildren. SwapForChildren is called during DFNMesh::UpdatePolyhedra. A bug from this could be very hard to catch.
+    // */
+    // void SwapRefinedDFNFaces(DFNPolyhedron& polyh);
+
+    /** @brief Removes refined DFNFaces from the fFaces datastructure
+    */
+    void RemoveRefinedDFNFaces(DFNPolyhedron& polyh);
+
 private:
 
     
@@ -237,9 +248,7 @@ private:
 
 public:
 
-    /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
-    /// @param dim: Filter by dimension. Set -1 to skip filter
-    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim = -1);
+
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
 

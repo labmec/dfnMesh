@@ -91,6 +91,10 @@ class DFNPolygon
     /// Sort nodes as above or below this polygon
     void SortNodes(const TPZGeoMesh* gmesh);
 
+	/// Same as DFNPolygon::SortNodes but only for possible new nodes in gmesh. Starts from the index in the gmesh::NodeVector equal to the current size of this polygon fNodesAbove vector.
+	/// If you call this method with an uninitialized DFNPolygon::fNodesAbove, it'll just call on DFPolygon::SortNodes
+	// void SortNodes_update(const TPZGeoMesh* gmesh);
+
 	/// Check if the segment that conects 2 coordinates has intersection with this polygon
 	bool Check_pair(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2, TPZManVector<REAL,3> &intersection) const;
 

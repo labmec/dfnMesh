@@ -50,6 +50,7 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
 		}
 #endif // LOG4CXX
 	}
+	else{PZError << "\n2D meshes are currently unsupported\n"; DebugStop();}
 	// @todo delete this after a robust decision is made on how to handle custom material ids (previously set boundary conditions, skeleton with id -1, etc...)
 #ifdef PZDEBUG
 	// Small flags so I won't forget to undo any debug tests
@@ -1667,11 +1668,11 @@ void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
 
 
 
-DFNPolyhedron* DFNMesh::CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex){
+DFNPolyhedron* DFNMesh::CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex, bool isConvex){
 	int ipolyh = fPolyhedra.size();
 	fPolyhedra.resize(ipolyh+1);
 	DFNPolyhedron& newpolyhedron = fPolyhedra[ipolyh];
-	newpolyhedron.Initialize(this,ipolyh,shell,coarseindex);
+	newpolyhedron.Initialize(this,ipolyh,shell,coarseindex,isConvex);
 #ifdef LOG4CXX
 	if(logger->isDebugEnabled()){
 		std::stringstream stream;
@@ -1725,7 +1726,7 @@ void DFNMesh::InitializePolyhedra(){
 		shell.push_back({gel->Index(),orient});
 		SetPolyhedralIndex({gel->Index(),orient},0);
 	}
-	CreatePolyhedron(shell,-1);
+	CreatePolyhedron(shell,-1,false);
 #ifdef PZDEBUG
 	shell.Fill({-1,0});
 #endif //PZDEBUG
@@ -2427,11 +2428,11 @@ void DFNMesh::Print(std::ostream & out, char* name) const
 }
 
 void DFNMesh::PrintRolodexes(std::ostream & out) const{
+	out << "\n\nROLODEXES:\n";
 	if(fSortedFaces.size() == 0) {
-		out << "\n- No rolodexes in this mesh\n"; 
+		out << "\n\"No rolodexes initialized in this mesh\"\n"; 
 		return;
 	}
-	out << "\n\nROLODEXES:_____________\n";
 	for(TPZGeoEl* edge : fGMesh->ElementVec()){
 		if(!edge) continue;
 		if(edge->Dimension() != 1) continue;
@@ -2441,11 +2442,11 @@ void DFNMesh::PrintRolodexes(std::ostream & out) const{
 	}
 }
 void DFNMesh::PrintPolyhedra(std::ostream & out) const{
+	out <<"\n\nPOLYHEDRA BY FACE:\n";
 	if(fPolyhedra.size() == 0) {
-		out << "\n- No polyhedra in this mesh\n"; 
+		out << "\n\"No polyhedra initialized in this DFNMesh\"\n"; 
 		return;
 	}
-	out <<"\n\nPOLYHEDRA BY FACE:\n";
 	{
 		out<<"                 (+)  |  (-)";
 		// int npolyhedra=0;

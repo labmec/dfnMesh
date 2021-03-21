@@ -30,7 +30,7 @@ void DFNPolyhedron::SwapIndex(const int newid){
 
 
 /** @brief Print method for logging */
-void DFNPolyhedron::Print(std::ostream& out, bool detailed){
+void DFNPolyhedron::Print(std::ostream& out, bool detailed) const{
     int nelements = this->fDFN->Mesh()->NElements();
     int width = 2 + int(std::log10(nelements)+1);
     out << "\nPolyh#"<<std::setw(width-1)<<fIndex<<":";
@@ -71,6 +71,7 @@ bool DFNPolyhedron::IsRefined()const{
 
 /** @brief Remove father from shell and add its subelements */
 void DFNPolyhedron::SwapForChildren(TPZGeoEl* father){
+    /// @todo I don't have time to check now, but I think this function keeps getting called on polyhedra that have stopped being important. So there might be room for optimization fixing this.
     // if no children, return
     int nchildren = father->NSubElements();
     if(!nchildren) return;
@@ -79,13 +80,15 @@ void DFNPolyhedron::SwapForChildren(TPZGeoEl* father){
     if(position == fShell.end()) DebugStop();
 
     // get orientation and remove father
-    int orientation = (*position).second;
+    int fatherorientation = (*position).second;
     fShell.erase(position);
 
     // enter children
     for(int i=0; i<nchildren; i++){
         int64_t childindex = father->SubElement(i)->Index();
-        fShell.insert({childindex,orientation});
+        int orientation = fatherorientation * DFN::SubElOrientation(father,i);
+        // fShell.insert({childindex,orientation});
+        fShell[childindex] = orientation;
     }
 }
 
@@ -147,4 +150,21 @@ void DFNPolyhedron::Refine(){
         i++;
     }
     fDFN->MeshPolyhedron(Shell, fCoarseIndex);
+}
+
+
+bool DFNPolyhedron::IsTetrahedron() const{
+    if(fShell.size() != 4) return false;
+
+    return true;
+
+    // Don't really need these, right?
+    // TPZGeoMesh* gmesh = fDFN->Mesh();
+    // int ntriangles = 0;
+    // for(auto& orientedface : fShell){
+    //     TPZGeoEl* face = gmesh->Element(orientedface.first);
+    //     ntriangles += (face->Type() == MElementType::ETriangle);
+    // }
+
+    // return ntriangles == 4;
 }

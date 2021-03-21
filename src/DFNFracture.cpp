@@ -90,6 +90,7 @@ DFNPolygon &DFNFracture::Polygon() {
 DFNFace* DFNFracture::AddFace(DFNFace &face){
     int index= face.Index();
     auto res = fFaces.emplace(index,face);
+    if(res.second == false) return nullptr;
 #ifdef LOG4CXX
     if(logger->isDebugEnabled())
     {
@@ -100,14 +101,13 @@ DFNFace* DFNFracture::AddFace(DFNFace &face){
         LOGPZ_DEBUG(logger,sout.str());
     }
 #endif
-    if(res.second == false) DebugStop();
     return &(res.first->second);
 }
 DFNRib* DFNFracture::AddRib(DFNRib &rib){
     int index= rib.Index();
     auto res = fRibs.insert({index,rib});
     // Check if the rib is already included
-    if(res.second == false) DebugStop();
+    if(res.second == false) return nullptr;
     #ifdef LOG4CXX
     if(logger->isDebugEnabled())
     {
@@ -116,7 +116,7 @@ DFNRib* DFNFracture::AddRib(DFNRib &rib){
         res.first->second.Print(sout);
         LOGPZ_DEBUG(logger,sout.str())
     }
-    #endif
+    #endif // LOG4CXX
     return &(res.first->second);
 }
 
@@ -770,56 +770,7 @@ void DFNFracture::SetLoopOrientation(TPZStack<int64_t>& edgelist){
 
 
 
-TPZGeoEl* DFNFracture::FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
-    TPZGeoMesh* gmesh = gelside1.Element()->Mesh();
-    std::set<int64_t> neighbours1;
-    std::set<int64_t> neighbours2;
-    std::set<int64_t> neighbours3;
 
-    TPZGeoElSide neig;
-    for(neig = gelside1.Neighbour(); neig != gelside1; neig = neig.Neighbour()){
-        TPZGeoEl* neig_el = neig.Element();
-        if(dim > -1 && neig_el->Dimension() != dim) continue;
-        neighbours1.insert(neig_el->Index());
-    }
-    if(neighbours1.size() < 1) return nullptr;
-    for(neig = gelside2.Neighbour(); neig != gelside2; neig = neig.Neighbour()){
-        TPZGeoEl* neig_el = neig.Element();
-        if(dim > -1 && neig_el->Dimension() != dim) continue;
-        neighbours2.insert(neig_el->Index());
-    }
-    if(neighbours2.size() < 1) return nullptr;
-    for(neig = gelside3.Neighbour(); neig != gelside3; neig = neig.Neighbour()){
-        TPZGeoEl* neig_el = neig.Element();
-        if(dim > -1 && neig_el->Dimension() != dim) continue;
-        neighbours3.insert(neig_el->Index());
-    }
-    if(neighbours3.size() < 1) return nullptr;
-
-    std::set<int64_t> common = DFN::set_intersection(neighbours1,neighbours3);
-    /** @warning: you may feel tempted to use:
-     *  if(common.size() == 1) return gmesh->Element(*(common.begin()));
-     *  but a common neighbour of 2 faces is not a condition for an existing face. It has to be neighbour of 3.
-    */
-    if(common.size() < 1) return nullptr;
-    common = DFN::set_intersection(common,neighbours2);
-
-    if(common.size() > 1) DebugStop(); // I don't think this could possibly happen, but if it ever does, I've left a weaker imposition rather than DebugStop() commented below
-    // {
-        // // in this case, what you probably want is 
-        // for(auto& iel : common){
-        //     if(gmesh->Element(*itr)->HasSubElement()) continue;
-        //     return gmesh->Element(*itr);
-        // }
-        // DebugStop();
-        // // or maybe just bet on the highest index candidate
-        // return gmesh->Element(*(common.rbegin()));
-    // }
-    if(common.size() < 1) return nullptr;
-
-    return gmesh->Element(*(common.begin()));
-
-}
 
 TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
@@ -841,7 +792,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     TPZGeoElSide gelside2(gel2,2);
     TPZGeoElSide gelside3(gel3,2);
     // A 2D neighbour, common to 3 edges is an existing face
-    TPZGeoEl* common_neig = FindCommonNeighbour(gelside1,gelside2,gelside3,2);
+    TPZGeoEl* common_neig = DFN::FindCommonNeighbour(gelside1,gelside2,gelside3,2);
 
     if(!common_neig) return nullptr;
 
@@ -1086,8 +1037,6 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
  * @param polygon a loop of edges that don't necessarily occupy the same plane
 */
 void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
-    int nedges = polygon.size();
-    int nnodes = nedges;
     // New elements to be created
     TPZStack<int64_t> newelements(1,-1);
 
@@ -1103,7 +1052,7 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 	}
     
     SetLoopOrientation(polygon);
-    nedges = polygon.size();
+    int nedges = polygon.size();
 //    std::cout << "Polygon coords\n";
 //    for(auto no : nodes) gmesh->NodeVec()[no].Print();
     // std::cout<<"SubPolygon# "<<polygon_counter<<": "<<polygon<<std::endl;
@@ -1308,7 +1257,7 @@ void DFNFracture::FindOffboundRibs(){
             // if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
             // edge->SetMaterialId(-5);
             DFNRib* ribptr = AddRib(rib);
-            ribptr->AppendToNeighbourFaces();
+            if(ribptr) ribptr->AppendToNeighbourFaces();
         }
     }
 
@@ -1683,7 +1632,7 @@ void DFNFracture::FindRibs(const std::set<int64_t>& ribset){
             DFNRib rib(gel,this);
             rib.SetIntersectionCoord(intpoint);
             DFNRib* newrib = AddRib(rib);
-            newrib->AppendToNeighbourFaces();
+            if(newrib) newrib->AppendToNeighbourFaces();
         }
     }
 }
@@ -1856,21 +1805,21 @@ void DFNFracture::Print(std::ostream & out) const
 {
     out << "\nFracture #" << fIndex << "\n";
     fPolygon.Print(out);
-	out << "\n\nDFNRibs:__________\n";
+	out << "\n\nDFNRibs:\n";
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
         const DFNRib *rib = &itr->second;
         rib->Print(out);
     }
-	out << "\n\nDFNFaces:_________\n";
+	out << "\n\nDFNFaces:\n";
     for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
         const DFNFace *face = &itr->second;
         face->Print(out);
     }
 
     // Surface elements
-	out << "\n\nSurface Elements:_________\n";
+	out << "\n\nSurface Elements:\n";
     if(fSurfaceFaces.size() < 1) 
-        {out << "\'No surface was created/incorporated on this fracture\'";}
+        {out << "\"No surface was created/incorporated on this fracture\"";}
     int nelements = fdfnMesh->Mesh()->NElements();
     int width = 2 + int(std::log10(nelements)+1);
     for(int64_t index : fSurfaceFaces){
@@ -1951,17 +1900,56 @@ std::set<int64_t> DFNFracture::IdentifySnapRibs(){
     return SnapRibs;
 }
 
+
+
+
+
+
+
+
+
+
+
+
 std::set<int> DFNFracture::IdentifyIntersectedPolyhedra(){
     std::set<int> IntersectedPolyh;
     for(const auto& volume : fdfnMesh->Polyhedra()){
-        if(!volume.IsIntersected(*this)) continue;
+        if(volume.Index() == 0) continue;           // skip boundary polyhedron
+        if(volume.IsRefined()) continue;            // skip refined polyhedra
+        if(!volume.IsConvex()) DebugStop();         // they should all be convex at this point
+        if(!volume.IsIntersected(*this)) continue;  // get only intersected polyhedra
         IntersectedPolyh.insert(volume.Index());
     }
     return IntersectedPolyh;
 }
 
+
+
+
+
+
+
+
+
+
+
+
 void DFNFracture::Handle_SnapInducedOverlap(){
+// #ifdef PZDEBUG
+//     fdfnMesh->PrintSummary();
+// #endif // PZDEBUG
+
+
+
+
+
+
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::set<int64_t> SnapRibs = this->IdentifySnapRibs();
+    // for(const int64_t index : SnapRibs){
+    //     gmesh->Element(index)->SetMaterialId(DFNMaterial::Efracture);
+    // }
+    // if(dfnMesh()->NPolyhedra() > 3) fdfnMesh->DumpVTK(true,false);
     auto IntersectedPolyh = this->IdentifyIntersectedPolyhedra();
     
     // Gather problematic volumes
@@ -1978,19 +1966,129 @@ void DFNFracture::Handle_SnapInducedOverlap(){
     for(int vol_index : problem_volumes){
         DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
         volume.Refine();
+        this->RemoveRefinedDFNFaces(volume);
     }
 
     // Update DFNFracture data
-    fdfnMesh->UpdatePolyhedra();
-    this->CreateRibs();
-    this->CreateFaces();
-    this->SnapIntersections_faces();
+    // try{
+        fdfnMesh->UpdatePolyhedra();
+        fPolygon.SortNodes(gmesh);
+        this->CreateRibs();
+        this->CreateFaces();
+        this->SnapIntersections_faces();
+    // }catch(...){
+    //     fdfnMesh->DumpVTK(true);
+    //     DebugStop();
+    // }
 
+// #ifdef PZDEBUG
+//     fdfnMesh->PrintSummary();
+// #endif // PZDEBUG
+    // for(const int64_t index : SnapRibs){
+    //     gmesh->Element(index)->SetMaterialId(DFNMaterial::Eintact);
+    // }
     // Continue recursively until there are none problematic volumes
     this->Handle_SnapInducedOverlap();
 }
 
-bool DFNFracture::IsProblemVolume(const std::set<int64_t>& SnapRibs, const DFNPolyhedron& IntersectedVolume){
-    DebugStop();
+bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DFNPolyhedron& IntersectedVolume) const{
+    // Boundary polyhedron can never be a problem volume
+    if(IntersectedVolume.Index() == 0) return false;
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+
+    /// @return False if is a tetrahedron
+    if(IntersectedVolume.IsTetrahedron()) return false;
+
+    /// @return False if volume has N_SnapRibs <= 1
+    std::set<int64_t> volumeSnapRibs = IntersectedVolume.GetEdges_InSet(AllSnapRibs);
+    int n_snapribs = volumeSnapRibs.size();
+    if(n_snapribs <= 1) return false;
+    
+    /// @return false if the set of rib elders form a closed loop of 3 or 4 edges (which means we've snapped onto a mesh face which will latter be incorporated during DFNFracture::MeshFractureSurface)
+    // @definition: rib elders = the set of EldestAncestors of the snap ribs in this polyhedron
+    std::set<int64_t> RibElders;
+    for(const int64_t rib_index : volumeSnapRibs){
+        TPZGeoEl* rib = gmesh->Element(rib_index);
+        TPZGeoEl* elder = (rib->Father()?rib->EldestAncestor():rib);
+        RibElders.insert(elder->Index());
+    }
+    // @todo : if snapribs completly cover their ancestor's area and elders complete a loop around a TPZGeoEl
+    // so this condition is incomplete.
+    switch (RibElders.size()){
+        case 1: return false;
+        case 2: break; // case 2 is inconclusive, see next test
+        case 3:
+        case 4: return DFN::GetLoopedFace(RibElders,gmesh) == nullptr;
+        default: break;
+    }
+
+    /***********************************************************************************/
+    // THIS WAS ANOTHER WAY I THOUGHT OF COUNTING n_neig_pairs & n_colinear_pairs
+    // IT'S PROBABLY LESS EFFICIENT, BUT I'D LIKE TO KEEP THE DRAFT
+    /// Count number of neighbour pairs and colinear neighbour pairs of SnapRibs within the volume
+    // for(auto it_A = volumeSnapRibs.begin(); it_A != volumeSnapRibs.end(); it_A++){
+    //     int64_t ribA_index = *it_A;
+    //     TPZGeoEl* ribA = gmesh->Element(ribA_index);
+    //     TPZGeoElSide ribA_side(ribA,-1);
+    //     it_A++;
+    //     for(auto it_B = it_A--; it_B != volumeSnapRibs.end(); it_B++){
+    //         int64_t ribB_index = *it_B;
+    //         TPZGeoEl* ribB = gmesh->Element(ribB_index);
+
+    //         TPZGeoElSide ribB_side({ribB,-1});
+    //         if(!DFN::AreNeighbours()) continue;
+    //         (...)
+    //     }
+    // }
+    /***********************************************************************************/
+    
+    
+    /// Count number of neighbour pairs and colinear neighbour pairs of SnapRibs within the volume
+    int n_neig_pairs = 0; ///< Number of pairs of neighbours within the set 'volumeSnapRibs'
+    int n_colinear_pairs = 0; ///< Number of pairs of COLINEAR neighbours within the set 'volumeSnapRibs'
+    for(const int64_t rib_index : volumeSnapRibs){
+        TPZGeoEl* rib = gmesh->Element(rib_index);
+        for(int inode = 0; inode < 2; inode ++){
+            TPZGeoElSide ribside(rib,inode);
+            for(TPZGeoElSide neig = ribside.Neighbour(); neig!=ribside; ++neig){
+                if(volumeSnapRibs.find(neig.Element()->Index()) == volumeSnapRibs.end()) continue;
+                if(neig.Element()->Index() < rib_index) continue;
+                n_neig_pairs++;
+                TPZGeoEl* elderA = (rib->Father()? rib->EldestAncestor() : rib);
+                TPZGeoEl* elderB = (neig.Element()->Father() ? neig.Element()->EldestAncestor() : neig.Element());
+                n_colinear_pairs += (int)(elderA == elderB);
+            }
+        }
+    }
+
+    /// @return False if there are no pairs of neighbour SnapRibs
+    if(!n_neig_pairs) return false;
+    /// @return False if all pairs of neighbour SnapRibs are co-linear (same EldestAncestor)
+    if(n_neig_pairs == n_colinear_pairs) return false;
+
     return true;
+}
+
+
+void DFNFracture::RemoveRefinedDFNFaces(DFNPolyhedron& polyh){
+
+    int n_faces_refined = 0;
+    for(const auto& oriented_face : polyh.Shell()){
+        int64_t faceindex = oriented_face.first;
+        // Get refined faces
+        TPZGeoEl* facegel = fdfnMesh->Mesh()->Element(faceindex);
+        if(!facegel->HasSubElement()) continue;
+        // Check if it's a DFNFace
+        auto itr = fFaces.find(faceindex);
+        if(itr == fFaces.end()) continue;
+        // itr->second.Print();
+        // DFNFace copydfnface(itr->second);
+
+        // Remove it from DFNFaces
+        fFaces.erase(itr++);
+        // fFaces.erase(faceindex);
+        n_faces_refined++;
+    }
+
+    if(n_faces_refined == 0) DebugStop(); // This is not really a bug, but it's a weird unexpected result. This exception can probably be removed without harm, but I'd like to catch it if it ever happens.
 }

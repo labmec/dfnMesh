@@ -223,7 +223,7 @@ public:
         {fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});}
 
     /// Create a new polyhedron at the end of the polyhedra vector of this mesh
-    DFNPolyhedron* CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex);
+    DFNPolyhedron* CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex = -1, bool isConvex = true);
 
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZVec<int64_t> GetEdgeIndices(int64_t face_index){return DFN::GetEdgeIndices(fGMesh->Element(face_index));}
@@ -235,6 +235,9 @@ public:
 
     /// Get number of fractures that have at least 1 surface element
     int RealNFractures() const;
+
+    /// Get number of polyhedra for this dfnMesh. Should always be at least 2, unless they aren't initialized
+    int NPolyhedra() const {return fPolyhedra.size();}
 
     /** @brief For a specific face, pass its polyhedral index to its children*/
     void InheritPolyhedra(TPZGeoEl* father);
@@ -250,7 +253,10 @@ public:
     /// @param filename A string with the relative path to the file where to dump the vtk graphics.
     void DumpVTK(bool polygon_representation = false, bool clearmaterials = true, std::string filename = "LOG/vtkmesh.vtk");
 
-
+    void PrintSummary(){
+        std::ofstream out("LOG/dfn.summary.log");
+        this->Print(out);
+    }
 
 private:
     /// Gather oriented faces around a 3D element to define a shell, then create a new polyhedron in the polyhedra vec DFNMesh::fPolyhedra

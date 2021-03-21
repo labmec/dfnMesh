@@ -522,6 +522,84 @@ namespace DFN{
         gmesh->BuildConnectivity();
     }
 
+    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
+        TPZGeoMesh* gmesh = gelside1.Element()->Mesh();
+        std::set<int64_t> neighbours1;
+        std::set<int64_t> neighbours2;
+        std::set<int64_t> neighbours3;
 
+        TPZGeoElSide neig;
+        for(neig = gelside1.Neighbour(); neig != gelside1; neig = neig.Neighbour()){
+            TPZGeoEl* neig_el = neig.Element();
+            if(dim > -1 && neig_el->Dimension() != dim) continue;
+            neighbours1.insert(neig_el->Index());
+        }
+        if(neighbours1.size() < 1) return nullptr;
+        for(neig = gelside2.Neighbour(); neig != gelside2; neig = neig.Neighbour()){
+            TPZGeoEl* neig_el = neig.Element();
+            if(dim > -1 && neig_el->Dimension() != dim) continue;
+            neighbours2.insert(neig_el->Index());
+        }
+        if(neighbours2.size() < 1) return nullptr;
+        for(neig = gelside3.Neighbour(); neig != gelside3; neig = neig.Neighbour()){
+            TPZGeoEl* neig_el = neig.Element();
+            if(dim > -1 && neig_el->Dimension() != dim) continue;
+            neighbours3.insert(neig_el->Index());
+        }
+        if(neighbours3.size() < 1) return nullptr;
+
+        std::set<int64_t> common = DFN::set_intersection(neighbours1,neighbours3);
+        /** @warning: you may feel tempted to use:
+         *  if(common.size() == 1) return gmesh->Element(*(common.begin()));
+         *  but a common neighbour of 2 faces is not a condition for an existing face. It has to be neighbour of 3.
+        */
+        if(common.size() < 1) return nullptr;
+        common = DFN::set_intersection(common,neighbours2);
+
+        if(common.size() > 1) DebugStop(); // I don't think this could possibly happen, but if it ever does, I've left a weaker imposition rather than DebugStop() commented below
+        // {
+            // // in this case, what you probably want is 
+            // for(auto& iel : common){
+            //     if(gmesh->Element(*itr)->HasSubElement()) continue;
+            //     return gmesh->Element(*itr);
+            // }
+            // DebugStop();
+            // // or maybe just bet on the highest index candidate
+            // return gmesh->Element(*(common.rbegin()));
+        // }
+        if(common.size() < 1) return nullptr;
+
+        return gmesh->Element(*(common.begin()));
+
+    }
+
+    TPZGeoEl* GetLoopedFace(const std::set<int64_t>& edges, TPZGeoMesh* gmesh){
+        // Consistency checks
+        int nedges = edges.size();
+        if(nedges < 3 || nedges > 4) DebugStop();
+
+        std::array<TPZGeoElSide,4> gelside;
+        int i = 0;
+        for(const int64_t index : edges){
+            TPZGeoEl* gel = gmesh->Element(index);
+            if(gel->Dimension() != 1) DebugStop();
+            gelside[i] = {gel,2};
+            i++;
+        }
+
+        TPZGeoEl* CandidateFace = FindCommonNeighbour(gelside[0],gelside[1],gelside[2],2);
+
+        if(!CandidateFace) return nullptr;
+        if(nedges == 3) return CandidateFace;
+        // return CandidateFace;
+
+        TPZGeoElSide neig = gelside[3].Neighbour();
+        for(/*void*/; neig != gelside[3]; ++neig){
+            if(neig.Element()->Index() == CandidateFace->Index())
+                {return CandidateFace;}
+        }
+
+        return nullptr;
+    }
 
 } /* namespace DFN*/

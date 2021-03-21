@@ -103,12 +103,18 @@ static const double _2PI = 2.*M_PI;//6.2831853071795865;
     */
     TPZGeoEl* GetSkeletonNeighbour(TPZGeoEl* gel, int side);
 
+    /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
+    /// @param dim: Filter by dimension. Set -1 to skip filter
+    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim = -1);
 
     /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
     /// @param shift: indices will get shifted by a constant 
     template<class Tcontainer>
     void GetLineLoop(TPZGeoEl* face_el, Tcontainer& lineloop, const int shift=0);
 
+    /// @brief Check if a set of 1D elements loop around a common 2D neighbour
+    TPZGeoEl* GetLoopedFace(const std::set<int64_t>& edges, TPZGeoMesh* gmesh);
+    
     /**
      * @brief Generates the best fitting plane to approximate a point cloud in R3 using least squares
      * @param pointcloud A 3xN matrix of coordinates for N points

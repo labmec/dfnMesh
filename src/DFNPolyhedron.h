@@ -25,14 +25,14 @@ class DFNMesh;
 class DFNPolyhedron
 {
     private:
+		// Pointer to the dfn this polyhedron belongs
+		DFNMesh* fDFN = nullptr;
+
 		// A set of oriented faces that form the polyhedron. {index, orientation}
 		std::map<int64_t, int> fShell;
 
 		// Index given to this polyhedron by DFNMesh
 		int fIndex = -1;
-
-		// Pointer to the dfn this polyhedron belongs
-		DFNMesh* fDFN = nullptr;
 
 		// Index of the coarse element where this polyhedron is contained
 		int fCoarseIndex = -1;
@@ -49,7 +49,7 @@ class DFNPolyhedron
 		~DFNPolyhedron(){};
 
 		// Initialize a polyhedron's datastructure
-		void Initialize(DFNMesh* dfn, int id, const TPZVec<std::pair<int64_t,int>>& oriented_shell, const int coarseindex)
+		void Initialize(DFNMesh* dfn, int id, const TPZVec<std::pair<int64_t,int>>& oriented_shell, const int coarseindex, const bool isConvex = true)
 		{
 			fDFN = dfn;
 			fIndex = id;
@@ -58,6 +58,7 @@ class DFNPolyhedron
 				fShell.insert(orientedface);
 			}
 			fCoarseIndex = coarseindex;
+			fIsConvex = isConvex;
 		}
 		
 		/// Constructor from a container
@@ -65,9 +66,10 @@ class DFNPolyhedron
 					DFNMesh* dfn, 
 					int id, 
 					const TPZVec<std::pair<int64_t,int>>& oriented_shell, 
-					const int coarseindex)
+					const int coarseindex,
+					const bool isConvex = true)
 		{
-			this->Initialize(dfn,id,oriented_shell,coarseindex);
+			this->Initialize(dfn, id, oriented_shell, coarseindex, isConvex);
 		}
 		
 		/// Copy constructor
@@ -77,7 +79,7 @@ class DFNPolyhedron
 		DFNPolyhedron &operator=(const DFNPolyhedron &copy);
 
 		/** @brief Print method for logging */
-		void Print(std::ostream& out = std::cout, bool detailed = true);
+		void Print(std::ostream& out = std::cout, bool detailed = true) const;
 
 		// Index of polyhedron
 		int Index() const{return fIndex;}
@@ -87,6 +89,9 @@ class DFNPolyhedron
 
 		// Get number of faces around this polyhedron
 		int NElements() const{return fShell.size();}
+
+		// Check flag of this polyhedron for convexity
+		bool IsConvex() const{return fIsConvex;}
 
 		// Set a new index for this polyhedron
 		void SwapIndex(const int newid);
@@ -100,7 +105,7 @@ class DFNPolyhedron
 		/** @brief Remove faces from this polyhedron*/
 		void RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack);
 
-		/** @brief Checks if this polyhedron was split in 2 smaller polyhedra*/
+		/** @brief Checks if this polyhedron was split into smaller polyhedra*/
 		bool IsRefined()const;
 
 		/** @brief Remove father from shell and add its subelements */
@@ -123,6 +128,9 @@ class DFNPolyhedron
 		 * @details Any quadrilateral in the shell will get refined to at least 2 triangles
 		*/
 		void Refine();
+
+		/// Checks if this Polyhedron is a tetrahedron
+		bool IsTetrahedron() const;
 };
 
 

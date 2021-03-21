@@ -141,7 +141,7 @@ int main(int argc, char* argv[]){
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
-		// fracture->Handle_SnapInducedOverlap();
+		fracture->Handle_SnapInducedOverlap();
 		// std::set<int64_t> SnapRibs;
 		// fracture->IdentifySnapRibs(SnapRibs);
 		// for(int64_t index : SnapRibs){
@@ -177,6 +177,7 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 		// dfn.PrintVTKColorful();
 	// Mesh fracture surface
+	// try{
 		if(gmesh->Dimension() == 3){
 			// dfn.InheritPolyhedra();
             // divide the fracture in simple geometries using the mesh created in RefineFaces
@@ -184,15 +185,18 @@ int main(int argc, char* argv[]){
 			// dfn.DumpVTK();
             // this is where the code can crash : a face that should be internal can be aligned
             // with an existing face
-			dfn.UpdatePolyhedra();
+			// dfn.UpdatePolyhedra();
 		}
+	// }catch(...){
 #ifdef PZDEBUG
         {
             std::ofstream logtest("LOG/dfn.summary.txt");
             dfn.Print(logtest,argv[1]);
-			dfn.DumpVTK(false,true,"LOG/gmesh.vtk");
+			dfn.DumpVTK(false,true,"LOG/vtkmesh.vtk");
         }
 #endif //PZDEBUG
+	// 	DebugStop();
+	// }
 	}
 	// Recover Limits
 	for(auto frac : dfn.FractureList()){
@@ -202,7 +206,7 @@ int main(int argc, char* argv[]){
 
 
 	// Generate submesh
-    dfn.ExportGMshCAD("dfnExport.geo");
+    // dfn.ExportGMshCAD("dfnExport.geo");
 	
 	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
