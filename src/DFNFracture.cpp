@@ -89,7 +89,7 @@ DFNPolygon &DFNFracture::Polygon() {
 
 DFNFace* DFNFracture::AddFace(DFNFace &face){
     int index= face.Index();
-    auto res = fFaces.emplace(index,face);
+    auto res = fFaces.insert({index,face});
     if(res.second == false) return nullptr;
 #ifdef LOG4CXX
     if(logger->isDebugEnabled())
@@ -190,7 +190,7 @@ void DFNFracture::CreateFaces(){
     if(gmesh->Dimension() == 3 && fLimit != Etruncated) IsolateFractureLimits();
     std::cout<<std::endl;
 #ifdef LOG4CXX
-    LOGPZ_INFO(logger, "\n[End][Searching faces]")
+    LOGPZ_INFO(logger, "[End][Searching faces]")
 #endif // LOG4CXX
 }
 
@@ -248,7 +248,7 @@ void DFNFracture::CreateRibs(){
     }
     std::cout<<std::endl;
 #ifdef LOG4CXX
-    LOGPZ_INFO(logger, "\n[End][Searching ribs]")
+    LOGPZ_INFO(logger, "[End][Searching ribs]")
 #endif // LOG4CXX
 }
 
@@ -822,7 +822,7 @@ void DFNFracture::MeshFractureSurface(){
             // skip 'boundary polyhedron'
             int polyhindex = fdfnMesh->GetPolyhedralIndex(initialface_orient);
             if(polyhindex==0) continue;
-            if(polyhindex< 0) DebugStop();
+            if(polyhindex< 0) fdfnMesh->DFN_DebugStop();
             
             // Skip polyhedra on Fracture limits if limit directive is Etruncated
             if(fLimit==Etruncated && fdfnMesh->Polyhedron(polyhindex).IntersectsFracLimit(*this)) continue; // this can be used to truncate the fracture
@@ -2012,13 +2012,19 @@ bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DF
         TPZGeoEl* elder = (rib->Father()?rib->EldestAncestor():rib);
         RibElders.insert(elder->Index());
     }
-    // @todo : if snapribs completly cover their ancestor's area and elders complete a loop around a TPZGeoEl
-    // so this condition is incomplete.
     switch (RibElders.size()){
         case 1: return false;
         case 2: break; // case 2 is inconclusive, see next test
         case 3:
-        case 4: return DFN::GetLoopedFace(RibElders,gmesh) == nullptr;
+        case 4: {
+            // @return False if VolumeSnapRibs perfectly cover (no more, no less) their eldest ancestors AND the set of rib elders form a closed loop of 3 or 4 edges (which means we've snapped onto a mesh face which will latter be incorporated during DFNFracture::MeshFractureSurface)
+            if(DFN::GetLoopedFace(RibElders,gmesh) != nullptr){
+                std::set<int64_t> children = DFN::YoungestChildren(RibElders,gmesh);
+                if(children == volumeSnapRibs) // @note: set comparison is O(1) if sets have different size
+                    {return false;}
+            }
+            break;
+        }
         default: break;
     }
 
@@ -2083,12 +2089,14 @@ void DFNFracture::RemoveRefinedDFNFaces(DFNPolyhedron& polyh){
         if(itr == fFaces.end()) continue;
         // itr->second.Print();
         // DFNFace copydfnface(itr->second);
-
+        #ifdef LOG4CXX
+            LOGPZ_DEBUG(logger,"DFNFace # " << faceindex << "\"(Removed from Frac# " << fIndex << ")\"");
+        #endif // LOG4CXX
         // Remove it from DFNFaces
         fFaces.erase(itr++);
         // fFaces.erase(faceindex);
         n_faces_refined++;
     }
 
-    if(n_faces_refined == 0) DebugStop(); // This is not really a bug, but it's a weird unexpected result. This exception can probably be removed without harm, but I'd like to catch it if it ever happens.
+    // if(n_faces_refined == 0) DebugStop(); // This is not really a bug, but it's a weird unexpected result. This exception can probably be removed without harm, but I'd like to catch it if it ever happens.
 }

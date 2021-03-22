@@ -7,6 +7,8 @@ cmake_minimum_required (VERSION 3.6)
 set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE STRING  INTERNAL FORCE )
 
 project (DFNMesh)
+
+# Adds definition of macro PROJECT_ROOT, which contains a string of the path to project directory
 add_compile_definitions("PROJECT_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 
 

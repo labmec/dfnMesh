@@ -21,7 +21,7 @@ add_test(NAME FracLimits5 COMMAND dfnTest "examples/fraclimits5.json" WORKING_DI
 add_test(NAME Octagon COMMAND dfnTest "examples/exampleOctagon.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # Snap Induced Overlap
-# add_test(NAME SnapOverlap1 COMMAND dfnTest "examples/bug_snap_overlap.txt" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_test(NAME SnapOverlap1 COMMAND dfnTest "examples/bug_snap_overlap1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # Frac 3D benchmarks
 add_test(NAME Fl_Benchmark_1 COMMAND dfnTest "examples/flemisch_benchmark/fl_case1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

@@ -1758,7 +1758,7 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 		shell.push_back(face_orient);
 		// Set polyhedral index to that oriented face
 		int currentface_polyh_index = GetPolyhedralIndex(face_orient);
-		if(currentface_polyh_index > -1 && currentface_polyh_index != ipolyh) DebugStop();
+		// if(currentface_polyh_index > -1 && currentface_polyh_index != ipolyh) DFN_DebugStop();
 		SetPolyhedralIndex(face_orient,ipolyh);
 	}
 	// DFNPolyhedron polyhedron(this,ipolyh,shell,coarseindex);
@@ -1822,7 +1822,7 @@ void DFNMesh::UpdatePolyhedra(){
 					this->DumpVTK(true);
 					DFNPolyhedron* bugpolyh = CreatePolyhedron(polyhedron,coarseindex);
 					PZError << "\nFailed to attribute a coarse element index to: ";
-					bugpolyh->Print(PZError,false);
+					bugpolyh->Print(PZError,true);
 					DebugStop();
 				}
 			#endif //PZDEBUG
@@ -2486,4 +2486,13 @@ void DFNMesh::DumpVTK(bool polygon_representation, bool clearmaterials, std::str
 	else
 		PrintVTK(filename,"skip");
 	std::cout<<"                      \r"<<std::flush;
+}
+
+
+
+
+void DFNMesh::DFN_DebugStop(){
+	DumpVTK(true,false);
+	PrintSummary();
+	DebugStop();
 }

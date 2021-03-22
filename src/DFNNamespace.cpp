@@ -602,4 +602,21 @@ namespace DFN{
         return nullptr;
     }
 
+    std::set<int64_t> YoungestChildren(const std::set<int64_t>& parents, TPZGeoMesh* gmesh){
+        TPZStack<TPZGeoEl*> childrenstack;
+        for(const auto index : parents){
+            TPZGeoEl* parentgel = gmesh->Element(index);
+            if(parentgel->HasSubElement()){
+                parentgel->YoungestChildren(childrenstack);
+            }else{
+                childrenstack.push_back(parentgel);
+            }
+        }
+        std::set<int64_t> childrenset;
+        for(const TPZGeoEl* child : childrenstack){
+            childrenset.insert(child->Index());
+        }
+        return childrenset; // move semantics makes this O(1)
+    }
+
 } /* namespace DFN*/

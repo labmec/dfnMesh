@@ -201,6 +201,9 @@ static const double _2PI = 2.*M_PI;//6.2831853071795865;
      */
     void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
 
+    /// @brief return a set with the indices of all youngest children in the refinement trees of elements whose indices are listed in 'parents'. If element have no children, its own index is added to the set.
+    std::set<int64_t> YoungestChildren(const std::set<int64_t>& parents, TPZGeoMesh* gmesh);
+
 } /*namespace DFN*/
 
 

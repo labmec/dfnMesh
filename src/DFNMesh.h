@@ -258,6 +258,9 @@ public:
         this->Print(out);
     }
 
+    // DebugStop but dump some more information
+    void DFN_DebugStop();
+
 private:
     /// Gather oriented faces around a 3D element to define a shell, then create a new polyhedron in the polyhedra vec DFNMesh::fPolyhedra
     int CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex);
@@ -300,7 +303,7 @@ private:
 
     /** @brief set polyh index -1 for every face in a stack*/
     void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);
-// public:
+public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
 
