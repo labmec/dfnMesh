@@ -242,6 +242,8 @@ public:
 
     /** @return Number of ribs whose intersection point is within the fracture limits*/
     int NInboundRibs() const;
+
+    void SketchStatusVec(std::ostream& out = std::cout) const;
 private: 
 
     /**

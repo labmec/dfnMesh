@@ -34,6 +34,7 @@ DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
     fFracture(fracture),
     fCoord(0)
 {
+	// DebugStop();
     int nsides = gel->NSides();
     fStatus.Resize(nsides,0);
     int nedges = gel->NCornerNodes();
@@ -910,6 +911,8 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 		fGeoEl->Node(i).Print(out);
 	}
 
+	SketchStatusVec(out);
+
 	if(print_refmesh){
 		// int nels = fGeoEl->Mesh()->NElements();
 		// int w = (int) std::log10(nels)+1;
@@ -962,4 +965,32 @@ int DFNFace::NInboundRibs() const{
 		n += fRibs[i]!=nullptr && !fRibs[i]->IsOffbound();
 	}
 	return n;
+}
+
+
+
+void DFNFace::SketchStatusVec(std::ostream& out) const{
+	std::stringstream sout;
+	sout << "\nStatusVec Sketch:";
+	switch(fGeoEl->Type()){
+		case MElementType::ETriangle:{
+			sout << "\n  " << (fStatus[2]?"x":" ");
+			sout << "\n | \\";
+			sout << "\n" << (fStatus[5]?"x":" ") <<"|  \\" << (fStatus[4]?"x":" ");
+			sout << "\n |___\\";
+			sout << "\n" << (fStatus[0]?"x":" ") << "  " << (fStatus[3]?"x":" ") << "  " << (fStatus[1]?"x":" ");
+			break;
+		}
+		case MElementType::EQuadrilateral:{
+			sout << "\n" << (fStatus[3]?"x":" ") << " __" << (fStatus[6]?"x":"_") << "__ " << (fStatus[2]?"x":" ");
+			sout << "\n |     | ";
+			sout << "\n" << (fStatus[7]?"x":" ") << "|     |" << (fStatus[5]?"x":" ");
+			sout << "\n |_____| ";
+			sout << "\n" << (fStatus[0]?"x":" ") << "   " << (fStatus[4]?"x":" ") << "   " << (fStatus[1]?"x":" ");
+			break;
+		}
+		default: DebugStop();
+	}
+
+	out << sout.str();
 }
