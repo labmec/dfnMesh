@@ -887,7 +887,7 @@ void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
     int nextinlet_side = -1;
     std::pair<int64_t,int> nextface_orient = PolyhNeighbour(currentface_orient, outlet_side, nextinlet_side);
 #ifdef PZDEBUG
-    if(!Face(nextface_orient.first)){ std::cout<<"\nPolyhNeighbour returned a next face that was not intersected by the fracture\n"; DebugStop();}
+    if(!Face(nextface_orient.first)){ std::cout<<"\nPolyhNeighbour returned a next face that was not intersected by the fracture\n"; fdfnMesh->DFN_DebugStop();}
 #endif // PZDEBUG
     // Check if its set to polygon
     int nextface_polyg_index = GetPolygonIndex(nextface_orient,Polygon_per_face);
@@ -1013,9 +1013,11 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
     }else{
         gmsh::model::geo::addPlaneSurface(wiretag,wiretag[0]);
     }
-    // gmsh::model::addPhysicalGroup(2,wiretag,this->fmatid);
-//    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Eintact);
-    gmsh::model::addPhysicalGroup(2,wiretag,this->fmatid);
+    
+    // This line is important so the code can conserve the material ids set by the user in the input coarse mesh. It's important for example that the material id inserted here is different than this->fmatid, otherwise we'll fail the recovery of fracture boundary conditions. There's a more robust way to do it, I know. But it's veeery inneficient.
+    gmsh::model::addPhysicalGroup(2,wiretag,DFNMaterial::Eintact);
+    // int x = <whatever you want as long as it's not zero>
+    // gmsh::model::addPhysicalGroup(2,wiretag, this->fmatid + x);
 
 	
 	// synchronize before meshing
@@ -1290,12 +1292,15 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
         gel = gmesh->Element(index);
         if(!gel) continue;
         if(gel->Dimension() != fracdim) continue;
+        if(gel->HasSubElement()) PZError << "\nYou should call DFNFracture::CleanUp before calling this method.\n";
         int nsides = gel->NSides();
         for(int iside = gel->FirstSide(bcdim); iside < nsides-1; iside++){
             TPZGeoElSide gelside(gel,iside);
             bool IsBoundarySide = true;
             for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
                 if(neig.Element()->Dimension() != 2) continue;
+                if(neig.Element()->HasSubElement()) continue;
+                // if(fSurfaceFaces.find(neig.Element()->Index()) != fSurfaceFaces.end()){
                 if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
                     IsBoundarySide = false;
                     break;
@@ -1303,7 +1308,7 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
             }
             if(!IsBoundarySide) continue;
             TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
-            gelbc->SetMaterialId(matid);
+            gelbc->SetMaterialId(matid); // @todo I'll probably want to remove this, right? fracture bc materialid is a concern of the resulting .geo file
             stream << gelbc->Index()+gmshshift << ",";
             /** @todo maybe add to a set?
               * @todo maybe the user would want the material id to match a chosen neighbour? 
@@ -1760,13 +1765,13 @@ void DFNFracture::CleanUp(){
         father->YoungestChildren(to_add);
         to_remove.push_back(father);
     }
-    for(TPZGeoEl* gel : to_remove){
-        fSurfaceEdges.erase(gel->Index());
-    }
     for(TPZGeoEl* gel : to_add){
         AddToSurface(gel);
         gel->SetMaterialId(this->fmatid);
         DFN::SetEdgesMaterialId(gel,this->fmatid);
+    }
+    for(TPZGeoEl* gel : to_remove){
+        fSurfaceFaces.erase(gel->Index());
     }
     // fdfnMesh->UpdatePolyhedra();
 }

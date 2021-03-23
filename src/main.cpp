@@ -143,11 +143,6 @@ int main(int argc, char* argv[]){
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
 		fracture->Handle_SnapInducedOverlap();
-		// std::set<int64_t> SnapRibs;
-		// fracture->IdentifySnapRibs(SnapRibs);
-		// for(int64_t index : SnapRibs){
-		// 	gmesh->Element(index)->SetMaterialId(20);
-		// }
 
 #ifdef LOG4CXX
         if(logger->isDebugEnabled()){
@@ -159,45 +154,25 @@ int main(int argc, char* argv[]){
         // we decided that the ribs can be cut. Apply the refinement to the geometric elements
 		fracture->RefineRibs();
         // apply the refinement to the faces
-        // @pedro - shouldnt we verify if the snap created a fracture line across a face
-        // maybe we need the notion of snap-ribs - ribs that belong to the fracture but
-        // are the result of a snap operation
-        // set of snap-ribs is suggested data structure of DFNFracture
-        // problems occurr when snap-ribs force the division of a face that was not intersected
-        // by the fracture plane "in the first place"
-        // In order to "know" if a fracture line will cross a face, we need to know the
-        // for each set of coplanar faces belonging to a same polyhedra a set of neighbouring snap-ribs
-        
-        // For each fracture, we need to identify the set of polyhedra - 
-        // For each intersected polyhedra, we need to verify if the snap-ribs will induce a refinement
-        // of one of its facets
-        // this method must be implemented in DFNFracture as it affects objects out of the scope
-        // of DFNFace and DFNRib
-        
-        
 		fracture->RefineFaces();
 		// dfn.PrintVTKColorful();
 	// Mesh fracture surface
-	// try{
 		if(gmesh->Dimension() == 3){
 			// dfn.InheritPolyhedra();
-            // divide the fracture in simple geometries using the mesh created in RefineFaces
+			// divide the fracture in simple geometries using the mesh created in RefineFaces
 			fracture->MeshFractureSurface();
 			// dfn.DumpVTK();
-            // this is where the code can crash : a face that should be internal can be aligned
-            // with an existing face
-			// dfn.UpdatePolyhedra();
+			// this is where the code can crash : a face that should be internal can be aligned
+			// with an existing face
+			dfn.UpdatePolyhedra();
 		}
-	// }catch(...){
 #ifdef PZDEBUG
         {
-            std::ofstream logtest("LOG/dfn.summary.txt");
+            std::ofstream logtest("LOG/dfn.summary.log");
             dfn.Print(logtest,argv[1]);
-			dfn.DumpVTK(false,true,"LOG/vtkmesh.vtk");
+			// dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
         }
 #endif //PZDEBUG
-	// 	DebugStop();
-	// }
 	}
 	// Recover Limits
 	for(auto frac : dfn.FractureList()){
@@ -207,13 +182,15 @@ int main(int argc, char* argv[]){
 
 
 	// Generate submesh
-    // dfn.ExportGMshCAD("dfnExport.geo");
+    dfn.ExportGMshCAD("dfnExport.geo");
 	
 	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
 	dfn.DumpVTK(true);
+	dfn.PrintSummary();
+	dfn.PrintVTK("skip");
 	std::cout<<"\n ...the end.\n\n";
 
 	gmsh::finalize();

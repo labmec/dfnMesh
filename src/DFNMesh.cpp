@@ -934,6 +934,7 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
  */ 
 void DFNMesh::ExportGMshCAD(std::string filename){
 	std::cout<<" -Exporting Gmsh CAD file\r"<<std::flush;
+	// fGMesh->BuildConnectivity();
 	// Surface cleanup (necessary if limit recovery is done after all fractures have been inserted to the mesh)
 	for(auto frac : FractureList()){
 		frac->CleanUp();
@@ -1023,9 +1024,6 @@ void DFNMesh::ExportGMshCAD_fractures(std::ofstream& out){
 }
 void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 	std::multimap<int, int64_t> physicalgroups;
-	// @todo this should always work but it is failling sometimes and I have to figure out why.
-	// tip: when faces get refined, somehow the outter polyhedron (the boundary) is not updating 1 or 2 arbitrary faces. Go over every time faces get refined and find out where this might be failing.
-	// example: Octagon + Rectangle
     if(fPolyhedra.size() == 0)
     {
         std::cout << __PRETTY_FUNCTION__ << "does not contain a boundary polyhedron\n";
@@ -2492,7 +2490,10 @@ void DFNMesh::DumpVTK(bool polygon_representation, bool clearmaterials, std::str
 
 
 void DFNMesh::DFN_DebugStop(){
-	DumpVTK(true,false);
+	fGMesh->BuildConnectivity();
 	PrintSummary();
+	std::ofstream pzmesh("LOG/pzmesh.txt");
+	fGMesh->Print(pzmesh);
+	DumpVTK(true,false);
 	DebugStop();
 }
