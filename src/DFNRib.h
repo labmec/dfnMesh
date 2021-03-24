@@ -31,8 +31,8 @@ private:
     /// pointer to its original geometric element
 	TPZGeoEl *fGeoEl = nullptr;
 
-	/// Contains the side of this element that has been intersected
-	int fStatus = -1;
+	/// Contains the side of this element that has been intersected. By default, a fracture intersects a rib at the 1D side, but the intersection may be snap to one of the nodes.
+	int fIntersectionSide = 2;
 
     /// Anticipated coordinates of an intersection point initialy found for this DFNRib and a DFNPolygon. 
     /// The point may be moved afterwards during DFNRib::SnapIntersection()
@@ -56,10 +56,10 @@ private:
 
 public:
     /// Empty constructor
-    DFNRib(): fGeoEl(nullptr), fStatus(-1){fCoord.resize(0);};
+    DFNRib(): fGeoEl(nullptr), fIntersectionSide(-1){fCoord.resize(0);};
     
     /// Default constructor takes a pointer to geometric element
-    DFNRib(TPZGeoEl *gel, DFNFracture *Fracture, int status = -1);
+    DFNRib(TPZGeoEl *gel, DFNFracture *Fracture);
     
     /// Copy constructor
     DFNRib(const DFNRib &copy);
@@ -101,20 +101,22 @@ public:
      * @brief Flag if rib was found to be intersected at any side
     */
     inline bool IsIntersected() const{
-        return fStatus != -1;
+        return fIntersectionSide != -1;
     }
 
+    /// Check if intersection node could be snapped (to actually check if snap will happen given a tolerance, use DFNRib::NeedsSnap)
+    inline bool CanBeSnapped() const {return (fIntersectionSide == 2);}
     /// Check if this rib should be refined
-    inline bool NeedsRefinement() const {return (fStatus == 2);}
+    inline bool NeedsRefinement() const {return (fIntersectionSide == 2);}
 
-    /// Set Status (the side where intersection happens)
-    void SetStatus(const int status){
-        if(status < 0 || status > 2) DebugStop();
-        fStatus = status;
+    /// Set IntersectionSide (the side where intersection happens)
+    void SetIntersectionSide(const int sideindex){
+        if(sideindex < 0 || sideindex > 2) DebugStop();
+        fIntersectionSide = sideindex;
     }
 
     /// Get side of this rib that has been intersected
-    const int Status() const {return fStatus;}
+    int IntersectionSide() const {return fIntersectionSide;}
 
     /// Check if should be refined and generate the subelements
     void Refine();
@@ -139,26 +141,27 @@ public:
     */
     bool SnapIntersection_try(REAL tolDist = 1e-4);
 
-    /// Forces projection (snap) of the intersection node to the closest lower dimensional side (nothing happens if insersection is already at zero dim side)
-    void SnapIntersection_force();
+    /// Forces projection (snap) of the intersection node to the closest lower dimensional side (nothing happens if insersection is already at zero dim side).
+    /// @param closestnode If filled, snapped will be forced to node of local index == closestnode. If left -1, code will compute closest node.
+    void SnapIntersection_force(int closestnode = -1);
 
     /**
      * @brief Check geometry of intersection against tolerance, to test if intersection should be snapped
      * @return False if no tolerance is violated or if intersection has already been snapped.
      * @param tolDist: Minimum acceptable distance
     */
-    bool NeedsSnap(int64_t& closestnode, REAL tolDist = 1e-4);
+    bool NeedsSnap(int& closestnode, REAL tolDist = 1e-4);
 
     /** @brief Adds a pointer of this rib into the corresponding position of its neighbour faces ribvectors*/
     void AppendToNeighbourFaces();
 
-    const bool IsOffbound(){return fOffbound;}
+    bool IsOffbound() const{return fOffbound;}
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
 
     private:
-        /// Creates refinement pattern based on status vector and intersection node index
+        /// Creates refinement pattern based on how a fracture intersects this rib
         void CreateRefPattern();
 
 };

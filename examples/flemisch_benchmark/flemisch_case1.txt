@@ -1,6 +1,0 @@
-NumberOfFractures 1
-
-Fracture 0 4
--20  120  120  -20
--20  -20  120  120
- 92    8    8   92

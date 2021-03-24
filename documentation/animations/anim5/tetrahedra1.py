@@ -8,17 +8,13 @@ import math
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
 # where to save vtk files?
-destination = "documentation/animations/2020-07-22/"
+destination = "documentation/animations/anim5/"
 # ../examples/<example>
-example = destination+"tetrahedra1.txt"
+example = destination+"anim5.txt"
 # ../examples/<msh>
 msh = "examples/tetrahedra1.msh"
 
-preamble = (
-"""NumberOfFractures 1
-
-Fracture 0 4"""
-)
+preamble = "Mesh\n\""+msh+"\"\n\n"
 z = "\n-1.50 -1.50  1.50  1.50"
 
 toldist = [0.01, 0.333]
@@ -38,25 +34,24 @@ for i in range(steps):
 # for i in range(67,68):
     # theta = (i-i%2)*step
     theta = i*step
-    f = open(example,"w+")
+    f = open(example,"w")
     f.write(preamble)
+    f.write("\nTolDist  " + str(toldist[1]) + "\n")
+    f.write("\nTolAngle  " + str(tolangle[1]) + "\n")
+    f.write("\nFracture 0 4")
     x1 = x0-r*math.cos(theta)
     y1 = y0-r*math.sin(theta)
     x2 = x0+r*math.cos(theta)
     y2 = y0+r*math.sin(theta)
-    x = ("\n %.2f %.2f %.2f %.2f" % (x1,x2,x2,x1))
-    y = ("\n %.2f %.2f %.2f %.2f" % (y1,y2,y2,y1))
+    x = ("\n% .2f % .2f % .2f % .2f" % (x1,x2,x2,x1))
+    y = ("\n% .2f % .2f % .2f % .2f" % (y1,y2,y2,y1))
     f.write(x)
     f.write(y)
     f.write(z)
     f.close()
     # run dfnMesh
-    print(toldist)
     dfnMesh = ["build/src/dfnTest"
-              ,example
-              ,msh
-              ,str(toldist[1])
-              ,str(tolangle[1])]
+              ,example]
     subprocess.call(dfnMesh)
     # @todo exception handler to stop loop could go in here
     rename = ["cp"

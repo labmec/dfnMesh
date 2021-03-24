@@ -29,10 +29,17 @@ private:
 
 	/** A status vector describes the topology of the intersection
      *  each vector entry corresponds to a side, which may contain 
-     *  an intersection node with the fracture
-     * @TODO phil : what is the meaning if the status vector is entirely ZERO
+     *  an intersection node with the fracture.
+     * @details The vector usually starts with 1 entries on its 1D sides (4~7 for quads and 3~5 for triangles), then snapping algorithms may move them to the nodes. If a face starts with nodes set to 1, then that means a tolerance was verified at the rib level before the face was created.
+     * For example: 
+     * {1,0,1,0,0,0,0,0,0} is a quadrilateral face intersected by a fracture, whose intersection nodes have been snapped to nodes 0 and 2;
+     * {0,0,0,0,1,0,1,0,0} is a quadrilateral face intersected by a fracture passing through sides 4 and 6 (the 1st and 3rd edges), where no snap was performed;
+     * {1,0,0,0,1,0,0} is a triangular face intersected by a fracture passing through sides 0 and 2. Meaning one intersection was snapped to node 0 and the other wasn't snapped;
+     * {0,0,0,0,0,0,0} is an uninitialized Status vector of a triangle;
+     * @attention As it currently stands, our methodology doesn't have a Status Vector with more than two entries == 1; If you find this ever to be violated, it's a bug;
+     * @note @phil if you are seeing an entirely zero StatusVector, you probably printed it before calling DFNFace::UpdateStatusVector, where faces build their status vector by analyzing their ribs.
      */
-	TPZManVector<int> fStatus;
+	TPZManVector<int,9> fStatus;
 
 	/// Anticipated coordinates of an in-plane intersection node (if any has beeen found)
     /// This vector is only filled if this face intersects the limits of the fracture polygon
@@ -53,6 +60,9 @@ private:
 public:
     /// Empty constructor
     DFNFace() : fGeoEl(nullptr), fStatus(9,0), fRibs(0), fCoord(0){};
+    
+    /// Default constructor takes a pointer to geometric element and a fracture
+    DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec);
     
     /// Default constructor takes a pointer to geometric element and a fracture
     DFNFace(TPZGeoEl *gel, DFNFracture *fracture);
@@ -79,7 +89,7 @@ public:
      * @brief Return pointer to i-th DFNrib.
      * @returns nullptr if rib isn't in Fracture's rib map
     */
-    DFNRib *Rib(int i);
+    DFNRib *Rib(int i) const;
     
     /// Set index of in-plane intersection node
     void SetIntersectionIndex(int64_t index){fIntersectionIndex = index;}
@@ -110,29 +120,7 @@ public:
      * @brief Check if element should be refined
      * @return False if only one node or only two consecutive nodes have been intersected
     */
-    bool NeedsRefinement() const{
-        int nsides = fGeoEl->NSides();
-        if(fStatus[nsides-1]) return true;
-        int nnodes = fGeoEl->NCornerNodes();
-        int nedges = nnodes;
-        int cutedges = 0;
-        int cutnodes = 0;
-        bool consecutive_nodes = false;
-        for(int i=0; i<nedges; i++){
-            cutnodes += fStatus[i];
-            cutedges += fStatus[i+nnodes];
-            if(fStatus[i]&&fStatus[(i+1)%nnodes]){
-                // check anterior and posterior edges for intersection
-                consecutive_nodes = (fStatus[i-1+nnodes]==0)&&(fStatus[(i+1)%nnodes+nnodes]==0);
-                //                             anterior edge                   posterior edge
-            }
-        }
-        if(cutnodes==3) consecutive_nodes = false;
-
-        if(consecutive_nodes && cutedges<=1) return false;
-        if(cutnodes == 1 && cutedges == 0) return false;
-        return true;
-    }
+    bool NeedsRefinement() const;
 
     /// Return true if this face is in contact at all with the fracture
     bool IsIntersected() const{
@@ -142,6 +130,9 @@ public:
         }
         return false;
     }
+
+    /// Check if intersections were snapped to the same node
+    bool AllSnapsWentToSameNode() const;
 
     /**
      * @brief Checks if face is intersected by one of the fracture edges
@@ -209,7 +200,7 @@ public:
     bool NeedsSnap(REAL tolDist = 1e-4, REAL tolAngle_cos = 0.9);
 
     /// Return false if all intersections have already been snapped
-    bool CanBeSnapped();
+    bool CanBeSnapped() const;
 
     /// Check if should be refined and generate the subelements of material id matID
     void Refine();
@@ -221,11 +212,17 @@ public:
      * @brief If intersection of fracture with this face results in a 1D element, get its index.
      * @return Index of 1D element, -1 if non existant or if line has not been created yet
      */ 
-    int64_t LineInFace();
+    int64_t LineInFace() const;
+    
+    /**
+     * @brief If the intersections of this face were snapped to 2 consecutive nodes, get the local side index for the 1D side that connects those nodes.
+     * @return Side Index, if there exists an assimilated side, get -1 if non existent;
+     */ 
+    int CheckAssimilatedSide() const;
 
     
     /// @brief Returns the first 1D side that contains a DFNRib 
-    int FirstRibSide(){
+    int FirstRibSide() const{
         int nedges = fGeoEl->NSides(1);
         for(int iedge=0; iedge<nedges; iedge++){
             if(fRibs[iedge]) return iedge + fGeoEl->NSides(0);
@@ -235,16 +232,18 @@ public:
     }
 
     /// @brief Returns the other 1D side with a DFNRib
-    int OtherRibSide(int inletside);
+    int OtherRibSide(int inletside) const;
 
     /// @brief Make children of this element inherit its polyhedral indices
     /// @note: Does nothing if mesh is not 3D
-    void InheritPolyhedra();
+    // void InheritPolyhedra();
 
-    int NIntersectedRibs();
+    int NIntersectedRibs() const;
 
     /** @return Number of ribs whose intersection point is within the fracture limits*/
-    int NInboundRibs();
+    int NInboundRibs() const;
+
+    void SketchStatusVec(std::ostream& out = std::cout) const;
 private: 
 
     /**

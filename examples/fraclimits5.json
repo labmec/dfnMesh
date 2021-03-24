@@ -1,0 +1,21 @@
+{
+    "PZGenGrid":{
+        "x0": [0.0, 0.0, 0.0],
+        "Dimensions": [1.0, 1.0, 1.0],
+        "MMeshType": "EHexahedral",
+        "Nels": [1,1,1]
+    },
+    "TolDist": 0.1,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0,
+            "Limit": "Erecovered",
+            "Nodes":[
+                [-0.5,  1.0,  0.5],
+                [ 0.5,  1.9,  0.5],
+                [ 2.0,  0.5,  0.5],
+                [ 1.0, -0.4,  0.5]
+            ]
+        }
+    ]
+}

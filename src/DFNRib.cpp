@@ -18,9 +18,9 @@
 #include <math.h>
 
 /// Default constructor takes a pointer to geometric element
-DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture, int status) :
+DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture) :
     fGeoEl(gel),
-    fStatus(status),
+    fIntersectionSide(2),
     fFracture(Fracture),
     fIntersectionIndex(-1),
     fOffbound(false)
@@ -34,7 +34,7 @@ DFNRib::DFNRib(const DFNRib &copy){
 // Assignment operator
 DFNRib &DFNRib::operator=(const DFNRib &copy){
     fGeoEl = copy.fGeoEl;
-    fStatus = copy.fStatus;
+    fIntersectionSide = copy.fIntersectionSide;
     fCoord = copy.fCoord;
     fIntersectionIndex = copy.fIntersectionIndex;
     fFracture = copy.fFracture;
@@ -51,7 +51,7 @@ TPZManVector<REAL, 3> DFNRib::RealCoord(){
     TPZManVector<REAL, 3> coord(3, 0);
     TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
-    if(fStatus == 2 && fIntersectionIndex < 0)
+    if(fIntersectionSide == 2 && fIntersectionIndex < 0)
         {coord = this->fCoord;}
     else
         {gmesh->NodeVec()[fIntersectionIndex].GetCoordinates(coord);}
@@ -118,15 +118,15 @@ void DFNRib::CreateRefPattern(){
         // insert father
         TPZManVector<int64_t,2> cornerindices({0,1});
         int64_t elindex = 0;
-        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
         
         // insert children
         cornerindices = {0,2};
         elindex = 1;
-        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
         cornerindices = {2,1};
         elindex = 2;
-        refPatternMesh.CreateGeoElement(EOned, cornerindices, DFNMaterial::Erefined, elindex);
+        refPatternMesh.CreateGeoElement(EOned, cornerindices, fGeoEl->MaterialId(), elindex);
                     
         // define refPattern
         refPatternMesh.BuildConnectivity(); 
@@ -138,9 +138,27 @@ void DFNRib::CreateRefPattern(){
 
 
 
-void DFNRib::SnapIntersection_force(){
+void DFNRib::SnapIntersection_force(int closestnode){
     REAL BIG_NUMBER = 1.e12;
-    this->SnapIntersection_try(BIG_NUMBER);
+    // this->SnapIntersection_try(BIG_NUMBER);
+    if(this->CanBeSnapped() == false) return;
+    // If closest node was filled, snapped will be forced to node of local index == closestnode. If left -1, code will compute closest node.
+    switch (closestnode){
+        case -1: NeedsSnap(closestnode,BIG_NUMBER); break;
+        case  0:
+        case  1: break;
+        default:{
+            std::stringstream error; 
+	        error << "An edge doesn't have a node of local index = " << closestnode << "\n  where():  " << __PRETTY_FUNCTION__ << '\n';
+            throw std::invalid_argument(error.str()); break;
+        } 
+    }
+
+    // Snap intersection
+    fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
+    fIntersectionSide = closestnode;
+    // When an intersection gets snapped, neighbours should also be snapped to keep refinements consistant
+    UpdateNeighbours(closestnode);
 }
 
 
@@ -148,18 +166,21 @@ void DFNRib::SnapIntersection_force(){
 bool DFNRib::SnapIntersection_try(REAL tolDist){
     // If there's an intersection at the 1D side of this DFNRib, check if 
     // that intersection violates the tolerable distance and, if necessary, snap it down to a lower-dimensional side
-    int64_t closestnode = -1;
+    int closestnode = -1;
+    // NeedsSnap will modify closestnode to zero or one if Snapping is required
     if(this->NeedsSnap(closestnode,tolDist)){
-        fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
-        fStatus = closestnode;
-        UpdateNeighbours(closestnode);
+        SnapIntersection_force(closestnode);
         return true;
     }
     return false;
 }
 
-bool DFNRib::NeedsSnap(int64_t& closestnode, REAL tolDist){
-    if(!this->NeedsRefinement()) return false;
+/// @todo extract a CanBeSnapped function from this to rewrite SnapIntersection_force and SnapIntersection_try
+bool DFNRib::NeedsSnap(int& closestnode, REAL tolDist){
+    if(this->CanBeSnapped() == false){
+        closestnode = fGeoEl->NodeIndex(fIntersectionSide);
+        return false;
+    }
     
     TPZManVector<REAL,3> coord(3,0);
     fGeoEl->NodePtr(0)->GetCoordinates(coord);
@@ -171,10 +192,7 @@ bool DFNRib::NeedsSnap(int64_t& closestnode, REAL tolDist){
     closestnode = (dist0 < dist1 ? 0 : 1);
     REAL dist = MIN(dist0,dist1);
 
-    if(dist<tolDist)
-        return true;
-    else 
-        return false;
+    return (dist < tolDist);
 }
 
 
@@ -186,6 +204,7 @@ void DFNRib::UpdateNeighbours(int iside){
     TPZGeoEl *gel;
     for(/*void*/; neighbour != gelside; neighbour = neighbour.Neighbour()){
         gel = neighbour.Element();
+        if(!gel) break;
         if(gel->HasSubElement()) continue;
         int neig_side = neighbour.Side();
 
@@ -200,12 +219,8 @@ void DFNRib::UpdateNeighbours(int iside){
                     // fFracture->AddRib(neig_rib);
                     // rib_ptr = fFracture->Rib(gel->Index());
                 }
-                // // skip if StatusVec entry already match
-                // if(fStatus[iside] == rib_ptr->StatusVec()[neig_side]){continue;}
-                // // else, match StatusVec entry for iside and optimize
-                // rib_ptr->StatusVec()[neig_side] = fStatus[iside];
-                // rib_ptr->SnapIntersection_try();
-                // if(rib_ptr->NeedsRefinement()) {rib_ptr->SnapIntersection_try();}
+                
+                // A rib needs refinement when its intersection node wasn't snapped to one of the nodes
                 if(rib_ptr->NeedsRefinement()) {rib_ptr->SnapIntersection_force();}
                 break;
             }
@@ -230,6 +245,7 @@ void DFNRib::AppendToNeighbourFaces(){
     TPZGeoElSide neig;
     for(neig=gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
         if(neig.Element()->Dimension() != 2) continue;
+        if(neig.Element()->HasSubElement()) continue;
         // if(neig.Element()->MaterialId() != DFNMaterial::Efracture && 
         //    neig.Element()->MaterialId() != DFNMaterial::Eskeleton) continue;
         int64_t neigindex = neig.Element()->Index();
@@ -251,7 +267,7 @@ void DFNRib::AppendToNeighbourFaces(){
 // bool DFNRib::UpdateMaterial(){
 //     DebugStop();
 //     if(fGeoEl->MaterialId() == DFNMaterial::Efracture) {return false;}
-//     if(fStatus[0] && fStatus[1]){
+//     if(fIntersectionSide[0] && fIntersectionSide[1]){
 //         fGeoEl->SetMaterialId(DFNMaterial::Efracture);
 //         return true;
 //     }
@@ -284,7 +300,7 @@ inline REAL Distance(TPZManVector<REAL,3> &vector1, TPZManVector<REAL,3> &vector
 void DFNRib::Print(std::ostream &out) const
 {
     out<<"\nRib GeoEl index # "<<fGeoEl->Index();
-	out<<"\nSide intersected:"<<fStatus;
+	out<<"\nSide intersected : "<<fIntersectionSide;
 	out<<"\nIntersection Coord : "<< fCoord;
 	out<<"\nIntersection Node index: " << fIntersectionIndex;
     out<<"\nRib Nodes:\n";

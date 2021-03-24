@@ -26,7 +26,11 @@
 #include <gmsh.h>
 
 class DFNMesh;
+class DFNPolyhedron;
 typedef TPZFMatrix<REAL> Matrix;
+
+
+
 
 /** 
  *  @brief     Describes a surface mesh for a fracture and all ribs & faces that are intersected by it.
@@ -51,16 +55,32 @@ private:
 	DFNPolygon fPolygon;
 	
     /// A material id for this fracture elements
-    int fmatid = gNoMaterial;
+    int fmatid = DFNMaterial::Efracture;
+
+    /// Index of this fracture at fdfnMesh fracture vector
+    int fIndex = -1;
+
+    /// Directive for determining if this fracture limits are truncated, extended or recovered
+    FracLimit fLimit = Eextended;
 
 	/// Set (of indices) of 2D geo elements on fracture surface
 	std::set<int64_t> fSurfaceFaces;
 	
-	/// Set (of indices) of 1D geo elements on fracture surface
+	/// Set (of indices) of 1D geo elements on fracture surface. 
+    /// @comment Right now, I'm thinking of filling this datastructure only temporarily, to use in DFNFracture::RecoverFractureLimits recovery. This may change later...
 	std::set<int64_t> fSurfaceEdges;
 
 public:
-    
+
+#ifdef LOG4CXX
+    log4cxx::LoggerPtr fLogger = nullptr;
+
+    /** @brief Creates a logger for this object and fills pointer to this->fLogger
+      * @note A method to create a separate logger + appender for each DFNFracture. (as opposed to the main logger which logs everything from the DFNMesh)*/
+    log4cxx::LoggerPtr CreateLogger(std::string filename="default", std::string layout_convpattern = "default");
+#endif // LOG4CXX
+
+
     /// Empty constructor
     DFNFracture();
 
@@ -70,7 +90,7 @@ public:
     /**
      * @brief Constructor from a DFNPolygon
      */
-    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh);
+    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -83,8 +103,74 @@ public:
     DFNPolygon &Polygon();
     
     DFNMesh* dfnMesh() const{return fdfnMesh;}
+
+
+	std::set<int64_t>& Surface(){return fSurfaceFaces;}
+
+    int MaterialId() const{return fmatid;}
+    int Index() const{return fIndex;}
+
+    int NSurfElements() const{return fSurfaceFaces.size();}
     
+    /// return the indices of all polyhedra intersected by the fracture
+    std::set<int> IdentifyIntersectedPolyhedra();
+
+    /** @brief Given an intersected polyhedron, check if it could lead to undesirable features due to the fracture intersecting it. Use only the SnapRibs.
+     * this method should return false when all the snap ribs loop around a TPZGeoEl
+     * @return False if volume has N_SnapRibs == 0
+     * @return False if there are no pairs of neighbour SnapRibs
+     * @return False if all pairs of neighbour SnapRibs are co-linear (same EldestAncestor)
+     * @return False if VolumeSnapRibs perfectly cover (no more, no less) their eldest ancestors AND the set of rib elders form a closed loop of 3 or 4 edges (which means we've snapped onto a mesh face which will latter be incorporated during DFNFracture::MeshFractureSurface)
+     * @return True(?) if there are 2 non-colinear neighbour SnapRibs (?). Not really, take the following construction: Triangulate a sphere, cut through it with a plane perfectly splitting it in 2 halfs. Let all intersections be snapped. That is not a problem volume, but this condition would return true.
+     */
+    bool IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DFNPolyhedron& IntersectedVolume) const;
+    
+    // return the indices of the geometric elements that belong to the discretized fracture
+    // through snapping AND were in the original mesh
+    /** @brief Fill a set with all SnapRibs due to this Fracture
+     *  @pre Should be called after DFNFracture::SnapIntersections_faces. The set will often be empty if you fail to do so. It will ALWAYS be empty if called before DFNFracture::SnapIntersections_ribs
+     *  @details SnapRibs are the 1D elements that previously existed in the mesh and this DFNFracture will try to incorporate to its surface. Not to be confused with DFNRibs (which are the 1D elements that were intersected).
+     *  @note This new 'SnapRibs' set is a subset of DFNFracture::fSurfaceEdges which is temporarily assembled during the limit recovery of this fracture. So there's some work being done twice, which we could optimize later.
+    */
+    std::set<int64_t> IdentifySnapRibs();
+    
+    /** facet set of 2d elements with the same normal direction
+     * divide facets of polyhedra that have non-colinear snap-ribs
+     * loop over polyhedra
+     * identify the snap-ribs the belong to the polyhedra
+     * verify if the snap-ribs require meshing of a facet (hard)
+     * divide the facet (hard part)
+     * @deprecated
+    */
+    void MeshSnapPlanes();
+
+    /**
+     * @brief Checks if this fracture is overlapping (partially, or completely) planar subsets
+     * of the shell of every DFNPolyhedron that it intersects. 
+     * @details If any trivial case is found, code moves on and the incorporation of any 
+     * overlapped TPZGeoEl is done at DFNFracture::FindPolygon() (as it used to). If any case is
+     * found that FindPolygon can't handle, then the DFNPolyhedron is split into tetrahedra and 
+     * pyramids by Gmsh, and we recursively update the set of faces and ribs intersected until 
+     * no non-trivial overlap is left.
+     * @note This function is somewhat costly, if you know it won't be necessary, you can just
+     * not call it
+    */
+    void CheckSnapInducedOverlap();
+    
+    // /** @briefUpdates DFNFracture's DFNFace list, swapping elements of a given polyhedron for their children
+    //  * @param polyh : A polyhedron from where to get refined DFNFaces
+    //  * @ATTENTION this method will fail if you call it after DFNPolyhedron::SwapForChildren. SwapForChildren is called during DFNMesh::UpdatePolyhedra. A bug from this could be very hard to catch.
+    // */
+    // void SwapRefinedDFNFaces(DFNPolyhedron& polyh);
+
+    /** @brief Removes refined DFNFaces from the fFaces datastructure
+    */
+    void RemoveRefinedDFNFaces(DFNPolyhedron& polyh);
+
 private:
+
+    
+    void Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture);
         
     /// Checks neighbour's dimension and returns true if it is equal
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
@@ -93,27 +179,20 @@ private:
     bool FindEndFracturePoint(DFNFace &face, TPZManVector<REAL,3> &ipoint);
     
 
-    /**
-     * @brief Read dim-dimensional geometric elements from a gmsh::model into a TPZGeoMesh, 
-     * and imported elements are pushed to the back of TPZGeoMesh::ElementVector 
-     * (Must be called between the pair gmsh::initialize and gmsh::finalize of 
-     * the model from which elements should be read).
-     * @param gmsh: Pointer to geometric mesh where elements should be inserted.
-     * @param dimension of elements to be imported
-     * @param oldnodes: a set of old nodes that don't require importing
-     * @param newelements: a vector with the indices of imported elements
-     * @note If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
-    */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<int64_t> &newelements);
+    // void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
 
     /**
      * @name Surface Meshing auxiliar methods
      * @{
     */
-    /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
-     * @param polygon an oriented loop of edges that don't necessarily occupy the same plane
+    /** @brief Mesh a convex polygon from a list of sequentialy connected edges. If not simple, calls on Gmsh
+     * @param polygon a loop of edges that don't necessarily occupy the same plane
     */
     void MeshPolygon(TPZStack<int64_t>& polygon);
+    /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
+     * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
+    */
+    void MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon,std::set<int64_t>& nodes, TPZStack<int64_t>& newelements, bool isplane=false);
     /** @brief Recursively finds the next face and gets its in-plane edge to build a SubPolygon (subset of the Fracture DFNPolygon contained in a polyhedron)
      *  @param Polygon_per_face a structure to store the two subpolygons per face
     */
@@ -136,7 +215,7 @@ private:
     void GetOuterLoop(std::vector<int> &outerLoop);
 
     /** @brief Insert 2D elements in the set of 2D elements in surface */
-    void InsertFaceInSurface(int64_t elindex){fSurfaceFaces.insert(elindex);}
+    void InsertFaceInSurface(int64_t elindex);
     void InsertFaceInSurface(const TPZVec<int64_t>& el_indices){
         for(int64_t index : el_indices){InsertFaceInSurface(index);}
     }
@@ -152,22 +231,48 @@ private:
 
     // Special setup of fracture mat id when working in 2D
     void SetFracMaterial_2D();
+
+    /** @brief For every child of every face in fFaces, check if it's above or below the fracture plane. It changes the material id of the elements and corrects the real fracture datastructures accordingly
+     * @attention This method was written to be called by a virtual fracture. One that is auxiliar orthogonal to a real fracture.
+    */
+    void SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture);
+    void RemoveFromSurface(TPZGeoEl* gel);
+    void AddToSurface(TPZGeoEl* gel);
+
+    /** @brief Check if face is above or below fracture surface
+     * @param use_face_centroid: true -> check using the centroid of the face; false -> check using centroid of the edges of the face.
+    */
+    bool CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid);
+
+    /** @brief Search for quadrilaterals that violate our general criterion for refinement
+     *  @note this is a draft which I commited by accident, it does nothing for now
+    */
+    void SearchForSpecialQuadrilaterals();
+    /** @brief A special quadrilateral is one that should be refined because of a special exception.
+     *  @note this is a draft which I commited by accident, it does nothing for now
+     * @details It has 3 or more neighbour ribs (some of them NOT occupying its 1D sides) whose intersection nodes were snapped toward this quadrilateral.
+     * If this quadrilateral is not refined, it'll (sometimes) induce a non-convex polyhedron with overlapped faces that GMSH can't mesh.
+    */
+    bool IsSpecialQuadrilateral(TPZGeoEl* gel);
+
 public:
 
-    /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
-    /// @param dim: Filter by dimension. Set -1 to skip filter
-    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim = -1);
+
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
+
     /// Triangulates fracture surface from outline
     void MeshFractureSurface();
-   /// Access the ribs data structure
+
+    /** @brief Following directive DFNFracture::fLimit, modify the extended 
+     * limits of this fracture to better represent the limits (boundary edges) 
+     * of the polygon that defined this fracture*/
+    void RecoverFractureLimits();
+
+    /// Access the ribs data structure
     DFNRib* AddRib(DFNRib &rib);
     
     DFNFace* AddFace(DFNFace &face);
-
-    /// Insert new volume in data structure
-    void AddVolume(DFNVolume volume);
 
     /// Pointer to rib corresponding to geometric element with index
     // return NULL if the geometric element is not intersected
@@ -176,23 +281,30 @@ public:
     /// Pointer to face of index 'index'
     DFNFace *Face(int64_t index);
     
-    /// Find intersected ribs, create DFNRib objects
-    void FindRibs();
+    /** @brief Search for intersected 1D elements and create DFNRib objects for them;
+     *  @details Loop over all 1D elements in the mesh; use DFNPolygon::fNodesAbove to check if an edge has nodes on opposite sides of the plane that contains the DFNPolygon; and check if the intersection is within the DFNPolygon bounds.
+     **/
+    void CreateRibs();
+    /// Find and intersect ribs within the element indices in a set.
+    /// @attention Unlike DFNFracture::CreateRibs(), this method won't check if intersection point is within fPolygon limits. Since ribs are already limited to a set, intersection search is done with the unbounded plane that contains fPolygon
+    void FindRibs(const std::set<int64_t>& ribset);
     
     /// verify proximity of rib intersection node
     /// Coalesce intersected ribs
-    // @TODO change the name of this method
-    void SnapIntersections_ribs(REAL tolDist);
+    void SnapIntersections_ribs(REAL tolDist = -1.0);
     
     /// Set Refinement Patterns and create sub elements
     void RefineRibs();
 
     /// Find intersected faces
-    void FindFaces();
+    void CreateFaces();
     /// Coalesce intersected faces
-    void SnapIntersections_faces(REAL tolDist = 1e-4, REAL tolAngle = 0.1);
+    void SnapIntersections_faces(REAL tolDist = -1.0, REAL tolAngle = -1.0);
     /// Set Refinement Patterns and create sub elements
     void RefineFaces();
+
+    /// Remove refined faces from the surface gelindex set and replace them by their youngest children
+    void UpdateFractureSurface();
 
 
     /**
@@ -200,20 +312,51 @@ public:
      * @{
     */
     /** @brief Identify Ribs, Faces and Polyhedra that are affected by the limits of the fracture
-     * @note Should be called after DFNFracture::FindFaces()
+     * @note Should be called after DFNFracture::CreateFaces()
+     * @details This method is a preparation for the actual recovery of fracture limits, which happens during DFNFracture::RecoverFractureLimits
     */
     void IsolateFractureLimits();
     /** @brief Find Ribs that lie out of the bounds of this fracture but are still influenced by its limits */
     void FindOffboundRibs();
     /** @brief Find Faces that lie out of the bounds of this fracture but are still influenced by its limits */
     void FindOffboundFaces();
+    /** @brief Fill a set with every 1D element that is contained in the surface of this fracture*/
+    void GetEdgesInSurface(std::set<int64_t>& edges);
+    /** @brief Creates a fracture (orthogonal to this) that contains the specified edge and whose normal vector is oriented towards the interior of this
+     * @param orthfracture [out] The reference to the created fracture
+     * @param edgeindex Index of the edge of the original fracture that is calling this method
+     * @details its polygon plane is a triangle with the nodes of the specified edge and a node above the real fracture
+    */
+    void CreateOrthogonalFracture(DFNFracture& orthfracture, const int edgeindex);
+
+    /** @brief Clears material ids that might have been changed by other fractures and updates fracture surface list of elements
+     * @note Because limit recovery is done after all fractures have been inserted, some cleaning is necessary*/
+    void CleanUp();
 
     /** @} */
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
 
+    /** @brief This is a draft to find the boundary conditions for fractures. I had the idea and quickly wrote down... but have not tested yet.
+     * Supposedly, the way it's written, it should allow a user to essentially merge 2 or more fractures into one.
+     * Meaning, they would have a continuous boundary 
+    */
+    void ExportFractureBC(int matid, std::ofstream& out);
 };
+
+
+namespace DFN{
+    static FracLimit StringToFracLimit(const std::string& name){
+        if(name[0] != 'E'){DebugStop();}
+        if(name == "Etruncated"){	return FracLimit::Etruncated;}
+        if(name == "Eextended"){	return FracLimit::Eextended;}
+        if(name == "Erecovered"){	return FracLimit::Erecovered;}
+        PZError << "\nUnrecognized FracLimit directive type: \""<<name<<"\"\n";
+        DebugStop();
+        return FracLimit::Eextended;
+    }
+}
 
 #endif /* DFNFracture_h */
 

@@ -5,6 +5,7 @@
 	#endif
 	
 	#include "TPZGenGrid2D.h"
+	#include "TPZGenGrid3D.h"
 	#include "TPZExtendGridDimension.h"
 	#include "TPZRefPatternDataBase.h"
 	#include "TPZGmshReader.h"
@@ -27,34 +28,12 @@
 	#include "DFNMesh.h"
 
 	#include <gmsh.h>
+	#include "json.hpp"
+	#include "filereader.h"
+	#include <filesystem>
 //includes
 
-/**
- * @brief Calls SetupExampleFromFile but for a single fracture
- * @param filename: path to the file that defines the fracture
- * @param polyg_stack: Matrix to fill with corners of the fracture
-*/
-void ReadFracture(std::string filename, TPZFMatrix<REAL> &plane);
 
-/**
- * @brief Define which example to run. See example file sintax in function definition
- * @param filename: path to the file that defines the example
- * @param polyg_stack: vector to fill with corners of the fractures
- * @param mshfile: [optional] path to .msh file (if applicable)
- * @returns pointer to geometric mesh created/read
-*/
-TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle);
-
-
-void ReadFile(	const std::string&				filename, 
-					TPZStack<TPZFMatrix<REAL>>& polygonmatrices, 
-					std::string& 				mshfile,
-					TPZManVector<REAL,3>& 		x0,
-					TPZManVector<REAL,3>& 		xf,
-					TPZManVector<int,3>& 		nels,
-					MMeshType&					eltype,
-					TPZManVector<REAL,2>&		tol
-					);
 
 
 
@@ -62,26 +41,48 @@ void ReadFile(	const std::string&				filename,
  * @brief information and assumptions
 */
 void PrintPreamble(){
-	std::string neopzversion = "/commit/29373e1"; // https://github.com/labmec/neopz/commit/...
+	std::string neopzversion = "/commit/eb88bc8"; // https://github.com/labmec/neopz/commit/...
 	std::string gmshversion = "4.5.6";
 	std::cout<<"\n";
 	std::cout<<"\nNeoPZ assumed version: " << neopzversion;
 	std::cout<<"\nGMsh assumed version: " << gmshversion << "\n\n";
-	std::cout<<"Runing...\n\n";
+	std::cout<<"Running...\n";
 
 }
 
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle);
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives);
+// TPZGeoMesh* ReadInputJSON(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives);
 
 
 #ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.fracture"));
+static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 #endif
 
 
 
+/** @brief a Quick script I've written to setup PZ's datastructure so we could test bug_snap_overlap3.json*/
+// void ScriptForBug3(TPZGeoMesh* gmesh){
+// 	std::vector<int> ref0 = {20,0,1,2};
+// 	std::vector<int> ref1 = {21,3,4,5};
+// 	std::vector<int> ref2 = {22,6,7,8};
+// 	std::vector<int> ref3 = {23,9,10,11};
+// 	std::vector<int> ref4 = {19,12,13,14,15,16,17};
 
+// 	std::vector<std::vector<int>> refs = {ref0, ref1, ref2, ref3, ref4};
 
+// 	for(auto& ref : refs){
+// 		TPZGeoEl* father = gmesh->Element(ref[0]);
+// 		int nchildren = ref.size()-1;
+// 		TPZManVector<TPZGeoEl*,6> children(nchildren,nullptr);
+// 		for(int i=1; i<=nchildren; i++){
+// 			children[i-1] = gmesh->Element(ref[i]);
+// 		}
+// 		DFN::CreateRefPattern(father,children);
+// 		for(int i=0; i<nchildren;i++) father->SetSubElement(i,children[i]);
+// 		children.Fill(nullptr);
+// 		children.clear();
+// 	}
+// }
 
 
 //-------------------------------------------------------------------------------------------------
@@ -95,8 +96,9 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 #ifdef LOG4CXX
-    InitializePZLOG();
-#endif
+	std::string configpath = PROJECT_ROOT "/src/util/DFNlog4cxx.cfg";
+	log4cxx::PropertyConfigurator::configure(configpath);
+#endif // LOG4CXX
 	TPZTimer time("DFNMesh");
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
@@ -104,33 +106,43 @@ int main(int argc, char* argv[]){
 	TPZStack<TPZFMatrix<REAL>> polyg_stack;
 	TPZGeoMesh *gmesh = nullptr;
 	REAL tol_dist = 1.e-4;
-	REAL tol_angle = 1.e-3; 
-	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle);
+	REAL tol_angle = 1.e-6; 
+	TPZManVector<int> matid;
+	TPZManVector<FracLimit> limit_directives;
+	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle,matid,limit_directives);
 	gmsh::initialize();
 	
-    /// Constructor of DFNMesh initializes the skeleton mesh
+	// ScriptForBug2(gmesh);
 	time.start();
+    /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh);
-	// dfn.PrintPolyhedra();
 	dfn.SetTolerances(tol_dist,tol_angle);
-	// Loop over fractures and refine mesh around them
-	DFNFracture *fracture = nullptr;
+
+	// dfn.InheritPolyhedra();
+	// dfn.PrintPolyhedra();
+
+
+    // Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
-		gmesh->BuildConnectivity();//@todo There is a proper buildconnectivity missing... this is a temporary patching until I find out where it's actually supposed to be
         // a polygon represents a set of points in a plane
+        // poly_stack[iplane] is a matrix 3xn where n is the number of points 
 		DFNPolygon polygon(polyg_stack[iplane], gmesh);
         // Initialize the basic data of fracture
-		fracture = new DFNFracture(polygon,&dfn);
-		dfn.AddFracture(fracture);
+		// fracture = new DFNFracture(polygon,&dfn,FracLimit::Etruncated);
+        // initialize an empty DFNFracture object
+		DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
         
-	// Find and split intersected ribs
-		fracture->FindRibs();
+		// Find intersected ribs and create a corresponding DFNRib object (administered by DFNFracture)
+		fracture->CreateRibs();
+        // For the rib object whose intersection point is closer than toldist to an endnode,
+        // snap the intersection point to the nearest node
 		fracture->SnapIntersections_ribs(tol_dist);
-	// Build the DFNFace objects and split intersected faces if necessary
-		fracture->FindFaces();
-		fracture->IsolateFractureLimits();
+		// create DFNFace objects - these are faces that have intersected ribs (always 2)
+		fracture->CreateFaces();
+        // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
-		// fracture->Polygon().PlotNodesAbove_n_Below(gmesh);
+
+		fracture->CheckSnapInducedOverlap();
 
 #ifdef LOG4CXX
         if(logger->isDebugEnabled()){
@@ -139,28 +151,46 @@ int main(int argc, char* argv[]){
             LOGPZ_DEBUG(logger,sout.str());
         }
 #endif
+        // we decided that the ribs can be cut. Apply the refinement to the geometric elements
 		fracture->RefineRibs();
+        // apply the refinement to the faces
 		fracture->RefineFaces();
+		// dfn.PrintVTKColorful();
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
+			// dfn.InheritPolyhedra();
+			// divide the fracture in simple geometries using the mesh created in RefineFaces
 			fracture->MeshFractureSurface();
+			// dfn.DumpVTK();
+			// this is where the code can crash : a face that should be internal can be aligned
+			// with an existing face
 			dfn.UpdatePolyhedra();
 		}
-
-		std::ofstream logtest("LOG/dfnprint.log");
-		dfn.Print(logtest,argv[1]);
+#ifdef PZDEBUG
+        {
+            std::ofstream logtest("LOG/dfn.summary.log");
+            dfn.Print(logtest,argv[1]);
+			// dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
+        }
+#endif //PZDEBUG
 	}
-	// Mesh intersected volumes
-    // dfn.ExportGMshCAD("dfnExport.geo"); // this is optional, I've been mostly using it for graphical debugging purposes
-		// dfn.GenerateSubMesh();
+	// Recover Limits
+	for(auto frac : dfn.FractureList()){
+		frac->RecoverFractureLimits();
+	}
+	
+
+
+	// Generate submesh
+    dfn.ExportGMshCAD("dfnExport.geo");
+	
+	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
-	std::cout<<"\n\n"<<time<<" ms"<<std::endl;
+	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
-		for(auto frac : dfn.FractureList()){
-			frac->Polygon().InsertGeomRepresentation(gmesh);
-		}
-		dfn.PrintVTK("pzmesh.txt","skip");
-		dfn.PrintVTKColorful();
+	dfn.DumpVTK(true);
+	dfn.PrintSummary();
+	dfn.PrintVTK("skip");
 	std::cout<<"\n ...the end.\n\n";
 
 	gmsh::finalize();
@@ -170,9 +200,9 @@ int main(int argc, char* argv[]){
 
 
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle){
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives){
 	TPZGeoMesh* gmesh = nullptr;
-	std::string default_example("examples/two-hex-and-a-frac.txt");
+	std::string default_example("examples/two-hex-and-a-frac.json");
 	std::string example = default_example;
 	std::string mshfile = "no-msh-file";
 	for(int iarg=1; iarg < argc; ++iarg){
@@ -188,7 +218,8 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 			DebugStop();
 		}
 	}
-	gmesh = SetupExampleFromFile(example,polyg_stack,mshfile,toldist,tolangle);
+	std::cout<<"input file: "<<example<<"\n";
+	gmesh = SetupExampleFromFile(example,polyg_stack,mshfile,toldist,tolangle,matid,limit_directives);
 	return gmesh;
 }
 
@@ -197,221 +228,3 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 
 
 
-TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle){
-
-
-	MMeshType eltype;
-	TPZStack<Matrix> planestack;
-	TPZManVector<REAL, 3> x0(3, 0.), x1(3, 0.);
-	TPZManVector<int,3> nels(3,0);
-	TPZManVector<REAL,2> tol = {toldist,tolangle};
-	
-	ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol);
-	toldist = tol[0];
-	tolangle = tol[1];
-
-
-	// Creating the Geo mesh
-	TPZGeoMesh *gmesh = new TPZGeoMesh;
-	if(mshfile == "no-msh-file"){
-		TPZManVector<int, 2> ndiv(2);
-		ndiv[0] = nels[0];
-		ndiv[1] = nels[1];
-		TPZGenGrid2D gengrid(ndiv, x0, x1);
-		gengrid.SetElementType(eltype);
-		gengrid.SetRefpatternElements(true);
-		gengrid.Read(gmesh);
-		gmesh->SetDimension(2);
-
-		// Mesh 3D
-		if(nels[2] != 0){
-			REAL Lz = (x1[2]-x0[2])/nels[2];
-			TPZExtendGridDimension extend(gmesh,Lz);
-			extend.SetElType(1);
-			TPZGeoMesh *gmesh3d = extend.ExtendedMesh(nels[2]);
-			gmesh = gmesh3d;
-		}
-	}else{
-		TPZGmshReader reader;
-		gmesh = reader.GeometricGmshMesh4(mshfile, gmesh);
-	}
-	return gmesh;
-}
-
-
-
-
-
-void ReadFile(	const std::string&			filename, 
-				TPZStack<TPZFMatrix<REAL>>& polygonmatrices, 
-				std::string& 				mshfile,
-				TPZManVector<REAL,3>& 		x0,
-				TPZManVector<REAL,3>& 		xf,
-				TPZManVector<int,3>& 		nels,
-				MMeshType&					eltype,
-				TPZManVector<REAL,2>&		tol
-				)
-{
-		/*_______________________________________________________________
-						FILE FORMAT 
-
-		Domain 								//dimensions of the domain
-		Lx Ly Lz (double)
-
-		Mesh			
-		2D ELTYPE (string)
-		Nx Ny Nz (int)						// number of divisions
-
-		Fracture 0	[ncorners]				// coordinates for j corner nodes
-		[x0] [x1] ... [xj]
-		[y0] [y1] ... [yj]
-		[z0] [z1] ... [zj]
-
-		Fracture 1	[ncorners]
-		...
-		Fracture N	[ncorners]
-		_______________________________________________________________
-						EXAMPLE
-		Domain
-		2.0 2.0 2.0
-
-		Mesh
-		EQuadrilateral
-		2 2 2
-
-		Fracture 0 4
-		0.3 1.3 1.3 0.3
-		0.3 0.3 1.4 1.4
-		0.7 0.7 0.5 0.5
-		
-		Fracture 1 4
-		0.6 1.6 1.6 0.6
-		0.55 0.7 0.55 0.40
-		1.3 1.3 0.25 0.25
-	 */
-	string line, word;
-	bool create_mesh_Q = mshfile == "no-msh-file";
-	// const string Domain = "Domain";
-	// const string Mesh("Mesh"), Fractures("NumberOfFractures");
-	int i, j, nfractures, ifrac=0;
-	REAL Lx, Ly, Lz;
-	TPZManVector<REAL,3> L(3,-1.);
-	x0.Fill(0.);
-	// Read file
-	ifstream file(filename);
-	if (!file){
-		std::cout << "\nCouldn't find file " << filename << std::endl;
-		DebugStop();
-	}
-	// Go through it line by line
-	while (getline(file, line)){
-		while(line.length() == 0){getline(file, line);}
-		std::stringstream ss(line);
-		getline(ss, word, ' ');
-		while (word.length() == 0){getline(ss, word, ' ');}
-		if(word == "Domain"){
-			getline(file,line);
-			ss.clear();
-			ss.str(line);
-
-			for(int i=0; i<3; i++){
-				getline(ss,word, ' ');
-				while (word.length() == 0){getline(ss, word, ' ');}
-				L[i] = std::stod(word);
-			}
-		}
-		else if(word == "Origin"){
-			getline(file,line);
-			ss.clear();
-			ss.str(line);
-			for(int i=0; i<3; i++){
-				getline(ss,word, ' ');
-				while (word.length() == 0){getline(ss, word, ' ');}
-				x0[i] = std::stod(word);
-			}
-		}
-		else if(word == "Mesh"){
-			getline(file,line);
-			ss.clear();
-			ss.str(line);
-			getline(ss,word, ' ');
-			if(word[0] == 'E'){
-				if(word == "EQuadrilateral") eltype = MMeshType::EQuadrilateral;
-				else if(word == "ETriangle" || word == "ETriangular") eltype = MMeshType::ETriangular;
-				else {PZError << "\nUnrecognized mesh type\n"<<word<<std::endl; DebugStop();}
-
-				getline(file,line);
-				ss.clear();
-				ss.str(line);
-				for(int i=0; i<3; i++){
-					getline(ss,word, ' ');
-					while (word.length() == 0){getline(ss, word, ' ');}
-					nels[i] = std::stoi(word);
-				}
-			}else if(word[0] == '\"' || word[0] == '\''){
-				// mshfile = word.substr(1, word.size()-2);
-				mshfile = line.substr(1, line.size()-2);
-			}else{
-				PZError<<"\nUnrecognized mesh info syntax\n\""<<line<<"\""; 
-				PZError<<"\nMeshtypes should start with an uppercase E, and .msh file path should be written between quotes or double-quotes.\n";
-				DebugStop();
-			}
-		}
-		else if(word == "Fracture" || word == "fracture"){
-			getline(ss,word, ' ');
-			ifrac = std::stoi(word);
-			getline(ss,word, ' ');
-			int ncorners = std::stoi(word);
-			if(ncorners < 3){
-				PZError<<"\nInvalid input file.\t Invalid number of corners.\n"; 
-				PZError<<"\tFile:"<<filename<<"\n\tFracture index: "<<ifrac<<"\n\tNumber of corners: "<<ncorners<<"\n\n"; 
-				DebugStop();
-			}
-			int npolygons = MAX(ifrac+1,polygonmatrices.size());
-			polygonmatrices.resize(npolygons);
-			if(polygonmatrices[ifrac].Cols()>2){
-				PZError<<"\nInvalid input file.\t Do you have fractures with repeated indices?\n"; 
-				PZError<<"\tFile:"<<filename<<"\n\tFracture index:"<<ifrac<<"\n\n"; 
-				DebugStop();
-			}
-			polygonmatrices[ifrac].Resize(3,ncorners);
-			for(int i=0; i<3; i++){
-				getline(file, line);
-				while(line.length() == 0){getline(file, line);}
-				ss.clear();
-				ss.str(line);
-				int j = 0;
-				while (getline(ss, word, ' ')){
-					while (word.length() == 0){getline(ss, word, ' ');}
-					polygonmatrices[ifrac](i, j) = std::stod(word);
-					// std::cout << std::setw(14) << std::setprecision(6) << std::right << polygonmatrices[ifrac](i, j) << (j<ncorners-1?",":"\n");
-					j++;
-				}
-				if(j<ncorners){
-					PZError<<"\nInvalid input file.\n\t Maybe a missing corner coordinate, or coordinate matrix size doesn't match specified number of corners?\n";
-					PZError<<"\tFile:"<<filename<<"\n\tFracture index:"<<ifrac<<"\n\n"; 
-					DebugStop();
-				}
-			}
-		}
-		else if(word == "toldist" || word == "tolDist" || word == "TolDist" || word == "TolerableDistance"){
-			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
-			tol[0] = std::stod(word);
-		}
-		else if(word == "tolangle" || word == "tolAngle" || word == "TolAngle" || word == "TolerableAngle"){
-			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
-			getline(ss, word, ' ');
-			tol[1] = std::stod(word);
-		}
-		else if(word == "tolcos" || word == "tolCos" || word == "TolCos" || word == "TolerableCosine"){
-			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
-			getline(ss, word, ' ');
-			tol[1] = std::acos(std::stod(word));
-		}
-
-	}
-	for(int i=0; i<3; i++) {xf[i] = x0[i] + L[i];}
-	std::cout<<std::endl;
-
-	
-}

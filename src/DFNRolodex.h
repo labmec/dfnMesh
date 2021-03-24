@@ -167,7 +167,7 @@ public:
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const{
-        out << "\n\nRolodex around edge # "<< fedgeindex<<"\n";
+        out << "\nRolodex around edge # "<< fedgeindex<<"\n";
         out << "orient. | gel index | side | angle\n";
         for(auto& card : fcards){
             card.Print(out);

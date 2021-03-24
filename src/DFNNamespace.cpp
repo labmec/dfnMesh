@@ -1,12 +1,17 @@
 /*! 
  *  @authors   Pedro Lima
  *  @date      2020.10
+ *  @brief     Namespace DFN definitions
  */
 
 
 
 #include "DFNNamespace.h"
+#include "TPZRefPattern.h"
 
+#ifdef LOG4CXX
+static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif
 
 
 namespace DFN{
@@ -59,7 +64,7 @@ namespace DFN{
         }
 
         // Singular Value Decomposition (SVD): A = U*SIGMA*VT
-        #ifdef USING_MKL
+#ifdef USING_MKL
         {
             // using MKL dgvesd()
             // U (3x3)
@@ -74,17 +79,17 @@ namespace DFN{
             normal[1] = U(1,2);
             normal[2] = U(2,2);
         }
-        #else
+#else
             PZError << "\nThis method needs NeoPZ compiled with MKL\n"<<__PRETTY_FUNCTION__;
             DebugStop();
-        #endif // USING_MKL
+#endif // USING_MKL
 
-        #ifdef PZDEBUG
+#ifdef PZDEBUG
         {
             float norm = Norm_f(normal);
             if(std::fabs(1.-norm) > gDFN_SmallNumber) DebugStop();
         }
-        #endif //PZDEBUG
+#endif //PZDEBUG
     }
 
 
@@ -189,7 +194,7 @@ namespace DFN{
         // consistency checks
         if(!face) 							DebugStop();
         if(face->Dimension() != 2) 			DebugStop();
-        if(face->HasSubElement()) 			DebugStop();
+        // if(face->HasSubElement()) 			DebugStop();
 
         int nedges = face->NSides(1);
         TPZManVector<int64_t,4> output(nedges,-1);
@@ -234,26 +239,7 @@ namespace DFN{
         return (neig1.SideNodeIndex(0) == neig2.SideNodeIndex(0));
     }
 
-    /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
-    /// @param shift: indices will get shifted by a constant 
-    void GetLineLoop(TPZGeoEl* face_el, std::vector<int>& lineloop, const int shift){
-        if(face_el->Dimension() != 2) DebugStop();
-        int nsides = face_el->NSides();
-        TPZManVector<int,4> lineloop_debug(4,-999999999);
-        lineloop.resize(face_el->NSides(1));
-        for(int iside = face_el->NSides(0); iside<nsides-1; iside++){
-            TPZGeoElSide gelside(face_el,iside);
-            TPZGeoElSide neig;
-            for(neig = gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
-                if(neig.Element()->Dimension()!=1) continue;
-                int orientation = OrientationMatch(gelside,neig)?1:-1;
-                lineloop[iside-face_el->NSides(1)] = orientation*(neig.Element()->Index()+shift);
-                lineloop_debug[iside-face_el->NSides(1)] = orientation*neig.Element()->Index();
-                break;
-            }
-        }
-        return;
-    }
+
 
     /**
      * @brief Get a vector from node 0 to node 1 of a 1D side
@@ -269,6 +255,368 @@ namespace DFN{
         gelside.Element()->Node(node1).GetCoordinates(coord1);
         
         vector = coord1 - coord0;
+    }
+
+
+
+
+
+
+    void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*>& children){
+        TPZGeoMesh refmesh;
+        TPZGeoMesh* gmesh;
+        int nfathernodes = father->NCornerNodes();
+        TPZManVector<int64_t,4> nodeindices(nfathernodes,-1);
+        TPZManVector<REAL,3> coord(3,0.);
+        std::map<int64_t,int64_t> orig_to_copy;
+        // std::map<int64_t,int64_t> copy_to_orig;
+        // Copy nodes
+		for(int i=0; i<nfathernodes; i++){
+            nodeindices[i] = refmesh.NodeVec().AllocateNewElement();
+			father->Node(i).GetCoordinates(coord);
+			refmesh.NodeVec()[nodeindices[i]].Initialize(coord,refmesh);
+
+            // map
+            orig_to_copy[father->NodeIndex(i)] = nodeindices[i];
+            // copy_to_orig[i] = father->NodeIndex(i);
+		}
+		// Copy father
+		MElementType etype = father->Type();
+		int64_t index = -1;
+		refmesh.CreateGeoElement(etype,nodeindices,1,index);
+        
+        // Copy children
+        int nchildren = children.size();
+        for(int ichild=0; ichild < nchildren; ichild++){
+            TPZGeoEl* child = children[ichild];
+            int nchildnodes = child->NCornerNodes();
+            nodeindices.resize(nchildnodes);
+            // gather children nodes that may be other than those of their father
+            for(int inode=0; inode < nchildnodes; inode++){
+                auto itr = orig_to_copy.find(child->NodeIndex(inode));
+                int64_t copyindex;
+                if(itr == orig_to_copy.end()){
+                    copyindex = refmesh.NodeVec().AllocateNewElement();
+                    orig_to_copy.insert({child->NodeIndex(inode),copyindex});
+                    child->Node(inode).GetCoordinates(coord);
+			        refmesh.NodeVec()[copyindex].Initialize(coord,refmesh);
+                }else{
+                    copyindex = itr->second;
+                }
+                
+                nodeindices[inode] = copyindex;
+            }
+            etype = child->Type();
+            index = -1;
+            refmesh.CreateGeoElement(etype,nodeindices,1,index);
+        }
+        // std::stringstream stream;
+        // refmesh.Print(stream);
+        // LOG4CXX_DEBUG(logger,stream.str());
+
+        // create refpattern from refmesh
+        TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(refmesh);
+	    father->SetRefPattern(refpat);
+    }
+
+    void ElementOrientation(TPZGeoEl* gel, TPZManVector<REAL,3>& orientvec){
+        // @todo This could be done using gram-schimidt orthogonalization
+        // gel->Jacobian()
+        switch(gel->Dimension()){
+            case  1:{
+                TPZGeoElSide gelside(gel,2);
+                DFN::GetSideVector(gelside,orientvec); break;
+            }
+            case  2:{
+                TPZGeoElSide edgeside1(gel,gel->FirstSide(1));
+                TPZGeoElSide edgeside2(gel,gel->FirstSide(1)+1);
+                TPZManVector<REAL,3> edgevec1(3,0.);
+                TPZManVector<REAL,3> edgevec2(3,0.);
+                DFN::GetSideVector(edgeside1,edgevec1);
+                DFN::GetSideVector(edgeside2,edgevec2);
+                orientvec = CrossProduct<REAL>(edgevec1,edgevec2);
+                REAL norm = Norm<REAL>(orientvec);
+                orientvec[0] /= norm;
+                orientvec[1] /= norm;
+                orientvec[2] /= norm;
+                break;
+            }
+            default: PZError << "\nTried to get orientation vector of element of dimension ="<<gel->Dimension()<<"\n";DebugStop();
+        }
+    }
+
+    /// @todo Rewrite this using the determinant of the matrix of the transformation between parametric space of father-child, so it won't be limited to 2D elements
+    int SubElOrientation(TPZGeoEl* father, int ichild){
+        if(!father->HasSubElement()) DebugStop();
+
+        TPZGeoEl* child = father->SubElement(ichild);
+        int dim = father->Dimension();
+        if(dim != child->Dimension()){PZError<<"\n I don't see how this could be considered consistent\n";DebugStop();}
+        
+        
+        // TPZTransform<REAL> transf = father->GetTransform(child->NSides()-1,ichild);
+        // REAL det = 1.;
+        // TPZFMatrix<REAL> inverse(dim,dim);
+        // transf.Mult().DeterminantInverse(det,inverse);
+        // return DFN::sgn(det);
+
+        TPZGeoElSide fatherside(father,father->NSides()-1);
+        TPZGeoElSide childside(child,child->NSides()-1);
+        TPZManVector<REAL,3> qsi(fatherside.Dimension(),0.);
+        int orientation=0;
+        switch(dim){
+            case  2:{
+                // TPZManVector<REAL,3> father_normal(3,0.);
+                // fatherside.Normal(qsi,father_normal);
+                // TPZManVector<REAL,3> child_normal(3,0.);
+                // childside.Normal(qsi,child_normal);
+                TPZManVector<REAL,3> father_normal(3,0.);
+                TPZManVector<REAL,3> child_normal(3,0.);
+                ElementOrientation(father,father_normal);
+                ElementOrientation(child,child_normal);
+                orientation = int(DFN::DotProduct<float>(father_normal,child_normal));
+                break;
+            }
+            default:{PZError<<"\nCurrently implemented for 2D els only\n";DebugStop();}
+        }
+
+        if(orientation != 1 && orientation != -1) DebugStop();
+        return orientation;
+    }
+
+
+
+    int SkeletonOrientation(TPZGeoElSide volside, TPZGeoEl* face){
+        TPZGeoElSide faceside(face,face->NSides()-1);
+        // Get transformation from volume to skeleton face
+        TPZTransform<REAL> transf = volside.NeighbourSideTransform(faceside);
+        if(transf.Mult().Rows() != 2 || transf.Mult().Cols() != 2) {PZError<<"\n[Error] Shouldn't an affine transformation between 2D parametric spaces be 2x2?\n";DebugStop();}
+        // Compute matrix determinant
+        REAL det = 0.;
+        // TPZFMatrix<REAL> test = {{0,1},{-1,-1}};
+        // TPZFMatrix<REAL> inverse;
+        // test.InitializePivot();
+        // test.DeterminantInverse(det,inverse);
+        // transf.Mult().DeterminantInverse(det,inverse); //(@note Can't use this because LUDecomposition sometimes changes the sign of the determinant)
+        det = transf.Mult()(0,0)*transf.Mult()(1,1) - transf.Mult()(0,1)*transf.Mult()(1,0);
+        // positive determinant means skeleton's orientation matches volume's faceside orientation
+        int neig_side_orientation = sgn(det);
+        // get 2D side orientation
+        int sideorientation = (PZOutwardPointingFace(volside)?1:-1);
+        // return their product
+        return sideorientation * neig_side_orientation;
+    }
+
+    void SetEdgesMaterialId(TPZGeoEl* gel, int matid){
+        TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(gel);
+        TPZGeoMesh* gmesh = gel->Mesh();
+        for(int64_t index : edgeindices){
+            gmesh->Element(index)->SetMaterialId(matid);
+        }
+    }
+
+
+
+
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements){
+        // GMsh does not accept zero index entities
+        const int shift = 1;
+
+        // First, if GMsh has created new nodes, these should be inserted in PZGeoMesh
+        // create a map <node,point>
+        std::map<int,int> mapGMshToPZ;
+
+        for(int64_t pznode : oldnodes){
+            std::vector<size_t> node_identifiers;
+            std::vector<double> coord;
+            std::vector<double> parametricCoord;
+            gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord,0,pznode+shift,true);
+            int gmshnode = (int) node_identifiers[0];
+            // insert with hint (since oldnodes is an already sorted set, these nodes will all go in the end)
+            mapGMshToPZ.insert(mapGMshToPZ.end(),{gmshnode,pznode+shift});
+        }
+
+        // add new nodes into PZGeoMesh
+        {
+            // get all nodes from GMsh
+                std::vector<size_t> node_identifiers;
+                std::vector<double> coord;
+                std::vector<double> parametricCoord;
+                gmsh::model::mesh::getNodes(node_identifiers, coord, parametricCoord);
+            // iterate over node_identifiers
+            int nnodes = node_identifiers.size();
+            for(int i = 0; i < nnodes; i++){
+                int gmshnode = node_identifiers[i];
+                // check if it is contained in the map
+                if(mapGMshToPZ.find(gmshnode) == mapGMshToPZ.end()){
+                    // New node -> add to PZGeoMesh
+                    int pznode = (int) gmesh->NodeVec().AllocateNewElement();
+                    TPZManVector<REAL,3> newnodeX(3);
+                    newnodeX[0] = coord[3*i];
+                    newnodeX[1] = coord[3*i+1];
+                    newnodeX[2] = coord[3*i+2];
+                    gmesh->NodeVec()[pznode].Initialize(newnodeX,*gmesh);
+                    // int pznode = (int) gmesh->NNodes();
+                    // gmesh->NodeVec().resize(pznode+1);
+                    // insert it in map
+                    mapGMshToPZ.insert({gmshnode,pznode+shift});
+                }
+
+            }
+        }
+        
+
+        
+        int64_t nels = gmesh->NElements();
+        std::vector<std::pair<int, int> > dim_to_physical_groups;
+        gmsh::model::getPhysicalGroups(dim_to_physical_groups,dimension);
+        
+        /// inserting the elements
+        for (auto group: dim_to_physical_groups) {
+        
+            int dim = group.first;
+            // only want elements of a given dimension
+            if(dim != dimension) continue;
+            int physical_identifier = group.second;
+        
+            std::vector< int > entities;
+            gmsh::model::getEntitiesForPhysicalGroup(dim, physical_identifier, entities);
+
+            for (auto tag: entities) {
+            // std::cout<<"______________________test - tag = "<<tag;
+            
+                std::vector<int> group_element_types;
+                std::vector<std::vector<std::size_t> > group_element_identifiers;
+                std::vector<std::vector<std::size_t> > group_node_identifiers;
+                gmsh::model::mesh::getElements(group_element_types,group_element_identifiers,group_node_identifiers, dim, tag);
+                int n_types = group_element_types.size();
+                for (int itype = 0; itype < n_types; itype++){
+                    int el_type = group_element_types[itype];
+                    int n_nodes = TPZGeoMeshBuilder::GetNumberofNodes(el_type);
+                    std::vector<int> node_identifiers(n_nodes);
+                    int n_elements = group_element_identifiers[itype].size();
+                    for (int iel = 0; iel < n_elements; iel++) {
+                        // int el_identifier = group_element_identifiers[itype][iel]+nels;
+                        int el_identifier = gmesh->CreateUniqueElementId()+gmshshift;
+                        // std::cout<<"\n"<<el_identifier<<"\n";
+
+                        for (int inode = 0; inode < n_nodes; inode++) {
+                            // Use mapGMshToPZ to translate from GMsh node index to PZ nodeindex
+                            node_identifiers[inode] = mapGMshToPZ[group_node_identifiers[itype][iel*n_nodes+inode]];
+                        }
+                        TPZGeoEl* newel = TPZGeoMeshBuilder::InsertElement(gmesh, physical_identifier, el_type, el_identifier, node_identifiers);
+                        newelements.push_back(newel->Index());
+                        #ifdef PZDEBUG
+                            if(newel->Dimension() != dimension){ 
+                                PZError << "\nGmsh tried to group a " << newel->Dimension() << "D element as " << dimension << "D.\n";
+                                gmesh->Element(el_identifier)->Print(PZError);
+                                DebugStop();
+                            }
+                        #endif // PZDEBUG
+                        // int64_t ntest = gmesh->NElements();
+                        // std::cout<<"nelements = "<<ntest<<"\n";
+                    }
+                }
+            }
+        }
+        gmesh->BuildConnectivity();
+    }
+
+    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
+        TPZGeoMesh* gmesh = gelside1.Element()->Mesh();
+        std::set<int64_t> neighbours1;
+        std::set<int64_t> neighbours2;
+        std::set<int64_t> neighbours3;
+
+        TPZGeoElSide neig;
+        for(neig = gelside1.Neighbour(); neig != gelside1; neig = neig.Neighbour()){
+            TPZGeoEl* neig_el = neig.Element();
+            if(dim > -1 && neig_el->Dimension() != dim) continue;
+            neighbours1.insert(neig_el->Index());
+        }
+        if(neighbours1.size() < 1) return nullptr;
+        for(neig = gelside2.Neighbour(); neig != gelside2; neig = neig.Neighbour()){
+            TPZGeoEl* neig_el = neig.Element();
+            if(dim > -1 && neig_el->Dimension() != dim) continue;
+            neighbours2.insert(neig_el->Index());
+        }
+        if(neighbours2.size() < 1) return nullptr;
+        for(neig = gelside3.Neighbour(); neig != gelside3; neig = neig.Neighbour()){
+            TPZGeoEl* neig_el = neig.Element();
+            if(dim > -1 && neig_el->Dimension() != dim) continue;
+            neighbours3.insert(neig_el->Index());
+        }
+        if(neighbours3.size() < 1) return nullptr;
+
+        std::set<int64_t> common = DFN::set_intersection(neighbours1,neighbours3);
+        /** @warning: you may feel tempted to use:
+         *  if(common.size() == 1) return gmesh->Element(*(common.begin()));
+         *  but a common neighbour of 2 faces is not a condition for an existing face. It has to be neighbour of 3.
+        */
+        if(common.size() < 1) return nullptr;
+        common = DFN::set_intersection(common,neighbours2);
+
+        if(common.size() > 1) DebugStop(); // I don't think this could possibly happen, but if it ever does, I've left a weaker imposition rather than DebugStop() commented below
+        // {
+            // // in this case, what you probably want is 
+            // for(auto& iel : common){
+            //     if(gmesh->Element(*itr)->HasSubElement()) continue;
+            //     return gmesh->Element(*itr);
+            // }
+            // DebugStop();
+            // // or maybe just bet on the highest index candidate
+            // return gmesh->Element(*(common.rbegin()));
+        // }
+        if(common.size() < 1) return nullptr;
+
+        return gmesh->Element(*(common.begin()));
+
+    }
+
+    TPZGeoEl* GetLoopedFace(const std::set<int64_t>& edges, TPZGeoMesh* gmesh){
+        // Consistency checks
+        int nedges = edges.size();
+        if(nedges < 3 || nedges > 4) DebugStop();
+
+        std::array<TPZGeoElSide,4> gelside;
+        int i = 0;
+        for(const int64_t index : edges){
+            TPZGeoEl* gel = gmesh->Element(index);
+            if(gel->Dimension() != 1) DebugStop();
+            gelside[i] = {gel,2};
+            i++;
+        }
+
+        TPZGeoEl* CandidateFace = FindCommonNeighbour(gelside[0],gelside[1],gelside[2],2);
+
+        if(!CandidateFace) return nullptr;
+        if(nedges == 3) return CandidateFace;
+        // return CandidateFace;
+
+        TPZGeoElSide neig = gelside[3].Neighbour();
+        for(/*void*/; neig != gelside[3]; ++neig){
+            if(neig.Element()->Index() == CandidateFace->Index())
+                {return CandidateFace;}
+        }
+
+        return nullptr;
+    }
+
+    std::set<int64_t> YoungestChildren(const std::set<int64_t>& parents, TPZGeoMesh* gmesh){
+        TPZStack<TPZGeoEl*> childrenstack;
+        for(const auto index : parents){
+            TPZGeoEl* parentgel = gmesh->Element(index);
+            if(parentgel->HasSubElement()){
+                parentgel->YoungestChildren(childrenstack);
+            }else{
+                childrenstack.push_back(parentgel);
+            }
+        }
+        std::set<int64_t> childrenset;
+        for(const TPZGeoEl* child : childrenstack){
+            childrenset.insert(child->Index());
+        }
+        return childrenset; // move semantics makes this O(1)
     }
 
 } /* namespace DFN*/

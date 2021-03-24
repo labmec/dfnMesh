@@ -10,6 +10,12 @@
 #include <math.h>
 #include "DFNMesh.h"
 
+
+#ifdef LOG4CXX
+    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif
+
+
 //Constructor
 DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) 
 :   fPointsIndex(CornerPoints.Cols(),-1), 
@@ -24,6 +30,7 @@ DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh)
 		DebugStop();
 	}
 	ComputeArea();
+    // initialize the fNodesAbove data structure
     SortNodes(gmesh);
 }
 
@@ -50,11 +57,11 @@ void DFNPolygon::ComputeAxis()
     int rows = fCornerPoints.Rows();
     
     if(rows != 3){    //Should be 3 (x y z)
-        std::cout<<"Check the input data";
+        std::cout<<"Check the input data. Poorly defined fracture\n";
         DebugStop();
     }
     if(cols < 3){
-        std::cout<<"Check the input data (number of corner points)";
+        std::cout<<"Check the input data (number of corner points for a fracture seems to be less than 3)\n";
         DebugStop();
     }
 
@@ -124,6 +131,15 @@ const Matrix& DFNPolygon::GetCornersX() const{
     return fCornerPoints;
 }
 
+void DFNPolygon::SetCornersX(const Matrix &CornerPoints){
+    if(fCornerPoints.Cols() != 0) LOG_DFN_WARN("Corners of a DFNPolygon were reset. You need to re-sort nodes above and below.\n");
+    fCornerPoints.Resize(CornerPoints.Rows(),CornerPoints.Cols());
+    fCornerPoints = CornerPoints;
+    ComputeAxis();
+    Check_Data_Consistency();
+    ComputeArea();
+    fNodesAbove.clear();
+}
 
 
 /**
@@ -146,7 +162,7 @@ bool DFNPolygon::Compute_PointAbove(const TPZVec<REAL> &point) const{
             return false;   //If the point is below the polygon
         }
 }
-bool DFNPolygon::IsCutByPlane(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
+bool DFNPolygon::IsCutByPlane(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection) const{
     if(gel->Dimension() != 1) {PZError<<"\n\n This ain't no rib \n\n"; DebugStop();}
     // Get rib's vertices
     TPZManVector<int64_t,2> inode(2,0);
@@ -167,12 +183,12 @@ bool DFNPolygon::IsCutByPlane(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection)
     }
 }
 
-bool DFNPolygon::IsCutByPolygon(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection){
+bool DFNPolygon::IsCutByPolygon(TPZGeoEl *gel, TPZManVector<REAL,3> &intersection) const{
     return IsCutByPlane(gel,intersection) && IsPointInPolygon(intersection);
 }
 
 
-bool DFNPolygon::Check_pair(const TPZVec<REAL>& p1, const TPZVec<REAL>& p2, TPZManVector<REAL,3> &intersection){
+bool DFNPolygon::Check_pair(const TPZVec<REAL>& p1, const TPZVec<REAL>& p2, TPZManVector<REAL,3> &intersection) const{
     //check for infinite plane
     if(Compute_PointAbove(p1) != Compute_PointAbove(p2)){
         //then calculate intersection point and check if it's within polygon boundaries
@@ -189,16 +205,16 @@ bool DFNPolygon::Check_pair(const TPZVec<REAL>& p1, const TPZVec<REAL>& p2, TPZM
  * @param Point below the polygon (vector)
  * @return Intersecting point
  */
-TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2)
+TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1, const TPZVec<REAL> &p2) const
 {     
     TPZManVector<double,3> Pint(3,0.);
 
-    double orthdist_p2 = ((fCornerPoints(0,1)-p2[0])*(fAxis(0,2))) 
-                        +((fCornerPoints(1,1)-p2[1])*(fAxis(1,2)))
-                        +((fCornerPoints(2,1)-p2[2])*(fAxis(2,2)));
-    double rib_normal_component = (p1[0]-p2[0])*fAxis(0,2) 
-                                 +(p1[1]-p2[1])*fAxis(1,2) 
-                                 +(p1[2]-p2[2])*fAxis(2,2);
+    double orthdist_p2 = ((fCornerPoints.g(0,1)-p2[0])*(fAxis.g(0,2))) 
+                        +((fCornerPoints.g(1,1)-p2[1])*(fAxis.g(1,2)))
+                        +((fCornerPoints.g(2,1)-p2[2])*(fAxis.g(2,2)));
+    double rib_normal_component = (p1[0]-p2[0])*fAxis.g(0,2) 
+                                 +(p1[1]-p2[1])*fAxis.g(1,2) 
+                                 +(p1[2]-p2[2])*fAxis.g(2,2);
     double alpha = orthdist_p2/rib_normal_component;
     for (int p=0; p<3; p++){
         Pint[p] = p2[p] + alpha*(p1[p]-p2[p]);
@@ -221,20 +237,20 @@ TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1
  * @return False if the point is out of fracture polygon
  */
 
-bool DFNPolygon::IsPointInPolygon(TPZVec<REAL> &point) 
+bool DFNPolygon::IsPointInPolygon(const TPZVec<REAL> &point) const
 {
     int ncorners = fCornerPoints.Cols();
     REAL area = 0;
     for(int i = 0; i<ncorners; i++){
         //Define vectors from the point to a each one of a pair of corners
         TPZManVector<REAL, 3> ax1(3);
-            ax1[0] = fCornerPoints(0,i) - point[0];
-            ax1[1] = fCornerPoints(1,i) - point[1];
-            ax1[2] = fCornerPoints(2,i) - point[2];
+            ax1[0] = fCornerPoints.g(0,i) - point[0];
+            ax1[1] = fCornerPoints.g(1,i) - point[1];
+            ax1[2] = fCornerPoints.g(2,i) - point[2];
         TPZManVector<REAL, 3> ax2(3);
-            ax2[0] = fCornerPoints(0,(i+1)%ncorners) - point[0];
-            ax2[1] = fCornerPoints(1,(i+1)%ncorners) - point[1];
-            ax2[2] = fCornerPoints(2,(i+1)%ncorners) - point[2];
+            ax2[0] = fCornerPoints.g(0,(i+1)%ncorners) - point[0];
+            ax2[1] = fCornerPoints.g(1,(i+1)%ncorners) - point[1];
+            ax2[2] = fCornerPoints.g(2,(i+1)%ncorners) - point[2];
         //Compute area of trangle outlined by these vectors
         REAL temp = pow(ax1[1]*ax2[2] - ax1[2]*ax2[1],2);
             temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
@@ -355,14 +371,14 @@ REAL DFNPolygon::ComputeArea(){
 
 
 
-TPZManVector<REAL, 3> DFNPolygon::GetProjectedX(TPZManVector<REAL, 3> &x){
+TPZManVector<REAL, 3> DFNPolygon::GetProjectedX(const TPZManVector<REAL, 3> &x)const{
     TPZManVector<REAL, 3> projection(3,0);
-    REAL alpha = fAxis(0,2)*(x[0]-fCornerPoints(0,1))
-                +fAxis(1,2)*(x[1]-fCornerPoints(1,1))
-                +fAxis(2,2)*(x[2]-fCornerPoints(2,1));
-    projection[0] = x[0] - alpha*fAxis(0,2);
-    projection[1] = x[1] - alpha*fAxis(1,2);
-    projection[2] = x[2] - alpha*fAxis(2,2);
+    REAL alpha = fAxis.g(0,2)*(x[0]-fCornerPoints.g(0,1))
+                +fAxis.g(1,2)*(x[1]-fCornerPoints.g(1,1))
+                +fAxis.g(2,2)*(x[2]-fCornerPoints.g(2,1));
+    projection[0] = x[0] - alpha*fAxis.g(0,2);
+    projection[1] = x[1] - alpha*fAxis.g(1,2);
+    projection[2] = x[2] - alpha*fAxis.g(2,2);
     return projection;
 }
 
@@ -406,7 +422,7 @@ void DFNPolygon::ComputeCentroid(TPZVec<REAL>& centroid){
     centroid[2] /= nnodes;
 }
 /**
- * @brief Inserts a geometric mesh to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
+ * @brief Inserts a few geometrical elements to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
 */
 TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid){
     int nnodes = this->NCornerNodes();
@@ -461,15 +477,24 @@ void DFNPolygon::Print(std::ostream & out) const
 
 
 void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
-    fNodesAbove.Resize(gmesh->NNodes(),false);
+#ifdef  LOG4CXX
+    LOGPZ_INFO(logger,"[Start][Sorting nodes to either side of the plane]");
+#endif // LOG4CXX
+    std::cout << " -Sorting nodes to either side of the plane\r" << std::flush;
+    int64_t i = fNodesAbove.size();
+    const int64_t nnodes = gmesh->NNodes();
+    fNodesAbove.Resize(nnodes,false);
     TPZManVector<REAL,3> coord(3,0.0);
-    int nnodes = gmesh->NNodes();
-    for(int i=0; i<nnodes; i++){
+    for(/*void*/; i<nnodes; i++){
         TPZGeoNode& node = gmesh->NodeVec()[i];
         if(node.Id() < 0) continue;
         node.GetCoordinates(coord);
         fNodesAbove[i] = Compute_PointAbove(coord);
     }
+    std::cout << "                                           \r" << std::flush;
+#ifdef  LOG4CXX
+    LOGPZ_INFO(logger,"[End][Sorting nodes to either side of the plane]");
+#endif // LOG4CXX
 }
 
 void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){
@@ -483,4 +508,33 @@ void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){
         int64_t index;
         gmesh->CreateGeoElement(EPoint,nodeindices,fNodesAbove[i],index);
     }
+}
+
+
+
+
+
+REAL DFNPolygon::EdgeLength(int edgeindex) const{
+    // consistency checks
+    // if(edgeindex < 0) DebugStop();
+    // if(edgeindex >= NEdges()) DebugStop();
+    TPZManVector<REAL,3> dif(3,0.);
+    GetEdgeVector(edgeindex,dif);
+    return DFN::Norm<REAL>(dif);
+}
+
+
+
+void DFNPolygon::GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector) const{
+    // consistency checks
+    if(edgeindex < 0) DebugStop();
+    if(edgeindex >= NEdges()) DebugStop();
+
+    int node0 = edgeindex;
+    int node1 = (edgeindex+1)%NEdges();
+
+    edgevector[0] = fCornerPoints.g(0,node0) - fCornerPoints.g(0,node1);
+    edgevector[1] = fCornerPoints.g(1,node0) - fCornerPoints.g(1,node1);
+    edgevector[2] = fCornerPoints.g(2,node0) - fCornerPoints.g(2,node1);
+
 }

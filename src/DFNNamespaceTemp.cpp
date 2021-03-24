@@ -9,6 +9,7 @@
 
 
 #include "pzgmesh.h"
+#include "DFNNamespace.h"
 
 
 
@@ -173,7 +174,7 @@ namespace DFN{
         
         TPZManVector<REAL,3> vec0 = p[0] - p[1];
         TPZManVector<REAL,3> vec2 = p[2] - p[1];
-        TPZManVector<REAL,3> vecj = {0., 0., 0.};
+        TPZManVector<REAL,3> vecj {0., 0., 0.};
 
         TPZManVector<REAL,3> normal = CrossProduct<REAL>(vec0,vec2);
         REAL norm = DFN::Norm<REAL>(normal);
@@ -186,7 +187,7 @@ namespace DFN{
         normal[1] /= norm;
         normal[2] /= norm;
 
-        TPZManVector<REAL,3> pj = {0., 0., 0.};
+        TPZManVector<REAL,3> pj {0., 0., 0.};
         for(int64_t inode : nodeindices){
             if(j<3) {j++;continue;}
             gmesh->NodeVec()[inode].GetCoordinates(pj);
@@ -211,8 +212,8 @@ namespace DFN{
     template<typename Ttype>
     std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2){
         std::set<Ttype> intersection;
-        std::set<int64_t>& smaller_set =  set1.size() > set2.size() ? set2 : set1;
-        std::set<int64_t>& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
+        std::set<Ttype>& smaller_set =  set1.size() > set2.size() ? set2 : set1;
+        std::set<Ttype>& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
 
         if(smaller_set.size() < 1) return intersection; //empty set
 
@@ -224,6 +225,31 @@ namespace DFN{
         }
         return intersection;
     }
+
+
+
+    /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
+    /// @param shift: indices will get shifted by a constant 
+    template<class Tcontainer>
+    void GetLineLoop(TPZGeoEl* face_el, Tcontainer& lineloop, const int shift){
+        if(face_el->Dimension() != 2) DebugStop();
+        int nsides = face_el->NSides();
+        TPZManVector<int,4> lineloop_debug(4,gDFN_NoIndex);
+        lineloop.resize(face_el->NSides(1));
+        for(int iside = face_el->NSides(0); iside<nsides-1; iside++){
+            TPZGeoElSide gelside(face_el,iside);
+            TPZGeoElSide neig;
+            for(neig = gelside.Neighbour(); neig != gelside; neig = neig.Neighbour()){
+                if(neig.Element()->Dimension()!=1) continue;
+                int orientation = OrientationMatch(gelside,neig)?1:-1;
+                lineloop[iside-face_el->NSides(1)] = orientation*(neig.Element()->Index()+shift);
+                lineloop_debug[iside-face_el->NSides(1)] = orientation*neig.Element()->Index();
+                break;
+            }
+        }
+        return;
+    }
+
 } /*namespace DFN*/
 
 

@@ -8,9 +8,9 @@ import math
 # ../dfnMesh/<vtkfile.vtk>
 vtkfile = "vtkmesh"
 # where to save vtk files?
-destination = "documentation/animations/2020-06-27/"
+destination = "documentation/animations/anim3/"
 # ../examples/<example>
-example = destination+"sweep-cubes.txt"
+example = destination+"anim3.txt"
 # ../examples/<msh>
 msh = "no-msh-file"
 
@@ -19,17 +19,18 @@ preamble = (
 4.0 4.0 4.0
 
 Mesh
-EQuadrilateral
+EHexahedral
 2 2 2
 
-NumberOfFractures 1
-
-Fracture 0 4"""
-)
-x = "\n-1.00  5.00  5.00 -1.00"
-z = "\n-1.00 -1.00  5.00  5.00"
+""")
 
 toldist = 0.8
+preamble += "TolDist  "+str(toldist)+"\n"
+
+
+
+x = "\n-1.00  5.00  5.00 -1.00"
+z = "\n-1.00 -1.00  5.00  5.00"
 step = 0.07
 # steps = 0
 y0 = 1.85
@@ -42,19 +43,19 @@ for i in range(steps):
     y0 += step
     f = open(example,"w+")
     f.write(preamble)
+    f.write("\nFracture 0")
+    f.write("\nLimit Etruncated")
     f.write(x)
-    if y0 < 0 :
-        y = ("\n%.2f %.2f %.2f %.2f" % (y0,y0,y0,y0))
-    else:
-        y = ("\n %.2f  %.2f  %.2f  %.2f" % (y0,y0,y0,y0))
+    y = ("\n% .2f % .2f % .2f % .2f" % (y0,y0,y0,y0))
     f.write(y)
     f.write(z)
     f.close()
     # run dfnMesh
-    print(y0)
     dfnMesh = ["build/src/dfnTest"
               ,example
+              ,"-m"
               ,msh
+              ,"-td"
               ,str(toldist)]
     subprocess.call(dfnMesh)
     # @todo exception handler to stop loop could go in here

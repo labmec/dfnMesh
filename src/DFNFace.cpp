@@ -14,15 +14,31 @@
 
 
 //Constructor
-DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
+DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec) :
 	fGeoEl(gel),
 	fFracture(fracture),
 	fCoord(0)
 {
 	int nsides = gel->NSides();
 	fStatus.Resize(nsides,0);
-	int nedges = gel->NCornerNodes();
-	fRibs.Resize(nedges,nullptr);
+//	int nedges = gel->NCornerNodes();
+//	fRibs.Resize(nedges,nullptr);
+    SetRibs(ribvec);
+	UpdateStatusVec();
+	// UpdateRefMesh();
+}
+
+//Constructor
+DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
+    fGeoEl(gel),
+    fFracture(fracture),
+    fCoord(0)
+{
+	// DebugStop();
+    int nsides = gel->NSides();
+    fStatus.Resize(nsides,0);
+    int nedges = gel->NCornerNodes();
+    fRibs.Resize(nedges,nullptr);
 }
 
 /// Copy constructor
@@ -44,7 +60,7 @@ DFNFace &DFNFace::operator=(const DFNFace &copy){
 
 
 
-DFNRib* DFNFace::Rib(int i){return fRibs[i];}
+DFNRib* DFNFace::Rib(int i) const {return fRibs[i];}
 
 
 
@@ -69,9 +85,42 @@ bool DFNFace::IsOnBoundary(){
 	return n_intersections == 1;
 }
 
+bool DFNFace::NeedsRefinement() const{
+	int nsides = fGeoEl->NSides();
+	if(fStatus[nsides-1]) return true;
+	int nnodes = fGeoEl->NCornerNodes();
+	int nedges = nnodes;
+	int cutedges = 0;
+	int cutnodes = 0;
+	bool consecutive_nodes = false;
+	// Basically return False if only one node or only two consecutive nodes have been intersected
+	for(int i=0; i<nedges; i++){
+		// Count number of nodes toward the intersection was snapped
+		cutnodes += fStatus[i];
+		// Count number of non-snapped intersections
+		cutedges += fStatus[i+nnodes];
+		// Check if snaps were made down to 2 consecutive nodes
+		if(fStatus[i]&&fStatus[(i+1)%nnodes]){
+			// check anterior and posterior edges for intersection
+			consecutive_nodes = true;
+			// consecutive_nodes = (fStatus[i-1+nnodes]==0)&&(fStatus[(i+1)%nnodes+nnodes]==0);
+			// //                             anterior edge                   posterior edge
+		}
+	}
+	if(cutnodes > 2){ consecutive_nodes = false; DebugStop();}
 
+	if(consecutive_nodes) return false;
+	if(cutnodes == 1 && cutedges == 0) return false;
+	return true;
+}
 
-
+int DFNFace::CheckAssimilatedSide() const{
+	int nnodes = fGeoEl->NSides(0);
+	for(int i=0; i<nnodes; i++){
+		if(fStatus[i] && fStatus[ (i+1)%nnodes ]) return i + nnodes;
+	}
+	return -1;
+}
 
 void DFNFace::UpdateRefMesh(){
 	if(!this->NeedsRefinement()) return;
@@ -80,20 +129,17 @@ void DFNFace::UpdateRefMesh(){
 	FillChildrenAndNewNodes(child,newnode);
     
 #ifdef PZDEBUG
-    {
-        for(int in=0; in<newnode.size(); in++)
-        {
-            if(newnode[in].size() != 3)
-            {
-                DebugStop();
-            }
-        }
-    }
+	for(int in=0; in<newnode.size(); in++){
+		if(newnode[in].size() != 3){
+			DebugStop();
+		}
+	}
 #endif
     
     
 	int ncornersfather = fGeoEl->NCornerNodes();
 	int nchildren = child.size();
+	int matid = fGeoEl->MaterialId();
 	TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
 	
@@ -121,7 +167,7 @@ void DFNFace::UpdateRefMesh(){
 		TPZManVector<int64_t,4> cornerindices(ncornersfather);
 		for(int i = 0; i<ncornersfather; i++) cornerindices[i] = i;
 		int64_t index = 0;
-		fRefMesh.CreateGeoElement(elemtype, cornerindices, DFNMaterial::Erefined, index);
+		fRefMesh.CreateGeoElement(elemtype, cornerindices, matid, index);
 	}
 	// insert children
 	for (int i = 0; i < nchildren; i++)
@@ -136,7 +182,7 @@ void DFNFace::UpdateRefMesh(){
 		// int64_t index = i;
 		TPZManVector<int64_t,4> refchild(ncorners);
 		for(int k = 0; k<ncorners; k++) refchild[k] = child[i][k];
-		fRefMesh.CreateGeoElement(elemtype, refchild, DFNMaterial::Erefined, index);
+		fRefMesh.CreateGeoElement(elemtype, refchild, matid, index);
 	}
 	fRefMesh.BuildConnectivity(); 
 }
@@ -146,6 +192,8 @@ void DFNFace::FillChildrenAndNewNodes(
 	TPZManVector<TPZManVector<REAL,3>> &newnode)
 {
 	if(!this->NeedsRefinement()) return;
+    // this method will determine how a face needs to be refined
+    // most complex operation of fracture insertion!!
 	int splitcase = GetSplitPattern(fStatus);
 	int nodeA = fGeoEl->NCornerNodes();
 	int nodeB = fGeoEl->NCornerNodes()+1;
@@ -280,6 +328,7 @@ void DFNFace::FillChildrenAndNewNodes(
 		// algorithm for case 7 == case 4
 		case 8:{ // A quadrilateral with a single mid-face intersection node 
 			DebugStop();
+			/// @deprecated
 			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
 			// In-plane itersection node
 			// child.resize(4);
@@ -293,7 +342,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			// }
 			break;}
 		case 9:{ // A quadrilateral with 2 mid-face intersection nodes
-			// @ToDo
+			/// @deprecated
 			DebugStop();
 			break;}
 		case 10:{// A triangle with 2 adjancent refined edges
@@ -399,7 +448,7 @@ void DFNFace::FillChildrenAndNewNodes(
 /// Check if should be refined and generate the subelements of material id matID
 void DFNFace::Refine(){
 	if(!this->NeedsRefinement()) return;
-	if(fGeoEl->MaterialId()!=DFNMaterial::Efracture) fGeoEl->SetMaterialId(DFNMaterial::Erefined);
+	// if(fGeoEl->MaterialId()!=DFNMaterial::Efracture) fGeoEl->SetMaterialId(DFNMaterial::Erefined);
 	// define refPattern
 	TPZAutoPointer<TPZRefPattern> refpat = new TPZRefPattern(fRefMesh);
 	fGeoEl->SetRefPattern(refpat);
@@ -407,8 +456,13 @@ void DFNFace::Refine(){
 	// refine
 	fGeoEl->Divide(children);
 
-	// // let children inherit polyhedral indices
-	// InheritPolyhedra();
+	// let children inherit polyhedral indices
+	/** @note I thought this would be done more efficiently if we updated all polyhedra at the same moment, so I wrote the method DFNMesh::InheritPolyhedra() (no parameters). 
+	I'm trying to avoid excessive dynamic memmory allocation in the vector DFNMesh::fPolyh_per_face, which would be increased every time a face gets refined 
+	and its subelements inherit the polyhedral index. 
+	This could also be approached with a chunk vector, but I've also tried and failed to employ PZChunkVector in these classes. Maybe in the future.*/
+	// DFNMesh* dfn = fFracture->dfnMesh();
+	// dfn->InheritPolyhedra(fGeoEl);
 
 	// update internal node index
 	int splitcase = GetSplitPattern(fStatus);
@@ -532,12 +586,12 @@ bool operator!=(TPZManVector<T,NumExtAlloc1>& v1,TPZManVector<T,NumExtAlloc2>& v
 	}
 	return false;
 }
-// fill vector with zeroes
-template< class T, int NumExtAlloc >
-void Zero(TPZManVector<T,NumExtAlloc> &vec){
-	int64_t size = vec.size();
-	for(int i=0; i<size; i++){vec[i]=0;}
-}
+// // fill vector with zeroes
+// template< class T, int NumExtAlloc >
+// void Zero(TPZManVector<T,NumExtAlloc> &vec){
+// 	int64_t size = vec.size();
+// 	for(int i=0; i<size; i++){vec[i]=0;}
+// }
 
 
 bool DFNFace::UpdateStatusVec(){
@@ -550,18 +604,25 @@ bool DFNFace::UpdateStatusVec(){
 	TPZManVector<int> old_fStatus = fStatus;
     fStatus.Fill(0);
 
-	int orientation = 0;
-	// loop through ribs and match their intersection into DFNFace::fStatus
+	// loop through ribs and match their intersection side index into DFNFace::fStatus
 	for(int i=0; i<nribs; i++){
-		rib = fRibs[i];
+		int irib = i;
+		rib = fRibs[irib];
 		if(!rib) continue;
-		orientation = (rib->GeoEl()->NodeIndex(0) == fGeoEl->NodeIndex(i) ? 0 : 1);
-		// if(rib->Status() == 2){fStatus[i+nnodes] = 1;}
-		// else{fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1;}
-		switch(rib->Status()){
-			case 2: fStatus[i+nnodes] = 1; break;
-			case 1: 
-			case 0: fStatus[(i+(orientation+rib->Status())%2)%nnodes] = 1; break;
+		switch(rib->IntersectionSide()){													// Get index of side through which fracture passes (before or after snap)
+			// If through side 2, simply mark that side in the status vector
+			case 2: fStatus[i+nnodes] = 1; break;											
+			// If it was snapped to a node, use rib orientation to permute accordingly
+			case 1:																			
+			case 0:{ /* fStatus[(i+(!orientation+rib->IntersectionSide())%2)%nnodes] = 1; break; */
+					// Check if orientation of rib matches orientation of the faceside it occupies. If node0 of the i-th rib matches the i-th node of the face, then their orientation match.
+					int orientation = rib->GeoEl()->NodeIndex(0) == fGeoEl->NodeIndex(i);
+					int permuted_rib_node = (rib->IntersectionSide() + !orientation) % 2;	// Note the ! (not operator) that swaps orientation before sum
+					int face_node_index = (permuted_rib_node + irib) % nnodes;				// This line is basically the opposite of TPZGeoEl::SideNodeLocIndex()
+					int old = (i+(!orientation+rib->IntersectionSide())%2)%nnodes;
+					fStatus[face_node_index] = 1;
+					break;
+			}
 			default: DebugStop();
 		}
 	}
@@ -617,6 +678,7 @@ bool DFNFace::FindInPlanePoint(){
 }
 
 void DFNFace::UpdateMaterial(){
+	DebugStop(); // deprecated
 	if(fGeoEl->MaterialId() == DFNMaterial::Efracture) return;
 
 	bool two_in_a_row = false;
@@ -633,7 +695,7 @@ void DFNFace::UpdateMaterial(){
 	else {fGeoEl->SetMaterialId(DFNMaterial::Erefined);}
 }
 
-int64_t DFNFace::LineInFace(){
+int64_t DFNFace::LineInFace() const{
 	// if(!fGeoEl->HasSubElement()) return -1;
 	int nsides = fGeoEl->NSides();
 	int nintersections=0;
@@ -698,12 +760,14 @@ int64_t DFNFace::LineInFace(){
 	return -1;
 }
 
-
-bool DFNFace::CanBeSnapped(){
+// method returns true is a side has been divided in two
+bool DFNFace::CanBeSnapped() const{
 	const int ncorners = fGeoEl->NCornerNodes();
 	const int nsides = fGeoEl->NSides();
+	// If fStatus indicates an intersection that wasn't snapped, then it could potentially be snapped, so it returns true.
+	// If all intersections were already snapped, there's nothing else to snap and method returns false.
 	for(int iside = ncorners; iside<nsides; iside++){
-		if(fStatus[iside]) break;
+		if(fStatus[iside]) break;			// if this condition evaluates to true, there's an intersection that was not snapped yet.
 		if(iside==nsides-1) return false;
 	}
 	return true;
@@ -711,7 +775,23 @@ bool DFNFace::CanBeSnapped(){
 
 
 
+
+
+bool DFNFace::AllSnapsWentToSameNode() const{
+	const int nsides = fGeoEl->NSides();
+	int sumAll = 0;
+	for(int i=0; i<nsides; i++){
+		sumAll += fStatus[i];
+	}
+	int sumNodes = fStatus[0]+fStatus[1]+fStatus[2]+(fGeoEl->NCornerNodes()==4)*fStatus[3];
+	return (sumNodes==1 && sumAll==1);
+}
+
+
+
+
 bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
+    // Consistency checks
 	if(!this->NeedsRefinement()) {return false;}
 	int nels = fRefMesh.NElements();
 	if(nels < 1) {PZError<<"\n\n"<<__PRETTY_FUNCTION__<<"\nSnap face refinements requires a proper refinement mesh to describe the refinement\n";DebugStop();}
@@ -722,6 +802,7 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 	// If intersections have already been snapped to corners, there's nothing else to snap
 	if(!this->CanBeSnapped()) return false;
 
+    // this stretch of code determines if an element has a bad angle or aspect ratio
 	for(int iel=1; iel <nels; iel++){
 		TPZGeoEl* gel = fRefMesh.Element(iel);
 		// Check if any angle violates the tolerable angle
@@ -742,19 +823,33 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 
 
 bool DFNFace::SnapIntersection_try(REAL tolDist, REAL tolAngle_cos){
-	if(this->NeedsSnap(tolDist, tolAngle_cos)) 
-		return this->SnapIntersection_force();
+    // this method determines if the mesh has elements with bad aspect ratio
+	if(this->NeedsSnap(tolDist, tolAngle_cos))
+    {
+        // @pedro : how are you sure that "all" sides need to be snapped?
+        // can it not be that a single rib needs to be snapped?
+		// @reply: I agree, this was a mistake of mine, I'll rewrite the method.
+        // thanks!!
+		this->SnapIntersection_force();
+        return true;
+    }
 	else
+    {
 		return false;
+    }
 }
 
+// this method will snap the nodes of all ribs
 bool DFNFace::SnapIntersection_force(){
 	int nribs = fGeoEl->NSides(1);
+    int ncorner = fGeoEl->NCornerNodes();
 	for(int irib=0; irib<nribs; irib++){
 		DFNRib* rib = fRibs[irib];
 		if(!rib) continue;
+        // will snap the node to a closest point
 		rib->SnapIntersection_force();
-		UpdateNeighbours(irib+nribs);
+        // adjust the neighbouring faces to acount for the snapped node
+		UpdateNeighbours(irib+ncorner);
 	}
 	UpdateStatusVec();
 	UpdateRefMesh();
@@ -770,6 +865,7 @@ void DFNFace::UpdateNeighbours(int iside){
 		//@todo skeletonMesh material would enter here
 		neig_face = fFracture->Face(neig.Element()->Index());
 		if(!neig_face) continue;
+        // this probably changes the values of the undocumented fStatus vector
 		if(!neig_face->UpdateStatusVec()) continue;
 		neig_face->UpdateRefMesh();
 		REAL tolDist = fFracture->dfnMesh()->TolDist();
@@ -816,10 +912,22 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 		fGeoEl->Node(i).Print(out);
 	}
 
+	SketchStatusVec(out);
+
 	if(print_refmesh){
-		out<<"Start of Refinement Mesh:_________________________________\n\n";
+		// int nels = fGeoEl->Mesh()->NElements();
+		// int w = (int) std::log10(nels)+1;
+		out << "\n[Start][Refinement Mesh][Face Index " 
+			// << std::setw(w) 
+			// << std::right 
+			<< fGeoEl->Index()
+			<< "]\n\n";
 		fRefMesh.Print(out);
-		out<<"\nEnd  of  Refinement Mesh:_________________________________\n\n";
+		out << "\n[End][Refinement Mesh][Face Index " 
+			// << std::setw(w) 
+			// << std::right 
+			<< fGeoEl->Index()
+			<< "]\n\n";
 	}
 	out<<"\n";
 }
@@ -827,7 +935,7 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 
 
 /// @brief Returns the other 1D side with a DFNRib
-int DFNFace::OtherRibSide(int inletside){
+int DFNFace::OtherRibSide(int inletside) const{
 	if(fGeoEl->SideDimension(inletside) != 1) DebugStop();
 	int nnodes = fGeoEl->NSides(0);
 	int inletedge = inletside-nnodes;
@@ -838,21 +946,52 @@ int DFNFace::OtherRibSide(int inletside){
 		if(outedge == inletedge) continue;
 		if(fRibs[outedge]) return outedge + nnodes;
 	}
+	#ifdef PZDEBUG
+	fFracture->dfnMesh()->DumpVTK();
+	#endif // PZDEBUG
 	DebugStop();
 	return -1;
 }
 
-int DFNFace::NIntersectedRibs(){
+int DFNFace::NIntersectedRibs() const{
 	int n=0;
 	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {
 		n += fRibs[i]!=nullptr;
 	}
 	return n;
 }
-int DFNFace::NInboundRibs(){
+int DFNFace::NInboundRibs() const{
 	int n=0;
 	for(int i=0,nribs=fGeoEl->NSides(1); i<nribs; i++) {
 		n += fRibs[i]!=nullptr && !fRibs[i]->IsOffbound();
 	}
 	return n;
+}
+
+
+
+void DFNFace::SketchStatusVec(std::ostream& out) const{
+	std::stringstream sout;
+	sout << "\nStatusVec Sketch:";
+	switch(fGeoEl->Type()){
+		case MElementType::ETriangle:{
+			sout << "\n  " << (fStatus[2]?"x":" ");
+			sout << "\n | \\";
+			sout << "\n" << (fStatus[5]?"x":" ") <<"|  \\" << (fStatus[4]?"x":" ");
+			sout << "\n |___\\";
+			sout << "\n" << (fStatus[0]?"x":" ") << "  " << (fStatus[3]?"x":" ") << "  " << (fStatus[1]?"x":" ");
+			break;
+		}
+		case MElementType::EQuadrilateral:{
+			sout << "\n" << (fStatus[3]?"x":" ") << " __" << (fStatus[6]?"x":"_") << "__ " << (fStatus[2]?"x":" ");
+			sout << "\n |     | ";
+			sout << "\n" << (fStatus[7]?"x":" ") << "|     |" << (fStatus[5]?"x":" ");
+			sout << "\n |_____| ";
+			sout << "\n" << (fStatus[0]?"x":" ") << "   " << (fStatus[4]?"x":" ") << "   " << (fStatus[1]?"x":" ");
+			break;
+		}
+		default: DebugStop();
+	}
+
+	out << sout.str();
 }

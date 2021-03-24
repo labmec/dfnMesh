@@ -13,23 +13,35 @@
 // #include "DFNFracture.h"
 #include "DFNFace.h"
 
+// class DFNFace;
 class DFNMesh;
 // class DFNFracture;
 
 /*! 
- *  @brief      Describes a convex polyhedral volume as a set of oriented faces that enclose the shell around it.
+ *  @brief Describes a convex polyhedral volume as a set of oriented faces that enclose the shell around it. (not to be confused with DFNPolygon)
  */
+// @pedro - what is the difference/relation between a DFNPolyhedron and a DFNVolume?
+// looked at DFNVolume that is deprecated...
 class DFNPolyhedron
 {
     private:
+		// Pointer to the dfn this polyhedron belongs
+		DFNMesh* fDFN = nullptr;
+
 		// A set of oriented faces that form the polyhedron. {index, orientation}
 		std::map<int64_t, int> fShell;
 
 		// Index given to this polyhedron by DFNMesh
 		int fIndex = -1;
 
-		// Pointer to the dfn this polyhedron belongs
-		DFNMesh* fDFN = nullptr;
+		// Index of the coarse element where this polyhedron is contained
+		int fCoarseIndex = -1;
+
+		/** A flag for convexity. Polyhedra can only be non-convex if they have been refined into convex subsets.
+		 * @note We weren't going to need this, but I noticed creating instances of this class for non-convex is the more elegant way to keep a continuous inheritance of fCoarseIndex as these polyhedra get refined. That's the only reason I'm keeping it.
+		 */
+		int fIsConvex = true;
+		
     public:
 		/// Empty constructor
 		DFNPolyhedron(){};
@@ -37,8 +49,7 @@ class DFNPolyhedron
 		~DFNPolyhedron(){};
 
 		// Initialize a polyhedron's datastructure
-		template<int t_NAlloc>
-		void Initialize(DFNMesh* dfn, int id, const TPZStack<std::pair<int64_t,int>,t_NAlloc>& oriented_shell)
+		void Initialize(DFNMesh* dfn, int id, const TPZVec<std::pair<int64_t,int>>& oriented_shell, const int coarseindex, const bool isConvex = true)
 		{
 			fDFN = dfn;
 			fIndex = id;
@@ -46,16 +57,19 @@ class DFNPolyhedron
 			for(auto& orientedface : oriented_shell){
 				fShell.insert(orientedface);
 			}
+			fCoarseIndex = coarseindex;
+			fIsConvex = isConvex;
 		}
 		
 		/// Constructor from a container
-		template<int t_NAlloc>
 		DFNPolyhedron(
 					DFNMesh* dfn, 
 					int id, 
-					const TPZStack<std::pair<int64_t,int>,t_NAlloc>& oriented_shell)
+					const TPZVec<std::pair<int64_t,int>>& oriented_shell, 
+					const int coarseindex,
+					const bool isConvex = true)
 		{
-			this->Initialize(dfn,id,oriented_shell);
+			this->Initialize(dfn, id, oriented_shell, coarseindex, isConvex);
 		}
 		
 		/// Copy constructor
@@ -65,13 +79,19 @@ class DFNPolyhedron
 		DFNPolyhedron &operator=(const DFNPolyhedron &copy);
 
 		/** @brief Print method for logging */
-		void Print(std::ostream& out = std::cout);
+		void Print(std::ostream& out = std::cout, bool detailed = true) const;
 
 		// Index of polyhedron
-		int Index(){return fIndex;}
+		int Index() const{return fIndex;}
+
+		// Index of coarse element to which this polyhedron is a subset
+		int CoarseIndex() const{return fCoarseIndex;}
 
 		// Get number of faces around this polyhedron
-		int NElements(){return fShell.size();}
+		int NElements() const{return fShell.size();}
+
+		// Check flag of this polyhedron for convexity
+		bool IsConvex() const{return fIsConvex;}
 
 		// Set a new index for this polyhedron
 		void SwapIndex(const int newid);
@@ -85,22 +105,32 @@ class DFNPolyhedron
 		/** @brief Remove faces from this polyhedron*/
 		void RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack);
 
-		/** @brief Checks if this polyhedron was split in 2 smaller polyhedra*/
-		bool IsRefined();
+		/** @brief Checks if this polyhedron was split into smaller polyhedra*/
+		bool IsRefined()const;
 
 		/** @brief Remove father from shell and add its subelements */
 		void SwapForChildren(TPZGeoEl* father);
 
-		/** @brief Fills a vector with the indices of the 1D skeleton elements around the faces of this polyhedron */
-		void GetEdges(TPZVec<TPZGeoEl*>& edgelist);
+		/** @brief Get a set with the indices of the 1D skeleton elements around the faces of this polyhedron */
+		std::set<int64_t> GetEdges() const;
+		/** @brief Get the indices of edges around this volume that are elements of a set. This returns the intersection between DFNPolyhedron::GetEdges and the argument 'SuperSet' */
+		std::set<int64_t> GetEdges_InSet(const std::set<int64_t>& SuperSet) const;
 
 		/** @brief Checks if this polyhedron was intersected by a fracture
 		 * @todo(maybe) - This method could be made more restrictive if we wished to do so. I'll leave it returning true if any face of fShell is intersected, but we could potentially want it to return true only if the intersection would actually lead to the polyhedron being split. This, of course, would cost some extra computations, and I don't really see a need for this more restrictive version yet.
 		*/
-		bool IsIntersected(DFNFracture& fracture);
+		bool IsIntersected(DFNFracture& fracture)const;
 
 		/** @brief Returns true if any of the faces in this polyhedron's shell contains only one Inbound rib*/
-		bool IntersectsFracLimit(DFNFracture& fracture);
+		bool IntersectsFracLimit(DFNFracture& fracture)const;
+
+		/** @brief Call on gmsh to refine itself 
+		 * @details Any quadrilateral in the shell will get refined to at least 2 triangles
+		*/
+		void Refine();
+
+		/// Checks if this Polyhedron is a tetrahedron
+		bool IsTetrahedron() const;
 };
 
 

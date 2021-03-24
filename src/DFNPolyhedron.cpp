@@ -8,6 +8,7 @@ DFNPolyhedron &DFNPolyhedron::operator=(const DFNPolyhedron &copy){
     fShell = copy.fShell;
     fIndex = copy.fIndex;
     fDFN = copy.fDFN;
+    fCoarseIndex = copy.fCoarseIndex;
     return *this;
 }
 
@@ -29,15 +30,18 @@ void DFNPolyhedron::SwapIndex(const int newid){
 
 
 /** @brief Print method for logging */
-void DFNPolyhedron::Print(std::ostream& out){
+void DFNPolyhedron::Print(std::ostream& out, bool detailed) const{
     int nelements = this->fDFN->Mesh()->NElements();
     int width = 2 + int(std::log10(nelements)+1);
     out << "\nPolyh#"<<std::setw(width-1)<<fIndex<<":";
+    out << (IsRefined()?"(R)":"   ");
     for(auto& oriented_face : fShell){
         // out << std::setw(5) << std::showpos << oriented_face << " ";
         out << std::setw(width) << oriented_face;
     }
-    if(IsRefined()) out << "\t [Refined]";
+    if(!detailed) return;
+    out << "\n\tCoarseIndex = " << std::setw(width-1) << fCoarseIndex
+        << "\n\tConvex      = " << std::setw(width-1) << (fIsConvex?"true":"false");
 }
 
 void DFNPolyhedron::ListDFNFaces(DFNFracture* fracture, TPZStack<DFNFace*> facelist){
@@ -59,14 +63,15 @@ void DFNPolyhedron::RemoveFaces(const TPZVec<std::pair<int64_t,int>>& facestack)
 }
 
 /** @brief Checks if this polyhedron was refined*/
-bool DFNPolyhedron::IsRefined(){
-    std::pair<const int64_t,int>& firstface = *(fShell.begin());
+bool DFNPolyhedron::IsRefined()const{
+    const auto& firstface = *(fShell.begin());
     int firstface_polyh = fDFN->GetPolyhedralIndex(firstface);
-    return firstface_polyh != this->fIndex;
+    return firstface_polyh != this->fIndex || firstface_polyh == -1;
 }
 
 /** @brief Remove father from shell and add its subelements */
 void DFNPolyhedron::SwapForChildren(TPZGeoEl* father){
+    /// @todo I don't have time to check now, but I think this function keeps getting called on polyhedra that have stopped being important. So there might be room for optimization fixing this.
     // if no children, return
     int nchildren = father->NSubElements();
     if(!nchildren) return;
@@ -75,18 +80,20 @@ void DFNPolyhedron::SwapForChildren(TPZGeoEl* father){
     if(position == fShell.end()) DebugStop();
 
     // get orientation and remove father
-    int orientation = (*position).second;
+    int fatherorientation = (*position).second;
     fShell.erase(position);
 
     // enter children
     for(int i=0; i<nchildren; i++){
         int64_t childindex = father->SubElement(i)->Index();
-        fShell.insert({childindex,orientation});
+        int orientation = fatherorientation * DFN::SubElOrientation(father,i);
+        // fShell.insert({childindex,orientation});
+        fShell[childindex] = orientation;
     }
 }
 
 /** @brief Checks if this polyhedron was intersected by a fracture*/
-bool DFNPolyhedron::IsIntersected(DFNFracture& fracture){
+bool DFNPolyhedron::IsIntersected(DFNFracture& fracture)const{
     for(auto& face_orient : fShell){
         int64_t index = face_orient.first;
         DFNFace* face = fracture.Face(index);
@@ -96,7 +103,7 @@ bool DFNPolyhedron::IsIntersected(DFNFracture& fracture){
 }
 
 /** @brief Returns true if any of the faces in this polyhedron's shell contains only one Inbound rib*/
-bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture){
+bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture)const{
     for(auto& face_orient : fShell){
         int64_t index = face_orient.first;
         DFNFace* face = fracture.Face(index);
@@ -106,8 +113,8 @@ bool DFNPolyhedron::IntersectsFracLimit(DFNFracture& fracture){
     return false;
 }
 
-void DFNPolyhedron::GetEdges(TPZVec<TPZGeoEl*>& edgelist){
-    // Throw every edge of every face from fShell into an std::set then copy into edgelist
+std::set<int64_t> DFNPolyhedron::GetEdges() const{
+    // Throw every edge of every face from fShell into an std::set
     std::set<int64_t> edge_set;
     TPZGeoMesh* gmesh = fDFN->Mesh();
     for(auto& face_orient : fShell){
@@ -117,10 +124,47 @@ void DFNPolyhedron::GetEdges(TPZVec<TPZGeoEl*>& edgelist){
             edge_set.insert(iedge);
         }
     }
-    edgelist.resize(edge_set.size());
+    return edge_set; // move semantics or RVO will handle this. Right?
+}
+
+std::set<int64_t> DFNPolyhedron::GetEdges_InSet(const std::set<int64_t>& SuperSet) const{
+    std::set<int64_t> result;
+    TPZGeoMesh* gmesh = fDFN->Mesh();
+    const auto& end = SuperSet.end();
+    for(auto& face_orient : fShell){
+        TPZGeoEl* face = gmesh->Element(face_orient.first);
+        TPZManVector<int64_t,4> face_edges = DFN::GetEdgeIndices(face);
+        for(int64_t iedge : face_edges){
+            if(SuperSet.find(iedge) != end)
+                {result.insert(iedge);}
+        }
+    }
+    return result; // move semantics or RVO will handle this. Right?
+}
+
+void DFNPolyhedron::Refine(){
+    TPZStack<std::pair<int64_t,int>> Shell(fShell.size(),{-1,0});
     int i=0;
-    for(int64_t iedge : edge_set){
-        edgelist[i] = gmesh->Element(iedge);
+    for(const auto& oriented_face : fShell){
+        Shell[i] = oriented_face;
         i++;
     }
+    fDFN->MeshPolyhedron(Shell, fCoarseIndex);
+}
+
+
+bool DFNPolyhedron::IsTetrahedron() const{
+    if(fShell.size() != 4) return false;
+
+    return true;
+
+    // Don't really need these, right?
+    // TPZGeoMesh* gmesh = fDFN->Mesh();
+    // int ntriangles = 0;
+    // for(auto& orientedface : fShell){
+    //     TPZGeoEl* face = gmesh->Element(orientedface.first);
+    //     ntriangles += (face->Type() == MElementType::ETriangle);
+    // }
+
+    // return ntriangles == 4;
 }

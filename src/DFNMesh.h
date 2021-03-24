@@ -21,7 +21,7 @@
 class DFNMesh{
 private:
     // A set of fractures
-    std::list<DFNFracture *> fFractures;
+    std::vector<DFNFracture *> fFractures;
     
     // Minimum acceptable distance/length for point insertion
     REAL fTolDist = 1e-5;
@@ -33,7 +33,7 @@ private:
     // Pointer to geometric mesh
     TPZGeoMesh *fGMesh = nullptr;
 
-    /// For each edge, a vector of sorted faces around that edge
+    /// For each edge, a vector of sorted faces around that edge. For efficiency, this structure should live through the life of every DFNMesh object
     TPZVec<TRolodex> fSortedFaces;
 
     /** 
@@ -45,12 +45,6 @@ private:
     
     // A set of polyhedral volumes
     TPZStack<DFNPolyhedron,20> fPolyhedra;
-
-    /** 
-     * @brief A set of volumes 
-     * @todo this is probably getting deprecated soon
-     */
-    std::map<int64_t, DFNVolume> fVolumes;
 
 public:
     
@@ -67,10 +61,7 @@ public:
     DFNMesh &operator=(const DFNMesh &copy);
 
     /// Add new fracture
-    void AddFracture(DFNFracture *fracture){fFractures.push_back(fracture);}
-    
-    /// Pointer to volume of index 'index'
-    DFNVolume *Volume(int64_t index){return &fVolumes[index];}
+    void AddFracture(DFNFracture *fracture);
     
     /// Pointer to geometric mesh
     TPZGeoMesh *Mesh(){return fGMesh;}
@@ -98,19 +89,26 @@ public:
     const REAL TolAngle_cos(){return fTolAngle_cos;}
 
     /// Return reference to list of fractures
-    std::list<DFNFracture *>& FractureList(){return fFractures;}
+    std::vector<DFNFracture *>& FractureList(){return fFractures;}
     
     /** 
      * @brief Insert intersection elements of lower dimension in the geometric mesh.
      * @note matid = -1 will use the material id of first that is found. Set it if you want to force
      */
     void CreateSkeletonElements(int dimension, int matid = -1);
+
+    /** @brief Standard command to create a DFNFracture */
+    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended);
     
-    // /// Setup datastructure for fractured volumes (including finding fracture elements enclosed by them)
-    // void CreateVolumes();
     
     /// Exports a .geo file for this mesh
     void ExportGMshCAD(std::string filename);
+    void ExportGMshCAD_nodes(std::ofstream& out);
+    void ExportGMshCAD_edges(std::ofstream& out);
+    void ExportGMshCAD_faces(std::ofstream& out);
+    void ExportGMshCAD_volumes(std::ofstream& out);
+    void ExportGMshCAD_fractures(std::ofstream& out);
+    void ExportGMshCAD_boundaryconditions(std::ofstream& out);
     
     // /// Uses gmsh API to tetrahedralize a DFNVolume
     // void Tetrahedralize(DFNVolume *volume);
@@ -129,39 +127,22 @@ public:
     void PrintPolyhedra(std::ostream& out = std::cout) const;
 
     /**
-     * @brief Prints DFN Geometric Mesh. 
+     * @brief Prints Geometric Mesh to a VTK file, a PZGeoMesh.txt or both
      * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
      * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
-     * @param MaterialIDs...
-     * @todo this method is unfinished
      */
-    void PrintVTK(std::string pzmesh = "pzmesh.txt"
-               ,std::string vtkmesh = "vtkmesh.vtk"
-               ,int fracture = 2
-               ,int transition = 3
-               ,int intact = 1);
+    void PrintVTK(std::string vtkmesh = "LOG/vtkmesh.vtk"
+                ,std::string pzmesh = "LOG/pzmesh.txt");
     /**
      * @brief Prints DFN Geometric Mesh and material ids are renumbered for VTK colorful print of refinement of 2D elements :) 
      * @param pzmesh : File name for geomesh txt. Feed "skip" to skip
      * @param vtkmesh : File name for geomesh vtk. Feed "skip" to skip
      */
-    void PrintVTKColorful(std::string pzmesh = "pzmesh.txt"
-                       ,std::string vtkmesh = "vtkmesh.vtk");
+    void PrintVTKColorful(std::string vtkmesh = "LOG/vtkmesh.vtk"
+                        ,std::string pzmesh = "skip");
     
-    /**
-     * @brief Imports d-dimensional elements from a GMsh::model to a TPZGeoMesh. Imported 
-     * elements are pushed to the back of TPZGeoMesh::ElementVector.
-     * @note (1) Must be called between the pair gmsh::initialize and gmsh::finalize of the
-     * model from which new elements should be read.
-     * @note (2) If GMsh has created any new nodes, those will be inserted into TPZGeoMesh aswell
-     * @param gmesh: Pointer to TPZGeoMesh
-     * @param dimension: Dimension of elements that should be imported
-     * @param oldnodes: A set of indices of the old nodes that were used to define the geometry in 
-     * GMsh (so that new nodes may be identified)
-     */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes);
     
-    int Dimension(){return fGMesh->Dimension();}
+    inline int Dimension() const{return fGMesh->Dimension();}
     
     
     
@@ -201,21 +182,31 @@ public:
      * @note This method is called by DFNMesh::BuildPolyhedra to assemble all polyhedral volumes in the mesh
     */
     template<int Talloc>
-    void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    void BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int& coarseindex);
     /// set a polyhedral index for a face in the structure fPolyh_per_face
     void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
     /// get the polyhedral index for a face from the structure fPolyh_per_face
-    int GetPolyhedralIndex(std::pair<int64_t,int> face_orient);
+    int GetPolyhedralIndex(const std::pair<int64_t,int>& face_orient) const;
+    
+    // aqui tirei no inline
+    int GetPolyhedralIndex(int64_t faceindex, int orientation) const{
+        const std::pair<int64_t,int> face_orient({faceindex,orientation});
+        return GetPolyhedralIndex(face_orient);
+    }
     /**
      * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
     */
-    template<int Talloc>
-    void MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
+    // template<int Talloc>
+    void MeshPolyhedron(TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex);
+
+    /** @brief Break quadrilaterals down to 2 triangles each in a stack of oriented faces*/
+    // template<int Talloc>
+    void RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron);
 
     /**
      * @brief Reference to polyhedra stack
     */
-    TPZStack<DFNPolyhedron,20>& Polyhedra(){return fPolyhedra;}
+    const TPZStack<DFNPolyhedron,20>& Polyhedra() const{return fPolyhedra;}
     // template<int Talloc>
 
     /** @brief adds geoels for graphics that illustrate the tolerance*/
@@ -228,13 +219,52 @@ public:
      * @attention It isolates the boundary as the polyhedron of index 0.*/
     void InitializePolyhedra();
 
+    void ExpandPolyhPerFace()
+        {fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});}
+
+    /// Create a new polyhedron at the end of the polyhedra vector of this mesh
+    DFNPolyhedron* CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex = -1, bool isConvex = true);
+
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZVec<int64_t> GetEdgeIndices(int64_t face_index){return DFN::GetEdgeIndices(fGMesh->Element(face_index));}
 
     DFNPolyhedron& Polyhedron(int i){return fPolyhedra[i];}
 
-private:
+    /// Get number of fractures in the fracture vector of this DFN
+    int NFractures() const{return fFractures.size();}
+
+    /// Get number of fractures that have at least 1 surface element
+    int RealNFractures() const;
+
+    /// Get number of polyhedra for this dfnMesh. Should always be at least 2, unless they aren't initialized
+    int NPolyhedra() const {return fPolyhedra.size();}
+
+    /** @brief For a specific face, pass its polyhedral index to its children*/
+    void InheritPolyhedra(TPZGeoEl* father);
     
+    /// Set all material ids to 1
+    void ClearMaterials();
+
+    /// @brief At any point in the code, dump a colored VTK file for graphical debugging 
+    /// @warning This method can break the code downstream. It's meant for graphical debugging only.
+    /// @note Nothing should break if you leave polygon_representation == false, though;
+    /// @param polygon_representation Set true to insert elements that represent the original definition for each fracture. (this will likely break the code downstream and should only be used if you plan to stop the execution soon. It is only meant for graphical debugging);
+    /// @param clearmaterials Will set every element's material id in the mesh to 1, before changing again fractures to DFNMaterial::Efracture and also coloring refined faces
+    /// @param filename A string with the relative path to the file where to dump the vtk graphics.
+    void DumpVTK(bool polygon_representation = false, bool clearmaterials = true, std::string filename = "LOG/vtkmesh.vtk");
+
+    void PrintSummary(){
+        std::ofstream out("LOG/dfn.summary.log");
+        this->Print(out);
+    }
+
+    // DebugStop but dump some more information
+    void DFN_DebugStop();
+
+private:
+    /// Gather oriented faces around a 3D element to define a shell, then create a new polyhedron in the polyhedra vec DFNMesh::fPolyhedra
+    int CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex);
+
     /**
      * @brief Navigate through neighbours of first level, than second level, and so on, until an element of a specific material id is found
      * @returns Index of eldest ancestor of such element
@@ -261,9 +291,6 @@ private:
     
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
-    /// Set all material ids to 1
-    void ClearMaterials();
-    
     // @todo
     void RestoreMaterials(TPZGeoMesh *originalmesh);
 
@@ -276,6 +303,7 @@ private:
 
     /** @brief set polyh index -1 for every face in a stack*/
     void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);
+public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
 

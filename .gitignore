@@ -3,6 +3,7 @@
 /.vscode
 /build
 /debug
+/release
 /doc
 LOG
 # documentation/animations/*
@@ -10,3 +11,5 @@ LOG
 */quicktests.cpp
 vtkmesh.vtk
 pzmesh.txt
+__py*
+/*.geo

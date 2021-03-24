@@ -1,28 +1,20 @@
 /*! 
  *	DFNVolume.cpp
- *  @author     Pedro Lima
- *  @date       2019
+ *  @brief     Describes a volume within DFN scope of application.
+ *  @details   
+ *  @author    Pedro Lima
+ *  @date      2019
+ *  @deprecated WE ARE NOT USING THIS CLASS. IT WAS CONCEIVED AS A TRACKER FOR COARSE ELEMENT AND SUB-MESH
  */
 
+/*
 #include "DFNVolume.h"
 
-// Empty constructor
-DFNVolume::DFNVolume(){
-    fVolumeIndex = -1;
-    fIsCut = false;
-}
-
-//Constructor
-DFNVolume::DFNVolume(int64_t index, bool iscut){
-    fVolumeIndex = index;
-    fIsCut = iscut;
-}
 
 /// Copy constructor
 DFNVolume::DFNVolume(const DFNVolume &copy){
     this->operator=(copy);
 }
-
 /// Assignment operator
 DFNVolume &DFNVolume::operator=(const DFNVolume &copy){
     fVolumeIndex = copy.fVolumeIndex;
@@ -30,6 +22,17 @@ DFNVolume &DFNVolume::operator=(const DFNVolume &copy){
     fSubEls = copy.fSubEls;
     fIntersection = copy.fIntersection;
     return *this;
+}
+
+// Empty constructor
+DFNVolume::DFNVolume(){
+    fVolumeIndex = -1;
+    fIsCut = false;
+}
+//Constructor
+DFNVolume::DFNVolume(int64_t index, bool iscut){
+    fVolumeIndex = index;
+    fIsCut = iscut;
 }
 
 /// Define the element index and whether it cuts the plane
@@ -64,3 +67,5 @@ void DFNVolume::SetFaceInVolume(int64_t Elindex){
     fEnclosedFaces.resize(N+1);
     fEnclosedFaces[N] = Elindex;
 }
+
+*/
