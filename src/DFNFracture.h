@@ -134,19 +134,28 @@ public:
     */
     std::set<int64_t> IdentifySnapRibs();
     
-    // facet set of 2d elements with the same normal direction
-    // divide facets of polyhedra that have non-colinear snap-ribs
-    // loop over polyhedra
-    // identify the snap-ribs the belong to the polyhedra
-    // verify if the snap-ribs require meshing of a facet (hard)
-    // divide the facet (hard part)
-    // @pedro - please implement me
+    /** facet set of 2d elements with the same normal direction
+     * divide facets of polyhedra that have non-colinear snap-ribs
+     * loop over polyhedra
+     * identify the snap-ribs the belong to the polyhedra
+     * verify if the snap-ribs require meshing of a facet (hard)
+     * divide the facet (hard part)
+     * @deprecated
+    */
     void MeshSnapPlanes();
 
     /**
-     * @brief Temporary name until I get a better idea
+     * @brief Checks if this fracture is overlapping (partially, or completely) planar subsets
+     * of the shell of every DFNPolyhedron that it intersects. 
+     * @details If any trivial case is found, code moves on and the incorporation of any 
+     * overlapped TPZGeoEl is done at DFNFracture::FindPolygon() (as it used to). If any case is
+     * found that FindPolygon can't handle, then the DFNPolyhedron is split into tetrahedra and 
+     * pyramids by Gmsh, and we recursively update the set of faces and ribs intersected until 
+     * no non-trivial overlap is left.
+     * @note This function is somewhat costly, if you know it won't be necessary, you can just
+     * not call it
     */
-    void Handle_SnapInducedOverlap();
+    void CheckSnapInducedOverlap();
     
     // /** @briefUpdates DFNFracture's DFNFace list, swapping elements of a given polyhedron for their children
     //  * @param polyh : A polyhedron from where to get refined DFNFaces
@@ -255,9 +264,9 @@ public:
     /// Triangulates fracture surface from outline
     void MeshFractureSurface();
 
-    /** @brief Following directive DFNFracture::fLimit, modify the extended limits of this fracture to better represent the limits (boundary edges) of the polygon that defined this fracture
-     * @todo After debugging, this method should be private and called in the end of DFNFracture::MeshFractureSurface
-    */
+    /** @brief Following directive DFNFracture::fLimit, modify the extended 
+     * limits of this fracture to better represent the limits (boundary edges) 
+     * of the polygon that defined this fracture*/
     void RecoverFractureLimits();
 
     /// Access the ribs data structure

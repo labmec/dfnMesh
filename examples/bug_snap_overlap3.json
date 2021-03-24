@@ -1,0 +1,25 @@
+{
+    "ATTENTION": "For this example to work, you need to run 'void ScriptForBug2(TPZGeoMesh* gmesh)' in main.cpp before creating the DFNMesh, and run DFNMesh::InheritPolyhedra() after you create the DFNMesh",
+    "Mesh": "examples/bug2.msh",
+    "TolDist": 2.0,
+    "Fractures":[
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+            "MaterialID": 4,
+            "Nodes":[
+                [ 2.1448906,   2.0977501,  -0.305719],
+                [ 2.5812073,  -1.2701592,  -1.25678],
+                [-0.51704348, -2.9153249,  -0.893504],
+                [-2.8681845,  -0.56418393,  0.282066],
+                [-1.2230188,   2.5340668,   0.645337]
+            ]
+        }
+    ]
+}
+
+
+// [ 2.14489,  2.09775,  0.0942809],
+// [ 2.02357, -2.02357, -0.905719 ],
+// [-2.09775, -2.14489,  0.0942809],
+// [-1.97643,  1.97643,  1.09428  ]

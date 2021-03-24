@@ -328,6 +328,7 @@ void DFNFace::FillChildrenAndNewNodes(
 		// algorithm for case 7 == case 4
 		case 8:{ // A quadrilateral with a single mid-face intersection node 
 			DebugStop();
+			/// @deprecated
 			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
 			// In-plane itersection node
 			// child.resize(4);
@@ -341,7 +342,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			// }
 			break;}
 		case 9:{ // A quadrilateral with 2 mid-face intersection nodes
-			// @ToDo
+			/// @deprecated
 			DebugStop();
 			break;}
 		case 10:{// A triangle with 2 adjancent refined edges

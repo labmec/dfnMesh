@@ -1939,23 +1939,11 @@ std::set<int> DFNFracture::IdentifyIntersectedPolyhedra(){
 
 
 
-void DFNFracture::Handle_SnapInducedOverlap(){
-// #ifdef PZDEBUG
-//     fdfnMesh->PrintSummary();
-// #endif // PZDEBUG
-
-
-
-
-
+void DFNFracture::CheckSnapInducedOverlap(){
 
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::set<int64_t> SnapRibs = this->IdentifySnapRibs();
-    // for(const int64_t index : SnapRibs){
-    //     gmesh->Element(index)->SetMaterialId(DFNMaterial::Efracture);
-    // }
-    // if(dfnMesh()->NPolyhedra() > 3) fdfnMesh->DumpVTK(true,false);
-    auto IntersectedPolyh = this->IdentifyIntersectedPolyhedra();
+    std::set<int> IntersectedPolyh = this->IdentifyIntersectedPolyhedra();
     
     // Gather problematic volumes
     TPZStack<int> problem_volumes;
@@ -1975,16 +1963,11 @@ void DFNFracture::Handle_SnapInducedOverlap(){
     }
 
     // Update DFNFracture data
-    // try{
-        fdfnMesh->UpdatePolyhedra();
-        fPolygon.SortNodes(gmesh);
-        this->CreateRibs();
-        this->CreateFaces();
-        this->SnapIntersections_faces();
-    // }catch(...){
-    //     fdfnMesh->DumpVTK(true);
-    //     DebugStop();
-    // }
+    fdfnMesh->UpdatePolyhedra();
+    fPolygon.SortNodes(gmesh);
+    this->CreateRibs();
+    this->CreateFaces();
+    this->SnapIntersections_faces();
 
 // #ifdef PZDEBUG
 //     fdfnMesh->PrintSummary();
@@ -1993,7 +1976,7 @@ void DFNFracture::Handle_SnapInducedOverlap(){
     //     gmesh->Element(index)->SetMaterialId(DFNMaterial::Eintact);
     // }
     // Continue recursively until there are none problematic volumes
-    this->Handle_SnapInducedOverlap();
+    this->CheckSnapInducedOverlap();
 }
 
 bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DFNPolyhedron& IntersectedVolume) const{

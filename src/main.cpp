@@ -60,29 +60,29 @@ static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 
 
 
+/** @brief a Quick script I've written to setup PZ's datastructure so we could test bug_snap_overlap3.json*/
+// void ScriptForBug3(TPZGeoMesh* gmesh){
+// 	std::vector<int> ref0 = {20,0,1,2};
+// 	std::vector<int> ref1 = {21,3,4,5};
+// 	std::vector<int> ref2 = {22,6,7,8};
+// 	std::vector<int> ref3 = {23,9,10,11};
+// 	std::vector<int> ref4 = {19,12,13,14,15,16,17};
 
-void ScriptForBug2(TPZGeoMesh* gmesh){
-	std::vector<int> ref0 = {20,0,1,2};
-	std::vector<int> ref1 = {21,3,4,5};
-	std::vector<int> ref2 = {22,6,7,8};
-	std::vector<int> ref3 = {23,9,10,11};
-	std::vector<int> ref4 = {19,12,13,14,15,16,17};
+// 	std::vector<std::vector<int>> refs = {ref0, ref1, ref2, ref3, ref4};
 
-	std::vector<std::vector<int>> refs = {ref0, ref1, ref2, ref3, ref4};
-
-	for(auto& ref : refs){
-		TPZGeoEl* father = gmesh->Element(ref[0]);
-		int nchildren = ref.size()-1;
-		TPZManVector<TPZGeoEl*,6> children(nchildren,nullptr);
-		for(int i=1; i<=nchildren; i++){
-			children[i-1] = gmesh->Element(ref[i]);
-		}
-		DFN::CreateRefPattern(father,children);
-		for(int i=0; i<nchildren;i++) father->SetSubElement(i,children[i]);
-		children.Fill(nullptr);
-		children.clear();
-	}
-}
+// 	for(auto& ref : refs){
+// 		TPZGeoEl* father = gmesh->Element(ref[0]);
+// 		int nchildren = ref.size()-1;
+// 		TPZManVector<TPZGeoEl*,6> children(nchildren,nullptr);
+// 		for(int i=1; i<=nchildren; i++){
+// 			children[i-1] = gmesh->Element(ref[i]);
+// 		}
+// 		DFN::CreateRefPattern(father,children);
+// 		for(int i=0; i<nchildren;i++) father->SetSubElement(i,children[i]);
+// 		children.Fill(nullptr);
+// 		children.clear();
+// 	}
+// }
 
 
 //-------------------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]){
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
-		fracture->Handle_SnapInducedOverlap();
+		fracture->CheckSnapInducedOverlap();
 
 #ifdef LOG4CXX
         if(logger->isDebugEnabled()){
