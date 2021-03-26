@@ -1,4 +1,5 @@
 {
+    "$schema": "./dfn_schema.json",
     "Mesh": "examples/tetrahedra1.msh",
     "TolDist":  0.3333333,
     "TolAngle": 1.571,

@@ -13,3 +13,5 @@ vtkmesh.vtk
 pzmesh.txt
 __py*
 /*.geo
+
+*.gdbinit

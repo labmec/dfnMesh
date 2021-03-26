@@ -1,5 +1,6 @@
 {
     "ATTENTION": "For this example to work, you need to run 'void ScriptForBug2(TPZGeoMesh* gmesh)' in main.cpp before creating the DFNMesh, and run DFNMesh::InheritPolyhedra() after you create the DFNMesh",
+    "$schema": "./dfn_schema.json",
     "Mesh": "examples/bug2.msh",
     "TolDist": 2.0,
     "Fractures":[

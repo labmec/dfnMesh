@@ -497,6 +497,8 @@ void ReadFileJSON(const std::string			& filename,
 		}
 		if(fracture.find("MaterialID") != fracture.end()){
 			matid[i] = (int)fracture["MaterialID"];
+		}else if(fracture.find("MatID") != fracture.end()){
+			matid[i] = (int)fracture["MatID"];
 		}
 		if(fracture.find("Limit") != fracture.end()){
 			limit_directives[i] = DFN::StringToFracLimit((std::string)fracture["Limit"]);

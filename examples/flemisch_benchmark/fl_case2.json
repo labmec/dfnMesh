@@ -2,6 +2,7 @@
     // @note I've noticed that the most efficient way to define a fracture that perfectly matches the limits existing in mesh is 
     // to have its corners slightly crossing the desired position, while setting Limit directive to "Etruncated".
     // E.g. that's why the corner coordinates of some of these fractures have a value like 1.01, when we actually want it to be 1.0.
+    "$schema": "../dfn_schema.json",
     "Mesh": "examples/flemisch_benchmark/fl_case2.msh",
     "TolDist":  0.1,
     "Fractures": [

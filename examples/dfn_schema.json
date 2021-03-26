@@ -1,0 +1,483 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "DFNMesh Configuration",
+    "description": "Input configuration for DFNMesh project",
+    "default": {},
+    "examples": [
+        {
+            "PZGenGrid": {
+                "x0": [0.0,0.0,0.0],
+                "xf": [2.0,2.0,2.0],
+                "MMeshType": "EHexahedral",
+                "Nels": [1,1,1]
+            },
+            "Mesh": "examples/cube.msh",
+            "TolDist": 0.0001,
+            "TolAngle": 0.01,
+            "Fractures": [
+                {
+                    "Index": 0,
+                    "Limit": "Etruncated",
+                    "MaterialID": 5,
+                    "Nodes": [
+                        [0.95,2.5,-0.5],
+                        [0.95,-0.5,-0.5],
+                        [0.95,-0.5,2.5],
+                        [0.95,2.5,2.5]
+                    ]
+                }
+            ]
+        }
+    ],
+    "required": [
+        "Fractures"
+    ],
+    "properties": {
+        "PZGenGrid": {
+            "$id": "#/properties/PZGenGrid",
+            "type": "object",
+            "title": "The PZGenGrid schema",
+            "description": "A grid generated using TPZGenGrid",
+            "default": {},
+            "examples": [
+                {},
+                {
+                    "x0": [0.0,0.0,0.0],
+                    "xf": [2.0,2.0,2.0],
+                    "MMeshType": "EHexahedral",
+                    "Nels": [1,1,1]
+                }
+            ],
+            "required": ["MMeshType"],
+            "properties": {
+                "x0": {
+                    "$id": "#/properties/PZGenGrid/properties/x0",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Grid origin",
+                    "description": "Lowest node coordinate of the grid.",
+                    "default": [0.0,0.0,0.0],
+                    "examples": [
+                        [-1.0,-1.0,-1.0]
+                    ],
+                    "additionalItems": false,
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/x0/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/x0/items/anyOf/0",
+                                "type": "number",
+                                "title": "Coord",
+                                "description": "Coordinate value",
+                                "default": 0.0,
+                                "examples": [
+                                    0.0
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "minX": {
+                    "$id": "#/properties/PZGenGrid/properties/minX",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Grid origin",
+                    "description": "Lowest node coordinate of the grid.",
+                    "default": [0.0,0.0,0.0],
+                    "examples": [
+                        [-1.0,-1.0,-1.0]
+                    ],
+                    "additionalItems": true,
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/minX/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/minX/items/anyOf/0",
+                                "type": "number",
+                                "title": "Coord",
+                                "description": "Coordinate value",
+                                "default": 0.0,
+                                "examples": [
+                                    0.0
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "Origin": {
+                    "$id": "#/properties/PZGenGrid/properties/Origin",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Grid origin",
+                    "description": "Lowest node coordinate of the grid.",
+                    "default": [0.0,0.0,0.0],
+                    "examples": [
+                        [-1.0,-1.0,-1.0]
+                    ],
+                    "additionalItems": true,
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/Origin/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/Origin/items/anyOf/0",
+                                "type": "number",
+                                "title": "Coord",
+                                "description": "Coordinate value",
+                                "default": 0.0,
+                                "examples": [
+                                    0.0
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "maxX": {
+                    "$id": "#/properties/PZGenGrid/properties/maxX",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Grid endpoint",
+                    "description": "The point at the opposite end of a diagonal taken from the origin of the grid.",
+                    "default": [],
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/maxX/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/maxX/items/anyOf/0",
+                                "type": "number",
+                                "default": 0.0
+                            }
+                        ]
+                    }
+                },
+                "xf": {
+                    "$id": "#/properties/PZGenGrid/properties/xf",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Grid endpoint",
+                    "description": "The point at the opposite end of a diagonal taken from the origin of the grid.",
+                    "default": [],
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/xf/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/xf/items/anyOf/0",
+                                "type": "number",
+                                "default": 0.0
+                            }
+                        ]
+                    }
+                },
+                "Endpoint": {
+                    "$id": "#/properties/PZGenGrid/properties/Endpoint",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Grid endpoint",
+                    "description": "The point at the opposite end of a diagonal taken from the origin of the grid.",
+                    "default": [],
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/Endpoint/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/Endpoint/items/anyOf/0",
+                                "type": "number",
+                                "default": 0.0
+                            }
+                        ]
+                    }
+                },
+                "Dimensions": {
+                    "$id": "#/properties/PZGenGrid/properties/Dimensions",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Grid dimensions",
+                    "description": "[Lx, Ly, Lz]",
+                    "default": [],
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/Dimensions/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/Dimensions/items/anyOf/0",
+                                "type": "number",
+                                "default": 0.0
+                            }
+                        ]
+                    }
+                },
+                "MMeshType": {
+                    "$id": "#/properties/PZGenGrid/properties/MMeshType",
+                    "type": "string",
+                    "title": "MMeshType",
+                    "description": "Type of element to populate the grid",
+                    "default": "EHexahedral",
+                    "enum": [
+                        "EQuadrilateral",
+                        "ETriangular",
+                        "EHexahedral",
+                        "ETetrahedral",
+                        "EPyramidal",
+                        "EPrismatic",
+                        "EHexaPyrMixed"
+                    ]
+                },
+                "Nels": {
+                    "$id": "#/properties/PZGenGrid/properties/Nels",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Number of elements",
+                    "description": "Number of grid layers on each orthogonal direction",
+                    "default": [1,1,1],
+                    "examples": [
+                        [1,1,0]
+                    ],
+                    "additionalItems": false,
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/Nels/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/Nels/items/anyOf/0",
+                                "type": "integer"
+                            }
+                        ]
+                    }
+                },
+                "nelDiv": {
+                    "$id": "#/properties/PZGenGrid/properties/nelDiv",
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "title": "Number of elements",
+                    "description": "Number of grid layers on each orthogonal direction",
+                    "default": [1,1,1],
+                    "examples": [
+                        [1,1,0]
+                    ],
+                    "additionalItems": false,
+                    "items": {
+                        "$id": "#/properties/PZGenGrid/properties/nelDiv/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/PZGenGrid/properties/nelDiv/items/anyOf/0",
+                                "type": "integer"
+                            }
+                        ]
+                    }
+                }
+            },
+            "dependencies":{
+                "x0": {"not": {"required": ["Origin","minX"]}},
+                "minX": {"not": {"required": ["Origin","x0"]}},
+                "Origin": {"not": {"required": ["minX","x0"]}}
+            },
+            "allOf": [
+                {
+                    "oneOf":[
+                        {"required": ["Endpoint"]},
+                        {"required": ["maxX"]},
+                        {"required": ["xf"]},
+                        {"required": ["Dimensions"]}
+                    ]
+                },
+                {
+                    "oneOf":[
+                        {"required": ["Nels"]},
+                        {"required": ["nelDiv"]}
+                    ]
+                }
+            ],
+            "additionalProperties": false
+        },
+        "Mesh": {
+            "$id": "#/properties/Mesh",
+            "type": "string",
+            "title": "Mesh",
+            "description": "Path to a .msh file to read as coarse mesh.",
+            "default": "examples/",
+            "examples": [
+                "examples/cube.msh"
+            ]
+        },
+        "TolDist": {
+            "$id": "#/properties/TolDist",
+            "type": "number",
+            "title": "Tolerable length",
+            "description": "Minimal tolerable distance between 2 nodes in the resulting mesh.",
+            "default": 0.0001,
+            "examples": [
+                0.1
+            ]
+        },
+        "TolAngle": {
+            "$id": "#/properties/TolAngle",
+            "type": "number",
+            "title": "Tolerable angle",
+            "description": "Minimal tolerable angle to be created in the mesh through refinement (in radians).",
+            "default": 0.0001,
+            "examples": [
+                0.01
+            ]
+        },
+        "Fractures": {
+            "$id": "#/properties/Fractures",
+            "type": "array",
+            "title": "Fracture list",
+            "uniqueItems": true,
+            "description": "List of fractures to insert in mesh.",
+            "default": [],
+            "examples": [
+                [],
+                [
+                    {
+                        "Index": 0,
+                        "Limit": "Etruncated",
+                        "MaterialID": 5,
+                        "Nodes": [
+                            [0.95, 2.5,-0.5],
+                            [0.95,-0.5,-0.5],
+                            [0.95,-0.5, 2.5],
+                            [0.95, 2.5, 2.5]
+                        ]
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/Fractures/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/Fractures/items/anyOf/0",
+                        "type": "object",
+                        "title": "Fracture",
+                        "description": "Basic description of a fracture.",
+                        "default": {
+                            "Index": -1,
+                            "Nodes": [
+                            ]
+                        },
+                        "examples": [
+                            {
+                                "Index": 0,
+                                "Limit": "Etruncated",
+                                "MaterialID": 5,
+                                "Nodes": [
+                                    [0.95, 2.5,-0.5],
+                                    [0.95,-0.5,-0.5],
+                                    [0.95,-0.5, 2.5],
+                                    [0.95, 2.5, 2.5]
+                                ]
+                            }
+                        ],
+                        "required": [
+                            "Index",
+                            "Nodes"
+                        ],
+                        "properties": {
+                            "Index": {
+                                "$id": "#/properties/Fractures/items/anyOf/0/properties/Index",
+                                "type": "integer",
+                                "minimum": 0,
+                                "title": "Index",
+                                "description": "Index of this fracture. They don't have to be declared in ascending order, but they should not repeat.",
+                                "default": 0
+                            },
+                            "Limit": {
+                                "$id": "#/properties/Fractures/items/anyOf/0/properties/Limit",
+                                "type": "string",
+                                "title": "Limit",
+                                "description": "Directive to handle the limits of this fracture",
+                                "default": "Etruncated",
+                                "enum": [
+                                    "Etruncated",
+                                    "Eextended",
+                                    "Erecovered"
+                                ]
+                            },
+                            "MaterialID": {
+                                "$id": "#/properties/Fractures/items/anyOf/0/properties/MaterialID",
+                                "type": "integer",
+                                "title": "Material ID",
+                                "description": "Material index for the elements at the surface of this fracture.",
+                                "default": 2
+                            },
+                            "MatID": {
+                                "$id": "#/properties/Fractures/items/anyOf/0/properties/MatID",
+                                "type": "integer",
+                                "title": "Material ID",
+                                "description": "Material index for the elements at the surface of this fracture.",
+                                "default": 2
+                            },
+                            "Nodes": {
+                                "$id": "#/properties/Fractures/items/anyOf/0/properties/Nodes",
+                                "type": "array",
+                                "uniqueItems": true,
+                                "minItems": 3,
+                                "title": "Corners coordinates",
+                                "description": "Coordinates for each corner of the polygon that initially defines this fracture. At least 3 corners to form a polygon.",
+                                "default": [],
+                                "additionalItems": true,
+                                "items": {
+                                    "$id": "#/properties/Fractures/items/anyOf/0/properties/Nodes/items",
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/Fractures/items/anyOf/0/properties/Nodes/items/anyOf/0",
+                                            "type": "array",
+                                            "minItems": 3,
+                                            "maxItems": 3,
+                                            "title": "Corner node",
+                                            "description": "Coordinates of a corner.",
+                                            "default": [],
+                                            "examples": [
+                                                [],
+                                                [0.0, 0.0, 0.0]
+                                            ],
+                                            "additionalItems": false,
+                                            "items": {
+                                                "$id": "#/properties/Fractures/items/anyOf/0/properties/Nodes/items/anyOf/0/items",
+                                                "allOf": [
+                                                    {
+                                                        "$id": "#/properties/Fractures/items/anyOf/0/properties/Nodes/items/anyOf/0/items/allOf/0",
+                                                        "type": "number",
+                                                        "default": 0.0
+                                                    },
+                                                    {
+                                                        "$id": "#/properties/Fractures/items/anyOf/0/properties/Nodes/items/anyOf/0/items/allOf/1",
+                                                        "type": "number",
+                                                        "default": 0.0
+                                                    },
+                                                    {
+                                                        "$id": "#/properties/Fractures/items/anyOf/0/properties/Nodes/items/anyOf/0/items/allOf/2",
+                                                        "type": "number",
+                                                        "default": 0.0
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "dependencies": {
+                            "MaterialID": {"not": {"required": ["MatID"]}},
+                            "MatID": {"not": {"required": ["MaterialID"]}}
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        }
+    },
+    "oneOf": [
+        {"required": ["PZGenGrid"]},
+        {"required": ["Mesh"]}
+    ],
+    "additionalProperties": true
+}
