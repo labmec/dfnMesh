@@ -1029,21 +1029,26 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
         std::cout << __PRETTY_FUNCTION__ << "does not contain a boundary polyhedron\n";
         return;
     }
+	// Use the boundary polyhedron to get boundary conditions
 	DFNPolyhedron& boundary = fPolyhedra[0];
 	for(auto orientedface : boundary.Shell()){
 		int64_t index = orientedface.first;
 		int matid = fGMesh->Element(index)->MaterialId();
 		physicalgroups.insert({matid,index});
 	}
-	// @todo this is a non-robust temporary patch. It will fail whenever a non-convex polyhedron is generated and corrected. The actual robust solution is above but it has a bug which I'm yet to solve
-	// for(TPZGeoEl* gel : Mesh()->ElementVec()){
-	// 	if(!gel) continue;
-	// 	if(gel->Dimension() != 2) continue;
-	// 	TPZGeoEl* ancestor = (gel->Father() ? gel->EldestAncestor() : gel);
-	// 	TPZGeoElSide gelside(ancestor, ancestor->NSides()-1);
-	// 	if(gelside.NNeighbours(3) != 1) continue;
-	// 	physicalgroups.insert({gel->MaterialId(),gel->Index()});
-	// }
+	/** @note I was initially tempted to have this. It is a non-robust temporary patch, though. 
+	  * It can fail when a volume is broken to tetrahedra for some reason.
+	  * (see DFNFracture::CheckSnapInducedOverlap and DFNMesh::UpdatePolyhedra for examples)
+	  * The actual robust solution is the one above, using the boundary polyhedron.
+	  * for(TPZGeoEl* gel : Mesh()->ElementVec()){
+	  * 	if(!gel) continue;
+	  * 	if(gel->Dimension() != 2) continue;
+	  * 	TPZGeoEl* ancestor = (gel->Father() ? gel->EldestAncestor() : gel);
+	  * 	TPZGeoElSide gelside(ancestor, ancestor->NSides()-1);
+	  * 	if(gelside.NNeighbours(3) != 1) continue;
+	  * 	physicalgroups.insert({gel->MaterialId(),gel->Index()});
+	  * }
+	  */
 
 	// Give physical tags to differenciate coarse element groups
 	std::stringstream stream;
@@ -1931,7 +1936,8 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 	for(int i=0; i<edges.size(); i++){
 		int64_t iedge = edges[i];
 		TRolodex& rolodex = fSortedFaces[iedge];
-		cards[i] = rolodex.Card(initial_face_orient.first);
+		try{ cards[i] = rolodex.Card(initial_face_orient.first);}
+		catch(...){DFN_DebugStop();}
 	}
 
 	// Determine orientation of neighbour cards
@@ -1942,7 +1948,18 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 		std::pair<TRolodexCard, int> current_card = {cards[i],initial_face_orient.second};
 		REAL angle = 0.0;
 		facingcards[i] = rolodex.FacingCard(current_card,angle);
-		if(angle > M_PI+gDFN_SmallNumber){ IsConvex = false; }
+		if(angle > M_PI+gDFN_SmallNumber)
+			{IsConvex = false; }
+		if(DFN::Is2PIorZero(angle)){
+			PZError << "\nCollapsed polyhedron:\n"
+					<< polyhedron
+					<< "\nCollapse happens between faces:\n"
+					<< initial_face_orient << "\n"
+					<< facingcards[i].first.fgelindex << " | " << facingcards[i].second
+					<< "\nAround rolodex:\n"
+					<< rolodex;
+			DFN_DebugStop();
+		}
 	}
 	// queue neighbour cards to verify
 	TPZStack<std::pair<int64_t, int>> to_verify;
@@ -2023,7 +2040,7 @@ void DFNMesh::RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron){
 	// TPZStack<std::pair<int64_t,int>,Talloc> aux;
 	for(auto& orient_face : polyhedron){
 		TPZGeoEl* gel = fGMesh->Element(orient_face.first);
-		if(gel->HasSubElement()) DebugStop();
+		if(gel->HasSubElement()) DFN_DebugStop();
 		if(gel->Type() == MElementType::ETriangle) {continue;}
 		
 		// Get index of the polyhedron on the other side of this gel to pass it to the children
@@ -2043,6 +2060,7 @@ void DFNMesh::RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron){
 			int child_orient = permut_orient*DFN::SubElOrientation(gel,i);
 			SetPolyhedralIndex({children[i]->Index(),child_orient},otherpolyh);
 		}
+		InheritPolyhedra(gel);
 	}
 	
 }
@@ -2373,6 +2391,7 @@ void DFNMesh::InheritPolyhedra(){
 
 	for(TPZGeoEl* father : fGMesh->ElementVec()){
 		if(!father) continue;
+		if(father->Dimension() != 2) continue;
 		if(!father->HasSubElement()) continue;
 		InheritPolyhedra(father);
 	}
@@ -2382,17 +2401,33 @@ void DFNMesh::InheritPolyhedra(TPZGeoEl* father){
 	if(!father->HasSubElement()) return;
 	TPZGeoEl* child = nullptr;
 	int nchildren = father->NSubElements();
+
+	// Gather children orientation
+	TPZManVector<int,4> childorient(nchildren,0);
+	for(int jchild=0; jchild<nchildren; jchild++){
+		childorient[jchild] = DFN::SubElOrientation(father,jchild);
+	}
+
 	for(int i=0; i<2; i++){
-		int orient = i?-1:1;
-		int father_polyhindex = GetPolyhedralIndex({father->Index(),orient});
+		int fatherorient = i?-1:1;
+		int father_polyhindex = GetPolyhedralIndex({father->Index(),fatherorient});
 		if(father_polyhindex<0) continue;
 		for(int jchild=0; jchild<nchildren; jchild++){
 			child = father->SubElement(jchild);
-			if(GetPolyhedralIndex({child->Index(),orient}) < 0){
+			int orient = childorient[jchild]*fatherorient;
+			int current_child_polyh = GetPolyhedralIndex({child->Index(),orient});
+			if(current_child_polyh < 0){
 				SetPolyhedralIndex({child->Index(),orient},father_polyhindex);
+			}else if(father_polyhindex != current_child_polyh){
+				PZError << "\nFather element is trying to overwrite its child's polyh index\n"
+						<<	"Father index " << father->Index()
+						<<	"Father polyh " << father_polyhindex
+						<<	"Child index " << child->Index()
+						<<	"Child polyh " << current_child_polyh;
+				DFN_DebugStop();
 			}
 		}
-		SetPolyhedralIndex({father->Index(),orient},-1); //< refined face doesn't need a polyhedral index
+		SetPolyhedralIndex({father->Index(),fatherorient},-1); //< refined face doesn't need a polyhedral index
 		DFNPolyhedron& polyhedron = fPolyhedra[father_polyhindex];
 		polyhedron.SwapForChildren(father);
 	}
@@ -2494,6 +2529,6 @@ void DFNMesh::DFN_DebugStop(){
 	PrintSummary();
 	std::ofstream pzmesh("LOG/pzmesh.txt");
 	fGMesh->Print(pzmesh);
-	DumpVTK(true,false);
+	DumpVTK(true,true);
 	DebugStop();
 }

@@ -252,6 +252,9 @@ void DFNRib::AppendToNeighbourFaces(){
         DFNFace* dfnface = fFracture->Face(neigindex);
         // If DFNFace is missing, create one
         if(!dfnface){
+            // TPZManVector<DFNRib*,4> rib_vec(neig.Element()->NSides(1),nullptr);
+            // rib_vec[neig.Side()-neig.Element()->NSides(0)] = this;
+            // DFNFace new_dfnface(neig.Element(),fFracture,rib_vec);
             DFNFace new_dfnface(neig.Element(),fFracture);
             dfnface = fFracture->AddFace(new_dfnface);
         }

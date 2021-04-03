@@ -354,11 +354,6 @@ namespace DFN{
         if(dim != child->Dimension()){PZError<<"\n I don't see how this could be considered consistent\n";DebugStop();}
         
         
-        // TPZTransform<REAL> transf = father->GetTransform(child->NSides()-1,ichild);
-        // REAL det = 1.;
-        // TPZFMatrix<REAL> inverse(dim,dim);
-        // transf.Mult().DeterminantInverse(det,inverse);
-        // return DFN::sgn(det);
 
         TPZGeoElSide fatherside(father,father->NSides()-1);
         TPZGeoElSide childside(child,child->NSides()-1);
@@ -367,14 +362,16 @@ namespace DFN{
         switch(dim){
             case  2:{
                 // TPZManVector<REAL,3> father_normal(3,0.);
-                // fatherside.Normal(qsi,father_normal);
                 // TPZManVector<REAL,3> child_normal(3,0.);
-                // childside.Normal(qsi,child_normal);
-                TPZManVector<REAL,3> father_normal(3,0.);
-                TPZManVector<REAL,3> child_normal(3,0.);
-                ElementOrientation(father,father_normal);
-                ElementOrientation(child,child_normal);
-                orientation = int(DFN::DotProduct<float>(father_normal,child_normal));
+                // ElementOrientation(father,father_normal);
+                // ElementOrientation(child,child_normal);
+                // orientation = int(DFN::DotProduct<float>(father_normal,child_normal));
+                TPZTransform<REAL> transf = father->GetTransform(child->NSides()-1,ichild);
+                REAL det = 1.;
+                // TPZFMatrix<REAL> inverse(dim,dim);
+                // transf.Mult().DeterminantInverse(det,inverse);
+                det = transf.Mult()(0,0)*transf.Mult()(1,1) - transf.Mult()(0,1)*transf.Mult()(1,0);
+                orientation = DFN::sgn(det);
                 break;
             }
             default:{PZError<<"\nCurrently implemented for 2D els only\n";DebugStop();}
@@ -619,4 +616,47 @@ namespace DFN{
         return childrenset; // move semantics makes this O(1)
     }
 
+    template<typename Ttype>
+    bool Is2PIorZero(Ttype angle, Ttype tolerance){
+        PZError << "\nUninplemented type\n";
+        DebugStop();
+        return false;
+    }
+
+    // float
+    template<>
+    bool Is2PIorZero<float>(float angle, float tolerance){
+        return abs(float(DFN::_2PI) - angle) < tolerance || abs(angle) < tolerance;
+    }
+    // double
+    template<>
+    bool Is2PIorZero<double>(double angle, double tolerance){
+        return abs(DFN::_2PI - angle) < tolerance || abs(angle) < tolerance;
+    }
+
+    void SketchStatusVec(const TPZManVector<int,9>& statusvec, std::ostream& out){
+		std::stringstream sout;
+		sout << "\nStatusVec Sketch:";
+		switch(statusvec.size()){
+			case pztopology::TPZTriangle::NSides:{
+				sout << "\n  " << (statusvec[2]?"x":" ");
+				sout << "\n | \\";
+				sout << "\n" << (statusvec[5]?"x":" ") <<"|  \\" << (statusvec[4]?"x":" ");
+				sout << "\n |___\\";
+				sout << "\n" << (statusvec[0]?"x":" ") << "  " << (statusvec[3]?"x":" ") << "  " << (statusvec[1]?"x":" ");
+				break;
+			}
+			case pztopology::TPZQuadrilateral::NSides:{
+				sout << "\n" << (statusvec[3]?"x":" ") << " __" << (statusvec[6]?"x":"_") << "__ " << (statusvec[2]?"x":" ");
+				sout << "\n |     | ";
+				sout << "\n" << (statusvec[7]?"x":" ") << "|     |" << (statusvec[5]?"x":" ");
+				sout << "\n |_____| ";
+				sout << "\n" << (statusvec[0]?"x":" ") << "   " << (statusvec[4]?"x":" ") << "   " << (statusvec[1]?"x":" ");
+				break;
+			}
+			default: DebugStop();
+		}
+
+		out << sout.str();
+    }
 } /* namespace DFN*/

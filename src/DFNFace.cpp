@@ -12,6 +12,9 @@
 #include "TPZRefPattern.h"
 #include "tpzgeoelrefpattern.h"
 
+#ifdef LOG4CXX
+    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif
 
 //Constructor
 DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec) :
@@ -626,8 +629,20 @@ bool DFNFace::UpdateStatusVec(){
 			default: DebugStop();
 		}
 	}
-
-	return old_fStatus != fStatus;
+	bool changed = old_fStatus != fStatus;
+#ifdef LOG4CXX
+	// @todo This feels too verbose. Maybe make it logger->IsTraceEnabled()
+	if(changed && logger->isDebugEnabled()){
+		std::stringstream sstream;
+		sstream << "Updated StatusVec in Face #" << fGeoEl->Index();
+		sstream << "\nOld [" << old_fStatus << "]";
+		DFN::SketchStatusVec(old_fStatus,sstream);
+		sstream << "\nNew [" << fStatus << "]";
+		DFN::SketchStatusVec(fStatus,sstream);
+		LOG4CXX_DEBUG(logger,sstream.str());
+	}
+#endif // LOG4CXX
+	return changed;
 }
 
 
@@ -824,6 +839,7 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 
 bool DFNFace::SnapIntersection_try(REAL tolDist, REAL tolAngle_cos){
     // this method determines if the mesh has elements with bad aspect ratio
+	// while(this->NeedsSnap(tolDist, tolAngle_cos))
 	if(this->NeedsSnap(tolDist, tolAngle_cos))
     {
         // @pedro : how are you sure that "all" sides need to be snapped?

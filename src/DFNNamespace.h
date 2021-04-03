@@ -27,7 +27,7 @@
 namespace DFN{
 
     /// 2*3.1415...
-static const double _2PI = 2.*M_PI;//6.2831853071795865;
+    const double _2PI = 2.*M_PI;//6.2831853071795865;
     // A small number for geometric tolerances
     // static const double gSmallNumber = 1.e-4;
 
@@ -204,6 +204,11 @@ static const double _2PI = 2.*M_PI;//6.2831853071795865;
     /// @brief return a set with the indices of all youngest children in the refinement trees of elements whose indices are listed in 'parents'. If element have no children, its own index is added to the set.
     std::set<int64_t> YoungestChildren(const std::set<int64_t>& parents, TPZGeoMesh* gmesh);
 
+    /// @brief return true if a float/double is equal to zero or 2*PI given a tolerance
+    template<typename Ttype>
+    bool Is2PIorZero(Ttype angle, Ttype tolerance = (Ttype)gDFN_SmallNumber);
+
+    void SketchStatusVec(const TPZManVector<int,9>& statusvec, std::ostream& out = std::cout);
 } /*namespace DFN*/
 
 

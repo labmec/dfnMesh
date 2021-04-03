@@ -35,8 +35,6 @@
 
 
 
-
-
 /**
  * @brief information and assumptions
 */
@@ -207,14 +205,18 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 	std::string mshfile = "no-msh-file";
 	for(int iarg=1; iarg < argc; ++iarg){
 		std::string aux = argv[iarg];
-		if(argv[iarg][0] != '-'){example = argv[iarg];}
-		else if(aux == "-m"){mshfile = argv[++iarg];}
-		else if(aux == "-f"){example = argv[++iarg];}
-		else if(aux == "-td"){toldist = std::stod(argv[++iarg]);}
-		else if(aux == "-ta"){tolangle = std::stod(argv[++iarg]);}
-		else if(aux == "-tc"){tolangle = std::acos(std::stod(argv[++iarg]));}
-		else{
-			PZError << "\nUnrecognized arguments passed:\n\t\""<<argv[iarg]<<"\" \""<<argv[++iarg]<<"\"\n\n"; 
+		try{
+			if(argv[iarg][0] != '-'){example = argv[iarg];}
+			else if(aux == "-m"){mshfile = argv[++iarg];}
+			else if(aux == "-f"){example = argv[++iarg];}
+			else if(aux == "-td"){toldist = std::stod(argv[++iarg]);}
+			else if(aux == "-ta"){tolangle = std::stod(argv[++iarg]);}
+			else if(aux == "-tc"){tolangle = std::acos(std::stod(argv[++iarg]));}
+			else{
+				throw std::bad_exception();
+			}
+		}catch(...){
+			PZError << "\nUnrecognized argument passed:\n\t\""<< argv[iarg] << "\"\n" << std::endl; 
 			DebugStop();
 		}
 	}

@@ -89,15 +89,14 @@ DFNPolygon &DFNFracture::Polygon() {
 
 DFNFace* DFNFracture::AddFace(DFNFace &face){
     int index= face.Index();
-    auto res = fFaces.insert({index,face});
+    auto res = fFaces.emplace(index,std::move(face));
     if(res.second == false) return nullptr;
 #ifdef LOG4CXX
     if(logger->isDebugEnabled())
     {
         std::stringstream sout;
         sout << "[Adding face]\n";
-        res.first->second.Print(sout,true);
-        // logger->setAdditivity(true);
+        face.Print(sout,true);
         LOGPZ_DEBUG(logger,sout.str());
     }
 #endif
@@ -187,7 +186,11 @@ void DFNFracture::CreateFaces(){
         AddFace(face);
         std::cout<<"\r#Faces intersected = "<<fFaces.size()<<std::flush;
     }
+
+    // Depending on the fracture limit directive (DFNFracture::fLimit) we may have to extend 
+    // the fracture surface inside the polyhedra intersected by fracture limits
     if(gmesh->Dimension() == 3 && fLimit != Etruncated) IsolateFractureLimits();
+    
     std::cout<<std::endl;
 #ifdef LOG4CXX
     LOGPZ_INFO(logger, "[End][Searching faces]")
@@ -1256,6 +1259,7 @@ void DFNFracture::FindOffboundRibs(){
             DFNRib rib(edge,this);
             rib.SetIntersectionCoord(intersection);
             rib.FlagOffbound(true);
+            rib.SnapIntersection_try(fdfnMesh->TolDist());
             // if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
             // edge->SetMaterialId(-5);
             DFNRib* ribptr = AddRib(rib);
@@ -1679,6 +1683,34 @@ void DFNFracture::InsertFaceInSurface(int64_t elindex){
 void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     fPolygon.SortNodes(gmesh);
+
+
+    // Has to be done for all faces on the surface of RealFracture before rechecking for OrthogonalFracture.fFaces
+    TPZStack<int64_t> to_remove;
+    for(const int64_t index : realfracture.fSurfaceFaces){
+        TPZGeoEl* face = gmesh->Element(index);
+        if(this->CheckFaceAbove(face,true)) continue;
+        
+        to_remove.push_back(index);
+        TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(face);
+        for(int64_t index : edgeindices){
+            TPZGeoEl* edge = gmesh->Element(index);
+            if(edge->HasSubElement()){
+                realfracture.RemoveFromSurface(edge);
+                continue;
+            }
+            TPZGeoElSide edgeside(edge,2);
+            TPZManVector<REAL,3> centroid(3,0.);
+            edgeside.CenterX(centroid);
+            if(!fPolygon.Compute_PointAbove(centroid))
+                {realfracture.RemoveFromSurface(edge);}
+        }
+    }
+    for(const int64_t index : to_remove){
+        TPZGeoEl* face = gmesh->Element(index);
+        realfracture.RemoveFromSurface(face);
+    }
+
     for(auto& it : fFaces){
         DFNFace& face = it.second;
         // This classification is only useful for faces with 2 intersected ribs
@@ -1713,11 +1745,6 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
         // Now add back children that are within the limits of fracture surface
         for(TPZGeoEl* child : children){
             
-            // TPZManVector<REAL,3> centroid(3,0.);
-            // TPZGeoElSide childside(child,child->NSides()-1);
-            // childside.CenterX(centroid);
-            // edgeindices = DFN::GetEdgeIndices(child);
-            // if(fPolygon.Compute_PointAbove(centroid)){
             if(this->CheckFaceAbove(child,false)){
                 realfracture.AddToSurface(child);
                 edgeindices = DFN::GetEdgeIndices(child);
@@ -1727,23 +1754,16 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
                 }
             }
             else{
-                // child->SetMaterialId(id_below);
                 child->SetMaterialId(father->MaterialId());
                 edgeindices = DFN::GetEdgeIndices(child);
                 for(int64_t index : edgeindices){
                     TPZGeoEl* edge = gmesh->Element(index);
-                    // edge->SetMaterialId(id_below);
                     edge->SetMaterialId(father->MaterialId());
                 }
-                // realfracture.RemoveFromSurface(child);
             }
         }
-        // // Keep father's lineInFace
-        // int64_t lineinface_index = face.LineInFace();
-        // if(lineinface_index < 0) continue;
-        // TPZGeoEl* lineinface = gmesh->Element(lineinface_index);
-        // lineinface->SetMaterialId(id_above);
     }
+
 }
 
 void DFNFracture::CleanUp(){
@@ -2016,25 +2036,6 @@ bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DF
         default: break;
     }
 
-    /***********************************************************************************/
-    // THIS WAS ANOTHER WAY I THOUGHT OF COUNTING n_neig_pairs & n_colinear_pairs
-    // IT'S PROBABLY LESS EFFICIENT, BUT I'D LIKE TO KEEP THE DRAFT
-    /// Count number of neighbour pairs and colinear neighbour pairs of SnapRibs within the volume
-    // for(auto it_A = volumeSnapRibs.begin(); it_A != volumeSnapRibs.end(); it_A++){
-    //     int64_t ribA_index = *it_A;
-    //     TPZGeoEl* ribA = gmesh->Element(ribA_index);
-    //     TPZGeoElSide ribA_side(ribA,-1);
-    //     it_A++;
-    //     for(auto it_B = it_A--; it_B != volumeSnapRibs.end(); it_B++){
-    //         int64_t ribB_index = *it_B;
-    //         TPZGeoEl* ribB = gmesh->Element(ribB_index);
-
-    //         TPZGeoElSide ribB_side({ribB,-1});
-    //         if(!DFN::AreNeighbours()) continue;
-    //         (...)
-    //     }
-    // }
-    /***********************************************************************************/
     
     
     /// Count number of neighbour pairs and colinear neighbour pairs of SnapRibs within the volume
@@ -2066,25 +2067,35 @@ bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DF
 
 void DFNFracture::RemoveRefinedDFNFaces(DFNPolyhedron& polyh){
 
-    int n_faces_refined = 0;
+    // Refined faces get removed from polyhedra when the polyhedra is meshed and those faces get refined. They're swapped for their children, so we should reach then through these
+    // Gather father elements of faces in this polyhedron's shell
+    std::set<int64_t> refinedfaces;
     for(const auto& oriented_face : polyh.Shell()){
+
         int64_t faceindex = oriented_face.first;
         // Get refined faces
         TPZGeoEl* facegel = fdfnMesh->Mesh()->Element(faceindex);
-        if(!facegel->HasSubElement()) continue;
+        if(!facegel->Father()) continue;
+        auto result = refinedfaces.insert(facegel->FatherIndex());
+
+        // Less readable, but more efficient way to implement this method
+        // if(result.second) continue;
+        // result.second == false, means we found a father element with at least 2 children in this polyhedron, which makes it a true candidate to be removed
+        // truecandidates.insert(facegel->FatherIndex());
+    }
+    for(int64_t index : refinedfaces){
+
         // Check if it's a DFNFace
-        auto itr = fFaces.find(faceindex);
+        auto itr = fFaces.find(index);
         if(itr == fFaces.end()) continue;
         // itr->second.Print();
         // DFNFace copydfnface(itr->second);
         #ifdef LOG4CXX
-            LOGPZ_DEBUG(logger,"DFNFace # " << faceindex << "\"(Removed from Frac# " << fIndex << ")\"");
+            LOGPZ_DEBUG(logger,"DFNFace # " << index << "\"(Removed from Frac# " << fIndex << ")\"");
         #endif // LOG4CXX
         // Remove it from DFNFaces
-        fFaces.erase(itr++);
+        fFaces.erase(itr++); // righthand-increment the iterator to avoid problems with destructor. First copies the iterator to std::map::erase(iterator), then increments, then executes map::erase()
         // fFaces.erase(faceindex);
-        n_faces_refined++;
     }
-
     // if(n_faces_refined == 0) DebugStop(); // This is not really a bug, but it's a weird unexpected result. This exception can probably be removed without harm, but I'd like to catch it if it ever happens.
 }

@@ -150,6 +150,15 @@ public:
         return output;
     }
 
+    /** @brief Print method for logging */
+    void Print(std::ostream& out = std::cout) const{
+        out << "\nRolodex around edge # "<< fedgeindex<<"\n";
+        out << "orient. | gel index | side | angle\n";
+        for(auto& card : fcards){
+            card.Print(out);
+        }
+    }
+
     /**
      * @brief Get a reference to a card using an index
      * @param index of the geometric element of that card
@@ -161,24 +170,25 @@ public:
         auto it = std::find(fcards.begin(),
                             fcards.end(),
                             dummycard);
-        if(it == fcards.end()) DebugStop();
+        if(it == fcards.end()){
+            PZError << "\nYou're looking for a card that doesn't exist in this rolodex.\nCard index : " << index; 
+            this->Print(PZError); 
+            DebugStop();
+        }
         return *it;
     }
 
-    /** @brief Print method for logging */
-    void Print(std::ostream& out = std::cout) const{
-        out << "\nRolodex around edge # "<< fedgeindex<<"\n";
-        out << "orient. | gel index | side | angle\n";
-        for(auto& card : fcards){
-            card.Print(out);
-        }
-    }
 
     /** @return Number of cards*/
-    int NCards(){return fcards.size();}
+    int NCards() const{return fcards.size();}
 };
 
 
+
+inline std::ostream& operator<<(std::ostream &out, const TRolodex& rolodex){
+    rolodex.Print(out);
+    return out;
+}
 
 
 
