@@ -1,0 +1,21 @@
+{
+    "$schema": "./dfn_schema.json",
+    "PZGenGrid": {
+        "x0": [-1,-1,-1],
+        "xf": [1,1,1],
+        "MMeshType": "EHexahedral",
+        "Nels": [1,1,1]
+    },
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+            "Nodes": [
+                [-1.01,-1.01,-0.33],
+                [ 1.01,-1.01, 0.33],
+                [ 1.01, 1.01, 0.33],
+                [-1.01, 1.01,-0.33]
+            ]
+        }
+    ]
+}
