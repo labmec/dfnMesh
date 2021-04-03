@@ -64,21 +64,23 @@
                         [-1.0,-1.0,-1.0]
                     ],
                     "additionalItems": false,
-                    "items": {
-                        "$id": "#/properties/PZGenGrid/properties/x0/items",
-                        "anyOf": [
-                            {
-                                "$id": "#/properties/PZGenGrid/properties/x0/items/anyOf/0",
-                                "type": "number",
-                                "title": "Coord",
-                                "description": "Coordinate value",
-                                "default": 0.0,
-                                "examples": [
-                                    0.0
-                                ]
-                            }
-                        ]
-                    }
+                    "items": [
+                        {
+                            "type": "number",
+                            "title": "Coord",
+                            "description": "x"
+                        },
+                        {
+                            "type": "number",
+                            "title": "Coord",
+                            "description": "y"
+                        },
+                        {
+                            "type": "number",
+                            "title": "Coord",
+                            "description": "z"
+                        }
+                    ]
                 },
                 "minX": {
                     "$id": "#/properties/PZGenGrid/properties/minX",
