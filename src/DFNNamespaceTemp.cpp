@@ -131,7 +131,7 @@ namespace DFN{
      * @param lineloop an oriented loop of 3 or 4 edges
     */  
     template<class Tcontainer>
-    static TPZGeoEl* MeshSimplePolygon(TPZGeoMesh* gmesh, Tcontainer lineloop, int matid){
+    TPZGeoEl* MeshSimplePolygon(TPZGeoMesh* gmesh,const Tcontainer& lineloop, int matid){
         int nnodes = lineloop.size();
         if(nnodes < 3) DebugStop();
         TPZManVector<int64_t,4> cornerindices(nnodes,-1);
@@ -157,46 +157,6 @@ namespace DFN{
         return new_el;
     }
 
-    /** @brief Check if a set of mesh nodes are coplanar
-    */
-    template<class TContainer>
-    bool AreCoPlanar(TPZGeoMesh* gmesh, TContainer nodeindices, REAL tolerance){
-        int nnodes = nodeindices.size();
-        if(nnodes < 4) return true;
-
-        TPZManVector<TPZManVector<REAL,3>,3> p(3,{0.,0.,0.});
-        int j=0;
-        for(int64_t inode : nodeindices){
-            gmesh->NodeVec()[inode].GetCoordinates(p[j]);
-            j++;
-            if(j>2) break;
-        }
-        
-        TPZManVector<REAL,3> vec0 = p[0] - p[1];
-        TPZManVector<REAL,3> vec2 = p[2] - p[1];
-        TPZManVector<REAL,3> vecj {0., 0., 0.};
-
-        TPZManVector<REAL,3> normal = CrossProduct<REAL>(vec0,vec2);
-        REAL norm = DFN::Norm<REAL>(normal);
-        if(fabs(norm) < tolerance){
-            PZError << "\n" << __PRETTY_FUNCTION__;
-            PZError << "\n\t Failed due to co-linear points";
-            DebugStop();
-        }
-        normal[0] /= norm;
-        normal[1] /= norm;
-        normal[2] /= norm;
-
-        TPZManVector<REAL,3> pj {0., 0., 0.};
-        for(int64_t inode : nodeindices){
-            if(j<3) {j++;continue;}
-            gmesh->NodeVec()[inode].GetCoordinates(pj);
-            vecj = pj - p[1];
-            REAL orth_dist = DotProduct<REAL>(normal,vecj);
-            if(fabs(orth_dist) > tolerance) return false; 
-        }
-        return true;
-    }
 
     /** @brief Set material ids for a set of element indices and skip negative entries*/
     template<class TContainer>

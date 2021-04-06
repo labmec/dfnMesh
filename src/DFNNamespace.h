@@ -128,16 +128,11 @@ namespace DFN{
      * @param lineloop an oriented loop of 3 or 4 edges
     */  
     template<class Tcontainer>
-    static TPZGeoEl* MeshSimplePolygon(TPZGeoMesh* gmesh, Tcontainer lineloop, int matid);
+    TPZGeoEl* MeshSimplePolygon(TPZGeoMesh* gmesh, const Tcontainer& lineloop, int matid);
 
     /** @brief Check if a set of mesh nodes are coplanar
-     * @warning While using with DFNFracture subpolygons, this method is only robust for sets
-     * of 4 points, since it fails in the case of colinearity of nodes 0, 1 and 2. I could make it better
-     * by picking the next node-triple whenever this colinearity is found, but there's no need for it
-     * right now. I'll leave it as a maybe-to-do...
     */
-    template<class TContainer>
-    bool AreCoPlanar(TPZGeoMesh* gmesh, TContainer nodeindices, REAL tolerance = gDFN_SmallNumber);
+    bool AreCoPlanar(TPZGeoMesh* gmesh, const std::set<int64_t>& nodeindices, REAL tolerance);
 
     /** @brief Set material ids for a set of element indices and skip negative entries*/
     template<class TContainer>

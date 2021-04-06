@@ -632,4 +632,56 @@ namespace DFN{
 
 		out << sout.str();
     }
+
+    bool AreCoPlanar(TPZGeoMesh* gmesh,const std::set<int64_t>& nodeindices, REAL tolerance){
+        int nnodes = nodeindices.size();
+        if(nnodes < 4) return true;
+        TPZManVector<TPZManVector<REAL,3>,3> p(3,{0.,0.,0.});
+
+        auto it = nodeindices.begin();
+        // In case we stumble on a triple of colinear points, we can keep on trying until a non-colinear triple is found or all possible triples were tried
+        for(int attempt=1; attempt <= nnodes; attempt++){
+            if(attempt > 1) it++;
+
+            // This is a little hard to read, but it's done this way to work with a template container. It would be easier to read if I'd limited the function to vectors, but I need it to work primarily with std::sets
+            auto auxit = it;
+            // p[0]
+            gmesh->NodeVec()[ *it  ].GetCoordinates(p[0]);
+            // p[1]
+            if(++auxit == nodeindices.end()) auxit = nodeindices.begin();
+            gmesh->NodeVec()[*auxit].GetCoordinates(p[1]);
+            // p[2]
+            if(++auxit == nodeindices.end()) auxit = nodeindices.begin();
+            gmesh->NodeVec()[*auxit].GetCoordinates(p[2]);
+
+            
+            TPZManVector<REAL,3> vec0 = p[0] - p[1];
+            TPZManVector<REAL,3> vec2 = p[2] - p[1];
+            TPZManVector<REAL,3> vecj {0., 0., 0.};
+
+            TPZManVector<REAL,3> normal = CrossProduct<REAL>(vec0,vec2);
+            REAL norm = DFN::Norm<REAL>(normal);
+            if(fabs(norm) < tolerance){
+                continue; // get the next triple of points and try again
+            }
+            normal[0] /= norm;
+            normal[1] /= norm;
+            normal[2] /= norm;
+
+            TPZManVector<REAL,3> pj {0., 0., 0.};
+            if(++auxit == nodeindices.end()) auxit = nodeindices.begin();
+            for(/*void*/; auxit != it; (++auxit == nodeindices.end() ? auxit = nodeindices.begin() : auxit)){
+                int64_t jnode = *auxit;
+                gmesh->NodeVec()[jnode].GetCoordinates(pj);
+                vecj = pj - p[1];
+                REAL orth_dist = DotProduct<REAL>(normal,vecj);
+                if(fabs(orth_dist) > tolerance) return false; 
+            }
+            return true;
+        }
+        PZError << "\n" << __PRETTY_FUNCTION__;
+        PZError << "\n\t Failed due to co-linear points";
+        DebugStop();
+        return false;
+    }
 } /* namespace DFN*/
