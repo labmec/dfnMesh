@@ -46853,10 +46853,10 @@
       <Property name="Camera2DManipulators" id="19218.Camera2DManipulators" number_of_elements="9">
         <Element index="0" value="1"/>
         <Element index="1" value="3"/>
-        <Element index="2" value="2"/>
+        <Element index="2" value="1"/>
         <Element index="3" value="2"/>
         <Element index="4" value="2"/>
-        <Element index="5" value="6"/>
+        <Element index="5" value="1"/>
         <Element index="6" value="3"/>
         <Element index="7" value="1"/>
         <Element index="8" value="4"/>
@@ -46875,8 +46875,8 @@
       </Property>
       <Property name="Camera3DManipulators" id="19218.Camera3DManipulators" number_of_elements="9">
         <Element index="0" value="4"/>
-        <Element index="1" value="1"/>
-        <Element index="2" value="2"/>
+        <Element index="1" value="2"/>
+        <Element index="2" value="1"/>
         <Element index="3" value="3"/>
         <Element index="4" value="4"/>
         <Element index="5" value="1"/>
