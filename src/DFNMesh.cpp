@@ -14,11 +14,14 @@
 static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 #endif
 
-DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle){
+DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 	fGMesh = gmesh;
     fTolDist = tolDist;
     fTolAngle = tolAngle;
     fTolAngle_cos = std::cos(tolAngle);
+
+	// Option to apply a uniform refinement to the coarse mesh before inserting fractures
+	PreRefine(prerefine);
 
 	// create a copy of the mesh because materials will be reset afterwards @todo
 	// this->ClearMaterials();
@@ -1574,6 +1577,7 @@ bool DFNMesh::HasEqualDimensionNeighbour(TPZGeoElSide &gelside){
 
 void DFNMesh::CreateSkeletonElements(int dimension, int matid)
 {
+	if(dimension == 0) return;
 	std::cout << " -Creating skeleton elements\r" << std::flush;
     int nel = fGMesh->NElements();
     for (int iel = 0; iel < nel; iel++)
@@ -1712,6 +1716,7 @@ void DFNMesh::InitializePolyhedra(){
 	TPZGeoElSide neig;
 	for(TPZGeoEl* gel : fGMesh->ElementVec()){
 		if(gel->Dimension() != 2) continue;
+		if(gel->HasSubElement()) continue;
 		// if(gel->Type() != EQuadrilateral) continue; //testing
 		// if(gel->MaterialId() != DFNMaterial::Eskeleton) continue;
 
@@ -1740,7 +1745,9 @@ void DFNMesh::InitializePolyhedra(){
 	for(TPZGeoEl* vol : fGMesh->ElementVec()){
 		if(!vol) continue;
 		if(vol->Dimension() != 3) continue;
-		CreateGelPolyhedron(vol,vol->Index());
+		if(vol->HasSubElement()) continue;
+		TPZGeoEl* ancestor = vol->EldestAncestor();
+		CreateGelPolyhedron(vol,ancestor->Index());
 	}
 
 	std::cout<<"                                 \r"<<std::flush;
@@ -2531,4 +2538,38 @@ void DFNMesh::DFN_DebugStop(){
 	fGMesh->Print(pzmesh);
 	DumpVTK(true,true);
 	DebugStop();
+}
+
+
+
+void DFNMesh::PreRefine(int n){
+	if(n == 0) return;
+	if(fFractures.size() > 0){
+		PZError << "\n__PRETTY_FUNCTION__\nWas called on a mesh that might have already been refined for a fracture.\n";
+		DebugStop();
+	}
+
+	/// @TODO tetrahedra and triangles
+	gRefDBase.InitializeUniformRefPattern(MElementType::EOned);
+	gRefDBase.InitializeUniformRefPattern(MElementType::EQuadrilateral);
+	gRefDBase.InitializeUniformRefPattern(MElementType::ECube);
+	int maxdim = fGMesh->Dimension();
+	TPZManVector<TPZGeoEl*,8> children;
+	for(int i=0; i<n; i++){
+		int64_t nels = fGMesh->NElements();
+		for(int dim=1; dim<=maxdim; dim++){
+			for(int64_t iel =0; iel < nels ; iel++){
+				TPZGeoEl* gel = fGMesh->Element(iel);
+				if(!gel) continue;
+				if(gel->Dimension() != dim) continue;
+				if(gel->HasSubElement()) continue;
+				
+				gel->Divide(children);
+			}
+		}
+		// CreateSkeletonElements(maxdim-1);
+		// CreateSkeletonElements(maxdim-2);
+		// UpdatePolyhedra();
+	}
+
 }

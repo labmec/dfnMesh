@@ -328,6 +328,14 @@
                 0.01
             ]
         },
+        "PreRefine": {
+            "$id": "#/properties/PreRefine",
+            "type": "integer",
+            "title": "CoarseMesh Refinement Lvl",
+            "description": "Number of uniform refinements to apply to the coarse mesh before introducing fractures. Defaults to zero.",
+            "default": 0,
+            "minimum": 0
+        },
         "Fractures": {
             "$id": "#/properties/Fractures",
             "type": "array",

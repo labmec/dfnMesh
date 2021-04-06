@@ -74,7 +74,8 @@ void ReadFile(	const std::string			& filename,
 				MMeshType					& eltype,
 				TPZManVector<REAL,2>		& tol,
 				TPZManVector<int>			& matid,
-				TPZManVector<FracLimit>		& limit_directives
+				TPZManVector<FracLimit>		& limit_directives,
+				int							& prerefine
 				)
 {
 		/*_______________________________________________________________
@@ -286,6 +287,12 @@ void ReadFile(	const std::string			& filename,
 			tol[1] = std::acos(std::stod(word));
 			continue;
 		}
+		else if(word == "PreRefine" || word == "prerefine"){
+			while (getline(ss, word, ' ') && word.length() == 0){/*void*/};
+			getline(ss, word, ' ');
+			prerefine = std::stoi(word);
+			continue;
+		}
 
 	}
 	for(int i=0; i<3; i++) {xf[i] = x0[i] + L[i];}
@@ -322,12 +329,14 @@ void ReadFileJSON(const std::string			& filename,
 				MMeshType					& eltype,
 				TPZManVector<REAL,2>		& tol,
 				TPZManVector<int>			& matid,
-				TPZManVector<FracLimit>		& limit_directives
+				TPZManVector<FracLimit>		& limit_directives,
+				int                         & prerefine
 				)
 {
 		/*_______________________________________________________________
 						JSON OPTIONS 
 	{												// <Don't forget opening brace>
+		"$schema": "path-schema.json"	<string>	// I have set up a json schema for the user to get autocomplete. It's in ${workspaceFolder}/examples/dfn_schema.json. Just add the $schema line and be happy. Make sure you've got your relative path right.
 		"PZGenGrid": {								// To create a PZGenGrid
 			"Origin": [x, y, z], 		<double>	// (optional) for the origin point of the grid. Assumes [0,0,0] if not provided
 			// "x0": 								// (alias for "Origin")
@@ -341,6 +350,7 @@ void ReadFileJSON(const std::string			& filename,
 			// "nelDiv": 							// (alias for "Nels")
 		},
 		"Mesh": "path",					<string>	// Path for .msh file
+		"PreRefine": value,				<int>		// Number of uniform refinements to apply to the coarse mesh before introducing fractures. Defaults to zero.
 		"TolDist": value,				<double>	// Tolerable distance (optional). Assumes 1e-4 if not provided
 		"TolAngle": value,				<double>	// Tolerable angle (optional). Assumes 1e-4 if not provided
 		"Fractures":[
@@ -485,6 +495,12 @@ void ReadFileJSON(const std::string			& filename,
 	else if(input.find("Tolerable Angle") != input.end())
 		{tol[1] = input["Tolerable Angle"];}
 	
+	// An option to apply uniform refinement in the mesh before fractures
+	if(input.find("PreRefine") != input.end())
+		{prerefine = input["PreRefine"];}
+	else if(input.find("prerefine") != input.end())
+		{prerefine = input["prerefine"];}
+	
 	// Fractures
 	int nfractures = input["Fractures"].size();
 	matid.Resize(nfractures,DFNMaterial::Efracture);
@@ -526,7 +542,7 @@ void ReadFileJSON(const std::string			& filename,
 
 
 
-TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives){
+TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine){
 
 
 	MMeshType eltype = MMeshType::ENoType;
@@ -540,9 +556,9 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 	try{extension = filename.substr(filename.find_last_of('.'));}
 	catch(std::out_of_range){extension = '?';}
 	if(extension == ".txt")	
-		{ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives);}
+		{ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives,prerefine);}
 	else if(extension == ".json" || extension == ".jsonc")
-		{ReadFileJSON(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives);}
+		{ReadFileJSON(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives,prerefine);}
 	else{
 		PZError << "\nUnrecognized file extension:"
 				<< "\nFile = " << filename

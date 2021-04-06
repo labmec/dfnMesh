@@ -48,8 +48,7 @@ void PrintPreamble(){
 
 }
 
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives);
-// TPZGeoMesh* ReadInputJSON(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives);
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine);
 
 
 #ifdef LOG4CXX
@@ -96,6 +95,7 @@ int main(int argc, char* argv[]){
 #ifdef LOG4CXX
 	std::string configpath = PROJECT_ROOT "/src/util/DFNlog4cxx.cfg";
 	log4cxx::PropertyConfigurator::configure(configpath);
+	logger->setLevel(log4cxx::Level::getTrace());
 #endif // LOG4CXX
 	TPZTimer time("DFNMesh");
 	PrintPreamble();
@@ -107,14 +107,14 @@ int main(int argc, char* argv[]){
 	REAL tol_angle = 1.e-6; 
 	TPZManVector<int> matid;
 	TPZManVector<FracLimit> limit_directives;
-	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle,matid,limit_directives);
+	int prerefine = 0;
+	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle,matid,limit_directives,prerefine);
 	gmsh::initialize();
 	
 	// ScriptForBug2(gmesh);
 	time.start();
     /// Constructor of DFNMesh initializes the skeleton mesh
-	DFNMesh dfn(gmesh);
-	dfn.SetTolerances(tol_dist,tol_angle);
+	DFNMesh dfn(gmesh,tol_dist,tol_angle,prerefine);
 
 	// dfn.InheritPolyhedra();
 	// dfn.PrintPolyhedra();
@@ -140,6 +140,7 @@ int main(int argc, char* argv[]){
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
+
 		fracture->CheckSnapInducedOverlap();
 
 #ifdef LOG4CXX
@@ -156,7 +157,6 @@ int main(int argc, char* argv[]){
 		// dfn.PrintVTKColorful();
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
-			// dfn.InheritPolyhedra();
 			// divide the fracture in simple geometries using the mesh created in RefineFaces
 			fracture->MeshFractureSurface();
 			// dfn.DumpVTK();
@@ -168,7 +168,7 @@ int main(int argc, char* argv[]){
         {
             std::ofstream logtest("LOG/dfn.summary.log");
             dfn.Print(logtest,argv[1]);
-			// dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
+			dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
         }
 #endif //PZDEBUG
 	}
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]){
 
 
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives){
+TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine){
 	TPZGeoMesh* gmesh = nullptr;
 	std::string default_example("examples/two-hex-and-a-frac.json");
 	std::string example = default_example;
@@ -212,6 +212,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 			else if(aux == "-td"){toldist = std::stod(argv[++iarg]);}
 			else if(aux == "-ta"){tolangle = std::stod(argv[++iarg]);}
 			else if(aux == "-tc"){tolangle = std::acos(std::stod(argv[++iarg]));}
+			else if(aux == "-r"){prerefine = std::stoi(argv[++iarg]);}
 			else{
 				throw std::bad_exception();
 			}
@@ -221,7 +222,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 		}
 	}
 	std::cout<<"input file: "<<example<<"\n";
-	gmesh = SetupExampleFromFile(example,polyg_stack,mshfile,toldist,tolangle,matid,limit_directives);
+	gmesh = SetupExampleFromFile(example,polyg_stack,mshfile,toldist,tolangle,matid,limit_directives,prerefine);
 	return gmesh;
 }
 

@@ -49,7 +49,7 @@ private:
 public:
     
     /// Constructor
-    DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = 1e-5, REAL tolerableAngle = 0.2);
+    DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = 1e-5, REAL tolerableAngle = 0.2, int prerefine = 0);
 
     /// Empty constructor
     DFNMesh(): fGMesh(nullptr){fTolAngle_cos = std::cos(fTolAngle);}
@@ -260,6 +260,9 @@ public:
 
     // DebugStop but dump some more information
     void DFN_DebugStop();
+
+    /// PreRefines the coarse mesh n-times using uniform refpatterns. Can be used to improve mesh quality
+    void PreRefine(int n = 1);
 
 private:
     /// Gather oriented faces around a 3D element to define a shell, then create a new polyhedron in the polyhedra vec DFNMesh::fPolyhedra
