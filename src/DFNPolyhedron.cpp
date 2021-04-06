@@ -154,9 +154,11 @@ void DFNPolyhedron::Refine(){
 
 
 bool DFNPolyhedron::IsTetrahedron() const{
-    if(fShell.size() != 4) return false;
+    bool condition = (fShell.size() == 4 
+                        && fDFN->Mesh()->Element(fShell.begin()->first)->Type() == MElementType::ETriangle
+                    );
 
-    return true;
+    return condition;
 
     // Don't really need these, right?
     // TPZGeoMesh* gmesh = fDFN->Mesh();
