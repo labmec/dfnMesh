@@ -1612,6 +1612,7 @@ void DFNFracture::RecoverFractureLimits(){
 
     // @todo I'm not sure if Updating Polyhedra after all limits is a robust decision. Maybe it should be called after each limit. Although, it hasn't broken yet, so maybe we'll just leave it here until we find an example of this breaking. I've left a TryCatch approach commented above.
     fdfnMesh->UpdatePolyhedra();
+    fdfnMesh->Mesh()->BuildConnectivity();
 
 
 #ifdef LOG4CXX
