@@ -17,6 +17,10 @@
 #include "DFNFracture.h"
 #include <math.h>
 
+#ifdef LOG4CXX
+    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif // LOG4CXX
+
 /// Default constructor takes a pointer to geometric element
 DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture) :
     fGeoEl(gel),
@@ -157,6 +161,10 @@ void DFNRib::SnapIntersection_force(int closestnode){
     // Snap intersection
     fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
     fIntersectionSide = closestnode;
+#ifdef LOG4CXX
+    if(logger->isTraceEnabled())
+        LOG4CXX_TRACE(logger,"Snap rib " << Index() << ". To LocalNode " << closestnode);
+#endif // LOG4CXX
     // When an intersection gets snapped, neighbours should also be snapped to keep refinements consistant
     UpdateNeighbours(closestnode);
 }
