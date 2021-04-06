@@ -151,20 +151,20 @@ namespace DFN{
     }
 
     /** @brief Return true if polygon has at least 3 valid edges
-     * @note Assumes any negative index represents an edge that was colapsed down to zero dimension
+     * @note 1: Assumes any negative index represents an edge that was colapsed down to zero dimension
+     * @note 2: Removes all negative entries from the polygon
     */
-    bool IsValidPolygon(TPZStack<int64_t> polygon){
-        int nedges = 0;
-        for(auto& edge : polygon){
-            nedges += int(edge>-1);
-        }
+    bool IsValidPolygon(TPZStack<int64_t>& polygon){
+        // clear collapsed edges from polygon lineloop
+        DFN::ClearNegativeEntries(polygon);
+        int nedges = polygon.size();
         return nedges > 2;
     }
 
     /** @brief Alternate name of dfn::IsValidPolygon for readability
      * @returns False
     */
-    bool IsDegeneratePolygon(TPZStack<int64_t> polygon){
+    bool IsDegeneratePolygon(TPZStack<int64_t>& polygon){
         return !IsValidPolygon(polygon);
     }
 
@@ -570,34 +570,7 @@ namespace DFN{
 
     }
 
-    TPZGeoEl* GetLoopedFace(const std::set<int64_t>& edges, TPZGeoMesh* gmesh){
-        // Consistency checks
-        int nedges = edges.size();
-        if(nedges < 3 || nedges > 4) DebugStop();
 
-        std::array<TPZGeoElSide,4> gelside;
-        int i = 0;
-        for(const int64_t index : edges){
-            TPZGeoEl* gel = gmesh->Element(index);
-            if(gel->Dimension() != 1) DebugStop();
-            gelside[i] = {gel,2};
-            i++;
-        }
-
-        TPZGeoEl* CandidateFace = FindCommonNeighbour(gelside[0],gelside[1],gelside[2],2);
-
-        if(!CandidateFace) return nullptr;
-        if(nedges == 3) return CandidateFace;
-        // return CandidateFace;
-
-        TPZGeoElSide neig = gelside[3].Neighbour();
-        for(/*void*/; neig != gelside[3]; ++neig){
-            if(neig.Element()->Index() == CandidateFace->Index())
-                {return CandidateFace;}
-        }
-
-        return nullptr;
-    }
 
     std::set<int64_t> YoungestChildren(const std::set<int64_t>& parents, TPZGeoMesh* gmesh){
         TPZStack<TPZGeoEl*> childrenstack;

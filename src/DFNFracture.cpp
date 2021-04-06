@@ -138,7 +138,7 @@ DFNFace * DFNFracture::Face(int64_t index){
 
 void DFNFracture::CreateFaces(){
 #ifdef LOG4CXX
-    LOGPZ_INFO(logger, "\n[Start][Searching faces]")
+    LOGPZ_INFO(logger, "[Start][Searching faces]")
 #endif // LOG4CXX
     std::cout<<"\r#Faces intersected = 0";
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
@@ -168,7 +168,7 @@ void DFNFracture::CreateFaces(){
                 rib_index[iedge] = neig.Element()->Index();
             }
             // rib_index contains the 1D geometric element index (of the skeleton mesh)
-            if(rib_index[iedge] == -1) DebugStop(); //Missing 1D skeleton
+            if(rib_index[iedge] == -1) fdfnMesh->DFN_DebugStop(); //Missing 1D skeleton
             // rib_index contains the geometric element index of the edge elements
             // Rib returns the pointer to the DFNRib object IF IT EXISTS
             rib_vec[iedge] = Rib(rib_index[iedge]);
@@ -778,29 +778,20 @@ void DFNFracture::SetLoopOrientation(TPZStack<int64_t>& edgelist){
 TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
 
-    // Get 3 edges of this polygon (skip if polygon still has zero dimensional edges i.e. index == -1)
-    int i=0;
-    while(polygon[i]<0) i++;
-    TPZGeoEl* gel1 = gmesh->Element(polygon[i]);
-    i++;
-    while(polygon[i]<0) i++;
-    TPZGeoEl* gel2 = gmesh->Element(polygon[i]);
-    i++;
-    while(polygon[i]<0) i++;
-    TPZGeoEl* gel3 = gmesh->Element(polygon[i]);
+    TPZGeoEl* loopedface = DFN::GetLoopedFace(polygon,gmesh);
+    if(loopedface) return loopedface;
 
-    if(gel1->Dimension() != 1 || gel2->Dimension() != 1 || gel3->Dimension() != 1) DebugStop();
+    // If edges in the subpolygon don't loop around a single face, try their ancestors
+    std::set<int64_t> RibElders;
+    for(const int64_t rib_index : polygon){
+        TPZGeoEl* rib = gmesh->Element(rib_index);
+        TPZGeoEl* elder = (rib->Father()?rib->EldestAncestor():rib);
+        RibElders.insert(elder->Index());
+    }
+    
+    loopedface = DFN::GetLoopedFace(RibElders,gmesh);
+    return loopedface;
 
-    TPZGeoElSide gelside1(gel1,2);
-    TPZGeoElSide gelside2(gel2,2);
-    TPZGeoElSide gelside3(gel3,2);
-    // A 2D neighbour, common to 3 edges is an existing face
-    TPZGeoEl* common_neig = DFN::FindCommonNeighbour(gelside1,gelside2,gelside3,2);
-
-    if(!common_neig) return nullptr;
-
-    // common_neig->SetMaterialId(fmatid);
-    return common_neig;
 }
 
 void DFNFracture::MeshFractureSurface(){
@@ -928,15 +919,7 @@ void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
     
 // }
 
-/// Removes negative integers from a stack
-void DFNFracture::ClearNegativeEntries(TPZStack<int64_t>& subpolygon){
-    TPZStack<int64_t> copy(subpolygon);
-    subpolygon.Fill(gDFN_NoIndex);
-    subpolygon.clear();
-    for(int64_t& index : copy){
-        if(index > -1 ) subpolygon.push_back(index);
-    }
-}
+
 
 
 
@@ -1045,8 +1028,6 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
     // New elements to be created
     TPZStack<int64_t> newelements(1,-1);
 
-    // clear collapsed edges from polygon lineloop
-    ClearNegativeEntries(polygon);
     // Get set of nodes
     std::set<int64_t> nodes;
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
@@ -1062,7 +1043,10 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 //    for(auto no : nodes) gmesh->NodeVec()[no].Print();
     // std::cout<<"SubPolygon# "<<polygon_counter<<": "<<polygon<<std::endl;
     // If polygon is planar quadrilateral or triangle, we can skip gmsh
-    bool isplane = DFN::AreCoPlanar(gmesh,nodes);
+    bool isplane = false;
+    try{isplane = DFN::AreCoPlanar(gmesh,nodes,1e-5);}
+    catch(...){fdfnMesh->DFN_DebugStop();}
+
     switch(nedges){
         case 0: 
         case 1: 
@@ -2013,6 +1997,10 @@ bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DF
     int n_snapribs = volumeSnapRibs.size();
     if(n_snapribs <= 1) return false;
     
+    /// @return false if the set of volumeSnapRibs form a closed loop of 3 or 4 edges around an existing face in the mesh
+    if(DFN::GetLoopedFace(volumeSnapRibs,gmesh)) 
+        {return false;}
+
     /// @return false if the set of rib elders form a closed loop of 3 or 4 edges (which means we've snapped onto a mesh face which will latter be incorporated during DFNFracture::MeshFractureSurface)
     // @definition: rib elders = the set of EldestAncestors of the snap ribs in this polyhedron
     std::set<int64_t> RibElders;

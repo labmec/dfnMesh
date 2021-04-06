@@ -113,7 +113,8 @@ namespace DFN{
     void GetLineLoop(TPZGeoEl* face_el, Tcontainer& lineloop, const int shift=0);
 
     /// @brief Check if a set of 1D elements loop around a common 2D neighbour
-    TPZGeoEl* GetLoopedFace(const std::set<int64_t>& edges, TPZGeoMesh* gmesh);
+    template<class Tcontainer>
+    TPZGeoEl* GetLoopedFace(const Tcontainer& edges, TPZGeoMesh* gmesh);
     
     /**
      * @brief Generates the best fitting plane to approximate a point cloud in R3 using least squares
@@ -145,7 +146,7 @@ namespace DFN{
     /** @brief Return true if polygon has at least 3 valid edges
      * @note Assumes any negative index represents an edge that was colapsed down to zero dimension
     */
-    bool IsValidPolygon(TPZStack<int64_t> polygon);
+    bool IsValidPolygon(TPZStack<int64_t>& polygon);
 
     /** @brief returns the intersection of 2 sets*/
     template<typename Ttype>
@@ -209,6 +210,11 @@ namespace DFN{
     bool Is2PIorZero(Ttype angle, Ttype tolerance = (Ttype)gDFN_SmallNumber);
 
     void SketchStatusVec(const TPZManVector<int,9>& statusvec, std::ostream& out = std::cout);
+
+    /// Removes negative integers from a container
+    template<class Tcontainer>
+    void ClearNegativeEntries(Tcontainer& list);
+
 } /*namespace DFN*/
 
 

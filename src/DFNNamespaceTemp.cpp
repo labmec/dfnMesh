@@ -250,6 +250,49 @@ namespace DFN{
         return;
     }
 
+    /// Removes negative integers from a container
+    template<class Tcontainer>
+    void ClearNegativeEntries(Tcontainer& list){
+        Tcontainer copy(list);
+        #ifdef PZDEBUG
+            list.Fill(gDFN_NoIndex);
+        #endif // PZDEBUG
+        list.clear();
+        for(auto& index : copy){
+            if( !(index < 0) ) list.push_back(index);
+        }
+    }
+
+    template<class Tcontainer>
+    TPZGeoEl* GetLoopedFace(const Tcontainer& edges, TPZGeoMesh* gmesh){
+        // Consistency checks
+        int nedges = edges.size();
+        if(nedges < 3 || nedges > 4) return nullptr;
+
+        std::array<TPZGeoElSide,4> gelside;
+        int i = 0;
+        for(const int64_t index : edges){
+            TPZGeoEl* gel = gmesh->Element(index);
+            if(gel->Dimension() != 1) DebugStop();
+            gelside[i] = {gel,2};
+            i++;
+        }
+
+        TPZGeoEl* CandidateFace = FindCommonNeighbour(gelside[0],gelside[1],gelside[2],2);
+
+        if(!CandidateFace) return nullptr;
+        if(nedges == 3) return CandidateFace;
+        // return CandidateFace;
+
+        TPZGeoElSide neig = gelside[3].Neighbour();
+        for(/*void*/; neig != gelside[3]; ++neig){
+            if(neig.Element()->Index() == CandidateFace->Index())
+                {return CandidateFace;}
+        }
+
+        return nullptr;
+    }
+
 } /*namespace DFN*/
 
 
