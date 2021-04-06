@@ -1259,13 +1259,13 @@ void DFNFracture::FindOffboundRibs(){
             DFNRib rib(edge,this);
             rib.SetIntersectionCoord(intersection);
             rib.FlagOffbound(true);
-            rib.SnapIntersection_try(fdfnMesh->TolDist());
             // if(edge->MaterialId() != DFNMaterial::Efracture) {edge->SetMaterialId(DFNMaterial::Erefined);}
             // edge->SetMaterialId(-5);
             DFNRib* ribptr = AddRib(rib);
             if(ribptr) ribptr->AppendToNeighbourFaces();
         }
     }
+    SnapIntersections_ribs();
 
 }
 void DFNFracture::FindOffboundFaces(){
