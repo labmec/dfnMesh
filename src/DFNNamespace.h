@@ -139,7 +139,8 @@ namespace DFN{
     void BulkSetMaterialId(TPZGeoMesh* gmesh, TContainer elementindices, int matid);
 
     /** @brief Return true if polygon has at least 3 valid edges
-     * @note Assumes any negative index represents an edge that was colapsed down to zero dimension
+     * @note 1: Assumes any negative index represents an edge that was colapsed down to zero dimension
+     * @note 2: Removes all negative entries from the polygon
     */
     bool IsValidPolygon(TPZStack<int64_t>& polygon);
 

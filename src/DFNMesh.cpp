@@ -365,7 +365,7 @@ DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandlin
 	// std::stringstream sout;
 	// sout << "\n[Start][Fracture " << fracture->Index() << "]";
     // if(logger->isInfoEnabled()) LOGPZ_INFO(logger, sout.str());
-    LOGPZ_INFO(logger, "\n[Start][Fracture " << fracture->Index() << "]");
+    LOGPZ_INFO(logger, "[Start][Fracture " << fracture->Index() << "]");
 #endif // LOG4CXX
 	std::cout<<"\nFracture #"<<fracture->Index();
 	fFractures.push_back(fracture);
@@ -1683,7 +1683,7 @@ DFNPolyhedron* DFNMesh::CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,in
 #ifdef LOG4CXX
 	if(logger->isDebugEnabled()){
 		std::stringstream stream;
-		stream << "\n[Adding Polyhedron]";
+		stream << "[Adding Polyhedron]";
 		newpolyhedron.Print(stream);
 		LOGPZ_DEBUG(logger,stream.str());
 	}
@@ -1781,7 +1781,7 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 
 void DFNMesh::UpdatePolyhedra(){
 #ifdef LOG4CXX
-	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"\n[Start][Update Polyhedra]");
+	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[Start][Update Polyhedra]");
 #endif // LOG4CXX
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
@@ -1804,7 +1804,7 @@ void DFNMesh::UpdatePolyhedra(){
 		// 	initial_face->MaterialId() != DFNMaterial::Efracture) continue;
 		int64_t initial_id = initial_face->Index();
 		
-		char loading[4] = {'\\','|','/','-'};
+		const char loading[4] {'\\','|','/','-'};
 		int buffering = 0;
 
 		// look for polyhedron on each orientation of the initial_face
@@ -1868,48 +1868,6 @@ void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
 	}
 }
 
-// void DFNMesh::BuildPolyhedra(){
-// 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
-// 	this->SortFacesAroundEdges();
-// 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
-// 	int polyh_counter = fPolyhedra.size();
-	
-// 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
-// 	// loop over 2D skeleton elements
-// 	for(TPZGeoEl* initial_face : fGMesh->ElementVec()){
-// 		if(!initial_face) continue;
-// 		if(initial_face->Dimension() != 2) continue;
-// 		if(initial_face->HasSubElement()) continue;
-// 		int64_t initial_id = initial_face->Index();
-
-// 		// look for polyhedron on each orientation of the initial_face
-// 		for(int ipolyh_local=0; ipolyh_local<2; ipolyh_local++){
-// 			// if the first has been found, continue to the next
-// 			if(fPolyh_per_face[initial_id][ipolyh_local] != -1) continue;
-// 			polyhedron.Fill({-1,0});
-// 			polyhedron.clear();
-// 			int orientation = ipolyh_local?-1:1;
-// 			std::pair<int64_t,int> initial_face_orientation = {initial_id,orientation};
-// 			polyhedron.push_back({initial_id,orientation});
-// 			SetPolyhedralIndex(initial_face_orientation,polyh_counter);
-// 			bool IsConvex = true;
-// 			BuildVolume(initial_face_orientation,IsConvex,polyhedron);
-
-// 			#ifdef PZDEBUG
-// 				// std::cout << "Polyh#"<< std::setw(4) << polyh_counter;
-// 				// std::cout << ":  " << polyhedron << std::endl;
-// 			#endif //PZDEBUG
-
-// 			if(!IsConvex) MeshPolyhedron(polyhedron);
-// 			else{
-// 				DFNPolyhedron new_polyhedron(this,polyh_counter,polyhedron);
-// 				fPolyhedra.push_back(new_polyhedron);
-// 			}
-// 			polyh_counter++;
-// 		}
-// 	}
-// }
-
 
 
 
@@ -1962,7 +1920,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 					<< polyhedron
 					<< "\nCollapse happens between faces:\n"
 					<< initial_face_orient << "\n"
-					<< facingcards[i].first.fgelindex << " | " << facingcards[i].second
+					<< std::make_pair(facingcards[i].first.fgelindex , facingcards[i].second)
 					<< "\nAround rolodex:\n"
 					<< rolodex;
 			DFN_DebugStop();

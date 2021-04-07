@@ -221,7 +221,7 @@ void DFNFracture::CreateFaces(){
 
 void DFNFracture::CreateRibs(){
 #ifdef LOG4CXX
-    LOGPZ_INFO(logger, "\n[Start][Searching ribs]");
+    LOGPZ_INFO(logger, "[Start][Searching ribs]");
 #endif // LOG4CXX
     std::cout<<"\r\n#Ribs intersected = 0";
     //search gmesh for intersected ribs
@@ -796,6 +796,9 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 
 void DFNFracture::MeshFractureSurface(){
     std::cout<<"\r#SubPolygons meshed = 0";
+    #ifdef LOG4CXX
+        LOGPZ_INFO(logger,"[Start][Meshing Fracture Surface] Frac# " << fIndex);
+    #endif // LOG4CXX
     // fdfnMesh->CreateSkeletonElements(1);
     fdfnMesh->ExpandPolyhPerFace();
     // SubPolygons are subsets of the fracture surface contained by a polyhedral volume
@@ -840,12 +843,19 @@ void DFNFracture::MeshFractureSurface(){
             if(DFN::IsValidPolygon(subpolygon) == false) continue;
             polygon_counter++;
             
+            #ifdef LOG4CXX
+            if(logger->isDebugEnabled())
+                {LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh # " << polyhindex);}
+            #endif // LOG4CXX
+
             // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
-                // TPZGeoElSide gelside(ExistingGel);
-                // TPZGeoElBC gbc(gelside,this->fIndex+10);
-                // InsertFaceInSurface(gbc.CreatedElement()->Index());
+                
+                #ifdef LOG4CXX
+                    if(logger->isDebugEnabled()){LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());}
+                #endif // LOG4CXX
+                
                 InsertFaceInSurface(ExistingGel->Index());
                 continue;
             }
@@ -860,6 +870,10 @@ void DFNFracture::MeshFractureSurface(){
     fdfnMesh->Mesh()->BuildConnectivity();
     std::cout << "                       \r" << std::flush;
     fdfnMesh->CreateSkeletonElements(1);
+
+    #ifdef LOG4CXX
+        LOGPZ_INFO(logger,"[End][Meshing Fracture Surface] Frac# " << fIndex);
+    #endif // LOG4CXX
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
@@ -1062,6 +1076,11 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
     }
 
     InsertFaceInSurface(newelements);
+
+    #ifdef LOG4CXX
+        if(logger->isDebugEnabled())
+            {LOGPZ_DEBUG(logger,"\tNew elements indices : [" << newelements << "]");}
+    #endif // LOG4CXX
 
 }
 
