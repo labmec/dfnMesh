@@ -1,6 +1,6 @@
 {
     "$schema": "../dfn_schema.json",
-    "Mesh": "examples/flemisch_benchmark/fl_case1_supercoarse.msh",
+    "Mesh": "examples/flemisch_benchmark/fl_case1.msh",
     "TolDist":  5.0,
     "Fractures": [
         {

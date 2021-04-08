@@ -7,12 +7,12 @@
     //     "MMeshType": "EHexahedral"
     // },
     "Mesh": "examples/flemisch_benchmark/fl_case3.msh",
-    "PreRefine": 0,
+    "PreRefine": 1,
     "TolDist": 0.022,
     "TolAngle": 0.12,
     "Fractures":[
         {
-            "Index": 6,
+            "Index": 0,
             "Limit": "Erecovered",
             "MatID": 11,
             "Nodes":[ 
@@ -23,7 +23,7 @@
             ]
         },
         {
-            "Index": 7,
+            "Index": 1,
             "Limit": "Erecovered",
             "MatID": 14,
             "Nodes":[ 
@@ -34,7 +34,7 @@
             ]
         },
         {
-            "Index": 2,
+            "Index": 7,
             "Limit": "Erecovered",
             "MatID": 15,
             "Nodes":[ 
@@ -45,7 +45,7 @@
             ]
         },
         {
-            "Index": 3,
+            "Index": 6,
             "Limit": "Erecovered",
             "MatID": 10,
             "Nodes":[ 
@@ -78,7 +78,7 @@
             ]
         },
         {
-            "Index": 0,
+            "Index": 2,
             "Limit": "Erecovered",
             "MatID": 12,
             "Nodes":[ 
@@ -89,7 +89,7 @@
             ]
         },
         {
-            "Index": 1,
+            "Index": 3,
             "Limit": "Erecovered",
             "MatID": 13,
             "Nodes":[ 

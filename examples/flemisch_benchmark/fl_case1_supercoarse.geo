@@ -7,12 +7,12 @@ Point( 1) = {  0,0,0};
 
 Extrude {100, 0, 0} {
     Point{1}; 
-    Layers{1}; 
+    Layers{2}; 
     Recombine;
 }
 Extrude {0, 100, 0} {
     Curve{1}; 
-    Layers{1}; 
+    Layers{2}; 
     Recombine;
 }
 
@@ -37,9 +37,8 @@ Extrude {0, 0, 10} {
 }
 
 
-
 // Physical Surface(1) = Surface{:};
-// Transfinite Curve{:} = 2;
+
 // Transfinite Surface{:};
 // Recombine Surface{:};
 // Mesh 2;
