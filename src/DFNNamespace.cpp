@@ -154,18 +154,25 @@ namespace DFN{
      * @note 1: Assumes any negative index represents an edge that was colapsed down to zero dimension
      * @note 2: Removes all negative entries from the polygon
     */
-    bool IsValidPolygon(TPZStack<int64_t>& polygon){
+    bool IsValidPolygon(TPZStack<int64_t>& polygon,TPZGeoMesh* gmesh){
         // clear collapsed edges from polygon lineloop
         DFN::ClearNegativeEntries(polygon);
         int nedges = polygon.size();
-        return nedges > 2;
+        if(nedges <= 1) return false;
+        // check for co-linearity of edges through shared eldest ancestor
+        std::set<int64_t> ancestors;
+        for(const auto index : polygon){
+            TPZGeoEl* elder = gmesh->Element(index)->EldestAncestor();
+            ancestors.insert(elder->Index());
+        }
+        return ancestors.size() > 1;
     }
 
     /** @brief Alternate name of dfn::IsValidPolygon for readability
      * @returns False
     */
-    bool IsDegeneratePolygon(TPZStack<int64_t>& polygon){
-        return !IsValidPolygon(polygon);
+    bool IsDegeneratePolygon(TPZStack<int64_t>& polygon, TPZGeoMesh* gmesh){
+        return !IsValidPolygon(polygon,gmesh);
     }
 
     /** @brief Check if a 2D side of a 3D element is oriented outward according to NeoPZ topolgy */

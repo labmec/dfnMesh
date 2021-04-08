@@ -795,6 +795,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 }
 
 void DFNFracture::MeshFractureSurface(){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::cout<<"\r#SubPolygons meshed = 0";
     #ifdef LOG4CXX
         LOGPZ_INFO(logger,"[Start][Meshing Fracture Surface] Frac# " << fIndex);
@@ -828,7 +829,9 @@ void DFNFracture::MeshFractureSurface(){
             if(GetPolygonIndex(initialface_orient,Polygon_per_face) > -1) continue;
 
             // Clear container
-            subpolygon.Fill(gDFN_NoIndex);
+            #ifdef PZDEBUG
+                subpolygon.Fill(gDFN_NoIndex);
+            #endif // PZDEBUG 
             subpolygon.clear();
             
             // Get entry side
@@ -840,7 +843,7 @@ void DFNFracture::MeshFractureSurface(){
             // DFN::BulkSetMaterialId(fdfnMesh->Mesh(),subpolygon,this->fmatid);
             
             // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
-            if(DFN::IsValidPolygon(subpolygon) == false) continue;
+            if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
             polygon_counter++;
             
             #ifdef LOG4CXX

@@ -142,7 +142,7 @@ namespace DFN{
      * @note 1: Assumes any negative index represents an edge that was colapsed down to zero dimension
      * @note 2: Removes all negative entries from the polygon
     */
-    bool IsValidPolygon(TPZStack<int64_t>& polygon);
+    bool IsValidPolygon(TPZStack<int64_t>& polygon, TPZGeoMesh* gmesh);
 
     /** @brief returns the intersection of 2 sets*/
     template<typename Ttype>
