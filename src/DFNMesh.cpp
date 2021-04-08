@@ -83,6 +83,14 @@ DFNMesh &DFNMesh::operator=(const DFNMesh &copy){
     return *this;
 }
 
+
+DFNMesh::~DFNMesh(){
+	for(auto fracture : fFractures){
+		delete fracture;
+	}
+}
+
+
 void DFNMesh::PrintVTK(std::string vtkmesh
                     ,std::string pzmesh)
 {
@@ -359,8 +367,8 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 // }
 
 
-DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling){
-	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling);
+DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid){
+	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling,materialid);
 #ifdef LOG4CXX
 	// std::stringstream sout;
 	// sout << "\n[Start][Fracture " << fracture->Index() << "]";
@@ -2476,7 +2484,7 @@ void DFNMesh::DumpVTK(bool polygon_representation, bool clearmaterials, std::str
 	if(clearmaterials) ClearMaterials();
 	std::cout<<" -Dumping VTK graphics\r"<<std::flush;
 	for(auto frac : FractureList()){
-		frac->CleanUp();
+		if(clearmaterials) frac->CleanUp();
 		if(polygon_representation) frac->Polygon().InsertGeomRepresentation(fGMesh);
 	}
 	if(clearmaterials) 

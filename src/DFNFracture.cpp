@@ -27,8 +27,9 @@ DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling)
-    :fPolygon(Polygon)
+DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid)
+    :fPolygon(Polygon),
+    fmatid(matid)
 {
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
@@ -1696,7 +1697,7 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
     TPZStack<int64_t> to_remove;
     for(const int64_t index : realfracture.fSurfaceFaces){
         TPZGeoEl* face = gmesh->Element(index);
-        if(this->CheckFaceAbove(face,true)) continue;
+        if(this->CheckFaceAbove(face,false)) continue;
         
         to_remove.push_back(index);
         TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(face);

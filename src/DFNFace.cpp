@@ -694,20 +694,20 @@ bool DFNFace::FindInPlanePoint(){
 
 void DFNFace::UpdateMaterial(){
 	DebugStop(); // deprecated
-	if(fGeoEl->MaterialId() == DFNMaterial::Efracture) return;
+	// if(fGeoEl->MaterialId() == DFNMaterial::Efracture) return;
 
-	bool two_in_a_row = false;
-	int cutnodes = 0;
-	int cutedges = 0;
-	int nnodes = fGeoEl->NCornerNodes();
-	for(int i=0; i<nnodes; i++){
-		cutnodes += fStatus[i];
-		if(fStatus[i]+fStatus[(i+1)%nnodes]==2){two_in_a_row = true;}
-	}
+	// bool two_in_a_row = false;
+	// int cutnodes = 0;
+	// int cutedges = 0;
+	// int nnodes = fGeoEl->NCornerNodes();
+	// for(int i=0; i<nnodes; i++){
+	// 	cutnodes += fStatus[i];
+	// 	if(fStatus[i]+fStatus[(i+1)%nnodes]==2){two_in_a_row = true;}
+	// }
 
-	if(cutnodes==nnodes){fGeoEl->SetMaterialId(DFNMaterial::Efracture);}
-	else if(cutnodes==2 && two_in_a_row){fGeoEl->SetMaterialId(DFNMaterial::Eintact);}
-	else {fGeoEl->SetMaterialId(DFNMaterial::Erefined);}
+	// if(cutnodes==nnodes){fGeoEl->SetMaterialId(DFNMaterial::Efracture);}
+	// else if(cutnodes==2 && two_in_a_row){fGeoEl->SetMaterialId(DFNMaterial::Eintact);}
+	// else {fGeoEl->SetMaterialId(DFNMaterial::Erefined);}
 }
 
 int64_t DFNFace::LineInFace() const{

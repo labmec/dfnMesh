@@ -54,7 +54,7 @@ public:
     /// Empty constructor
     DFNMesh(): fGMesh(nullptr){fTolAngle_cos = std::cos(fTolAngle);}
     /// Destructor
-    ~DFNMesh(){};
+    ~DFNMesh();
     /// Copy constructor
     DFNMesh(const DFNMesh &copy);
     /// Assignment operator
@@ -98,7 +98,7 @@ public:
     void CreateSkeletonElements(int dimension, int matid = -1);
 
     /** @brief Standard command to create a DFNFracture */
-    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended);
+    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended, int materialid = DFNMaterial::Efracture);
     
     
     /// Exports a .geo file for this mesh

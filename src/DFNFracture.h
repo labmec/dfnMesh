@@ -90,7 +90,7 @@ public:
     /**
      * @brief Constructor from a DFNPolygon
      */
-    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended);
+    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);

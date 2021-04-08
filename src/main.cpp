@@ -128,7 +128,7 @@ int main(int argc, char* argv[]){
         // Initialize the basic data of fracture
 		// fracture = new DFNFracture(polygon,&dfn,FracLimit::Etruncated);
         // initialize an empty DFNFracture object
-		DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane]);
+		DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane],matid[iplane]);
         
 		// Find intersected ribs and create a corresponding DFNRib object (administered by DFNFracture)
 		fracture->CreateRibs();
@@ -168,7 +168,7 @@ int main(int argc, char* argv[]){
         {
             std::ofstream logtest("LOG/dfn.summary.log");
             dfn.Print(logtest,argv[1]);
-			dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
+			// dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
         }
 #endif //PZDEBUG
 	}
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]){
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
-	dfn.DumpVTK(true);
+	dfn.DumpVTK(true,true);
 	dfn.PrintSummary();
 	dfn.PrintVTK("skip");
 	std::cout<<"\n ...the end.\n\n";
