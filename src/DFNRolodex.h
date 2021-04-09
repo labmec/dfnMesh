@@ -30,6 +30,7 @@ struct TRolodexCard{
     int fposition = -1;
 
     /// empty constructor and destructor
+    // TRolodexCard(){};
     TRolodexCard(int64_t id=-1, REAL angle=0.0, int side=0)
             :fgelindex(id),fangle_to_reference(angle), fSide(side){};
     ~TRolodexCard(){};
@@ -101,39 +102,16 @@ public:
     TRolodex(const TRolodex& copy){
         this->operator=(copy);
     }
-    // /**
-    //  * @brief Get the next face forward or backwards according to direction and fill the angle between faces
-    //  * @param current_index = index of current element
-    //  * @param angle to be filled with angle between current and next face
-    //  * @param direction 1 or -1
-    // */
-    // TRolodexCard& NextCard(int64_t current_index, REAL& angle, int direction=1){
-    //     TRolodexCard& current_card = Card(current_index);
-    //     int ncards = fcards.size();
-    //     int jcard = current_card.fposition; //position where current card appears in the card vector
-        
-    //     int64_t next_id = -1;
-    //     switch(direction){
-    //         case  1: next_id = (jcard+1)%ncards;        break;
-    //         case -1: next_id = (jcard-1+ncards)%ncards; break;
-    //         default: DebugStop();
-    //     }
-    //     TRolodexCard& next_card = fcards[next_id];
-    //     angle = next_card.fangle_to_reference - current_card.fangle_to_reference;
-    //     if(angle < 0.) {angle = angle + DFN::_2PI;}
-    //     return next_card;
-    // }
     /**
      * @brief Get the next face forward or backwards according to direction and fill the angle between faces
-     * @param current_index = index of current element
-     * @param angle to be filled with angle between current and next face
-     * @param direction 1 or -1
+     * @param card_orientation a pair of a card in the rolodex and the direction of the desired next card (backwards -1 or forwards +1)
+     * @param angle (output) to be filled with angle between current and next card
     */
-    std::pair<TRolodexCard,int> FacingCard(std::pair<TRolodexCard,int> input, REAL& angle){
-        int jcard = input.first.fposition;
+    std::pair<TRolodexCard,int> FacingCard(std::pair<TRolodexCard,int> card_orientation, REAL& angle){
+        int jcard = card_orientation.first.fposition;
         int ncards = fcards.size();
         int facing_id = -1;
-        int direction = input.second*input.first.forientation;
+        int direction = card_orientation.second*card_orientation.first.forientation;
         switch(direction){
             case  1: facing_id = (jcard+1)%ncards;        break;
             case -1: facing_id = (jcard-1+ncards)%ncards; break;
@@ -144,7 +122,7 @@ public:
         output.first = fcards[facing_id];
         output.second = -direction*output.first.forientation;
         // compute angle between faces
-        angle = direction*(output.first.fangle_to_reference - input.first.fangle_to_reference);
+        angle = direction*(output.first.fangle_to_reference - card_orientation.first.fangle_to_reference);
         if(angle < 0.) {angle = angle + DFN::_2PI;}
         
         return output;

@@ -901,6 +901,7 @@ void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
 #ifdef PZDEBUG
     if(!Face(nextface_orient.first)){ std::cout<<"\nPolyhNeighbour returned a next face that was not intersected by the fracture\n"; fdfnMesh->DFN_DebugStop();}
 #endif // PZDEBUG
+
     // Check if its set to polygon
     int nextface_polyg_index = GetPolygonIndex(nextface_orient,Polygon_per_face);
     if(nextface_polyg_index < 0){
