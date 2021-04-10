@@ -817,6 +817,14 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 	// If intersections have already been snapped to corners, there's nothing else to snap
 	if(!this->CanBeSnapped()) return false;
 
+	// If there's an intersection on a node and an adjacent edge, the edge's intersection should be snapped
+	for(int i=0, nnodes = fGeoEl->NSides(0); i < nnodes; i++){
+		if(fStatus[i] == 0) continue;
+		int next_edge = i+nnodes;
+		int previous_edge = (i+nnodes-1)%nnodes+nnodes;
+		if(fStatus[next_edge] || fStatus[previous_edge]) return true;
+	}
+
     // this stretch of code determines if an element has a bad angle or aspect ratio
 	for(int iel=1; iel <nels; iel++){
 		TPZGeoEl* gel = fRefMesh.Element(iel);
@@ -1008,6 +1016,6 @@ void DFNFace::SketchStatusVec(std::ostream& out) const{
 		}
 		default: DebugStop();
 	}
-
+	sout << "\n";
 	out << sout.str();
 }

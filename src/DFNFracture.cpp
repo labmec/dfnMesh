@@ -1273,7 +1273,7 @@ void DFNFracture::FindOffboundRibs(){
             if(ribptr) ribptr->AppendToNeighbourFaces();
         }
     }
-    SnapIntersections_ribs();
+    // SnapIntersections_ribs();
 
 }
 void DFNFracture::FindOffboundFaces(){
@@ -1996,6 +1996,7 @@ void DFNFracture::CheckSnapInducedOverlap(){
     fPolygon.SortNodes(gmesh);
     this->CreateRibs();
     this->CreateFaces();
+    this->SnapIntersections_ribs();
     this->SnapIntersections_faces();
 
 // #ifdef PZDEBUG

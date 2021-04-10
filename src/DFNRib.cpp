@@ -163,7 +163,7 @@ void DFNRib::SnapIntersection_force(int closestnode){
     fIntersectionSide = closestnode;
 #ifdef LOG4CXX
     if(logger->isTraceEnabled())
-        LOG4CXX_TRACE(logger,"Snap rib " << Index() << ". To LocalNode " << closestnode << "  - GlobalNode " << fGeoEl->NodeIndex(closestnode));
+        LOG4CXX_TRACE(logger,"Snap rib " << Index() << ". Towards LocalNode " << closestnode << "  - GlobalNode " << fGeoEl->NodeIndex(closestnode));
 #endif // LOG4CXX
     // When an intersection gets snapped, neighbours should also be snapped to keep refinements consistant
     UpdateNeighbours(closestnode);
