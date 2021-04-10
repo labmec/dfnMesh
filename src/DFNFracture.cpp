@@ -2102,14 +2102,11 @@ void DFNFracture::RemoveRefinedDFNFaces(const int vol_index){
         // Check if it's a DFNFace
         auto itr = fFaces.find(index);
         if(itr == fFaces.end()) continue;
-        // itr->second.Print();
-        // DFNFace copydfnface(itr->second);
         #ifdef LOG4CXX
-            LOGPZ_DEBUG(logger,"DFNFace # " << index << "\"(Removed from Frac# " << fIndex << ")\"");
+            LOGPZ_DEBUG(logger,"DFNFace # " << index << " \"(Removed from Frac# " << fIndex << ")\"");
         #endif // LOG4CXX
         // Remove it from DFNFaces
         fFaces.erase(itr++); // righthand-increment the iterator to avoid problems with destructor. First copies the iterator to std::map::erase(iterator), then increments, then executes map::erase()
         // fFaces.erase(faceindex);
     }
-    // if(n_faces_refined == 0) DebugStop(); // This is not really a bug, but it's a weird unexpected result. This exception can probably be removed without harm, but I'd like to catch it if it ever happens.
 }

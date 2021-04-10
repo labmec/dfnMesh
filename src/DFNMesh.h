@@ -197,11 +197,11 @@ public:
      * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
     */
     // template<int Talloc>
-    void MeshPolyhedron(TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex);
+    void MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex);
 
     /** @brief Break quadrilaterals down to 2 triangles each in a stack of oriented faces*/
     // template<int Talloc>
-    void RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron);
+    void RefineQuads(const TPZVec<std::pair<int64_t,int>>& polyhedron);
 
     /**
      * @brief Reference to polyhedra stack
@@ -223,7 +223,7 @@ public:
         {fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});}
 
     /// Create a new polyhedron at the end of the polyhedra vector of this mesh
-    DFNPolyhedron* CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex = -1, bool isConvex = true);
+    DFNPolyhedron* CreatePolyhedron(const TPZVec<std::pair<int64_t,int>>& shell,int64_t coarseindex = -1, bool isConvex = true);
 
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZVec<int64_t> GetEdgeIndices(int64_t face_index){return DFN::GetEdgeIndices(fGMesh->Element(face_index));}
@@ -274,12 +274,6 @@ private:
      */
     int64_t SearchIndirectNeighbours(TPZGeoEl* gel);
     /**
-     * @brief Goes through all neighbours of gel and identifies if any of them has material id different of that from surface elements
-     * @returns Index of eldest ancestor of first found neighbour that matches the material id criteria (macro element)
-     * @note Later I might modify this to fill a vector/list with all neighbours that match the material id criteria
-     */
-    int64_t FindAdjacentMacroEl(TPZGeoEl* gel);
-    /**
      * @brief Pushes all neighbours of a geometric element onto the back of a list
      * @note Not all neighbours are pushed to the list, but rather some criteria are specified so that it gets only those that are candidates of higher interest. Currently these would be 2D elements that are neighbours through the edges of gel.
      * @param gel: Pointer to geometric element
@@ -297,12 +291,6 @@ private:
     // @todo
     void RestoreMaterials(TPZGeoMesh *originalmesh);
 
-    // After the first run of DFNMesh::BuildPolyhedra,
-    // swap polyh indices so the "boundary polyh" has index zero
-    void IsolateBoundaryPolyh2();
-
-    template<int NAlloc>
-    void IsolateBoundaryPolyh(TPZStack<std::pair<int64_t,int>,NAlloc>& polyhedron);
 
     /** @brief set polyh index -1 for every face in a stack*/
     void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);

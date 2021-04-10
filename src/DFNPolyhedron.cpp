@@ -145,8 +145,9 @@ std::set<int64_t> DFNPolyhedron::GetEdges_InSet(const std::set<int64_t>& SuperSe
 void DFNPolyhedron::Refine(){
     TPZStack<std::pair<int64_t,int>> Shell(fShell.size(),{-1,0});
     int i=0;
-    for(const auto& oriented_face : fShell){
-        Shell[i] = oriented_face;
+    for(auto oriented_face : fShell){
+        Shell[i].first = oriented_face.first;
+        Shell[i].second = oriented_face.second;
         i++;
     }
     fDFN->MeshPolyhedron(Shell, fCoarseIndex);

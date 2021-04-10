@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
-
+		// Search and fix possibly problematic overlaps of fracture surface and existing mesh elements
 		fracture->CheckSnapInducedOverlap();
 
 #ifdef LOG4CXX

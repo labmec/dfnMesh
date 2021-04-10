@@ -1683,7 +1683,7 @@ void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
 
 
 
-DFNPolyhedron* DFNMesh::CreatePolyhedron(TPZVec<std::pair<int64_t,int>> shell,int64_t coarseindex, bool isConvex){
+DFNPolyhedron* DFNMesh::CreatePolyhedron(const TPZVec<std::pair<int64_t,int>>& shell,int64_t coarseindex, bool isConvex){
 	int ipolyh = fPolyhedra.size();
 	fPolyhedra.resize(ipolyh+1);
 	DFNPolyhedron& newpolyhedron = fPolyhedra[ipolyh];
@@ -2009,7 +2009,7 @@ TPZStack<TPZGeoEl*,2> GetOverlappedElements(TPZGeoEl* gel){
 
 // template<int Talloc>
 // void DFNMesh::RefineQuads(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron){
-void DFNMesh::RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron){
+void DFNMesh::RefineQuads(const TPZVec<std::pair<int64_t,int>>& polyhedron){
 	// DebugStop(); // Under construction
 	// TPZStack<std::pair<int64_t,int>,Talloc> aux;
 	for(auto& orient_face : polyhedron){
@@ -2042,7 +2042,7 @@ void DFNMesh::RefineQuads(TPZVec<std::pair<int64_t,int>>& polyhedron){
 
 // template<int Talloc>
 // void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex){
-void DFNMesh::MeshPolyhedron(TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex){
+void DFNMesh::MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex){
 	// GMsh doesn't like zero index entities
     const int shift = 1;
 
@@ -2516,13 +2516,19 @@ void DFNMesh::PreRefine(int n){
 		DebugStop();
 	}
 
-	/// @TODO tetrahedra and triangles
 	gRefDBase.InitializeUniformRefPattern(MElementType::EOned);
 	gRefDBase.InitializeUniformRefPattern(MElementType::EQuadrilateral);
 	gRefDBase.InitializeUniformRefPattern(MElementType::ECube);
+
+	gRefDBase.InitializeUniformRefPattern(MElementType::ETriangle);
+	gRefDBase.InitializeUniformRefPattern(MElementType::ETetraedro);
+	gRefDBase.InitializeUniformRefPattern(MElementType::EPrisma);
+	gRefDBase.InitializeUniformRefPattern(MElementType::EPiramide);
+
 	int maxdim = fGMesh->Dimension();
 	TPZManVector<TPZGeoEl*,8> children;
 	for(int i=0; i<n; i++){
+		std::cout << "Pre-refining mesh x" << i+1 << std::endl;
 		int64_t nels = fGMesh->NElements();
 		for(int dim=1; dim<=maxdim; dim++){
 			for(int64_t iel =0; iel < nels ; iel++){
