@@ -228,7 +228,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][2] = (i+3)%4;
 				child[1][3] = i;
 			break;}
-		case 2:{ // A quadrilateral with 2 adjancent refined edges
+		case 2:{ // A quadrilateral with 2 adjacent refined edges
 			child.resize(4);
 			newnode.resize(2);
 			int i = 0;
@@ -348,7 +348,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			/// @deprecated
 			DebugStop();
 			break;}
-		case 10:{// A triangle with 2 adjancent refined edges
+		case 10:{// A triangle with 2 adjacent refined edges
 			child.resize(2);
 			newnode.resize(2);
 			int i = 0;
@@ -527,29 +527,26 @@ int DFNFace::GetSplitPattern(const TPZManVector<int> &status) const{
 	bool inplane_point = fStatus[fGeoEl->NSides()-1];
 
 	// Get split case
-    // Check documentation for consult on what each splitcase means
-    
-    // @TODO phil : where is the documentation
 	int splitcase;
 	if (n == 4){ //quadrilateral
 		switch(ribscut){
 			case 0:
 				switch(nodescut){
-					case 0: splitcase = 8;break; //or 9
-					case 1: splitcase = 6;break;
-					case 2: splitcase = 3;break; 
+					case 0: splitcase = 8; DebugStop(); break; // deprecated but could be brought back for 2D meshes
+					case 1: splitcase = 6; DebugStop(); break; // deprecated but could be brought back for 2D meshes
+					case 2: splitcase = 3;break; // A quadrilateral with 2 opposite intersected corners
 				}
 				break;
 			case 1:
 				switch(nodescut){
-					case 0: if(inplane_point){splitcase = 5;break;}
-							else{splitcase = 4;break;}
-					case 1: splitcase = 7;break;
+					case 0: if(inplane_point){splitcase = 5; DebugStop(); break;} // deprecated but could be brought back for 2D meshes
+							else{splitcase = 4;break;} // A quadrilateral with a single refined edge
+					case 1: splitcase = 7;break; // A quadrilateral with an intersected corner and a refined edge
 				}
 				break;
 			case 2:{
-				if((status[n+0]&&status[n+2])||(status[n+1]&&status[n+3])){splitcase =1;}
-				else {splitcase = 2;}
+				if((status[n+0]&&status[n+2])||(status[n+1]&&status[n+3])){splitcase =1;}// A quadrilateral with 2 opposite refined edges
+				else {splitcase = 2;} // A quadrilateral with 2 adjacent refined edges
 				break;}
 			default: DebugStop();break;
 		}
@@ -558,19 +555,19 @@ int DFNFace::GetSplitPattern(const TPZManVector<int> &status) const{
 		switch(ribscut){
 			case 0:
 				switch(nodescut){
-					case 0: splitcase = 15;break; //or 16
-					case 1: splitcase = 13;break;
+					case 0: splitcase = 15; DebugStop(); break;// deprecated but could be brought back for 2D meshes
+					case 1: splitcase = 13; DebugStop(); break;// deprecated but could be brought back for 2D meshes
 				}
 				break;
 			case 1:
 				switch(nodescut){
-					case 0: if(inplane_point){splitcase = 12;break;}
-							else{splitcase = 14;break;}
-					case 1: splitcase = 11;break;
+					case 0: if(inplane_point){splitcase = 12;break;}// deprecated but could be brought back for 2D meshes
+							else{splitcase = 14;break;}// A triangle with a single refined edge
+					case 1: splitcase = 11;break;// A triangle with an intersected corner and a refined edge
 				}
 				break;
 			case 2:
-				splitcase = 10;
+				splitcase = 10; // A triangle with 2 adjacent refined edges
 				break;
 			default: DebugStop();break;
 		}
