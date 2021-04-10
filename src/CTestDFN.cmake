@@ -27,3 +27,4 @@ add_test(NAME SnapOverlap2 COMMAND dfnTest "examples/bug_snap_overlap2.json" WOR
 # Frac 3D benchmarks
 add_test(NAME Fl_Benchmark_1 COMMAND dfnTest "examples/flemisch_benchmark/fl_case1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Fl_Benchmark_2 COMMAND dfnTest "examples/flemisch_benchmark/fl_case2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_test(NAME Fl_Benchmark_3 COMMAND dfnTest "examples/flemisch_benchmark/fl_case3.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
