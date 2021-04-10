@@ -165,7 +165,7 @@ public:
 
     /** @brief Removes refined DFNFaces from the fFaces datastructure
     */
-    void RemoveRefinedDFNFaces(DFNPolyhedron& polyh);
+    void RemoveRefinedDFNFaces(const int vol_index);
 
 private:
 

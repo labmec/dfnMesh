@@ -1988,7 +1988,7 @@ void DFNFracture::CheckSnapInducedOverlap(){
     for(int vol_index : problem_volumes){
         DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
         volume.Refine();
-        this->RemoveRefinedDFNFaces(volume);
+        this->RemoveRefinedDFNFaces(vol_index);
     }
 
     // Update DFNFracture data
@@ -2078,11 +2078,12 @@ bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DF
 }
 
 
-void DFNFracture::RemoveRefinedDFNFaces(DFNPolyhedron& polyh){
+void DFNFracture::RemoveRefinedDFNFaces(const int vol_index){
 
     // Refined faces get removed from polyhedra when the polyhedra is meshed and those faces get refined. They're swapped for their children, so we should reach then through these
     // Gather father elements of faces in this polyhedron's shell
     std::set<int64_t> refinedfaces;
+    DFNPolyhedron& polyh = fdfnMesh->Polyhedron(vol_index);
     for(const auto& oriented_face : polyh.Shell()){
 
         int64_t faceindex = oriented_face.first;
