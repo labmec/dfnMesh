@@ -51,7 +51,7 @@ inline REAL Distance(TPZManVector<REAL,3> &vector1, TPZManVector<REAL,3> &vector
 
 
 /// Get real intersection coordinates
-TPZManVector<REAL, 3> DFNRib::RealCoord(){
+TPZManVector<REAL, 3> DFNRib::RealCoord() const{
     TPZManVector<REAL, 3> coord(3, 0);
     TPZGeoMesh *gmesh = fGeoEl->Mesh();
 
@@ -148,7 +148,7 @@ void DFNRib::SnapIntersection_force(int closestnode){
     if(this->CanBeSnapped() == false) return;
     // If closest node was filled, snapped will be forced to node of local index == closestnode. If left -1, code will compute closest node.
     switch (closestnode){
-        case -1: NeedsSnap(closestnode,BIG_NUMBER); break;
+        case -1: NeedsSnap(closestnode,BIG_NUMBER); break; // If user gave -1, they don't know which node is closest, and need this method to compute it
         case  0:
         case  1: break;
         default:{

@@ -31,6 +31,13 @@ namespace DFN{
     // A small number for geometric tolerances
     // static const double gSmallNumber = 1.e-4;
 
+    // Default tolerable distance
+    const REAL default_tolDist = 1.e-5;
+    // Default tolerable angle
+    const REAL default_tolAngle = 0.2;
+    // Cosine of default tolerable angle
+    const REAL default_tolCos = std::cos(DFN::default_tolAngle);
+
     /**
      * @brief Tests if a 2D element is an interface or boundary for 3D coarse elements in the context of DFN meshing
      */
@@ -176,7 +183,7 @@ namespace DFN{
      * @return +1 if skeleton is pointing outwards;
      * @return -1 if skeleton is pointing inwards;
     */
-    int SkeletonOrientation(TPZGeoElSide volside, TPZGeoEl* face);
+    int SkeletonOrientation(TPZGeoElSide& volside, TPZGeoEl* face);
 
     void SetEdgesMaterialId(TPZGeoEl* gel, int matid);
 
@@ -210,6 +217,9 @@ namespace DFN{
     /// Removes negative integers from a container
     template<class Tcontainer>
     void ClearNegativeEntries(Tcontainer& list);
+
+    /// Plot determinant of Jacobian Matrix of all elements in the mesh
+    void PlotJacobian(TPZGeoMesh* gmesh, std::string filename = "LOG/jacplot.vtk");
 
 } /*namespace DFN*/
 

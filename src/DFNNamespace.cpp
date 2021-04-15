@@ -390,7 +390,7 @@ namespace DFN{
 
 
 
-    int SkeletonOrientation(TPZGeoElSide volside, TPZGeoEl* face){
+    int SkeletonOrientation(TPZGeoElSide& volside, TPZGeoEl* face){
         TPZGeoElSide faceside(face,face->NSides()-1);
         // Get transformation from volume to skeleton face
         TPZTransform<REAL> transf = volside.NeighbourSideTransform(faceside);
@@ -690,5 +690,24 @@ namespace DFN{
         PZError << "\n\t Failed due to co-linear points";
         DebugStop();
         return false;
+    }
+
+    void PlotJacobian(TPZGeoMesh* gmesh, std::string filename /*="LOG/jacplot.vtk"*/){
+
+        int64_t nels = gmesh->NElements();
+        const REAL notcomputed = -999.0;
+        TPZVec<REAL> elData(nels,notcomputed);
+
+        for(auto gel : gmesh->ElementVec()){
+            if(!gel) continue;
+            if(gel->HasSubElement()) continue;
+
+            TPZVec<REAL> qsi(gel->Dimension(),0.); TPZFMatrix<double> jac; TPZFMatrix<double> axes; REAL detjac = notcomputed; TPZFMatrix<double> jacinv;
+            gel->Jacobian(qsi,jac,axes,detjac,jacinv);
+            elData[gel->Index()] = detjac;
+        }
+
+        std::ofstream file(filename);
+        TPZVTKGeoMesh::PrintGMeshVTK(gmesh,file, elData);
     }
 } /* namespace DFN*/

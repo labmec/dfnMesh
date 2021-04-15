@@ -13,13 +13,12 @@
 #include "pzmatrix.h"
 #include "pzcompel.h"
 #include "pzgeoelbc.h"
+#include "DFNNamespace.h"
 #include "DFNRib.h"
 
 class DFNFracture;
 
-/// DFNFace class describes a plane and how it's cut by a fracture. It also carries a method to split itself into smaller sub faces.
-// @TODO I dont understand the meaning of Face based on this description>
-// It represents the intersection of the fracture polygon with a given volume?
+/// DFNFace class describes a mesh 2D element (face) and how it's cut by a fracture. It also carries a method to split itself into smaller sub faces.
 class DFNFace
 {
     
@@ -184,20 +183,21 @@ public:
      * @param tolAngle_cos: Cosine of minimum acceptable angle
      * @todo
     */
-    bool SnapIntersection_try(REAL tolDist = 1e-4, REAL tolAngle_cos = 0.9);
+    bool SnapIntersection_try(REAL tolDist = DFN::default_tolDist, REAL tolAngle_cos = DFN::default_tolCos);
 
     /**
      * @brief Force snap intersection nodes down to closest nodes
     */
-    bool SnapIntersection_force();
+    bool SnapIntersection_force(const int edge_index);
 
     /**
      * @brief Check geometry of intersection against tolerances, to test if intersections should be snapped
      * @return False if no tolerance is violated or if intersections have already been snapped.
+     * @param edge_index: (out) Fill with index of the rib that needs snap. If doesn't need snap, will get attributed -1
      * @param tolDist: Minimum acceptable distance
      * @param tolAngle_cos: Cosine of minimum acceptable angle
     */
-    bool NeedsSnap(REAL tolDist = 1e-4, REAL tolAngle_cos = 0.9);
+    bool NeedsSnap(int& edge_index, REAL tolDist = DFN::default_tolDist, REAL tolAngle_cos = DFN::default_tolCos);
 
     /// Return false if all intersections have already been snapped
     bool CanBeSnapped() const;
@@ -222,14 +222,9 @@ public:
 
     
     /// @brief Returns the first 1D side that contains a DFNRib 
-    int FirstRibSide() const{
-        int nedges = fGeoEl->NSides(1);
-        for(int iedge=0; iedge<nedges; iedge++){
-            if(fRibs[iedge]) return iedge + fGeoEl->NSides(0);
-        }
-        DebugStop();
-        return -1;
-    }
+    int FirstRibSide() const;
+    /// @brief Returns the second 1D side that contains a DFNRib 
+    int SecondRibSide() const;
 
     /// @brief Returns the other 1D side with a DFNRib
     int OtherRibSide(int inletside) const;
@@ -243,6 +238,9 @@ public:
     /** @return Number of ribs whose intersection point is within the fracture limits*/
     int NInboundRibs() const;
 
+    /// Return number of intersected edges whose intersection weren't yet snapped
+    int NSnappableRibs(int& first_rib_localindex) const;
+
     void SketchStatusVec(std::ostream& out = std::cout) const;
 private: 
 
@@ -252,5 +250,10 @@ private:
     */
     void FillChildrenAndNewNodes(TPZManVector<TPZManVector<int64_t,4>,6> &child, TPZManVector<TPZManVector<REAL,3>> &newnode);
 
+    /// Given an index of a snappable node in the RefMesh, get the local rib index that contains it as intersection node
+    /// This perfoms floating point operations: at most 2 vector<double, 3> subtractions and the norm of the resulting vector
+    int ComputeRibContainingNode(const int64_t snapNode) const;
+
+};
 };
 #endif /* DFNFace_h */

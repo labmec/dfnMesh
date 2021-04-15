@@ -1887,6 +1887,9 @@ void DFNMesh::SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_i
 		default: DebugStop();
 	}
 }
+int DFNMesh::GetPolyhedralIndex(int64_t faceindex, int orientation) const{
+	return GetPolyhedralIndex(std::make_pair(faceindex,orientation));
+}
 int DFNMesh::GetPolyhedralIndex(const std::pair<int64_t,int>& face_orient) const{
 	int polyh_index = -1;
 	if(face_orient.first > fPolyh_per_face.size()) return -1;

@@ -126,7 +126,7 @@ int DFNFace::CheckAssimilatedSide() const{
 }
 
 void DFNFace::UpdateRefMesh(){
-	if(!this->NeedsRefinement()) return;
+	if(!this->NeedsRefinement()){fRefMesh.CleanUp(); return;}
 	TPZManVector<TPZManVector<int64_t,4>,6> child(0); 
 	TPZManVector<TPZManVector<REAL,3>> newnode(0);
 	FillChildrenAndNewNodes(child,newnode);
@@ -802,7 +802,8 @@ bool DFNFace::AllSnapsWentToSameNode() const{
 
 
 
-bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
+bool DFNFace::NeedsSnap(int& edge_index,REAL tolDist, REAL tolAngle_cos){
+	edge_index = -1;
     // Consistency checks
 	if(!this->NeedsRefinement()) {return false;}
 	int nels = fRefMesh.NElements();
@@ -819,9 +820,13 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 		if(fStatus[i] == 0) continue;
 		int next_edge = i+nnodes;
 		int previous_edge = (i+nnodes-1)%nnodes+nnodes;
-		if(fStatus[next_edge] || fStatus[previous_edge]) return true;
+		if(fStatus[next_edge])
+			{edge_index = next_edge-nnodes; return true;}
+		if(fStatus[previous_edge])
+			{edge_index = previous_edge-nnodes; return true;}
 	}
 
+	/// @note: We can't use any function from TPZRefPattern in this function, because no refinement pattern was created yet
     // this stretch of code determines if an element has a bad angle or aspect ratio
 	for(int iel=1; iel <nels; iel++){
 		TPZGeoEl* gel = fRefMesh.Element(iel);
@@ -829,49 +834,121 @@ bool DFNFace::NeedsSnap(REAL tolDist, REAL tolAngle_cos){
 		int ncorners = gel->NCornerNodes();
 		for(int icorner=0; icorner < ncorners; icorner++){
 			REAL corner_cosine = DFN::CornerAngle_cos(gel,icorner);
-			if(corner_cosine > tolAngle_cos) return true;
+			if(corner_cosine > tolAngle_cos){
+				// If there's only one snappable rib, no further check is necessary
+				if(NSnappableRibs(edge_index) == 1){return true;}
+				// Get snappable node for this child gel
+				// Try the corner that gave the sharp angle first, then move counter-clockwise
+				for(int j = 0; j<ncorners; j++){
+					int snapnode_local = (icorner+j)%ncorners;
+					int64_t snapnode = gel->NodeIndex(snapnode_local);
+					if(snapnode < fGeoEl->NCornerNodes()) continue;
+					if(snapnode == fGeoEl->NCornerNodes()){edge_index = FirstRibSide();}
+					else{edge_index = SecondRibSide();}
+					// Side_index - nnodes = edge_index
+					edge_index -= fGeoEl->NSides(0);
+					return true;
+				}
+			}
 		}
 		// Check if any edge violates the tolerable distance
 		int nedges = gel->NSides(1);
 		int nsides = gel->NSides();
 		for(int iedge=ncorners; iedge<nsides-1; iedge++){
-			if(gel->SideArea(iedge) < tolDist) return true;
+			// Check side length
+			if(gel->SideArea(iedge) > tolDist) continue;
+			// If there's only one snappable rib, no further check is necessary
+			if(NSnappableRibs(edge_index) == 1){return true;}
+			// Check if a node of the illict gelside is snappable node
+			// Snappable nodes are the ones in the RefMesh whose index is >= the number of nodes of the father
+			TPZGeoElSide illicit_side(gel,iedge);
+			if(illicit_side.SideNodeIndex(0) < fGeoEl->NSides(0) 
+				&& illicit_side.SideNodeIndex(1) < fGeoEl->NSides(0)) continue;
+			
+			// Snap is going to happen, lets determine which rib should be snapped
+			int64_t snapNode = (illicit_side.SideNodeIndex(0) >= fGeoEl->NSides(0) ? illicit_side.SideNodeIndex(0):illicit_side.SideNodeIndex(1));
+			if(snapNode == fGeoEl->NCornerNodes()){edge_index = FirstRibSide();}
+			else{edge_index = SecondRibSide();}
+			// Side_index - nnodes = edge_index
+			edge_index -= fGeoEl->NSides(0);
+			// edge_index = this->ComputeRibContainingNode(snapNode);
+			return true;
 		}
 	}
 	return false;
 }
 
+int DFNFace::ComputeRibContainingNode(const int64_t snapNode) const{
+	// Consistency checks
+	if(snapNode < fGeoEl->NCornerNodes()){PZError << "\nNot a snappable node."; DebugStop();}
+
+	const REAL tol = 1e-8;
+	TPZManVector<REAL,3> node(3,0.);
+	fRefMesh.NodeVec()[snapNode].GetCoordinates(node);
+
+	const int nedges = fGeoEl->NSides(1);
+	for(int edge_index=0; edge_index<nedges; edge_index++){
+		DFNRib* rib = fRibs[edge_index];
+		if(!rib) continue;
+		if(rib->IntersectionSide() < 2) continue;
+
+		// Measure the distance of the snap node to rib intersection
+		const TPZVec<REAL>& ribintersection = rib->AntCoord();
+		TPZManVector<REAL,3> dist(3,0.);
+		dist[0] = ribintersection[0] - node[0];
+		dist[1] = ribintersection[1] - node[1];
+		dist[2] = ribintersection[2] - node[2];
+		REAL norm = DFN::Norm(dist);
+		if(norm < tol){return edge_index;}
+	}
+
+	PZError << "\nFailed to find a Rib containing node:\n"
+			<< node
+			<< "\nto a tolerance of " << tol <<'\n'
+			<< "Within the ribs of Face# " << Index();
+	DebugStop();
+	return -1;
+}
+
+int DFNFace::NSnappableRibs(int& first_snappablerib_localindex) const{
+	const int nedges = fGeoEl->NSides(1);
+	int result=0;
+	first_snappablerib_localindex = -1;
+	for(int i=0; i<nedges; i++){
+		DFNRib* rib = fRibs[i];
+		if(!rib) continue;
+		if(rib->CanBeSnapped()){
+			result++;
+			if(first_snappablerib_localindex<0){first_snappablerib_localindex = i;}
+		}
+	}
+	return result;
+}
 
 bool DFNFace::SnapIntersection_try(REAL tolDist, REAL tolAngle_cos){
+	int edge_index = -1;
     // this method determines if the mesh has elements with bad aspect ratio
-	// while(this->NeedsSnap(tolDist, tolAngle_cos))
-	if(this->NeedsSnap(tolDist, tolAngle_cos))
-    {
-        // @pedro : how are you sure that "all" sides need to be snapped?
-        // can it not be that a single rib needs to be snapped?
-		// @reply: I agree, this was a mistake of mine, I'll rewrite the method.
-        // thanks!!
-		this->SnapIntersection_force();
+	while(this->NeedsSnap(edge_index, tolDist, tolAngle_cos)){
+		this->SnapIntersection_force(edge_index);
         return true;
     }
-	else
-    {
-		return false;
-    }
+	
+	return false;
 }
 
 // this method will snap the nodes of all ribs
-bool DFNFace::SnapIntersection_force(){
-	int nribs = fGeoEl->NSides(1);
-    int ncorner = fGeoEl->NCornerNodes();
-	for(int irib=0; irib<nribs; irib++){
-		DFNRib* rib = fRibs[irib];
-		if(!rib) continue;
-        // will snap the node to a closest point
-		rib->SnapIntersection_force();
-        // adjust the neighbouring faces to acount for the snapped node
-		UpdateNeighbours(irib+ncorner);
-	}
+bool DFNFace::SnapIntersection_force(const int edge_index){
+	const int nnodes = fGeoEl->NSides(0);
+	if(edge_index >= nnodes) DebugStop();
+
+	DFNRib* rib = fRibs[edge_index];
+	if(!rib) fFracture->dfnMesh()->DFN_DebugStop();
+	
+	// will snap the node to a closest point
+	rib->SnapIntersection_force();
+	// adjust the neighbouring faces to account for the snapped node
+	UpdateNeighbours(edge_index + nnodes);
+	// Update it's own data structure
 	UpdateStatusVec();
 	UpdateRefMesh();
 	return true;
@@ -886,11 +963,13 @@ void DFNFace::UpdateNeighbours(int iside){
 		//@todo skeletonMesh material would enter here
 		neig_face = fFracture->Face(neig.Element()->Index());
 		if(!neig_face) continue;
-        // this probably changes the values of the undocumented fStatus vector
-		if(!neig_face->UpdateStatusVec()) continue;
+		if(!neig_face->UpdateStatusVec()) continue; // No updates to statusVec means no updates to RefMesh
 		neig_face->UpdateRefMesh();
 		REAL tolDist = fFracture->dfnMesh()->TolDist();
 		REAL tolAngle_cos = fFracture->dfnMesh()->TolAngle_cos();
+		// One of the edges of this neighbour was already forced to 
+		// snap during DFNFace::SnapIntersection_force(), now the other 
+		// one might want to snap due to creation of a sharp angle, so try
 		neig_face->SnapIntersection_try(tolDist,tolAngle_cos);
 		// neig_face->SnapIntersection_force();
 	}
@@ -968,10 +1047,29 @@ int DFNFace::OtherRibSide(int inletside) const{
 		if(fRibs[outedge]) return outedge + nnodes;
 	}
 	#ifdef PZDEBUG
-	fFracture->dfnMesh()->DumpVTK();
+		fFracture->dfnMesh()->DFN_DebugStop();
+	#else // PZDEBUG
+		DebugStop();
 	#endif // PZDEBUG
+	return -1;
+}
+
+
+int DFNFace::FirstRibSide() const{
+	int nedges = fGeoEl->NSides(1);
+	for(int iedge=0; iedge<nedges; iedge++){
+		if(fRibs[iedge]) return iedge + fGeoEl->NSides(0);
+	}
 	DebugStop();
 	return -1;
+}
+
+
+int DFNFace::SecondRibSide() const{
+	if(NIntersectedRibs() < 2) return FirstRibSide();
+
+	int first = FirstRibSide();
+	return OtherRibSide(first);
 }
 
 int DFNFace::NIntersectedRibs() const{

@@ -89,10 +89,10 @@ public:
     void FlagOffbound(bool flag){fOffbound = flag;}
 
     /// Get anticipated intersection coordinates
-    TPZManVector<REAL, 3> AntCoord(){return fCoord;}
+    const TPZManVector<REAL, 3>& AntCoord(){return fCoord;}
 
     /// Get real intersection coordinates (after SnapIntersection)
-    TPZManVector<REAL, 3> RealCoord();
+    TPZManVector<REAL, 3> RealCoord() const;
 
     /// Give face a pointer to which fracture is cutting it
     void SetFracture(DFNFracture *Fracture){fFracture = Fracture;}

@@ -742,7 +742,7 @@ std::pair<int64_t,int> DFNFracture::PolyhNeighbour(std::pair<int64_t,int>& curre
             return {neigindex,-1};
         }
     }
-    DebugStop();
+    fdfnMesh->DFN_DebugStop();
     return {-1,0};
 }
 

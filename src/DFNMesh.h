@@ -24,11 +24,11 @@ private:
     std::vector<DFNFracture *> fFractures;
     
     // Minimum acceptable distance/length for point insertion
-    REAL fTolDist = 1e-5;
+    REAL fTolDist = DFN::default_tolDist;
     
     // Minimum acceptable angle
-    REAL fTolAngle = 0.2;
-    REAL fTolAngle_cos = 0.98006657784; // == cos(0.2)
+    REAL fTolAngle = DFN::default_tolAngle;
+    REAL fTolAngle_cos = DFN::default_tolCos; // == cos(0.2)
 
     // Pointer to geometric mesh
     TPZGeoMesh *fGMesh = nullptr;
@@ -49,7 +49,7 @@ private:
 public:
     
     /// Constructor
-    DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = 1e-5, REAL tolerableAngle = 0.2, int prerefine = 0);
+    DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = DFN::default_tolDist, REAL tolerableAngle = DFN::default_tolAngle, int prerefine = 0);
 
     /// Empty constructor
     DFNMesh(): fGMesh(nullptr){fTolAngle_cos = std::cos(fTolAngle);}
@@ -187,12 +187,8 @@ public:
     void SetPolyhedralIndex(std::pair<int64_t,int> face_orient, int polyh_index);
     /// get the polyhedral index for a face from the structure fPolyh_per_face
     int GetPolyhedralIndex(const std::pair<int64_t,int>& face_orient) const;
-    
-    // aqui tirei no inline
-    int GetPolyhedralIndex(int64_t faceindex, int orientation) const{
-        const std::pair<int64_t,int> face_orient({faceindex,orientation});
-        return GetPolyhedralIndex(face_orient);
-    }
+    /// Get the polyhedral index for a face from the structure fPolyh_per_face (alias I usually use with gdb)
+    int GetPolyhedralIndex(int64_t faceindex, int orientation) const;
     /**
      * @brief Given a set of faces that enclose a volume, call on Gmsh to generate 3D mesh
     */
