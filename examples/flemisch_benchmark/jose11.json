@@ -1,0 +1,16 @@
+{
+    "$schema": "../dfn_schema.json",
+    "Mesh": "examples/flemisch_benchmark/jose10_coarse.msh",
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+            "Nodes": [
+                [-0.1,1.0,-0.1],
+                [ 2.1,1.0,-0.1],
+                [ 2.1,1.0, 2.1],
+                [-0.1,1.0, 2.1]
+            ]
+        }
+    ]
+}

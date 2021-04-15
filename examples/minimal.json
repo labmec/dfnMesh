@@ -19,7 +19,7 @@
         { //Fracture 0
             "Index": 0,
             "Limit": "Etruncated",
-            "MaterialID": 5,
+            "MaterialID": 12,
             "Nodes":[
                 [0.95, 2.50,-0.50],
                 [0.95,-0.50,-0.50],

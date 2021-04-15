@@ -80,15 +80,16 @@ Volume(4) = {4};
 
 // COARSE ELEMENTS GROUPING
 
-Physical Volume("c1",1) = {3,4};
+Physical Volume("c1",1) = {3};
+Physical Volume("c2",2) = {4};
 
 
 
  // FRACTURES
 
-frac1[] = {40};
+// frac1[] = {40};
 
-Physical Surface("Fracture2",2) = {frac1[]};
+// Physical Surface("Fracture2",2) = {frac1[]};
 
 
 
@@ -98,9 +99,9 @@ Physical Surface("Fracture2",2) = {frac1[]};
 // Physical Surface("inlet") = {31, 30};
 // Physical Surface("outlet") = {32, 33};
 // Physical Surface("noflux") = {28, 29, 15, 35, 34, 17};
-Physical Surface("inlet") = {17};
+Physical Surface("inlet") = {28};
 Physical Surface("outlet") = {15};
-Physical Surface("noflux") = {29, 28, 31, 30, 35, 34, 33, 32};
+Physical Surface("noflux") = {29, 17, 31, 30, 35, 34, 33, 32};
 
 
 BCfrac0[] = {36,37,39,38};
@@ -110,6 +111,7 @@ Physical Curve("BCfrac0", 10) = {BCfrac0[]};
 
 Coherence Mesh;
 Transfinite Curve{:} = 2;
+// Transfinite Curve{2, 36, 4, 12, 39, 10} = 3;
 Transfinite Surface{:};
 Transfinite Volume{:};
 Recombine Surface{:};

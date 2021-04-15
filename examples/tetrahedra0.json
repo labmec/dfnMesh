@@ -2,11 +2,12 @@
     "$schema": "./dfn_schema.json",
     "Mesh": "examples/tetrahedra0.msh",
     "TolDist": 0.01,
+    "PreRefine": 0,
     "Fractures":[
         {
             "Index": 0,
             "Limit": "Etruncated",
-            "MaterialID": 4,
+            "MaterialID": 12,
             "Nodes":[
                 [-2.27,-0.65,-1.50],
                 [ 1.67, 0.05,-1.50],

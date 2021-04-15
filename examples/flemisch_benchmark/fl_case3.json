@@ -7,7 +7,7 @@
     //     "MMeshType": "EHexahedral"
     // },
     "Mesh": "examples/flemisch_benchmark/fl_case3.msh",
-    "PreRefine": 1,
+    "PreRefine": 0,
     "TolDist": 0.022,
     "TolAngle": 0.12,
     "Fractures":[
