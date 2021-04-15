@@ -54,7 +54,9 @@ private:
 	/// A planar convex polygon that defines the outline of the fracture
 	DFNPolygon fPolygon;
 	
-    /// A material id for this fracture elements
+    /// A material id for this fracture elements. You want to keep it different than
+    /// all other mesh matids, otherwise it'll cost you to find the fracture boundary 
+    /// conditions. Also, if you want to merge fractures, just match their matids.
     int fmatid = DFNMaterial::Efracture;
 
     /// Index of this fracture at fdfnMesh fracture vector
@@ -73,6 +75,8 @@ private:
 public:
 
 #ifdef LOG4CXX
+    /// During debug, I experimented with a log file for each fracture. It's not as 
+    /// useful as one would think, but I left it here if you want to use it
     log4cxx::LoggerPtr fLogger = nullptr;
 
     /** @brief Creates a logger for this object and fills pointer to this->fLogger

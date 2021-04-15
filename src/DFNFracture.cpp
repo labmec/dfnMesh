@@ -1297,7 +1297,7 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
     int fracdim = gmesh->Dimension()-1;
     int bcdim = fracdim-1;
     std::stringstream stream;
-    stream << "\nBCfrac" << this->fIndex << "[] = {";
+    stream << "\nBCfrac" << this->fIndex << "[] = { ";
     // for(TPZGeoEl* gel : gmesh->ElementVec()){
     TPZGeoEl* gel = nullptr;
     for(int64_t index : this->fSurfaceFaces){

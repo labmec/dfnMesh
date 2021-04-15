@@ -225,16 +225,17 @@ namespace DFN{
 
 
 
-/// The robustness of these material ids is dependant upon the method DFNMesh::ClearMaterials()
-/// Leaving Erefined as the biggest material id is important for better graphics, but isn't mandatory for the code to work. 
+/// @brief default material ids.
+/// You should keep abs(Erefined - Efracture) > 5 to get better graphics, but this isn't mandatory for the code to work. 
+/// Fracture materials should be different than all other mesh materials, so this also applies to DFNMaterial::Efracture, if you choose to use it. 
 /// The choice of ids is, otherwise, arbitrary.
-/// @note I dropped the material ID Eskeleton = -1 idea. Phill has found a demand for submeshes to be conformal through (beyond?) coarse elements, which turns dependance on matID to not as useful. For example, boundary condition surfaces have to be conformal to fine meshes, so they'll have to be refined anyway, which means we should use BCGeoEls as skeleton elements (when they exist) and should conserve their material ID.
+/// @note I dropped the material ID Eskeleton = -1 idea. Phil has found a demand for submeshes to be conformal through (beyond?) coarse elements, which turns dependance on matID to not as useful. For example, boundary condition surfaces have to be conformal to fine meshes, so they'll have to be refined anyway, which means we should use BCGeoEls as skeleton elements (when they exist) and should conserve their material ID.
 enum DFNMaterial{
     // Eskeleton = -1,
     Eintact = 1, 
-    Efracture = 2, 
+    Efracture = 10, 
     // Esurface = 2, 
-    Erefined = 3, //@todo default used to be 3, I've changed it for a test 
+    Erefined = 3, 
     // Etransition = 3
 };
 
