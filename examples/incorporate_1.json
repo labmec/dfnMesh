@@ -5,6 +5,7 @@
         "MMeshType": "EHexahedral",
         "Nels": [2, 2, 2]
     },
+    "TolDist": 100.0,
     "Fractures": [
         {
             "Index": 0,

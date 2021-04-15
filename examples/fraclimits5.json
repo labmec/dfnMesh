@@ -11,6 +11,7 @@
         { //Fracture 0
             "Index": 0,
             "Limit": "Erecovered",
+            "MatID": 14,
             "Nodes":[
                 [-0.5,  1.0,  0.5],
                 [ 0.5,  1.9,  0.5],

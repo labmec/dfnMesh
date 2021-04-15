@@ -12,7 +12,7 @@
         { //Fracture 0
             "Index": 0,
             "Limit": "Erecovered",
-            "MaterialID": 4,
+            "MaterialID": 14,
             "Nodes":[
                 [2.908, 1.383, 0.552],
                 [1.624, 2.890, 0.269],

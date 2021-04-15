@@ -14,7 +14,7 @@
         {
             "Index": 4,
             "Limit": "Erecovered",
-            "MatID": 11,
+            "MatID": 14,
             "Comment": "The lonely vertical one",
             "Nodes":[ 
                 [0.500, 0.050, 0.050],
@@ -26,7 +26,7 @@
         {
             "Index": 0,
             "Limit": "Erecovered",
-            "MatID": 12,
+            "MatID": 10,
             "Comment": "One of the 2 small vertical parallels",
             "Nodes":[ 
                 [0.830, 1.900, 0.300],
@@ -38,7 +38,7 @@
         {
             "Index": 1,
             "Limit": "Erecovered",
-            "MatID": 13,
+            "MatID": 11,
             "Comment": "One of the 2 small vertical parallels",
             "Nodes":[ 
                 [0.770, 1.900, 0.300],
@@ -50,7 +50,7 @@
         {
             "Index": 7,
             "Limit": "Erecovered",
-            "MatID": 14,
+            "MatID": 17,
             "Comment": "The horizontal big one that cuts the domain in half",
             "Nodes":[ 
                 [0.050, 0.240, 0.500],
@@ -62,7 +62,7 @@
         {
             "Index": 3,
             "Limit": "Erecovered",
-            "MatID": 10,
+            "MatID": 13,
             "Comment": "One of the 2 that cross each other",
             "Nodes":[ 
                 [0.170, 1.900, 0.300],
@@ -74,7 +74,7 @@
         {
             "Index": 2,
             "Limit": "Erecovered",
-            "MatID": 11,
+            "MatID": 12,
             "Comment": "One of the 2 that cross each other",
             "Nodes":[ 
                 [0.230, 1.900, 0.300],
@@ -86,7 +86,7 @@
         {
             "Index": 5,
             "Limit": "Erecovered",
-            "MatID": 12,
+            "MatID": 15,
             "Comment": "Big diagonal above",
             "Nodes":[ 
                 [0.950, 1.000, 0.500],
@@ -98,7 +98,7 @@
         {
             "Index": 6,
             "Limit": "Erecovered",
-            "MatID": 13,
+            "MatID": 16,
             "Comment": "Big diagonal below",
             "Nodes":[ 
                 [0.950, 1.000, 0.480],

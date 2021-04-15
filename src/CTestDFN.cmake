@@ -8,7 +8,7 @@ add_test(NAME Tetrahedra_0 COMMAND dfnTest "examples/tetrahedra0.json" WORKING_D
 
 # Snapping and incorporating faces of the mesh
 add_test(NAME Incorporate_1 COMMAND dfnTest "examples/incorporate_1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-add_test(NAME Incorporate_2 COMMAND dfnTest "examples/incorporate-lvl2.txt" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_test(NAME Incorporate_2 COMMAND dfnTest "examples/incorporate_2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Tetrahedra_1 COMMAND dfnTest "examples/tetrahedra1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Tetrahedra_2 COMMAND dfnTest "examples/tetrahedra2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
