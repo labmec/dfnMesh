@@ -88,32 +88,47 @@ bool DFNFace::IsOnBoundary(){
 	return n_intersections == 1;
 }
 
-bool DFNFace::NeedsRefinement() const{
-	int nsides = fGeoEl->NSides();
-	if(fStatus[nsides-1]) return true;
-	int nnodes = fGeoEl->NCornerNodes();
+bool DFNFace::NeedsRefinement() const{return DFNFace::NeedsRefinement(fStatus);}
+
+bool DFNFace::NeedsRefinement(const TPZVec<int>& statusvec){
+	using namespace pztopology;
+	if(statusvec.size() != TPZTriangle::NSides && statusvec.size() != TPZQuadrilateral::NSides){
+		PZError << "\nTrying to analyze a status vector that doesn't correspond to a triangle nor a quadrilateral topology.";
+		DebugStop();
+	}
+
+	int nsides = statusvec.size();
+	if(statusvec[nsides-1]) return true;
+	int nnodes = (nsides==TPZQuadrilateral::NSides? 4 : 3);
 	int nedges = nnodes;
 	int cutedges = 0;
 	int cutnodes = 0;
 	bool consecutive_nodes = false;
-	// Basically return False if only one node or only two consecutive nodes have been intersected
+	// Basically return False if vector is empty, only one node, or only two consecutive nodes have been intersected
 	for(int i=0; i<nedges; i++){
 		// Count number of nodes toward the intersection was snapped
-		cutnodes += fStatus[i];
+		cutnodes += statusvec[i];
 		// Count number of non-snapped intersections
-		cutedges += fStatus[i+nnodes];
+		cutedges += statusvec[i+nnodes];
 		// Check if snaps were made down to 2 consecutive nodes
-		if(fStatus[i]&&fStatus[(i+1)%nnodes]){
+		if(statusvec[i]&&statusvec[(i+1)%nnodes]){
 			// check anterior and posterior edges for intersection
 			consecutive_nodes = true;
-			// consecutive_nodes = (fStatus[i-1+nnodes]==0)&&(fStatus[(i+1)%nnodes+nnodes]==0);
+			// consecutive_nodes = (statusvec[i-1+nnodes]==0)&&(statusvec[(i+1)%nnodes+nnodes]==0);
 			// //                             anterior edge                   posterior edge
 		}
 	}
+	// Empty status vector
+	if(cutnodes+cutedges/*+MidFaceIntersections*/ == 0) return false;
+	
+	// Excessive number of intersections
 	if(cutnodes > 2){ consecutive_nodes = false; DebugStop();}
 
+	// Fracture is tangential and does not refine face
 	if(consecutive_nodes) return false;
 	if(cutnodes == 1 && cutedges == 0) return false;
+
+	// Passed all conditions, then it'll need refinement
 	return true;
 }
 
@@ -197,7 +212,7 @@ void DFNFace::FillChildrenAndNewNodes(
 	if(!this->NeedsRefinement()) return;
     // this method will determine how a face needs to be refined
     // most complex operation of fracture insertion!!
-	int splitcase = GetSplitPattern(fStatus);
+	ESplitPattern splitcase = GetSplitPattern(fStatus);
 	int nodeA = fGeoEl->NCornerNodes();
 	int nodeB = fGeoEl->NCornerNodes()+1;
 	// Vector of face's node indices
@@ -205,7 +220,7 @@ void DFNFace::FillChildrenAndNewNodes(
 	fGeoEl->GetNodeIndices(node);
 	
 	switch(splitcase){
-		case 1:{ // A quadrilateral with 2 opposite refined edges
+		case Quad_2_OppositeEdges:{ // A quadrilateral with 2 opposite refined edges
 			child.resize(2);
 			newnode.resize(2);
 			int i = 0;
@@ -228,7 +243,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][2] = (i+3)%4;
 				child[1][3] = i;
 			break;}
-		case 2:{ // A quadrilateral with 2 adjacent refined edges
+		case Quad_2_AdjacentEdges:{ // A quadrilateral with 2 adjacent refined edges
 			child.resize(4);
 			newnode.resize(2);
 			int i = 0;
@@ -257,7 +272,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[3][1] = (i+2)%4;
 				child[3][2] = (i+3)%4;
 			break;}
-		case 3:{ // A quadrilateral with 2 opposite intersected corners
+		case Quad_2_OppositeNodes:{ // A quadrilateral with 2 opposite intersected corners
 			child.resize(2);
 			int i = fStatus[1];
 			child[0].Resize(3);
@@ -269,8 +284,9 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][1] = i+2;
 				child[1][2] = (i+3)%4;
 			break;}
-		case 4: // A quadrilateral with a single refined edge
-		case 7:{ // A quadrilateral with an intersected corner and a refined edge
+		case Quad_1_Edge: // A quadrilateral with a single refined edge
+		case Quad_1_Edge_1_Node:{ // A quadrilateral with an intersected corner and a refined edge
+			/// @note Quad_1_Edge_1_Node and Quad_1_Edge are refined the same way
 			child.resize(3);
 			newnode.resize(1);
 			int i = 0;
@@ -293,6 +309,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[2][2] = i;
 			break;}
 		case 5:{ // A quadrilateral with a refined edge and a mid-face intersection node
+		// case Quad_1_Edge_1_MidFace:{ // A quadrilateral with a refined edge and a mid-face intersection node
 			DebugStop();
 			// child.resize(5);
 			// newnode.resize(2);
@@ -327,9 +344,11 @@ void DFNFace::FillChildrenAndNewNodes(
 			// 	child[4][2] = nodeA;
 			break;}
 		case 6: // A quadrilateral with an intersected corner and a mid-face intersection node
+		// case Quad_1_Node_1_MidFace: // A quadrilateral with an intersected corner and a mid-face intersection node
 		// algorithm for case 8 == case 6
 		// algorithm for case 7 == case 4
 		case 8:{ // A quadrilateral with a single mid-face intersection node 
+		// case Quad_1_MidFace:{ // A quadrilateral with a single mid-face intersection node 
 			DebugStop();
 			/// @deprecated
 			// @warning: if child[0][0] != internal-node for cases 5, 6 and 8, DFNFace::Refine() will break
@@ -345,10 +364,13 @@ void DFNFace::FillChildrenAndNewNodes(
 			// }
 			break;}
 		case 9:{ // A quadrilateral with 2 mid-face intersection nodes
+		// case Quad_2_MidFace:{ // A quadrilateral with 2 mid-face intersection nodes
 			/// @deprecated
 			DebugStop();
 			break;}
-		case 10:{// A triangle with 2 adjacent refined edges
+
+		// Triangles{
+		case Triang_2_AdjacentEdges:{// A triangle with 2 adjacent refined edges
 			child.resize(2);
 			newnode.resize(2);
 			int i = 0;
@@ -370,9 +392,9 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][2] = (i+1)%3;
 				child[1][3] = (i+2)%3;
 			break;}
-		case 11: // A triangle with an intersected corner and a refined edge
+		case Triang_1_Edge_1_Node: // A triangle with an intersected corner and a refined edge
 		// algorithm for case 11 == case 14
-		case 14:{ // A triangle with a single refined edge
+		case Triang_1_Edge:{ // A triangle with a single refined edge
 			child.resize(2);
 			newnode.resize(1);
 			int i=0;
@@ -391,6 +413,7 @@ void DFNFace::FillChildrenAndNewNodes(
 				child[1][2] = i;
 			break;}
 		case 12:{ // A triangle with a refined edge and a mid-face intersection node
+		// case Triang_1_Edge_1_MidFace:{ // A triangle with a refined edge and a mid-face intersection node
 			DebugStop();
 			// child.resize(4);
 			// newnode.resize(2);
@@ -420,9 +443,11 @@ void DFNFace::FillChildrenAndNewNodes(
 			// 	child[3][2] = nodeA;
 			break;}
 		case 13: // A triangle with an intersected corner and a mid-face intersection node
+		// case Triang_1_Node_1_MidFace: // A triangle with an intersected corner and a mid-face intersection node
 		// algorithm for case 13 == case 15
 		// algorithm for case 14 == case 11
 		case 15:{ // A triangle with a single mid-face intersection node
+		// case Triang_1_MidFace:{ // A triangle with a single mid-face intersection node
 			DebugStop();
 			// In-plane itersection node
 			// child.resize(3);
@@ -435,6 +460,7 @@ void DFNFace::FillChildrenAndNewNodes(
 			// }
 			break;}
 		case 16:{ // A triangle with 2 mid-face intersection nodes
+		// case Trang_2_MidFace:{ // A triangle with 2 mid-face intersection nodes
 			DebugStop();
 			// @ToDo
 			break;}
@@ -509,44 +535,49 @@ void DFNFace::Refine(){
 
 
 
-/**
- * @brief Returns the split pattern that should be used to split this face
- * @param Status vector (boolean) that indicates which ribs and/or nodes are cut
- * @return Integer that indicates which split pattern to use. (check documentation)
- */
-int DFNFace::GetSplitPattern(const TPZManVector<int> &status) const{
-	if(!this->NeedsRefinement()) return 0;
+ESplitPattern DFNFace::GetSplitPattern(const TPZManVector<int> &status){
+	if(!NeedsRefinement(status)) return ESplitPattern::None;
     // Count number of ribs and nodes cut
     int ribscut = 0;
 	int nodescut = 0;
-	int n = fGeoEl->NCornerNodes();
-	for (int i = 0; i < n; i++){
-		ribscut += status[i+n];
+	int nnodes = 4 - (status.size() == pztopology::TPZTriangle::NSides);
+	for (int i = 0; i < nnodes; i++){
+		ribscut += status[i+nnodes];
 		nodescut += status[i];
 	}
-	bool inplane_point = fStatus[fGeoEl->NSides()-1];
+	// In PZ Topology, last side always corresponds to the volume of the element
+	int MidFacePoint = status[status.size()-1];
+	if(MidFacePoint) DebugStop(); // MidFace intersection nodes were deprecated
 
-	// Get split case
-	int splitcase;
-	if (n == 4){ //quadrilateral
+	// Get split case by simply checking the distribution of intersection nodes
+	ESplitPattern splitcase;
+	if (nnodes == 4){ //quadrilateral
 		switch(ribscut){
 			case 0:
 				switch(nodescut){
-					case 0: splitcase = 8; DebugStop(); break; // deprecated but could be brought back for 2D meshes
-					case 1: splitcase = 6; DebugStop(); break; // deprecated but could be brought back for 2D meshes
-					case 2: splitcase = 3;break; // A quadrilateral with 2 opposite intersected corners
+					case 0: splitcase = ESplitPattern::Uninitialized;DebugStop(); break; 
+					case 1: DebugStop(); // The NeedsRefinement() at the start of this function should never let code reach this point
+						// switch(inplane_point){
+						// 	case 0: DebugStop(); // NeedsRefinement() should've stopped you
+						// 	case 1: splitcase = ESplitPattern::Quad_1_Node_1_MidFace; break; // deprecated but could be brought back for 2D meshes
+						// 	case 2: splitcase = ESplitPattern::Quad_1_Node_2_MidFace; break; // deprecated but could be brought back for 2D meshes
+						// }
+					case 2: splitcase = ESplitPattern::Quad_2_OppositeNodes;break; // A quadrilateral with 2 opposite intersected corners
 				}
 				break;
 			case 1:
 				switch(nodescut){
-					case 0: if(inplane_point){splitcase = 5; DebugStop(); break;} // deprecated but could be brought back for 2D meshes
-							else{splitcase = 4;break;} // A quadrilateral with a single refined edge
-					case 1: splitcase = 7;break; // A quadrilateral with an intersected corner and a refined edge
+					case 0: if(MidFacePoint){ DebugStop();} // splitcase = 5; deprecated but could be brought back for 2D meshes
+							else{splitcase = ESplitPattern::Quad_1_Edge;break;} // A quadrilateral with a single refined edge
+					case 1: splitcase = ESplitPattern::Quad_1_Edge_1_Node; break; // A quadrilateral with an intersected corner and a refined edge
 				}
 				break;
 			case 2:{
-				if((status[n+0]&&status[n+2])||(status[n+1]&&status[n+3])){splitcase =1;}// A quadrilateral with 2 opposite refined edges
-				else {splitcase = 2;} // A quadrilateral with 2 adjacent refined edges
+				if(
+					(status[nnodes+0]&&status[nnodes+2])    //  edges 0 and 2 (sides 4 and 6)
+					||(status[nnodes+1]&&status[nnodes+3]) //or edges 1 and 3 (sides 5 and 7)
+				){splitcase = ESplitPattern::Quad_2_OppositeEdges;}// A quadrilateral with 2 opposite refined edges
+				else {splitcase = ESplitPattern::Quad_2_AdjacentEdges;} // A quadrilateral with 2 adjacent refined edges
 				break;}
 			default: DebugStop();break;
 		}
@@ -555,19 +586,21 @@ int DFNFace::GetSplitPattern(const TPZManVector<int> &status) const{
 		switch(ribscut){
 			case 0:
 				switch(nodescut){
-					case 0: splitcase = 15; DebugStop(); break;// deprecated but could be brought back for 2D meshes
-					case 1: splitcase = 13; DebugStop(); break;// deprecated but could be brought back for 2D meshes
+					case 0:  if(MidFacePoint) DebugStop();// splitcase = 15; deprecated but could be brought back for 2D meshes
+								else splitcase = ESplitPattern::Uninitialized; DebugStop(); break;	
+					case 1:  if(MidFacePoint) DebugStop();// splitcase = 13; deprecated but could be brought back for 2D meshes
+								else splitcase = ESplitPattern::None; DebugStop();break;
 				}
 				break;
 			case 1:
 				switch(nodescut){
-					case 0: if(inplane_point){splitcase = 12;break;}// deprecated but could be brought back for 2D meshes
-							else{splitcase = 14;break;}// A triangle with a single refined edge
-					case 1: splitcase = 11;break;// A triangle with an intersected corner and a refined edge
+					case 0: if(MidFacePoint){DebugStop();}// splitcase = 12; deprecated but could be brought back for 2D meshes
+							else{splitcase = ESplitPattern::Triang_1_Edge; break;}// A triangle with a single refined edge
+					case 1: splitcase = ESplitPattern::Triang_1_Edge_1_Node;break;// A triangle with an intersected corner and a refined edge
 				}
 				break;
 			case 2:
-				splitcase = 10; // A triangle with 2 adjacent refined edges
+				splitcase = ESplitPattern::Triang_2_AdjacentEdges; // A triangle with 2 adjacent refined edges
 				break;
 			default: DebugStop();break;
 		}
@@ -1015,17 +1048,15 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 	SketchStatusVec(out);
 
 	if(print_refmesh){
-		// int nels = fGeoEl->Mesh()->NElements();
-		// int w = (int) std::log10(nels)+1;
+		int nels = fRefMesh.NElements();
 		out << "[Start][Refinement Mesh][Face Index " 
-			// << std::setw(w) 
-			// << std::right 
 			<< fGeoEl->Index()
 			<< "]\n\n";
-		fRefMesh.Print(out);
+
+		if(nels){fRefMesh.Print(out);}
+		else{out << "\t\"This face's RefinementMesh is empty\"\n\n";}
+		
 		out << "[End][Refinement Mesh][Face Index " 
-			// << std::setw(w) 
-			// << std::right 
 			<< fGeoEl->Index()
 			<< "]\n\n";
 	}

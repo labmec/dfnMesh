@@ -16,7 +16,9 @@
 #include "DFNNamespace.h"
 #include "DFNRib.h"
 
+// Forward declarations
 class DFNFracture;
+enum ESplitPattern : int;
 
 /// DFNFace class describes a mesh 2D element (face) and how it's cut by a fracture. It also carries a method to split itself into smaller sub faces.
 class DFNFace
@@ -120,6 +122,11 @@ public:
      * @return False if only one node or only two consecutive nodes have been intersected
     */
     bool NeedsRefinement() const;
+    /**
+     * @brief (STATIC) Check if element should be refined
+     * @return False if only one node or only two consecutive nodes have been intersected
+    */
+    static bool NeedsRefinement(const TPZVec<int>& statusvec);
 
     /// Return true if this face is in contact at all with the fracture
     bool IsIntersected() const{
@@ -168,12 +175,12 @@ public:
     void UpdateMaterial();
 
     /**
-     * @brief Returns the split pattern that should be used to split this face
+     * @brief Returns the split pattern that should be used to split this face.
+     * @details This function is the actual definition of the SplitPatterns, you can see
+     *        the comments in the enum definition for some examples
      * @param Status vector that indicates which sides are cut
-     * @return Integer that indicates which split pattern to use. (check documentation)
-     * @TODO I believe this can be simplified if only the ribs are divided!! Please update the code
      */
-    int GetSplitPattern(const TPZManVector<int> &status) const;
+    static ESplitPattern GetSplitPattern(const TPZManVector<int> &status);
 
     /**
      * @brief Check geometry of intersection against a tolerance, snaps intersection 
@@ -255,5 +262,53 @@ private:
     int ComputeRibContainingNode(const int64_t snapNode) const;
 
 };
+
+
+
+/** @brief Enumeration of possible SplitPatterns to be used when refining faces to 
+ * conform to their intersection with the fracture.
+ * 
+ * @details Split patterns are statically defined, since they describe a small set of 
+ * possible topologies for the refinement patterns that will be (dinamically) created.
+ * Split patterns are TOPOLOGY, Refinement Patterns are GEOMETRY.
+ * 
+ * @example 1: For example: ESplitPattern::Quad_2_OppositeEdges is the topological 
+ * construction of a fracture crossing through a 2D skeleton mesh quadrilateral element 
+ * and intersecting 2 of its edges, without triggering any snap of nodes (no tolerance 
+ * is violated). There's no imposition of what permutation of this construction we're 
+ * handling, or on the coordinates of the intersection nodes, other than that they 
+ * exist in the space of 2 opposing edges and be not snapped to a closest node.
+ * 
+ * @example 2: Another example: ESplitPattern::Triang_1_Edge_1_Node is the topological 
+ * construction of a fracture crossing through a 2D skeleton mesh triangle element and 
+ * intersecting an edge without triggering a snap, and another edge whose intersection 
+ * was snapped to its closest node. 
+*/
+enum ESplitPattern : int{
+    Uninitialized           = 0,
+    None                    = 0,
+    
+    // Quadrilaterals ==============================================================
+    Quad_2_OppositeEdges   =  1, // Quadrilateral with 2 opposite refined edges
+    Quad_2_AdjacentEdges   =  2, // Quadrilateral with 2 adjacent refined edges
+    Quad_2_OppositeNodes   =  3, // Quadrilateral with 2 opposite intersected corners
+    Quad_1_Edge            =  4, // Quadrilateral with a single refined edge
+    // Quad_1_Edge_1_MidFace  =  5, // (Deprecated) Quadrilateral with a refined edge and a mid-face intersection node 
+    // Quad_1_Node_1_MidFace  =  6, // (Deprecated) Quadrilateral with an intersected corner and a mid-face intersection node
+    Quad_1_Edge_1_Node     =  7, // Quadrilateral with an intersected corner and a refined edge 
+    // Quad_1_MidFace         =  8, // (Deprecated) Quadrilateral with a single mid-face intersection node 
+    // Quad_2_MidFace         =  9, // (Deprecated) Quadrilateral with 2 mid-face intersection nodes
+
+    // Triangles ===================================================================
+    Triang_2_AdjacentEdges  = 10, // Triangle with 2 adjacent refined edges
+    Triang_1_Edge_1_Node    = 11, // Triangle with an intersected corner and a refined edge
+    // Triang_1_Edge_1_MidFace= 12, // (Deprecated) Triangle with a refined edge and a mid-face intersection node
+    // Triang_1_Node_1_MidFace= 13, // (Deprecated) Triangle with an intersected corner and a mid-face intersection node
+    Triang_1_Edge           = 14  // Triangle with a single refined edge
+    // Triang_1_MidFace       = 15, // (Deprecated) Triangle with a single mid-face intersection node
+    // Trang_2_MidFace        = 16, // (Deprecated) Triangle with 2 mid-face intersection nodes
 };
+
+
+
 #endif /* DFNFace_h */
