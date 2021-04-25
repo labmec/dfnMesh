@@ -21,6 +21,9 @@
 
 
 typedef TPZFMatrix<REAL> Matrix;
+/// A geometrical intersection between 2 bounded planes in R^3 is a line segment, 
+/// so we can represent it by the coordinates of its nodes
+typedef TPZStack<TPZManVector<REAL,3>,2> Segment;
 
 /*! 
  *  @brief     Describes a planar convex polygon from it's corner points. (not to be confused with DFNPolyhedron)
@@ -82,6 +85,13 @@ class DFNPolygon
 	/// Return corner coordinates
 	const Matrix& GetCornersX() const;
 
+	/// Fill corner coordinates
+	void iCornerX(int icorner, TPZManVector<REAL,3>& coord) const{
+		coord[0] = fCornerPoints.g(0,icorner);
+		coord[1] = fCornerPoints.g(1,icorner);
+		coord[2] = fCornerPoints.g(2,icorner);
+	}
+
 	/// Return area of polygon
 	double area() const { return fArea; }
 
@@ -131,6 +141,7 @@ class DFNPolygon
 	 * @param Local index of corner
 	 */
 	int64_t CornerIndex(int i) const{
+		DebugStop(); // Deprecated
 		return fPointsIndex[i];
 	}
 
@@ -174,6 +185,9 @@ class DFNPolygon
 	REAL EdgeLength(int edgeindex) const;
 	/// Compute a vector from the first to last nodes of an edge
 	void GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector) const;
+
+	/// Compute an intersection segment between 2 DFNPolygons (if there is any)
+	bool ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segment& intersection_segment) const;
 
   private:
 	/// Checks consistency and initializes the datastructure of the object

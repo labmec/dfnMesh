@@ -538,3 +538,39 @@ void DFNPolygon::GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector) const{
     edgevector[2] = fCornerPoints.g(2,node0) - fCornerPoints.g(2,node1);
 
 }
+
+
+bool DFNPolygon::ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segment& segment) const{
+    const DFNPolygon& polygA = *this;
+    const DFNPolygon& polygB = otherpolyg;
+
+    int n_int = 0; //< Number of intersection points found
+    segment.clear();
+
+    TPZManVector<REAL,3> p1(3,0.), p2(3,0.), intpoint(3,0.);
+    TPZManVector<const DFNPolygon*,2> polyg {this, &otherpolyg};
+    // polyg[0] = *this;
+    // polyg[1] = otherpolyg;
+
+    for(int A=0; A<2; A++){
+        int B = !A;
+        // Test edges of DFNPolygonA being cut by DFNPolygonB, then
+        // test edges of DFNPolygonB being cut by DFNPolygonA
+        int nnodesA = polyg[A]->NCornerNodes();
+        for(int inode=0; inode<nnodesA; inode++){
+            // Get 2 consecutive corners
+            polyg[A]->iCornerX(inode,p1);
+            polyg[A]->iCornerX((inode+1)%nnodesA,p2);
+            // Check if corners lie in opposite sides, and if the 
+            // intersection point is within bounds of the polygon
+            bool intersects_Q = polyg[B]->Check_pair(p1,p2,intpoint);
+            if(!intersects_Q) continue;
+
+            segment.push_back(intpoint);
+            n_int++;
+            if(n_int == 2) return true;
+        }
+    }
+
+    return false;
+}
