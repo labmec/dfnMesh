@@ -153,7 +153,7 @@ namespace DFN{
 
     /** @brief returns the intersection of 2 sets*/
     template<typename Ttype>
-    std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2);
+    std::set<Ttype> set_intersection(const std::set<Ttype>& set1, const std::set<Ttype>& set2);
 
     /** Outward/inward (true/false) orientation of faces in NeoPZ's tetrahedron */
     static const bool TPZTetrahedron_faceorient[4] = {0,1,1,0};

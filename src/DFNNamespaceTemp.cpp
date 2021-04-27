@@ -170,10 +170,10 @@ namespace DFN{
 
     /** @brief returns the intersection of 2 sets*/
     template<typename Ttype>
-    std::set<Ttype> set_intersection(std::set<Ttype>& set1, std::set<Ttype>& set2){
+    std::set<Ttype> set_intersection(const std::set<Ttype>& set1,const std::set<Ttype>& set2){
         std::set<Ttype> intersection;
-        std::set<Ttype>& smaller_set =  set1.size() > set2.size() ? set2 : set1;
-        std::set<Ttype>& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
+        auto& smaller_set =  set1.size() > set2.size() ? set2 : set1;
+        auto& bigger_set = !(set1.size() > set2.size()) ? set2 : set1;
 
         if(smaller_set.size() < 1) return intersection; //empty set
 
