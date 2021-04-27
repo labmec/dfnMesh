@@ -8,7 +8,7 @@ will force them to overlap.
         "x0": [-1,-1,-1],
         "xf": [1,1,1],
         "MMeshType": "EHexahedral",
-        "Nels": [4,4,4]
+        "Nels": [3,2,2]
     },
     "TolDist": 10.0,
     "Fractures": [
@@ -30,8 +30,8 @@ will force them to overlap.
             "Nodes": [
                 [-1.10,-0.07,-0.90],
                 [ 0.32, 0.01,-0.90],
-                [ 0.32, 0.01, 2.10],
-                [-1.10,-0.07, 2.10]
+                [ 0.32, 0.01, 1.10],
+                [-1.10,-0.07, 1.10]
             ]
         }
     ]

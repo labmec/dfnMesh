@@ -109,6 +109,7 @@ public:
     void ExportGMshCAD_volumes(std::ofstream& out);
     void ExportGMshCAD_fractures(std::ofstream& out);
     void ExportGMshCAD_boundaryconditions(std::ofstream& out);
+    void ExportGMshCAD_fractureIntersections(std::ofstream& out);
     
     // /// Uses gmsh API to tetrahedralize a DFNVolume
     // void Tetrahedralize(DFNVolume *volume);

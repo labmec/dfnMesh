@@ -13,6 +13,7 @@
 #include "TPZRefPatternDataBase.h"
 #include "TPZGeoMeshBuilder.h"
 #include "DFNNamespace.h"
+#include "DFNGraph.h"
 
 #ifdef LOG4CXX
     #include "log4cxx/fileappender.h"
@@ -2110,4 +2111,62 @@ void DFNFracture::RemoveRefinedDFNFaces(const int vol_index){
         fFaces.erase(itr++); // righthand-increment the iterator to avoid problems with destructor. First copies the iterator to std::map::erase(iterator), then increments, then executes map::erase()
         // fFaces.erase(faceindex);
     }
+}
+
+bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFrac, 
+                                                    const std::set<int64_t>& CommonFaces, 
+                                                    const Segment& Segment,
+                                                    TPZStack<int64_t>& EdgeList)
+{
+    using namespace DFN;
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+
+    // Get common edges
+    std::set<int64_t> common_edges; // Edges of the graph
+    std::set<int64_t> nodes; // Nodes of the graph
+    for(auto index : CommonFaces){
+        TPZGeoEl* face = gmesh->Element(index);
+        const int nsides = face->NSides();
+        for(int iside = face->FirstSide(1); iside < nsides-1; iside++){
+            TPZGeoEl* edge = DFN::GetSkeletonNeighbour(face,iside);
+            common_edges.insert(edge->Index());
+            nodes.insert(edge->NodeIndex(0));
+            nodes.insert(edge->NodeIndex(1));
+        }
+    }
+
+    // Get initial and final node for the path (closest nodes to the coordinates defined in Segment)
+    TPZStack<int64_t,2> PathNodes(2,-1);
+    for(int i=0; i<2; i++){
+        TPZManVector<REAL,3> jcoord(3,0.);
+        int64_t closestnode = -1;
+        REAL closestdist = __FLT_MAX__;
+
+        for(int64_t nodeindex : nodes){
+            gmesh->NodeVec()[nodeindex].GetCoordinates(jcoord);
+            // Compute distance
+            TPZManVector<REAL,3> dif = jcoord - Segment[i];
+            REAL normdist = Norm<REAL>(dif);
+            if(normdist > closestdist) continue;
+            closestdist = normdist;
+            closestnode = nodeindex;
+        }
+        PathNodes[i] = closestnode;
+    }
+    int64_t start = PathNodes[0];
+    int64_t end = PathNodes[1];
+
+    /* If initial and final nodes are the same, then mesh size is too big to catch this intersection
+     * If you want to force it, you may try one or more of the following:
+     * 1. Pre-refine the mesh (see DFNMesh::PreRefine())
+     * 2. Change tolerances (see DFNMesh::fTolDist & DFNMesh::fTolAngle)
+     * 3. Design the coarse mesh to have a convenient node that can help to represent this intersection
+     */
+    if(start == end) return false;
+
+    // Build a graph and solve
+    DFNGraph graph(gmesh,common_edges);
+    graph.ComputeShortestPath(start,end,EdgeList);
+
+    return EdgeList.size();
 }

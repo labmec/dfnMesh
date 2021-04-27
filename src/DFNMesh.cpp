@@ -969,6 +969,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     ExportGMshCAD_fractures(out);
 	// boundary conditions
 	ExportGMshCAD_boundaryconditions(out);
+	ExportGMshCAD_fractureIntersections(out);
     
     
 	out << "\n// OPTIONS\n";
@@ -1105,7 +1106,33 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 
 
 
+void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
+	/// A geometrical intersection between 2 bounded planes in R^3 is a line segment, 
+	/// so we represent it by the coordinates of its nodes
+	Segment int_segment;
 
+	const int nfrac = this->NFractures();
+	// Test every pair of fractures for intersection
+	for(int jfrac = 0; jfrac<nfrac; jfrac++){
+		for(int kfrac = jfrac+1; kfrac<nfrac; kfrac++){
+			const DFNPolygon& jpolygon = fFractures[jfrac]->Polygon();
+			const DFNPolygon& kpolygon = fFractures[kfrac]->Polygon();
+			bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,int_segment);
+
+			std::set<int64_t> surface_j = fFractures[jfrac]->Surface();
+			std::set<int64_t> surface_k = fFractures[kfrac]->Surface();
+			std::set<int64_t> common_faces = DFN::set_intersection(surface_j,surface_k);
+
+			TPZStack<int64_t> intersection_edges;
+			// If fractures have overlapped surfaces, it's a non trivial case
+			if(common_faces.size() > 0){
+				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],common_faces,int_segment,intersection_edges);
+			}else{
+
+			}
+		}
+	}
+}
 
 
 
