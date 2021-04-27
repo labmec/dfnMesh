@@ -642,7 +642,7 @@ namespace DFN{
 
     bool AreCoPlanar(TPZGeoMesh* gmesh,const std::set<int64_t>& nodeindices, REAL tolerance){
         int nnodes = nodeindices.size();
-        if(nnodes < 4) return true;
+        if(nnodes < 4) return true; // this return may introduce a bug for sets of 3 nodes that are colinear, I'll fix it if the code ever breaks because of it.
         TPZManVector<TPZManVector<REAL,3>,3> p(3,{0.,0.,0.});
 
         auto it = nodeindices.begin();
@@ -662,12 +662,14 @@ namespace DFN{
             gmesh->NodeVec()[*auxit].GetCoordinates(p[2]);
 
             
-            TPZManVector<REAL,3> vec0 = p[0] - p[1];
-            TPZManVector<REAL,3> vec2 = p[2] - p[1];
-            TPZManVector<REAL,3> vecj {0., 0., 0.};
+            TPZManVector<REAL,3> vec0 = p[0] - p[1]; // < Vector connecting p[1] to p[0]
+            TPZManVector<REAL,3> vec2 = p[2] - p[1]; // < Vector connecting p[1] to p[2]
+            TPZManVector<REAL,3> vecj {0., 0., 0.};  // < Vector connecting p[1] to p[j]
 
+            // Get a normal vector to the p0,p1,p2 plane
             TPZManVector<REAL,3> normal = CrossProduct<REAL>(vec0,vec2);
             REAL norm = DFN::Norm<REAL>(normal);
+            // Test if p0, p1 and p2 are colinear by check if vec0 and vec2 are linearly independent
             if(fabs(norm) < tolerance){
                 continue; // get the next triple of points and try again
             }
@@ -675,6 +677,7 @@ namespace DFN{
             normal[1] /= norm;
             normal[2] /= norm;
 
+            // Test every other j-th node for coplanarity
             TPZManVector<REAL,3> pj {0., 0., 0.};
             if(++auxit == nodeindices.end()) auxit = nodeindices.begin();
             for(/*void*/; auxit != it; (++auxit == nodeindices.end() ? auxit = nodeindices.begin() : auxit)){
@@ -686,6 +689,10 @@ namespace DFN{
             }
             return true;
         }
+        /* Surely, colinear points are indeed co-planar, but that's not what this function was intended for
+        if you want to adapt it to return true for co-linear points, maybe a bool argument to give the
+        choice to the user would be the better way go. It should of course default to not supporting it.
+        */
         PZError << "\n" << __PRETTY_FUNCTION__;
         PZError << "\n\t Failed due to co-linear points";
         DebugStop();
