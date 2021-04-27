@@ -318,11 +318,11 @@ PathNodePool::Block* PathNodePool::NewBlock()
 }
 
 
-unsigned PathNodePool::Hash( void* voidval ) 
+unsigned PathNodePool::Hash( int voidval ) 
 {
 	/*
 		Spent quite some time on this, and the result isn't quite satifactory. The
-		input set is the size of a void*, and is generally (x,y) pairs or memory pointers.
+		input set is the size of a int, and is generally (x,y) pairs or memory pointers.
 
 		FNV resulting in about 45k collisions in a (large) test and some other approaches
 		about the same.
@@ -411,7 +411,7 @@ void PathNodePool::AddPathNode( unsigned key, PathNode* root )
 }
 
 
-PathNode* PathNodePool::FetchPathNode( void* state )
+PathNode* PathNodePool::FetchPathNode( int state )
 {
 	unsigned key = Hash( state );
 
@@ -427,7 +427,7 @@ PathNode* PathNodePool::FetchPathNode( void* state )
 }
 
 
-PathNode* PathNodePool::GetPathNode( unsigned frame, void* _state, float _costFromStart, float _estToGoal, PathNode* _parent )
+PathNode* PathNodePool::GetPathNode( unsigned frame, int _state, float _costFromStart, float _estToGoal, PathNode* _parent )
 {
 	unsigned key = Hash( _state );
 
@@ -454,7 +454,7 @@ PathNode* PathNodePool::GetPathNode( unsigned frame, void* _state, float _costFr
 
 
 void PathNode::Init(	unsigned _frame,
-						void* _state,
+						int _state,
 						float _costFromStart, 
 						float _estToGoal, 
 						PathNode* _parent )
@@ -507,9 +507,9 @@ void MicroPather::Reset()
 }
 
 
-void MicroPather::GoalReached( PathNode* node, void* start, void* end, MP_VECTOR< void* > *_path )
+void MicroPather::GoalReached( PathNode* node, int start, int end, MP_VECTOR< int > *_path )
 {
-	MP_VECTOR< void* >& path = *_path;
+	MP_VECTOR< int >& path = *_path;
 	path.clear();
 
 	// We have reached the goal.
@@ -627,7 +627,7 @@ void MicroPather::GetNodeNeighbors( PathNode* node, MP_VECTOR< NodeCost >* pNode
 			NodeCost* pNodeCostPtr = &(*pNodeCost)[0];
 
 			for( unsigned i=0; i<stateCostVecSize; ++i ) {
-				void* state = stateCostVecPtr[i].state;
+				int state = stateCostVecPtr[i].state;
 				pNodeCostPtr[i].cost = stateCostVecPtr[i].cost;
 				pNodeCostPtr[i].node = pathNodePool.GetPathNode( frame, state, FLT_MAX, FLT_MAX, 0 );
 			}
@@ -679,14 +679,14 @@ void MicroPather::DumpStats()
 #endif
 
 
-void MicroPather::StatesInPool( MP_VECTOR< void* >* stateVec )
+void MicroPather::StatesInPool( MP_VECTOR< int >* stateVec )
 {
  	stateVec->clear();
 	pathNodePool.AllStates( frame, stateVec );
 }
 
 
-void PathNodePool::AllStates( unsigned frame, MP_VECTOR< void* >* stateVec )
+void PathNodePool::AllStates( unsigned frame, MP_VECTOR< int >* stateVec )
 {	
     for ( Block* b=blocks; b; b=b->nextBlock )
     {
@@ -727,7 +727,7 @@ void PathCache::Reset()
 }
 
 
-void PathCache::Add( const MP_VECTOR< void* >& path, const MP_VECTOR< float >& cost )
+void PathCache::Add( const MP_VECTOR< int >& path, const MP_VECTOR< float >& cost )
 {
 	if ( nItems + (int)path.size() > allocated*3/4 ) {
 		return;
@@ -740,14 +740,14 @@ void PathCache::Add( const MP_VECTOR< void* >& path, const MP_VECTOR< float >& c
 		// But uses much more memory. Experiment with this commented
 		// in and out and how to set.
 
-		void* end   = path[path.size()-1];
+		int end   = path[path.size()-1];
 		Item item = { path[i], end, path[i+1], cost[i] };
 		AddItem( item );
 	}
 }
 
 
-void PathCache::AddNoSolution( void* end, void* states[], int count )
+void PathCache::AddNoSolution( int end, int states[], int count )
 {
 	if ( count + nItems > allocated*3/4 ) {
 		return;
@@ -760,7 +760,7 @@ void PathCache::AddNoSolution( void* end, void* states[], int count )
 }
 
 
-int PathCache::Solve( void* start, void* end, MP_VECTOR< void* >* path, float* totalCost )
+int PathCache::Solve( int start, int end, MP_VECTOR< int >* path, float* totalCost )
 {
 	const Item* item = Find( start, end );
 	if ( item ) {
@@ -811,7 +811,7 @@ void PathCache::AddItem( const Item& item )
 }
 
 
-const PathCache::Item* PathCache::Find( void* start, void* end )
+const PathCache::Item* PathCache::Find( int start, int end )
 {
 	MPASSERT( allocated );
 	Item fake = { start, end, 0, 0 };
@@ -852,7 +852,7 @@ void MicroPather::GetCacheData( CacheData* data )
 
 
 
-int MicroPather::Solve( void* startNode, void* endNode, MP_VECTOR< void* >* path, float* cost )
+int MicroPather::Solve( int startNode, int endNode, MP_VECTOR< int >* path, float* cost )
 {
 	// Important to clear() in case the caller doesn't check the return code. There
 	// can easily be a left over path  from a previous call.
@@ -969,7 +969,7 @@ int MicroPather::Solve( void* startNode, void* endNode, MP_VECTOR< void* >* path
 }	
 
 
-int MicroPather::SolveForNearStates( void* startState, MP_VECTOR< StateCost >* near, float maxCost )
+int MicroPather::SolveForNearStates( int startState, MP_VECTOR< StateCost >* near, float maxCost )
 {
 	/*	 http://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 

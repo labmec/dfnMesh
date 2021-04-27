@@ -7,7 +7,7 @@ class DFNGraph : public micropather::Graph
 {
     private:
         
-        MPVector<int64_t> fpath;
+        // MPVector<int64_t> fpath;
         
         MicroPather* fpather;
 
@@ -48,7 +48,7 @@ class DFNGraph : public micropather::Graph
             delete fpather;
         }
 
-        virtual float LeastCostEstimate( void* nodeStart, void* nodeEnd ){
+        virtual float LeastCostEstimate( int nodeStart, int nodeEnd ){
             return (float)fleast;
             // return 0.6666667f;
 
@@ -101,10 +101,10 @@ class DFNGraph : public micropather::Graph
         void ComputeShortestPath(int64_t start, int64_t end, TPZStack<int64_t>& Path){
             float totalCost = 0.;
             // solution gets the nodes of the shortest path
-            micropather::MPVector<void*> solution;
+            micropather::MPVector<int> solution;
 
-            void* graphstart = (void*)MeshToGraphNode(start);
-            void* graphend = (void*)MeshToGraphNode(end);
+            int graphstart = (int)MeshToGraphNode(start);
+            int graphend = (int)MeshToGraphNode(end);
 
             // Test gets the success result as an enum
             int test = fpather->Solve(graphstart,graphend,&solution,&totalCost);
@@ -142,22 +142,22 @@ class DFNGraph : public micropather::Graph
          * exact values for every call to MicroPather::Solve(). It should generally be a simple,
          * fast function with no callbacks into the pather.
         */	
-        virtual void AdjacentCost(void* node, MP_VECTOR< micropather::StateCost > *adjacent ){
+        virtual void AdjacentCost(int node, MP_VECTOR< micropather::StateCost > *adjacent ){
             int nnodes = this->NNodes();
-            int inode = (int64_t)node;
+            int inode = node;
             for(int jneig=0; jneig<nnodes; jneig++){
                 if(IsZero(fdist(inode,jneig))) continue;
-                void* test = (void*)jneig;
-                micropather::StateCost travelcost = {test,fdist(inode,jneig)};
+                int test = jneig;
+                micropather::StateCost travelcost = {jneig,fdist(inode,jneig)};
                 adjacent->push_back(travelcost);
             }
         }
         /**
-            This function is only used in DEBUG mode - it dumps output to stdout. Since void* 
+            This function is only used in DEBUG mode - it dumps output to stdout. Since int 
             aren't really human readable, normally you print out some concise info (like "(1,2)") 
             without an ending newline.
         */
-        virtual void PrintStateInfo( void* node ){
+        virtual void PrintStateInfo( int node ){
             int x = 0;   
             int y = 1;   
             printf( "(%d,%d)", x, y );
@@ -182,7 +182,7 @@ class DFNGraph : public micropather::Graph
         }
 
         /** @brief converts a path given in graph nodes to a path listed as edges*/
-        void ConvertNodePathToEdgePath(const micropather::MPVector<void*>& NodePath, TPZStack<int64_t>& EdgePath) const{
+        void ConvertNodePathToEdgePath(const micropather::MPVector<int>& NodePath, TPZStack<int64_t>& EdgePath) const{
             const int nnodes = NodePath.size();
             if(nnodes < 2) DebugStop();
 

@@ -137,7 +137,7 @@ namespace micropather
 	*/
 	struct StateCost
 	{
-		void* state;			///< The state as a void*
+		int state;			///< The state as a int
 		float cost;				///< The cost to the state. Use FLT_MAX for infinite cost.
 	};
 
@@ -152,7 +152,7 @@ namespace micropather
 		- Unchanging (unless MicroPather::Reset() is called)
 
 		If the client application represents states as objects, then the state is usually
-		just the object cast to a void*. If the client application sees states as numerical
+		just the object cast to a int. If the client application sees states as numerical
 		values, (x,y) for example, then state is an encoding of these values. MicroPather
 		never interprets or modifies the value of state.
 	*/
@@ -167,7 +167,7 @@ namespace micropather
 			map. If you pathfinding is based on minimum time, it is the minimal travel time 
 			between 2 points given the best possible terrain.
 		*/
-		virtual float LeastCostEstimate( void* stateStart, void* stateEnd ) = 0;
+		virtual float LeastCostEstimate( int stateStart, int stateEnd ) = 0;
 
 		/** 
 			Return the exact cost from the given state to all its neighboring states. This
@@ -175,14 +175,14 @@ namespace micropather
 			exact values for every call to MicroPather::Solve(). It should generally be a simple,
 			fast function with no callbacks into the pather.
 		*/	
-		virtual void AdjacentCost( void* state, MP_VECTOR< micropather::StateCost > *adjacent ) = 0;
+		virtual void AdjacentCost( int state, MP_VECTOR< micropather::StateCost > *adjacent ) = 0;
 
 		/**
-			This function is only used in DEBUG mode - it dumps output to stdout. Since void* 
+			This function is only used in DEBUG mode - it dumps output to stdout. Since int 
 			aren't really human readable, normally you print out some concise info (like "(1,2)") 
 			without an ending newline.
 		*/
-		virtual void  PrintStateInfo( void* state ) = 0;
+		virtual void  PrintStateInfo( int state ) = 0;
 	};
 
 
@@ -196,14 +196,14 @@ namespace micropather
 
 
 	/*
-		Every state (void*) is represented by a PathNode in MicroPather. There
+		Every state (int) is represented by a PathNode in MicroPather. There
 		can only be one PathNode for a given state.
 	*/
 	class PathNode
 	{
 	  public:
 		void Init(	unsigned _frame,
-					void* _state,
+					int _state,
 					float _costFromStart, 
 					float _estToGoal, 
 					PathNode* _parent );
@@ -215,7 +215,7 @@ namespace micropather
 			prev = next = this;
 		}	
 
-		void *state;			// the client state
+		int   state;			// the client state
 		float costFromStart;	// exact
 		float estToGoal;		// estimated
 		float totalCost;		// could be a function, but save some math.
@@ -290,13 +290,13 @@ namespace micropather
 		// NOTE: if the pathNode exists (and is current) all the initialization
 		//       parameters are ignored.
 		PathNode* GetPathNode(		unsigned frame,
-									void* _state,
+									int _state,
 									float _costFromStart, 
 									float _estToGoal, 
 									PathNode* _parent );
 
 		// Get a pathnode that is already in the pool.
-		PathNode* FetchPathNode( void* state );
+		PathNode* FetchPathNode( int state );
 
 		// Store stuff in cache
 		bool PushCache( const NodeCost* nodes, int nNodes, int* start );
@@ -307,7 +307,7 @@ namespace micropather
 
 		// Return all the allocated states. Useful for visuallizing what
 		// the pather is doing.
-		void AllStates( unsigned frame, MP_VECTOR< void* >* stateVec );
+		void AllStates( unsigned frame, MP_VECTOR< int >* stateVec );
 
 	private:
 		struct Block
@@ -316,7 +316,7 @@ namespace micropather
 			PathNode pathNode[1];
 		};
 
-		unsigned Hash( void* voidval );
+		unsigned Hash( int voidval );
 		unsigned HashSize() const	{ return 1<<hashShift; }
 		unsigned HashMask()	const	{ return ((1<<hashShift)-1); }
 		void AddPathNode( unsigned key, PathNode* p );
@@ -350,21 +350,21 @@ namespace micropather
 	public:
 		struct Item {
 			// The key:
-			void* start;
-			void* end;
+			int start;
+			int end;
 
 			bool KeyEqual( const Item& item ) const	{ return start == item.start && end == item.end; }
 			bool Empty() const						{ return start == 0 && end == 0; }
 
 			// Data:
-			void*	next;
+			int	next;
 			float	cost;	// from 'start' to 'next'. FLT_MAX if unsolveable.
 
 			unsigned Hash() const {
 				const unsigned char *p = (const unsigned char *)(&start);
 				unsigned int h = 2166136261U;
 
-				for( unsigned i=0; i<sizeof(void*)*2; ++i, ++p ) {
+				for( unsigned i=0; i<sizeof(int)*2; ++i, ++p ) {
 					h ^= *p;
 					h *= 16777619;
 				}
@@ -376,9 +376,9 @@ namespace micropather
 		~PathCache();
 		
 		void Reset();
-		void Add( const MP_VECTOR< void* >& path, const MP_VECTOR< float >& cost );
-		void AddNoSolution( void* end, void* states[], int count );
-		int Solve( void* startState, void* endState, MP_VECTOR< void* >* path, float* totalCost );
+		void Add( const MP_VECTOR< int >& path, const MP_VECTOR< float >& cost );
+		void AddNoSolution( int end, int states[], int count );
+		int Solve( int startState, int endState, MP_VECTOR< int >* path, float* totalCost );
 
 		int AllocatedBytes() const { return allocated * sizeof(Item); }
 		int UsedBytes() const { return nItems * sizeof(Item); }
@@ -388,7 +388,7 @@ namespace micropather
 
 	private:
 		void AddItem( const Item& item );
-		const Item* Find( void* start, void* end );
+		const Item* Find( int start, int end );
 		
 		Item*	mem;
 		int		allocated;
@@ -460,7 +460,7 @@ namespace micropather
 			@param totalCost	Output, the cost of the path, if found.
 			@return				Success or failure, expressed as SOLVED, NO_SOLUTION, or START_END_SAME.
 		*/
-		int Solve( void* startState, void* endState, MP_VECTOR< void* >* path, float* totalCost );
+		int Solve( int startState, int endState, MP_VECTOR< int >* path, float* totalCost );
 
 		/**
 			Find all the states within a given cost from startState.
@@ -471,7 +471,7 @@ namespace micropather
 								larger 'near' sets and take more time to compute.)
 			@return				Success or failure, expressed as SOLVED or NO_SOLUTION.
 		*/
-		int SolveForNearStates( void* startState, MP_VECTOR< StateCost >* near, float maxCost );
+		int SolveForNearStates( int startState, MP_VECTOR< StateCost >* near, float maxCost );
 
 		/** Should be called whenever the cost between states or the connection between states changes.
 			Also frees overhead memory used by MicroPather, and calling will free excess memory.
@@ -479,14 +479,14 @@ namespace micropather
 		void Reset();
 
 		// Debugging function to return all states that were used by the last "solve" 
-		void StatesInPool( MP_VECTOR< void* >* stateVec );
+		void StatesInPool( MP_VECTOR< int >* stateVec );
 		void GetCacheData( CacheData* data );
 
 	  private:
 		MicroPather( const MicroPather& );	// undefined and unsupported
 		void operator=( const MicroPather ); // undefined and unsupported
 		
-		void GoalReached( PathNode* node, void* start, void* end, MP_VECTOR< void* > *path );
+		void GoalReached( PathNode* node, int start, int end, MP_VECTOR< int > *path );
 
 		void GetNodeNeighbors(	PathNode* node, MP_VECTOR< NodeCost >* neighborNode );
 
