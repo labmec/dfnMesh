@@ -2129,7 +2129,8 @@ bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFr
         const int nsides = face->NSides();
         for(int iside = face->FirstSide(1); iside < nsides-1; iside++){
             TPZGeoEl* edge = DFN::GetSkeletonNeighbour(face,iside);
-            common_edges.insert(edge->Index());
+            bool test = common_edges.insert(edge->Index()).second;
+            if(!test) continue;
             nodes.insert(edge->NodeIndex(0));
             nodes.insert(edge->NodeIndex(1));
         }

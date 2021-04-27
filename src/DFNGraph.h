@@ -22,11 +22,19 @@ class DFNGraph : public micropather::Graph
         /// Graph to mesh node index map
         std::vector<int64_t> fGraphToMeshNode;
 
+        // A matrix to cache the connectivities by edge for efficiency
+        TPZFMatrix<int64_t> fedges;
+
     public:
         /// Default constructor
-        DFNGraph(TPZGeoMesh* gmesh, const std::set<int64_t>& edges){
+        DFNGraph(TPZGeoMesh* gmesh, const std::set<int64_t>& edges, int nnodes = 0){
             fpather = new MicroPather(this,20);
+            fdist.Resize(nnodes,nnodes);
+            fedges.Resize(nnodes,nnodes);
+            
             ComputeCostMatrix(gmesh, edges);
+            CacheEdgeConnectivity(gmesh, edges);
+            
             fleast = ComputeMinimumLength();
         }
         /// Empty constructor
@@ -41,8 +49,8 @@ class DFNGraph : public micropather::Graph
         }
 
         virtual float LeastCostEstimate( void* nodeStart, void* nodeEnd ){
-            return 0.6666667f;
-            // return (float)fleast;
+            return (float)fleast;
+            // return 0.6666667f;
 
             // using namespace DFN;
             // int graphstart = *(int*)nodeStart;
@@ -66,7 +74,7 @@ class DFNGraph : public micropather::Graph
         /// Compute minimal distance in the weighted graph by taking the minimal non-zero entry in fdist
         float ComputeMinimumLength() const{
             int nnodes = NNodes();
-            const float BIG_NUMBER = FLT_MAX;
+            const float BIG_NUMBER = __FLT_MAX__;
             float minimal = BIG_NUMBER;
             for(int i=0; i<nnodes; i++){
                 for(int j=i+1; j<nnodes; j++){
@@ -90,24 +98,29 @@ class DFNGraph : public micropather::Graph
         }
 
         /// @brief Solve shortest path between 2 nodes
-        void ComputeShortestPath(int64_t start, int64_t end, TPZManVector<int64_t>& Path){
+        void ComputeShortestPath(int64_t start, int64_t end, TPZStack<int64_t>& Path){
             float totalCost = 0.;
+            // solution gets the nodes of the shortest path
             micropather::MPVector<void*> solution;
 
-            int graphstart = MeshToGraphNode(start);
-            int graphend = MeshToGraphNode(end);
+            void* graphstart = (void*)MeshToGraphNode(start);
+            void* graphend = (void*)MeshToGraphNode(end);
 
-            int test = fpather->Solve(&graphstart,&graphend,&solution,&totalCost);
-            int nedges = solution.size();
-            Path.Resize(nedges,0);
-            for(int i = 0; i<nedges; i++)
-                {Path[i] = int64_t(solution[i]);}
+            // Test gets the success result as an enum
+            int test = fpather->Solve(graphstart,graphend,&solution,&totalCost);
+            if(test == MicroPather::NO_SOLUTION)
+                {PZError << "\nCouldn't solve for shortest path while analysing graph for inter-fracture intersection."; DebugStop();}
+            
+            // if(test == MicroPather::SOLVED)
+            ConvertNodePathToEdgePath(solution,Path);
         }
 
     private:
         void ComputeCostMatrix(TPZGeoMesh* gmesh, const std::set<int64_t>& edges){
-            int estimative = edges.size()+2; // Number of nodes can never be bigger then twice the number of edges
-            fdist.Resize(estimative,estimative);
+            if(fdist.Rows() == 0){
+                int estimative = edges.size()+2; // Number of nodes can never be bigger then twice the number of edges
+                fdist.Resize(estimative,estimative);
+            }
             fdist.Zero();
             for(auto index : edges){
                 TPZGeoEl* edge = gmesh->Element(index);
@@ -118,9 +131,10 @@ class DFNGraph : public micropather::Graph
                 fdist(j,i) = fdist(i,j); // Symmetry
             }
             int real_nnodes = fMeshToGraphNode.size();
-            fdist.Print("cost1",std::cout,EFixedColumn);
             fdist.Resize(real_nnodes,real_nnodes);
-            fdist.Print("cost2",std::cout,EFixedColumn);
+            #ifdef LOG4CXX
+                fdist.Print("cost",std::cout,EFixedColumn);
+            #endif // lLOG4CXX
         }
         /** 
          * Return the exact cost from the given node to all its neighboring nodes. This
@@ -130,10 +144,11 @@ class DFNGraph : public micropather::Graph
         */	
         virtual void AdjacentCost(void* node, MP_VECTOR< micropather::StateCost > *adjacent ){
             int nnodes = this->NNodes();
-            int inode = *(int*)node;
+            int inode = (int64_t)node;
             for(int jneig=0; jneig<nnodes; jneig++){
                 if(IsZero(fdist(inode,jneig))) continue;
-                micropather::StateCost travelcost = {&jneig,fdist(inode,jneig)};
+                void* test = (void*)jneig;
+                micropather::StateCost travelcost = {test,fdist(inode,jneig)};
                 adjacent->push_back(travelcost);
             }
         }
@@ -146,5 +161,35 @@ class DFNGraph : public micropather::Graph
             int x = 0;   
             int y = 1;   
             printf( "(%d,%d)", x, y );
+        }
+
+        /** @brief Store edge connectivity but using graph node indices
+         * this is only used in the end to convert a path in local nodes to edge indices
+        */
+        void CacheEdgeConnectivity(TPZGeoMesh* gmesh, const std::set<int64_t>& edges){
+            if(fedges.Rows() == 0){
+                int nnodes = NNodes();
+                fedges.Resize(nnodes,nnodes);
+            }
+            fedges.Zero();
+            for(int64_t index : edges){
+                TPZGeoEl* edge = gmesh->Element(index);
+                int i = MeshToGraphNode(edge->NodeIndex(0));
+                int j = MeshToGraphNode(edge->NodeIndex(1));
+                fedges(i,j) = index;
+                fedges(j,i) = index; // Symmetry
+            }
+        }
+
+        /** @brief converts a path given in graph nodes to a path listed as edges*/
+        void ConvertNodePathToEdgePath(const micropather::MPVector<void*>& NodePath, TPZStack<int64_t>& EdgePath) const{
+            const int nnodes = NodePath.size();
+            if(nnodes < 2) DebugStop();
+
+            for(int inode=0; inode<nnodes-1; inode++){
+                int i = (int64_t)NodePath[inode];
+                int j = (int64_t)NodePath[inode+1];
+                EdgePath.push_back(fedges.g(i,j));
+            }
         }
 };
