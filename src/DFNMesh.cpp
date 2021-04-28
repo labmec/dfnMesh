@@ -1110,7 +1110,7 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 	/// A geometrical intersection between 2 bounded planes in R^3 is a line segment, 
 	/// so we represent it by the coordinates of its nodes
 	Segment int_segment;
-
+	out << "\n// INTER-FRACTURE INTERSECTIONS\n";
 	const int nfrac = this->NFractures();
 	// Test every pair of fractures for intersection
 	for(int jfrac = 0; jfrac<nfrac; jfrac++){
@@ -1128,10 +1128,29 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 			if(common_faces.size() > 0){
 				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],common_faces,int_segment,intersection_edges);
 			}else{
-
+				fFractures[jfrac]->FindFractureIntersection_Trivial(*fFractures[kfrac],intersection_edges);
 			}
+			if(intersection_edges.size() == 0) continue;
+			stringstream stream;
+			// Setup Physical Groups for each intersection
+			stream << "\nfracIntersection_" << jfrac << '_' << kfrac << "[] = { ";
+			for(int64_t iedge : intersection_edges){
+				stream << iedge+gmshshift << ',';
+			}
+			stream.seekp(stream.str().length()-1);
+			stream << "};";
+			stream << "\nfracIntersection_" << kfrac << '_' << jfrac << "[] = fracIntersection_" << jfrac << '_' << kfrac << ';';
+			stream <<"\nPhysical Curve(\"fracIntersection_" << jfrac << '_' << kfrac<<"\") = "
+								  << "fracIntersection_" << jfrac << '_' << kfrac<<"[];";
+			// When importing back meshes to PZ, we'll need to avoid elements belonging to more than one physical group
+			// and boundary conditions should differ from intersections. When these sets intersect, frac-intersection should 'get' the element
+			// so we take the set difference using gmsh list operations
+			stream << "\nBCfrac" << jfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
+			stream << "\nBCfrac" << kfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
+			out << stream.str() << std::endl;
 		}
 	}
+	out << std::endl;
 }
 
 

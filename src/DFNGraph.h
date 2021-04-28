@@ -147,7 +147,6 @@ class DFNGraph : public micropather::Graph
             int inode = node;
             for(int jneig=0; jneig<nnodes; jneig++){
                 if(IsZero(fdist(inode,jneig))) continue;
-                int test = jneig;
                 micropather::StateCost travelcost = {jneig,fdist(inode,jneig)};
                 adjacent->push_back(travelcost);
             }
@@ -158,9 +157,7 @@ class DFNGraph : public micropather::Graph
             without an ending newline.
         */
         virtual void PrintStateInfo( int node ){
-            int x = 0;   
-            int y = 1;   
-            printf( "(%d,%d)", x, y );
+            DebugStop();
         }
 
         /** @brief Store edge connectivity but using graph node indices

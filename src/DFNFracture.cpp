@@ -1074,7 +1074,8 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
         case 3:             
         case 4: if(isplane){
                     // TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,this->fmatid); 
-                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,fIndex+10);
+                    // If you create elements in the surface with matid = this->fmatid, Fracture Boundary condition recovery may fail
+                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Eintact);
                     newelements[0] = newel->Index();
                     break;
                 }
@@ -1684,7 +1685,7 @@ void DFNFracture::InsertFaceInSurface(int64_t elindex){
         children.push_back(gel);
     }
     for(TPZGeoEl* gel : children){
-        // gel->SetMaterialId(fmatid);
+        // gel->SetMaterialId(fmatid); // Don't set material id here, otherwise fracture BC recovery will fail
         if(gel->Dimension() !=2) DebugStop();
         fSurfaceFaces.insert(gel->Index());
     }
@@ -1764,11 +1765,11 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
                 }
             }
             else{
-                child->SetMaterialId(father->MaterialId());
+                // child->SetMaterialId(father->MaterialId());
                 edgeindices = DFN::GetEdgeIndices(child);
                 for(int64_t index : edgeindices){
                     TPZGeoEl* edge = gmesh->Element(index);
-                    edge->SetMaterialId(father->MaterialId());
+                    // edge->SetMaterialId(father->MaterialId());
                 }
             }
         }
@@ -2170,4 +2171,48 @@ bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFr
     graph.ComputeShortestPath(start,end,EdgeList);
 
     return EdgeList.size();
+}
+
+
+
+
+
+
+
+void DFNFracture::FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    std::set<int64_t> EdgeList_set;
+
+    const std::set<int64_t>& othersurface = OtherFrac.fSurfaceFaces;
+    
+    for(int64_t faceindex : this->fSurfaceFaces){
+        TPZGeoEl* face = gmesh->Element(faceindex);
+        for(int iside = face->FirstSide(1); iside < face->FirstSide(2); iside++){
+            TPZGeoElSide geoside(face,iside);
+            for(auto neig = geoside.Neighbour(); neig!=geoside; ++neig){
+                if(neig.Element()->Dimension() != 2) continue;
+                /* This can be done more efficiently by checking material id, but you'd have to make sure no fractures with different material ids overlap.
+                What I mean is, if there's a third fracture that overlaps OtherFrac, then it may have changed the material id of some elements in their shared surface.
+                I'm not very enthusiastic on leaving the robustness dependent on details based in material ids, though. Feels hacky.
+                So here's the expensive but robust solution: Multiple binary searches. As in, the worst case (which happens whenever 2 fractures do not intersect) being
+                twice for every 2D neighbour through each 1D side of each 2D gel in the surface of this fracture by each other fracture tested.*/
+                if(othersurface.find(neig.Element()->Index()) == othersurface.end()) continue;
+                // if(neig.Element()->MaterialId() != OtherFrac.MaterialId()) continue;
+                
+                TPZGeoEl* skeleton = DFN::GetSkeletonNeighbour(face,iside);
+                EdgeList_set.insert(skeleton->Index());
+                break;
+            }
+        }
+    }
+
+    int nedges = EdgeList_set.size();
+    if(nedges == 0) return; // No intersection
+
+    EdgeList.resize(nedges);
+    int i=0;
+    for(int64_t index : EdgeList_set){
+        EdgeList[i] = index;
+        i++;
+    }
 }

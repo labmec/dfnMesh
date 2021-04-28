@@ -362,6 +362,14 @@ public:
                                             const std::set<int64_t>& CommonFaces, 
                                             const Segment& Segment,
                                             TPZStack<int64_t>& EdgeList);
+
+    /** @brief Find edges that define the intersection between this and another DFNFracture, by searching for
+     * 1D sides of the faces in this fracture's surface through where a neighbour can be found with the matid
+     * of the OtherFrac.
+     * @param OtherFrac The other fracture the code should search for intersection
+     * @param EdgeList [output] A stack to fill with the result of the search
+    */
+    void FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList);
 };
 
 

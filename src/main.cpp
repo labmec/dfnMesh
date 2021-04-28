@@ -177,11 +177,6 @@ int main(int argc, char* argv[]){
 		frac->RecoverFractureLimits();
 	}
 
-	Segment int_segment;
-	const DFNPolygon& polygA = dfn.FractureList()[0]->Polygon();
-	const DFNPolygon& polygB = dfn.FractureList()[1]->Polygon();
-	bool test = polygA.ComputePolygonIntersection(polygB,int_segment);
-	
 
 
 	// Generate submesh
