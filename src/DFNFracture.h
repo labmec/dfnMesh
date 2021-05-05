@@ -72,6 +72,10 @@ private:
     /// @comment Right now, I'm thinking of filling this datastructure only temporarily, to use in DFNFracture::RecoverFractureLimits recovery. This may change later...
 	std::set<int64_t> fSurfaceEdges;
 
+    TPZStack<int> f_frac_frac_intersections;
+
+    int fmatid_BC = fmatid-1;
+
 public:
 
 #ifdef LOG4CXX

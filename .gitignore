@@ -15,3 +15,5 @@ __py*
 /*.geo
 
 *.gdbinit
+
+graphics

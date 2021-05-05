@@ -368,13 +368,15 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 
 
 DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid){
-	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling,materialid);
+	// For the export graphics code, we're starting with this limit of max_intersections and reserving material ids within every 1000 for frac_frac_intersections. It's just for graphics
+	int frac_tag = this->NFractures() + 1;
+	materialid = frac_tag*max_intersections;
+	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling, materialid);
+
 #ifdef LOG4CXX
-	// std::stringstream sout;
-	// sout << "\n[Start][Fracture " << fracture->Index() << "]";
-    // if(logger->isInfoEnabled()) LOGPZ_INFO(logger, sout.str());
     LOGPZ_INFO(logger, "[Start][Fracture " << fracture->Index() << "]");
 #endif // LOG4CXX
+
 	std::cout<<"\nFracture #"<<fracture->Index();
 	fFractures.push_back(fracture);
 	return fracture;
