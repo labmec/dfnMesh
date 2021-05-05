@@ -46,6 +46,10 @@ private:
     // A set of polyhedral volumes
     TPZStack<DFNPolyhedron,20> fPolyhedra;
 
+    // // mat ids in use for this DFNMesh
+    // std::set<int> matids_in_use;
+
+    const int max_intersections = 1000;
 public:
     
     /// Constructor
@@ -110,6 +114,8 @@ public:
     void ExportGMshCAD_fractures(std::ofstream& out);
     void ExportGMshCAD_boundaryconditions(std::ofstream& out);
     void ExportGMshCAD_fractureIntersections(std::ofstream& out);
+
+    void ExportDetailedGraphics();
     
     // /// Uses gmsh API to tetrahedralize a DFNVolume
     // void Tetrahedralize(DFNVolume *volume);
@@ -294,6 +300,8 @@ private:
 public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
+
+    
 
 };
 

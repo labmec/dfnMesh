@@ -2121,6 +2121,7 @@ bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFr
 {
     using namespace DFN;
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    EdgeList.clear();
 
     // Get common edges
     std::set<int64_t> common_edges; // Edges of the graph
@@ -2209,10 +2210,97 @@ void DFNFracture::FindFractureIntersection_Trivial(const DFNFracture& OtherFrac,
     int nedges = EdgeList_set.size();
     if(nedges == 0) return; // No intersection
 
+    EdgeList.clear();
     EdgeList.resize(nedges);
     int i=0;
     for(int64_t index : EdgeList_set){
         EdgeList[i] = index;
         i++;
     }
+}
+
+void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int){
+	/// A geometrical intersection between 2 bounded planes in R^3 is a line segment, 
+	/// so we represent it by the coordinates of its nodes
+	Segment int_segment;
+	const int nfrac = fdfnMesh->NFractures();
+    TPZGeoMesh* gmesh = this->fdfnMesh->Mesh();
+	// Test every pair of fractures for intersection
+    int jfrac = this->fIndex;
+    for(int kfrac = 0; kfrac<nfrac; kfrac++){
+        if(kfrac == jfrac) continue;
+        const DFNPolygon& jpolygon = this->Polygon();
+        const DFNPolygon& kpolygon = fdfnMesh->FractureList()[kfrac]->Polygon();
+        bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,int_segment);
+
+        const std::set<int64_t>& surface_j = this->Surface();
+        const std::set<int64_t>& surface_k = fdfnMesh->FractureList()[kfrac]->Surface();
+        std::set<int64_t> common_faces = DFN::set_intersection(surface_j,surface_k);
+
+        TPZStack<int64_t> intersection_edges;
+        // If fractures have overlapped surfaces, it's a non trivial case
+        if(common_faces.size() > 0){
+            this->FindFractureIntersection_NonTrivial(*fdfnMesh->FractureList()[kfrac],common_faces,int_segment,intersection_edges);
+        }else{
+            this->FindFractureIntersection_Trivial(*fdfnMesh->FractureList()[kfrac],intersection_edges);
+        }
+        if(intersection_edges.size() == 0) continue;
+        
+        int intersection_matid = 0;
+        if(kfrac > jfrac) 
+            {intersection_matid = this->fmatid + kfrac;}
+        else /*(kfrac < jfrac)*/ 
+            {intersection_matid = fdfnMesh->FractureList()[kfrac]->fmatid + jfrac;}
+        fracfrac_int.push_back(intersection_matid);
+        for(auto index : intersection_edges){
+            gmesh->Element(index)->SetMaterialId(intersection_matid);
+        }
+    }
+}
+
+void DFNFracture::SetupGraphicsFractureBC(){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    int fracdim = gmesh->Dimension()-1;
+    int bcdim = fracdim-1;
+    TPZGeoEl* gel = nullptr;
+    for(int64_t index : this->fSurfaceFaces){
+        gel = gmesh->Element(index);
+        if(!gel) continue;
+        if(gel->Dimension() != fracdim) continue;
+        if(gel->HasSubElement()) PZError << "\nYou should call DFNFracture::CleanUp before calling this method.\n";
+        int nsides = gel->NSides();
+        for(int iside = gel->FirstSide(bcdim); iside < nsides-1; iside++){
+            TPZGeoElSide gelside(gel,iside);
+            bool IsBoundarySide = true;
+            for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
+                if(neig.Element()->Dimension() != 2) continue;
+                if(neig.Element()->HasSubElement()) continue;
+                // if(fSurfaceFaces.find(neig.Element()->Index()) != fSurfaceFaces.end()){
+                if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
+                    IsBoundarySide = false;
+                    break;
+                }
+            }
+            if(!IsBoundarySide) continue;
+            TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
+            gelbc->SetMaterialId(fmatid_BC); // @todo I'll probably want to remove this, right? fracture bc materialid is a concern of the resulting .geo file
+            /** @todo maybe add to a set?
+              * @todo maybe the user would want the material id to match a chosen neighbour? 
+              *       this way we would have multiple subsets of the boundary for a fracture, which is likely to come handy
+              */
+        }
+    }
+}
+
+void DFNFracture::PlotVTK(const std::string exportname, bool putGraphicalElements){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    this->CleanUp();
+    TPZStack<int> fracfrac_int;
+    SetupGraphicsFractureIntersections(fracfrac_int);
+    SetupGraphicsFractureBC();
+    std::set<int> myMaterial {fmatid,fmatid_BC};
+    for(int mat : fracfrac_int) myMaterial.insert(mat);
+
+    std::ofstream file(exportname);
+    TPZVTKGeoMesh::PrintGMeshVTKmy_material(gmesh, file, myMaterial, true, true);
 }

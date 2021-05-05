@@ -7,7 +7,7 @@
 #include "DFNMesh.h"
 #include "TPZVTKGeoMesh.h"
 #include "TPZGeoMeshBuilder.h"
-
+#include <filesystem>
 #include "pzlog.h"
 
 #ifdef LOG4CXX
@@ -1121,8 +1121,8 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 			const DFNPolygon& kpolygon = fFractures[kfrac]->Polygon();
 			bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,int_segment);
 
-			std::set<int64_t> surface_j = fFractures[jfrac]->Surface();
-			std::set<int64_t> surface_k = fFractures[kfrac]->Surface();
+			const std::set<int64_t>& surface_j = fFractures[jfrac]->Surface();
+			const std::set<int64_t>& surface_k = fFractures[kfrac]->Surface();
 			std::set<int64_t> common_faces = DFN::set_intersection(surface_j,surface_k);
 
 			TPZStack<int64_t> intersection_edges;
@@ -2596,4 +2596,30 @@ void DFNMesh::PreRefine(int n){
 		// UpdatePolyhedra();
 	}
 
+}
+
+void InitializeFilterScript(std::ofstream& filter){
+
+}
+
+
+
+void DFNMesh::ExportDetailedGraphics(){
+#ifdef PZDEBUG
+	std::cout << "[WARNING] DFNMesh::ExportDetailedGraphics() inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
+#endif // PZDEBUG
+	
+	std::string filename = "dfnmesh";
+	std::ofstream out1("dfnmesh.0.vtk");
+
+	std::ofstream filter("graphics/filter.py");
+	InitializeFilterScript(filter);
+
+	const std::string dirname = "./graphics";
+	std::filesystem::create_directory(dirname);
+
+	for(auto frac : fFractures){
+		std::string exportname = dirname + '/' + filename + "." + std::to_string(frac->Index()) + ".vtk";
+		frac->PlotVTK(exportname);
+	}
 }

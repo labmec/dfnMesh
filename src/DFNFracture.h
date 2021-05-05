@@ -265,6 +265,9 @@ private:
 
 public:
 
+    void PlotVTK(const std::string exportname, bool putGraphicalElements = true);
+    void SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int);
+    void SetupGraphicsFractureBC();
 
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
