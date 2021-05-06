@@ -27,6 +27,11 @@ target_link_libraries(dfnTest dfnlib)
 add_executable(perfTest main_perftests.cpp)
 target_link_libraries(perfTest dfnlib)
 
+
+# A cleaner target to summarize main methods
+add_executable(SimpleDFN main_simple.cpp)
+target_link_libraries(SimpleDFN dfnlib)
+
 # # Quick Tests
 # add_executable(quickTests quicktests.cpp)
 # target_link_libraries(quickTests dfnlib)
