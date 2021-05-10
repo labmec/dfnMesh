@@ -174,13 +174,13 @@ int main(int argc, char* argv[]){
 	// Generate submesh
     dfn.ExportGMshCAD("dfnExport.geo");
 
-	// dfn.FractureList()[0]->PlotVTK("LOG/vtkmesh.0.vtk");
-	dfn.ExportDetailedGraphics();
 	
 	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
+	// dfn.FractureList()[0]->PlotVTK("LOG/vtkmesh.0.vtk");
+	dfn.ExportDetailedGraphics();
 	dfn.DumpVTK(true,true);
 	dfn.PrintSummary();
 	dfn.PrintVTK("skip","LOG/pzmesh.txt");

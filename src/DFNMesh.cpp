@@ -1133,7 +1133,7 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 				fFractures[jfrac]->FindFractureIntersection_Trivial(*fFractures[kfrac],intersection_edges);
 			}
 			if(intersection_edges.size() == 0) continue;
-			stringstream stream;
+			std::stringstream stream;
 			// Setup Physical Groups for each intersection
 			stream << "\nfracIntersection_" << jfrac << '_' << kfrac << "[] = { ";
 			for(int64_t iedge : intersection_edges){

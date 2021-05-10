@@ -1859,7 +1859,7 @@ void DFNFracture::Print(std::ostream & out) const
     int nelements = fdfnMesh->Mesh()->NElements();
     int width = 2 + int(std::log10(nelements)+1);
     for(int64_t index : fSurfaceFaces){
-        out << setw(width) << std::right << index << "\n";
+        out << std::setw(width) << std::right << index << "\n";
     }
     // todo?
     // SubPolygons
