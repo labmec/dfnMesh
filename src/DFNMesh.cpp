@@ -2617,6 +2617,13 @@ void DFNMesh::ExportDetailedGraphics(){
 
 	const std::string dirname = "./graphics";
 	std::filesystem::create_directory(dirname);
+	
+	// Make sure fracture surfaces are consistent
+	for(auto frac : FractureList()){
+		frac->CleanUp();
+	}
+	// Plot complete graphics
+	PrintVTK(dirname+"/dfnmesh.vtk","skip");
 
 	for(auto frac : fFractures){
 		std::string exportname = dirname + '/' + filename + "." + std::to_string(frac->Index()) + ".vtk";
