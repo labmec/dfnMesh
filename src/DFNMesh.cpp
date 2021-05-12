@@ -2598,9 +2598,7 @@ void DFNMesh::PreRefine(int n){
 
 }
 
-void InitializeFilterScript(std::ofstream& filter){
-
-}
+void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename);
 
 
 
@@ -2609,24 +2607,55 @@ void DFNMesh::ExportDetailedGraphics(){
 	std::cout << "[WARNING] DFNMesh::ExportDetailedGraphics() inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
 #endif // PZDEBUG
 	
-	std::string filename = "dfnmesh";
-	std::ofstream out1("dfnmesh.0.vtk");
-
-	std::ofstream filter("graphics/filter.py");
-	InitializeFilterScript(filter);
-
+	// Standard control
+	const std::string filename = "dfnmesh";
 	const std::string dirname = "./graphics";
 	std::filesystem::create_directory(dirname);
 	
 	// Make sure fracture surfaces are consistent
 	for(auto frac : FractureList()){
 		frac->CleanUp();
+		frac->Polygon().InsertGeomRepresentation(fGMesh,-frac->MaterialId());
 	}
 	// Plot complete graphics
-	PrintVTK(dirname+"/dfnmesh.vtk","skip");
+	PrintVTK(dirname+'/'+filename+'.'+std::to_string(NFractures())+".vtk","skip");
 
+	// Plot each of the fractures
 	for(auto frac : fFractures){
 		std::string exportname = dirname + '/' + filename + "." + std::to_string(frac->Index()) + ".vtk";
 		frac->PlotVTK(exportname);
 	}
+
+
+	// Create a filter script
+	std::ofstream filter("graphics/test.py");
+	CreateFilterScript(*this,filter,filename);
+}
+
+void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename){
+	filter <<   "#### import the simple module from the paraview\n"
+				"from paraview.simple import *\n"
+				"#### disable automatic camera reset on 'Show'\n"
+				"paraview.simple._DisableFirstRenderCameraReset()\n"
+				"\n"
+				"# find source\n"
+				"vtkmesh = FindSource(\'"<< filename << ".*\')\n";
+	
+	// A control for the global range of elements to plot
+	filter << "\n\n";
+	filter << 	"# ELEMENT RANGE\n"
+				"elementRange = Threshold(Input=vtkmesh)\n"
+				"elementRange.Scalars = ['CELLS', 'elIndex']\n"
+				"elementRange.ThresholdRange = [0.0," << dfn.Mesh()->NElements() <<"]\n"
+				"RenameSource('ElementRange', elementRange)\n";
+
+	// Setup layout and view to create filters
+	filter << "\n\n";
+	filter << 	"# get active view\n"
+				"renderView1 = GetActiveViewOrCreate('RenderView')\n"
+				"# get layout\n"
+				"layout1 = GetLayout()\n";
+
+	// FILTERS
+	filter << "\n\n";
 }
