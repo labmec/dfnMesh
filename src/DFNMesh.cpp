@@ -2734,6 +2734,15 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 				<< iBoundary <<".Scalars = ['CELLS', 'material']\n"
 				<< iBoundary <<".ThresholdRange = [" << frac_mat-1<<','<<frac_mat-1 <<"]\n"
 				<< "RenameSource('Boundary', "<<iBoundary<<")\n";
+		filter  << iBoundary <<"Display = Show("<<iBoundary<<", renderView1,'UnstructuredGridRepresentation')\n"
+				<< iBoundary<<"Display.SetRepresentationType('Surface With Edges')\n"
+				<< "ColorBy("<<iBoundary<<"Display, ('CELLS', 'material'))\n"
+				<< iBoundary<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
+				<< iBoundary<<"Display.SetScalarBarVisibility(renderView1, False)\n"
+				// << iBoundary<<"Display.AmbientColor = [1.0, 0.0, 0.0]\n"
+				// << iBoundary<<"Display.DiffuseColor = [1.0, 0.0, 0.0]\n"
+				<< iBoundary<<"Display.LineWidth = 4.0\n";
+
 		filter.flush();
 	}
 	// }@ FILTERS
