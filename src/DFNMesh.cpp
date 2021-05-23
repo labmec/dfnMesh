@@ -2604,7 +2604,7 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 
 void DFNMesh::ExportDetailedGraphics(){
 #ifdef PZDEBUG
-	std::cout << "[WARNING] DFNMesh::ExportDetailedGraphics() inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
+	std::cout << "[WARNING] " << __PRETTY_FUNCTION__ << " inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
 #endif // PZDEBUG
 	
 	// Standard control
@@ -2615,10 +2615,8 @@ void DFNMesh::ExportDetailedGraphics(){
 	// Make sure fracture surfaces are consistent
 	for(auto frac : FractureList()){
 		frac->CleanUp();
-		frac->Polygon().InsertGeomRepresentation(fGMesh,-frac->MaterialId());
+		frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->MaterialId()) );
 	}
-	// Plot complete graphics
-	PrintVTK(dirname+'/'+filename+'.'+std::to_string(NFractures())+".vtk","skip");
 
 	// Plot each of the fractures
 	for(auto frac : fFractures){
@@ -2626,6 +2624,8 @@ void DFNMesh::ExportDetailedGraphics(){
 		frac->PlotVTK(exportname);
 	}
 
+	// Plot complete graphics
+	PrintVTK(dirname+'/'+filename+'.'+std::to_string(NFractures())+".vtk","skip");
 
 	// Create a filter script
 	std::ofstream filter("graphics/test.py");

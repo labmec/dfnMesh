@@ -2248,9 +2248,9 @@ void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int
         
         int intersection_matid = 0;
         if(kfrac > jfrac) 
-            {intersection_matid = this->fmatid + kfrac;}
+            {intersection_matid = this->fmatid + kfrac+1;}
         else /*(kfrac < jfrac)*/ 
-            {intersection_matid = fdfnMesh->FractureList()[kfrac]->fmatid + jfrac;}
+            {intersection_matid = fdfnMesh->FractureList()[kfrac]->fmatid + jfrac+1;}
         fracfrac_int.push_back(intersection_matid);
         for(auto index : intersection_edges){
             gmesh->Element(index)->SetMaterialId(intersection_matid);
@@ -2298,7 +2298,7 @@ void DFNFracture::PlotVTK(const std::string exportname, bool putGraphicalElement
     TPZStack<int> fracfrac_int;
     SetupGraphicsFractureIntersections(fracfrac_int);
     SetupGraphicsFractureBC();
-    std::set<int> myMaterial {fmatid,fmatid_BC};
+    std::set<int> myMaterial {-fmatid,fmatid,fmatid_BC};
     for(int mat : fracfrac_int) myMaterial.insert(mat);
 
     std::ofstream file(exportname);
