@@ -2754,6 +2754,14 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 					<< ij_intersection <<".ThresholdRange = [" << intersection_id<<','<<intersection_id <<"]\n"
 					<< "RenameSource('Intersection_"<<other_frac->Index()<<"', "<<ij_intersection<<")\n";
 			
+			filter  << ij_intersection <<"Display = Show("<<ij_intersection<<", renderView1,'UnstructuredGridRepresentation')\n"
+					<< ij_intersection<<"Display.SetRepresentationType('Surface With Edges')\n"
+					// << "ColorBy("<<ij_intersection<<"Display, ('CELLS', 'material'))\n"
+					// << ij_intersection<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
+					// << ij_intersection<<"Display.SetScalarBarVisibility(renderView1, False)\n"
+					<< ij_intersection<<"Display.AmbientColor = [0.0, 1.0, 0.0]\n"
+					<< ij_intersection<<"Display.DiffuseColor = [0.0, 1.0, 0.0]\n"
+					<< ij_intersection<<"Display.LineWidth = 4.0\n";
 		}
 		filter.flush();
 	}
