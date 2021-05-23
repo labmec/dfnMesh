@@ -2684,4 +2684,54 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 			<< "DFNPolygonsDisplay.EdgeColor = [0.0, 0.0, 0.0]\n"
 			<< "DFNPolygonsDisplay.Opacity = 1.0\n";
 
+	for(auto frac : dfn.FractureList()){
+		filter << "\n\n";
+		int index = frac->Index();
+		int ifrac_tag = index+1;
+		// int frac_mat = frac->MaterialId();
+		int frac_mat = 1000*(index+1);
+		std::string ifrac = "Fracture" + std::to_string(index);
+		std::string iPolygon = "Polygon" + std::to_string(index);
+		std::string iSurface = "Surface" + std::to_string(index);
+		std::string iBoundary = "Boundary" + std::to_string(index);
+		std::string iShrink = "Shrink" + std::to_string(index);
+		filter  << "########################\n# " <<ifrac << "\n########################\n"
+				<< ifrac <<" = Threshold(Input=" <<rootfilter<<")\n"
+				<< ifrac <<".Scalars = ['CELLS', 'Dimension']\n"
+				<< ifrac <<".ThresholdRange = [1.0, 2.0]\n"
+				<< "RenameSource('"<<ifrac<<"', "<<ifrac<<")\n";
+		
+		filter  << "# Shrink (" <<ifrac << ")\n"
+				<< iShrink <<" = Shrink(Input=" <<ifrac<<")\n"
+				<< iShrink <<".ShrinkFactor = 0.9\n"
+				<< "RenameSource('Shrink', "<<iShrink<<")\n";
+
+		filter  << "# " << ifrac <<" (Polygon)" << "\n"
+				<< iPolygon <<" = Threshold(Input=" <<ifrac<<")\n"
+				<< iPolygon <<".Scalars = ['CELLS', 'material']\n"
+				<< iPolygon <<".ThresholdRange = [" << -frac_mat<<','<<-frac_mat <<"]\n"
+				<< "RenameSource('Polygon', "<<iPolygon<<")\n";
+
+		std::string two_dim = "two_dim"+ std::to_string(index);
+		filter  << "# " << ifrac <<" (2D filter)" << "\n"
+				<< two_dim <<" = Threshold(Input=" <<iShrink<<")\n"
+				<< two_dim <<".Scalars = ['CELLS', 'Dimension']\n"
+				<< two_dim <<".ThresholdRange = [2, 2]\n"
+				<< "RenameSource('2D', "<<two_dim<<")\n";
+		filter  << "# " << ifrac <<" (Surface)" << "\n"
+				<< iSurface <<" = Threshold(Input=" <<two_dim<<")\n"
+				<< iSurface <<".Scalars = ['CELLS', 'material']\n"
+				<< iSurface <<".ThresholdRange = [" << frac_mat<<','<<frac_mat <<"]\n"
+				<< "RenameSource('Surface', "<<iSurface<<")\n";
+		filter  << iSurface <<"Display = Show("<<iSurface<<", renderView1,'UnstructuredGridRepresentation')\n"
+				<< iSurface<<"Display.SetRepresentationType('Surface')\n"
+				<< "ColorBy("<<iSurface<<"Display, ('CELLS', 'material'))\n"
+				<< iSurface<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
+				<< iSurface<<"Display.SetScalarBarVisibility(renderView1, False)\n";
+
+		filter.flush();
+	}
+	// }@ FILTERS
+
+	filter.flush();
 }
