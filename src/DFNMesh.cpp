@@ -2642,11 +2642,15 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 				"vtkmesh = FindSource(\'"<< filename << ".*\')\n";
 	
 	// A control for the global range of elements to plot
+	/* Most, if not all, filters are applied to ElementRange or one of its subfilter, 
+	so we can keep a toggle to sample elements from a specific range without much effort
+	*/
+	const std::string rootfilter("elementRange");
 	filter << "\n\n";
 	filter << 	"# ELEMENT RANGE\n"
 				"elementRange = Threshold(Input=vtkmesh)\n"
 				"elementRange.Scalars = ['CELLS', 'elIndex']\n"
-				"elementRange.ThresholdRange = [0.0," << dfn.Mesh()->NElements() <<"]\n"
+				"elementRange.ThresholdRange = [0.0," << dfn.Mesh()->NElements()+100<<"]\n"
 				"RenameSource('ElementRange', elementRange)\n";
 
 	// Setup layout and view to create filters
@@ -2657,5 +2661,27 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 				"layout1 = GetLayout()\n";
 
 	// FILTERS
+	// @{
+
 	filter << "\n\n";
+	filter  << "# Domain box\n"
+			<< "DomainBox = Threshold(Input=" <<rootfilter<<")\n"
+			<< "DomainBox.Scalars = ['CELLS', 'Dimension']\n"
+			<< "DomainBox.ThresholdRange = [3.0, 3.0]\n"
+			<< "RenameSource('DomainBox', DomainBox)\n"
+			<< "DomainBoxDisplay = Show(DomainBox, renderView1,'UnstructuredGridRepresentation')\n"
+			<< "DomainBoxDisplay.SetRepresentationType('Outline')\n";
+	
+	
+	filter << "\n\n";
+	filter << "# DFNPolygons\n"
+			<< "DFNPolygons = Threshold(Input=" <<rootfilter<<")\n"
+			<< "DFNPolygons.Scalars = ['CELLS', 'material']\n"
+			<< "DFNPolygons.ThresholdRange = [" << -1000 * (dfn.NFractures()+1) << ".0, -1.0]\n"
+			<< "RenameSource('DFNPolygons', DFNPolygons)\n"
+			<< "DFNPolygonsDisplay = Show(DFNPolygons, renderView1,'UnstructuredGridRepresentation')\n"
+			<< "DFNPolygonsDisplay.SetRepresentationType('Wireframe')\n"
+			<< "DFNPolygonsDisplay.EdgeColor = [0.0, 0.0, 0.0]\n"
+			<< "DFNPolygonsDisplay.Opacity = 1.0\n";
+
 }
