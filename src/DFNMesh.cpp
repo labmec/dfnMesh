@@ -2743,6 +2743,18 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 				// << iBoundary<<"Display.DiffuseColor = [1.0, 0.0, 0.0]\n"
 				<< iBoundary<<"Display.LineWidth = 4.0\n";
 
+		for(auto other_frac : dfn.FractureList()){
+			std::string jfrac = "Fracture" + std::to_string(other_frac->Index());
+			std::string ij_intersection = "Intersection_"+std::to_string(frac->Index())
+													+'_'+std::to_string(other_frac->Index());
+			int intersection_id = std::min(frac->MaterialId(),other_frac->MaterialId()) + 1 + std::max(frac->Index(),other_frac->Index());
+			filter  << "# " << ifrac <<" (Intersection with "<<jfrac<<")\n"
+					<< ij_intersection <<" = Threshold(Input=" <<ifrac<<")\n"
+					<< ij_intersection <<".Scalars = ['CELLS', 'material']\n"
+					<< ij_intersection <<".ThresholdRange = [" << intersection_id<<','<<intersection_id <<"]\n"
+					<< "RenameSource('Intersection_"<<other_frac->Index()<<"', "<<ij_intersection<<")\n";
+			
+		}
 		filter.flush();
 	}
 	// }@ FILTERS
