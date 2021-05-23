@@ -2729,6 +2729,11 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 				<< iSurface<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
 				<< iSurface<<"Display.SetScalarBarVisibility(renderView1, False)\n";
 
+		filter  << "# " << ifrac <<" (Boundary)" << "\n"
+				<< iBoundary <<" = Threshold(Input=" <<ifrac<<")\n"
+				<< iBoundary <<".Scalars = ['CELLS', 'material']\n"
+				<< iBoundary <<".ThresholdRange = [" << frac_mat-1<<','<<frac_mat-1 <<"]\n"
+				<< "RenameSource('Boundary', "<<iBoundary<<")\n";
 		filter.flush();
 	}
 	// }@ FILTERS
