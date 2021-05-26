@@ -3,9 +3,8 @@
 # include_directories("." "util")
 add_subdirectory(util)
 
-file(GLOB headers *.h *.tpp *Temp.cpp)
-file(GLOB sources *.cpp)
-# file(GLOB sources DFNNamespace.cpp DFNRib.cpp DFNFace.cpp DFNVolume.cpp DFNPolygon.cpp DFNFracture.cpp DFNMesh.cpp DFNPolyhedron.cpp)
+file(GLOB_RECURSE headers *.h *.tpp *Temp.cpp)
+file(GLOB_RECURSE sources *.cpp)
 
 # Using regex filter to clear targets from ${sources}. "|" is the 'or' operator in regex
 list(FILTER sources EXCLUDE REGEX ".*Temp.cpp|main.*|quicktests.cpp")
