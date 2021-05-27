@@ -19,19 +19,16 @@
 //Constructor
 DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) 
 :   fPointsIndex(CornerPoints.Cols(),-1), 
-    fArea(-1.), 
+    fArea(-1.),
     fAxis(3,3,0.)
 {
-    //If data is consistent, fAxis was computed during consistency check
-    fCornerPoints = CornerPoints;
-    ComputeAxis();
-    if( !Check_Data_Consistency() )	{
-		std::cout<<"Error at DFNPolygon: Bad input data \n";
-		DebugStop();
-	}
-	ComputeArea();
-    // initialize the fNodesAbove data structure
-    SortNodes(gmesh);
+  //If data is consistent, fAxis was computed during consistency check
+  fCornerPoints = CornerPoints;
+  ComputeAxis();
+  Check_Data_Consistency();
+  ComputeArea();
+  // initialize the fNodesAbove data structure
+  SortNodes(gmesh);
 }
 
 // Copy constructor
@@ -97,30 +94,49 @@ void DFNPolygon::ComputeAxis()
 
 
 
-
-
-
 bool DFNPolygon::Check_Data_Consistency() const
 {
-	
-    int cols = fCornerPoints.Cols();
-	//Coplanarity verification for quadrilateral polygon
-	if(cols > 3){
-        for(int ic = 3; ic<cols; ic++)
-        {
-            //scalar product between Ax2 and <P3-P1> should be zero
-            REAL ver = fAxis.GetVal(0,2)*(fCornerPoints.g(0,ic)-fCornerPoints.g(0,1))
-                      +fAxis.GetVal(1,2)*(fCornerPoints.g(1,ic)-fCornerPoints.g(1,1))
-                      +fAxis.g(2,2)*(fCornerPoints.g(2,ic)-fCornerPoints.g(2,1));
-            //Checks if points are coplanar
-            if(std::abs(ver) > gDFN_SmallNumber){
-                std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
-                DebugStop();
-            }
-        }
-	}
+  
+  int cols = fCornerPoints.Cols();
+  //Coplanarity verification for polygon
+  if(cols > 3){
+    for(int ic = 3; ic<cols; ic++) {
+      //scalar product between Ax2 and <P(ic)-P1> should be zero
+      
+      // 1) Compute the normalized vector <P(ic)-P1>
+      TPZManVector<REAL,3> vecToTest(3,0.);
+      REAL normvec = 0.;
+      for (int idim = 0; idim < 3; idim++) {
+        vecToTest[idim] = fCornerPoints.g(idim,ic) - fCornerPoints.g(idim,1);
+        normvec += vecToTest[idim]*vecToTest[idim];
+      }
+      normvec = sqrt(normvec);
+      for (int idim = 0; idim < 3; idim++)
+        vecToTest[idim] /= normvec;
+      
+#ifdef PZDEBUG
+      const REAL newnorm = sqrt(vecToTest[0]*vecToTest[0] + vecToTest[1]*vecToTest[1] + vecToTest[2]*vecToTest[2]);
+      if((std::abs(newnorm) - 1.) > ZeroTolerance()){
+        std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
+        DebugStop();
+      }
+#endif
 
-	return true;
+      // 2) Perform dot product
+      REAL ver = fAxis.GetVal(0,2)*vecToTest[0]
+      +fAxis.GetVal(1,2)*vecToTest[1]
+      +fAxis.g(2,2)*vecToTest[2];
+      
+      // 3) Checks if points are coplanar
+      if(std::abs(ver) > gDFN_SmallNumber){
+        std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
+        DebugStop();
+        return false;
+      }
+    }
+  }
+  
+  return true;
 }
 
 /**
