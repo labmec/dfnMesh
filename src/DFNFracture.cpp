@@ -2283,7 +2283,7 @@ void DFNFracture::SetupGraphicsFractureBC(){
             }
             if(!IsBoundarySide) continue;
             TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
-            gelbc->SetMaterialId(fmatid_BC); // @todo I'll probably want to remove this, right? fracture bc materialid is a concern of the resulting .geo file
+            gelbc->SetMaterialId(fmatid_BC);
             /** @todo maybe add to a set?
               * @todo maybe the user would want the material id to match a chosen neighbour? 
               *       this way we would have multiple subsets of the boundary for a fracture, which is likely to come handy
@@ -2296,8 +2296,8 @@ void DFNFracture::PlotVTK(const std::string exportname, bool putGraphicalElement
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     this->CleanUp();
     TPZStack<int> fracfrac_int;
-    SetupGraphicsFractureIntersections(fracfrac_int);
     SetupGraphicsFractureBC();
+    SetupGraphicsFractureIntersections(fracfrac_int);
     std::set<int> myMaterial {-fmatid,fmatid,fmatid_BC};
     for(int mat : fracfrac_int) myMaterial.insert(mat);
 

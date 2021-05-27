@@ -595,6 +595,9 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 		TPZGmshReader reader;
 		gmesh = reader.GeometricGmshMesh4(mshfile, gmesh);
 	}
+
+	std::ofstream out1("graphics/CoarseMesh.vtk");
+	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);
 	return gmesh;
 }
 
