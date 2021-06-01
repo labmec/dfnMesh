@@ -116,6 +116,7 @@ public:
 	std::set<int64_t>& Surface(){return fSurfaceFaces;}
 
     int MaterialId() const{return fmatid;}
+    void SetMaterialId(int matid){fmatid = matid;}
     int Index() const{return fIndex;}
 
     int NSurfElements() const{return fSurfaceFaces.size();}
@@ -262,6 +263,8 @@ private:
      * If this quadrilateral is not refined, it'll (sometimes) induce a non-convex polyhedron with overlapped faces that GMSH can't mesh.
     */
     bool IsSpecialQuadrilateral(TPZGeoEl* gel);
+
+    void ResetSurfaceMaterial(const int matid);
 
 public:
 

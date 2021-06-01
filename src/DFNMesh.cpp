@@ -369,8 +369,8 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 
 DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid){
 	// For the export graphics code, we're starting with this limit of max_intersections and reserving material ids within every 1000 for frac_frac_intersections. It's just for graphics
-	int frac_tag = this->NFractures() + 1;
-	materialid = frac_tag*max_intersections;
+	// int frac_tag = this->NFractures() + 1;
+	// materialid = frac_tag*max_intersections;
 	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling, materialid);
 
 #ifdef LOG4CXX
@@ -1127,7 +1127,7 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 
 			TPZStack<int64_t> intersection_edges;
 			// If fractures have overlapped surfaces, it's a non trivial case
-			if(common_faces.size() > 0){
+			if(common_faces.size() > 0 && geom_intersection_Q){
 				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],common_faces,int_segment,intersection_edges);
 			}else{
 				fFractures[jfrac]->FindFractureIntersection_Trivial(*fFractures[kfrac],intersection_edges);
@@ -1672,11 +1672,11 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
 
 
 
-void DFNMesh::ClearMaterials(){
+void DFNMesh::ClearMaterials(int matid){
 	std::cout << "\n\n[WARNING] Boundary conditions were erased to print VTK graphics.\n\n" << std::flush;
 	for(auto el : fGMesh->ElementVec()){
 		if(!el) continue;
-		el->SetMaterialId(DFNMaterial::Eintact);
+		el->SetMaterialId(matid);
 	}
 }
 
@@ -1841,7 +1841,7 @@ void DFNMesh::UpdatePolyhedra(){
 #endif // LOG4CXX
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
-	std::cout<<" -Updating polyhedral volumes\r"<<std::flush;
+	std::cout<<"-Updating polyhedral volumes\r"<<std::flush;
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 	// Refined faces pass down their polyh index to their subelements
 	InheritPolyhedra();
@@ -2598,24 +2598,26 @@ void DFNMesh::PreRefine(int n){
 
 }
 
-void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename);
+void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename, const std::string ColorPreset = "Rainbow Uniform");
 
 
 
-void DFNMesh::ExportDetailedGraphics(){
+void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 #ifdef PZDEBUG
 	std::cout << "[WARNING] " << __PRETTY_FUNCTION__ << " inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
 #endif // PZDEBUG
+	ClearMaterials(GMESHNOMATERIAL);
 	
 	// Standard control
-	const std::string filename = "dfnmesh";
+	const std::string filename = "Fracture";
 	const std::string dirname = "./graphics";
 	std::filesystem::create_directory(dirname);
 	
 	// Make sure fracture surfaces are consistent
 	for(auto frac : FractureList()){
+		frac->SetMaterialId(frac->Index());
 		frac->CleanUp();
-		frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->MaterialId()) );
+		frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1) );
 	}
 
 	// Plot each of the fractures
@@ -2625,35 +2627,58 @@ void DFNMesh::ExportDetailedGraphics(){
 	}
 
 	// Plot complete graphics
-	PrintVTK(dirname+'/'+filename+'.'+std::to_string(NFractures())+".vtk","skip");
+	// PrintVTK(dirname+'/'+"Complete"+'.'+std::to_string(NFractures())+".vtk","skip");
 
 	// Create a filter script
 	std::ofstream filter("graphics/test.py");
-	CreateFilterScript(*this,filter,filename);
+	CreateFilterScript(*this,filter,filename,ColorPreset);
 }
 
-void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename){
+void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename,const std::string ColorPreset){
 	filter <<   "#### import the simple module from the paraview\n"
 				"from paraview.simple import *\n"
 				"#### disable automatic camera reset on 'Show'\n"
-				"paraview.simple._DisableFirstRenderCameraReset()\n"
-				"\n"
-				"# find source\n"
-				"vtkmesh = FindSource(\'"<< filename << ".*\')\n";
+				"paraview.simple._DisableFirstRenderCameraReset()\n";
 	
-	// A control for the global range of elements to plot
-	/* Most, if not all, filters are applied to ElementRange or one of its subfilter, 
-	so we can keep a toggle to sample elements from a specific range without much effort
-	*/
-	const std::string rootfilter("elementRange");
-	filter << "\n\n";
-	filter << 	"# ELEMENT RANGE\n"
-				"elementRange = Threshold(Input=vtkmesh)\n"
-				"elementRange.Scalars = ['CELLS', 'elIndex']\n"
-				"elementRange.ThresholdRange = [0.0," << dfn.Mesh()->NElements()+100<<"]\n"
-				"RenameSource('ElementRange', elementRange)\n";
-
+	filter << "\n# create a new \'Legacy VTK Reader\' for CoarseMesh file\n"
+			<< "coarseMeshvtk = LegacyVTKReader(FileNames=[\'" << PROJECT_ROOT << "/graphics/CoarseMesh.vtk'])\n"
+			<< "RenameSource(\'CoarseMesh\', coarseMeshvtk)\n";
 	// Setup layout and view to create filters
+	filter << "\n\n";
+	filter << 	"# get active view\n"
+				"renderView1 = GetActiveViewOrCreate('RenderView')\n"
+				"# get layout\n"
+				"layout1 = GetLayout()\n";
+
+	
+	filter <<	"\n# find source of Coarse Mesh\n"
+				"CoarseMesh = FindSource(\'"<< "CoarseMesh.vtk" << "\')\n";
+	
+	filter  << "CoarseDisplay = Show("<<"CoarseMesh"<<", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "CoarseDisplay.SetRepresentationType('Wireframe')\n"
+			<< "CoarseDisplay.AmbientColor = [0.443137255, 0.450980392, 0.6]\n"
+			<< "CoarseDisplay.DiffuseColor = [0.443137255, 0.450980392, 0.6]\n";
+	
+
+
+
+
+
+
+	filter << "# create a new \'Legacy VTK Reader\' for Fracture list\n"
+			<< "fracturevtk = LegacyVTKReader(FileNames=[";
+	std::stringstream fracturelist;
+	for(auto frac : dfn.FractureList()){
+		fracturelist << " \'" << PROJECT_ROOT "/graphics/Fracture." << frac->Index() << ".vtk\',";
+	}
+	fracturelist.seekp(fracturelist.str().length()-1); ///< removes spare comma
+	fracturelist << "])\n";
+	filter << fracturelist.str();
+	filter << "RenameSource(\'Fracture\', fracturevtk)\n";
+
+	filter <<	"\n# find source of fractures\n"
+				"Fracture = FindSource(\'"<< filename << "\')\n";
+	// Update current layout and view to create filters
 	filter << "\n\n";
 	filter << 	"# get active view\n"
 				"renderView1 = GetActiveViewOrCreate('RenderView')\n"
@@ -2663,109 +2688,159 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 	// FILTERS
 	// @{
 
+	int nfrac = dfn.NFractures();
+
 	filter << "\n\n";
-	filter  << "# Domain box\n"
-			<< "DomainBox = Threshold(Input=" <<rootfilter<<")\n"
-			<< "DomainBox.Scalars = ['CELLS', 'Dimension']\n"
-			<< "DomainBox.ThresholdRange = [3.0, 3.0]\n"
-			<< "RenameSource('DomainBox', DomainBox)\n"
-			<< "DomainBoxDisplay = Show(DomainBox, renderView1,'UnstructuredGridRepresentation')\n"
-			<< "DomainBoxDisplay.SetRepresentationType('Outline')\n";
+	std::string rootfilter = "Fracture";
+	std::string frac = "Fracture";
+	std::string Polygon = "Polygon";
+	std::string Surface = "Surface";
+	std::string Boundary = "Boundary";
+	std::string Intersection = "Intersections";
+	std::string Shrink = "Shrink";
+	std::string two_dim = "two_dim";
+	std::string one_dim = "one_dim";
+	filter  << "\n# (2D filter)" << "\n"
+			<< two_dim <<" = Threshold(Input=" <<rootfilter<<")\n"
+			<< two_dim <<".Scalars = ['CELLS', 'Dimension']\n"
+			<< two_dim <<".ThresholdRange = [2, 2]\n"
+			<< "RenameSource('2D', "<<two_dim<<")\n";
+	
+	filter  << "\n# Shrink (" <<two_dim<< ")\n"
+			<< Shrink <<" = Shrink(Input=" <<two_dim<<")\n"
+			<< Shrink <<".ShrinkFactor = 0.9\n"
+			<< "RenameSource('Shrink', "<<Shrink<<")\n";
+
+
+	filter  << "\n\n# (" << Surface << ")\n"
+			<< Surface << " = Threshold(Input="<<Shrink<<")\n"
+			<< Surface << ".Scalars = ['CELLS', 'material']\n"
+			<< Surface << ".ThresholdRange = [0, "<<nfrac-1<<"]\n"
+			<< "RenameSource('" << Surface << "', " << Surface << ")\n"
+			<< "# show data in view\n"
+			<< Surface << "Display = Show(" << Surface << ", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "# set representation type\n"
+			<< Surface << "Display.SetRepresentationType('Surface')\n";
+	filter  << "# set scalar coloring using an separate color/opacity maps\n"
+			<< "ColorBy(" << Surface << "Display, ('CELLS', 'material'), separate=True)\n"
+			<< "# Hide colormap bar\n"
+			<< Surface << "Display.SetScalarBarVisibility(renderView1, False)\n"
+			<< "# rescale color and/or opacity maps used to include current data range\n"
+			<< Surface << "Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			<< "# get separate color transfer function/color map for 'material'\n"
+			<< Surface << "Display_materialLUT = GetColorTransferFunction('material', " << Surface << "Display, separate=True)\n"
+			<< "# get separate opacity transfer function/opacity map for 'material'\n"
+			<< Surface << "Display_materialPWF = GetOpacityTransferFunction('material', " << Surface << "Display, separate=True)\n"
+			<< "# Apply a preset using its name. Note this may not work as expected when presets have duplicate names.\n"
+			<< Surface << "Display_materialLUT.ApplyPreset('"<<ColorPreset<<"', True)\n"
+			<< "# Rescale transfer function\n"
+			<< Surface << "Display_materialLUT.RescaleTransferFunction(0.0, " << nfrac-1 << ".0)\n"
+			<< "# Rescale transfer function\n"
+			<< Surface << "Display_materialPWF.RescaleTransferFunction(0.0, " << nfrac-1 << ".0)\n\n";
+	
+
+
+	filter  << "\n# " << two_dim <<" (Polygon)" << "\n"
+			<< Polygon <<" = Threshold(Input=" <<two_dim<<")\n"
+			<< Polygon <<".Scalars = ['CELLS', 'material']\n"
+			<< Polygon <<".ThresholdRange = [" << -(nfrac+1) <<','<< -1 <<"]\n"
+			<< "RenameSource('Polygon', "<<Polygon<<")\n";
+	filter  << Polygon <<"Display = Show("<<Polygon<<", renderView1,'UnstructuredGridRepresentation')\n"
+			<< Polygon<<"Display.SetRepresentationType('Wireframe')\n"
+			<< Polygon<<"Display.AmbientColor = [0.0, 0.0, 0.0]\n"
+			<< Polygon<<"Display.DiffuseColor = [0.0, 0.0, 0.0]\n";
+			// << "ColorBy("<<Polygon<<"Display, ('CELLS', 'material'))\n"
+			// << Polygon<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			// << Polygon<<"Display.SetScalarBarVisibility(renderView1, False)\n";
+	
+	filter  << "\n# (1D filter)" << "\n"
+			<< one_dim <<" = Threshold(Input=" <<rootfilter<<")\n"
+			<< one_dim <<".Scalars = ['CELLS', 'Dimension']\n"
+			<< one_dim <<".ThresholdRange = [1, 1]\n"
+			<< "RenameSource('1D', "<<one_dim<<")\n";
 	
 	
-	filter << "\n\n";
-	filter << "# DFNPolygons\n"
-			<< "DFNPolygons = Threshold(Input=" <<rootfilter<<")\n"
-			<< "DFNPolygons.Scalars = ['CELLS', 'material']\n"
-			<< "DFNPolygons.ThresholdRange = [" << -1000 * (dfn.NFractures()+1) << ".0, -1.0]\n"
-			<< "RenameSource('DFNPolygons', DFNPolygons)\n"
-			<< "DFNPolygonsDisplay = Show(DFNPolygons, renderView1,'UnstructuredGridRepresentation')\n"
-			<< "DFNPolygonsDisplay.SetRepresentationType('Wireframe')\n"
-			<< "DFNPolygonsDisplay.EdgeColor = [0.0, 0.0, 0.0]\n"
-			<< "DFNPolygonsDisplay.Opacity = 1.0\n";
 
-	for(auto frac : dfn.FractureList()){
-		filter << "\n\n";
-		int index = frac->Index();
-		int ifrac_tag = index+1;
-		// int frac_mat = frac->MaterialId();
-		int frac_mat = 1000*(index+1);
-		std::string ifrac = "Fracture" + std::to_string(index);
-		std::string iPolygon = "Polygon" + std::to_string(index);
-		std::string iSurface = "Surface" + std::to_string(index);
-		std::string iBoundary = "Boundary" + std::to_string(index);
-		std::string iShrink = "Shrink" + std::to_string(index);
-		filter  << "########################\n# " <<ifrac << "\n########################\n"
-				<< ifrac <<" = Threshold(Input=" <<rootfilter<<")\n"
-				<< ifrac <<".Scalars = ['CELLS', 'Dimension']\n"
-				<< ifrac <<".ThresholdRange = [1.0, 2.0]\n"
-				<< "RenameSource('"<<ifrac<<"', "<<ifrac<<")\n";
-		
-		filter  << "# Shrink (" <<ifrac << ")\n"
-				<< iShrink <<" = Shrink(Input=" <<ifrac<<")\n"
-				<< iShrink <<".ShrinkFactor = 0.9\n"
-				<< "RenameSource('Shrink', "<<iShrink<<")\n";
 
-		filter  << "# " << ifrac <<" (Polygon)" << "\n"
-				<< iPolygon <<" = Threshold(Input=" <<ifrac<<")\n"
-				<< iPolygon <<".Scalars = ['CELLS', 'material']\n"
-				<< iPolygon <<".ThresholdRange = [" << -frac_mat<<','<<-frac_mat <<"]\n"
-				<< "RenameSource('Polygon', "<<iPolygon<<")\n";
+	filter  << "\n\n# (" << Boundary << ")\n"
+			<< Boundary << " = Threshold(Input="<<one_dim<<")\n"
+			<< Boundary << ".Scalars = ['CELLS', 'material']\n"
+			<< Boundary << ".ThresholdRange = ["<<nfrac<<", "<<2*nfrac-1<<"]\n"
+			<< "RenameSource('" << Boundary << "', " << Boundary << ")\n"
+			<< "# show data in view\n"
+			<< Boundary << "Display = Show(" << Boundary << ", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "# set representation type\n"
+			<< Boundary << "Display.SetRepresentationType('Surface With Edges')\n";
+	filter  << "# set scalar coloring using an separate color/opacity maps\n"
+			<< "ColorBy(" << Boundary << "Display, ('CELLS', 'material'), separate=True)\n"
+			<< "# Hide colormap bar\n"
+			<< Boundary << "Display.SetScalarBarVisibility(renderView1, False)\n"
+			// << Boundary<<"Display.AmbientColor = [1.0, 0.0, 0.0]\n"
+			// << Boundary<<"Display.DiffuseColor = [1.0, 0.0, 0.0]\n"
+			<< "# Set Line Width\n"
+			<< Boundary<<"Display.LineWidth = 4.0\n"
+			<< "# rescale color and/or opacity maps used to include current data range\n"
+			<< Boundary << "Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			<< "# get separate color transfer function/color map for 'material'\n"
+			<< Boundary << "Display_materialLUT = GetColorTransferFunction('material', " << Boundary << "Display, separate=True)\n"
+			<< "# get separate opacity transfer function/opacity map for 'material'\n"
+			<< Boundary << "Display_materialPWF = GetOpacityTransferFunction('material', " << Boundary << "Display, separate=True)\n"
+			<< "# Apply a preset using its name. Note this may not work as expected when presets have duplicate names.\n"
+			<< Boundary << "Display_materialLUT.ApplyPreset('"<<ColorPreset<<"', True)\n"
+			<< "# Rescale transfer function\n"
+			<< Boundary << "Display_materialLUT.RescaleTransferFunction("<<nfrac<<".0, "<<2*nfrac-1<<".0)\n"
+			<< "# Rescale transfer function\n"
+			<< Boundary << "Display_materialPWF.RescaleTransferFunction("<<nfrac<<".0, "<<2*nfrac-1<<".0)\n\n";
 
-		std::string two_dim = "two_dim"+ std::to_string(index);
-		filter  << "# " << ifrac <<" (2D filter)" << "\n"
-				<< two_dim <<" = Threshold(Input=" <<iShrink<<")\n"
-				<< two_dim <<".Scalars = ['CELLS', 'Dimension']\n"
-				<< two_dim <<".ThresholdRange = [2, 2]\n"
-				<< "RenameSource('2D', "<<two_dim<<")\n";
-		filter  << "# " << ifrac <<" (Surface)" << "\n"
-				<< iSurface <<" = Threshold(Input=" <<two_dim<<")\n"
-				<< iSurface <<".Scalars = ['CELLS', 'material']\n"
-				<< iSurface <<".ThresholdRange = [" << frac_mat<<','<<frac_mat <<"]\n"
-				<< "RenameSource('Surface', "<<iSurface<<")\n";
-		filter  << iSurface <<"Display = Show("<<iSurface<<", renderView1,'UnstructuredGridRepresentation')\n"
-				<< iSurface<<"Display.SetRepresentationType('Surface')\n"
-				<< "ColorBy("<<iSurface<<"Display, ('CELLS', 'material'))\n"
-				<< iSurface<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
-				<< iSurface<<"Display.SetScalarBarVisibility(renderView1, False)\n";
 
-		filter  << "# " << ifrac <<" (Boundary)" << "\n"
-				<< iBoundary <<" = Threshold(Input=" <<ifrac<<")\n"
-				<< iBoundary <<".Scalars = ['CELLS', 'material']\n"
-				<< iBoundary <<".ThresholdRange = [" << frac_mat-1<<','<<frac_mat-1 <<"]\n"
-				<< "RenameSource('Boundary', "<<iBoundary<<")\n";
-		filter  << iBoundary <<"Display = Show("<<iBoundary<<", renderView1,'UnstructuredGridRepresentation')\n"
-				<< iBoundary<<"Display.SetRepresentationType('Surface With Edges')\n"
-				<< "ColorBy("<<iBoundary<<"Display, ('CELLS', 'material'))\n"
-				<< iBoundary<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
-				<< iBoundary<<"Display.SetScalarBarVisibility(renderView1, False)\n"
-				// << iBoundary<<"Display.AmbientColor = [1.0, 0.0, 0.0]\n"
-				// << iBoundary<<"Display.DiffuseColor = [1.0, 0.0, 0.0]\n"
-				<< iBoundary<<"Display.LineWidth = 4.0\n";
+	int TriangleNumber = nfrac*(nfrac+1)/2; ///< Triangle Number bounds the range for frac-to-frac intersections (wikipedia explains it better than I, but you can see this as the answer for the question "how many unique entries in a square symmetric matrix")
+	int max_intersections = TriangleNumber;
 
-		for(auto other_frac : dfn.FractureList()){
-			std::string jfrac = "Fracture" + std::to_string(other_frac->Index());
-			std::string ij_intersection = "Intersection_"+std::to_string(frac->Index())
-													+'_'+std::to_string(other_frac->Index());
-			int intersection_id = std::min(frac->MaterialId(),other_frac->MaterialId()) + 1 + std::max(frac->Index(),other_frac->Index());
-			filter  << "# " << ifrac <<" (Intersection with "<<jfrac<<")\n"
-					<< ij_intersection <<" = Threshold(Input=" <<ifrac<<")\n"
-					<< ij_intersection <<".Scalars = ['CELLS', 'material']\n"
-					<< ij_intersection <<".ThresholdRange = [" << intersection_id<<','<<intersection_id <<"]\n"
-					<< "RenameSource('Intersection_"<<other_frac->Index()<<"', "<<ij_intersection<<")\n";
-			
-			filter  << ij_intersection <<"Display = Show("<<ij_intersection<<", renderView1,'UnstructuredGridRepresentation')\n"
-					<< ij_intersection<<"Display.SetRepresentationType('Surface With Edges')\n"
-					// << "ColorBy("<<ij_intersection<<"Display, ('CELLS', 'material'))\n"
-					// << ij_intersection<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
-					// << ij_intersection<<"Display.SetScalarBarVisibility(renderView1, False)\n"
-					<< ij_intersection<<"Display.AmbientColor = [0.0, 1.0, 0.0]\n"
-					<< ij_intersection<<"Display.DiffuseColor = [0.0, 1.0, 0.0]\n"
-					<< ij_intersection<<"Display.LineWidth = 4.0\n";
-		}
-		filter.flush();
-	}
+	filter  << "\n\n# (" << Intersection << ")\n"
+			<< Intersection << " = Threshold(Input="<<one_dim<<")\n"
+			<< Intersection << ".Scalars = ['CELLS', 'material']\n"
+			<< Intersection << ".ThresholdRange = [" << 2*nfrac<<','<<2*nfrac + max_intersections << "]\n"
+			<< "RenameSource('" << Intersection << "', " << Intersection << ")\n"
+			<< "# show data in view\n"
+			<< Intersection << "Display = Show(" << Intersection << ", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "# set representation type\n"
+			<< Intersection << "Display.SetRepresentationType('Surface With Edges')\n";
+	filter  << "# set scalar coloring using an separate color/opacity maps\n"
+			<< "ColorBy(" << Intersection << "Display, ('CELLS', 'material'), separate=True)\n"
+			<< "# Hide colormap bar\n"
+			<< Intersection << "Display.SetScalarBarVisibility(renderView1, False)\n"
+			// << Intersection <<"Display.AmbientColor = [0.0, 1.0, 0.0]\n"
+			// << Intersection <<"Display.DiffuseColor = [0.0, 1.0, 0.0]\n"
+			<< "# Set Line Width\n"
+			<< Intersection<<"Display.LineWidth = 4.0\n"
+			<< "# rescale color and/or opacity maps used to include current data range\n"
+			<< Intersection << "Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			<< "# get separate color transfer function/color map for 'material'\n"
+			<< Intersection << "Display_materialLUT = GetColorTransferFunction('material', " << Intersection << "Display, separate=True)\n"
+			<< "# get separate opacity transfer function/opacity map for 'material'\n"
+			<< Intersection << "Display_materialPWF = GetOpacityTransferFunction('material', " << Intersection << "Display, separate=True)\n"
+			<< "# Apply a preset using its name. Note this may not work as expected when presets have duplicate names.\n"
+			<< Intersection << "Display_materialLUT.ApplyPreset('"<<ColorPreset<<"', True)\n"
+			<< "# Rescale transfer function\n"
+			<< Intersection << "Display_materialLUT.RescaleTransferFunction(" << 2*nfrac<<','<<2*nfrac + max_intersections << ".0)\n"
+			<< "# Rescale transfer function\n"
+			<< Intersection << "Display_materialPWF.RescaleTransferFunction(" << 2*nfrac<<','<<2*nfrac + max_intersections << ".0)\n\n";
 	// }@ FILTERS
+
+
+	// {@ FINAL SETUP
+	filter  << '\n' << '\n';
+	filter  << "Hide(" << Polygon << ", renderView1)\n";
+
+	filter  << "\n\nrenderView1.Update()\n"
+			<< "# current camera placement for renderView1\n"
+			<< "renderView1.InteractionMode = '3D'\n"
+			<< "renderView1.CameraPosition = [3.47, 4.0, 10000.0]\n"
+			<< "renderView1.CameraFocalPoint = [3.47, 4.0, 0.0]\n"
+			<< "renderView1.CameraParallelScale = 7.1307240904601645\n"
+			<< "\n# reset view to fit data\n"
+			<< "renderView1.ResetCamera()\n";
+	// }@ FINAL SETUP
 
 	filter.flush();
 }

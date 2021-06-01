@@ -1777,6 +1777,23 @@ void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& r
 
 }
 
+void DFNFracture::ResetSurfaceMaterial(const int matid){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    for(int64_t index : fSurfaceFaces){
+        TPZGeoEl* gel = gmesh->Element(index);
+        if(!gel){
+            fSurfaceFaces.erase(index);
+            continue;
+        }
+        // if(gel->Dimension() != 2) DebugStop();
+        gel->SetMaterialId(matid);
+        DFN::SetEdgesMaterialId(gel,matid);
+    }
+}
+
+
+
+
 void DFNFracture::CleanUp(){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     TPZStack<TPZGeoEl*> to_add;
@@ -2239,18 +2256,18 @@ void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int
 
         TPZStack<int64_t> intersection_edges;
         // If fractures have overlapped surfaces, it's a non trivial case
-        if(common_faces.size() > 0){
+        if(common_faces.size() > 0 && geom_intersection_Q){
             this->FindFractureIntersection_NonTrivial(*fdfnMesh->FractureList()[kfrac],common_faces,int_segment,intersection_edges);
         }else{
             this->FindFractureIntersection_Trivial(*fdfnMesh->FractureList()[kfrac],intersection_edges);
         }
         if(intersection_edges.size() == 0) continue;
         
-        int intersection_matid = 0;
-        if(kfrac > jfrac) 
-            {intersection_matid = this->fmatid + kfrac+1;}
-        else /*(kfrac < jfrac)*/ 
-            {intersection_matid = fdfnMesh->FractureList()[kfrac]->fmatid + jfrac+1;}
+        int min = std::min(jfrac,kfrac);
+        int max = std::max(jfrac,kfrac);
+        // You can think of this as the indexing of elements in a symmetric matrix (intersection(i,j)==intersection(j,i)), but shifted 2*N (because N fractures + N boundaries)
+        int intersection_matid = nfrac*min - ((min+1)*min)/2 + max + 2*nfrac;
+
         fracfrac_int.push_back(intersection_matid);
         for(auto index : intersection_edges){
             gmesh->Element(index)->SetMaterialId(intersection_matid);
@@ -2263,6 +2280,7 @@ void DFNFracture::SetupGraphicsFractureBC(){
     int fracdim = gmesh->Dimension()-1;
     int bcdim = fracdim-1;
     TPZGeoEl* gel = nullptr;
+    int bc_matid = fIndex+fdfnMesh->NFractures();
     for(int64_t index : this->fSurfaceFaces){
         gel = gmesh->Element(index);
         if(!gel) continue;
@@ -2283,7 +2301,8 @@ void DFNFracture::SetupGraphicsFractureBC(){
             }
             if(!IsBoundarySide) continue;
             TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
-            gelbc->SetMaterialId(fmatid_BC);
+            // gelbc->SetMaterialId(fmatid_BC);
+            gelbc->SetMaterialId(bc_matid);
             /** @todo maybe add to a set?
               * @todo maybe the user would want the material id to match a chosen neighbour? 
               *       this way we would have multiple subsets of the boundary for a fracture, which is likely to come handy
@@ -2296,10 +2315,15 @@ void DFNFracture::PlotVTK(const std::string exportname, bool putGraphicalElement
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     this->CleanUp();
     TPZStack<int> fracfrac_int;
+    // this->ResetSurfaceMaterial(fmatid);
     SetupGraphicsFractureBC();
     SetupGraphicsFractureIntersections(fracfrac_int);
-    std::set<int> myMaterial {-fmatid,fmatid,fmatid_BC};
-    for(int mat : fracfrac_int) myMaterial.insert(mat);
+
+    int mat_BC = fIndex + fdfnMesh->NFractures();
+    int mat_frac = fIndex;
+    int mat_polygon = -fIndex-1;
+    std::set<int> myMaterial {mat_frac, mat_BC, mat_polygon};
+    for(int mat_intersection : fracfrac_int) myMaterial.insert(mat_intersection);
 
     std::ofstream file(exportname);
     TPZVTKGeoMesh::PrintGMeshVTKmy_material(gmesh, file, myMaterial, true, true);
