@@ -2666,14 +2666,24 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 
 
 	filter << "# create a new \'Legacy VTK Reader\' for Fracture list\n"
-			<< "fracturevtk = LegacyVTKReader(FileNames=[";
+			<< "fracturevtk = LegacyVTKReader(";
+	
 	std::stringstream fracturelist;
+	// std::stringstream timesteps;
+	fracturelist << "FileNames=[";
+	// timesteps << "TimestepValues=[";
 	for(auto frac : dfn.FractureList()){
-		fracturelist << " \'" << PROJECT_ROOT "/graphics/Fracture." << frac->Index() << ".vtk\',";
+		fracturelist << "\n\t\'" << PROJECT_ROOT "/graphics/Fracture." << frac->Index() << ".vtk\',";
+		// timesteps << ' ' << frac->Index() << ',';
 	}
 	fracturelist.seekp(fracturelist.str().length()-1); ///< removes spare comma
-	fracturelist << "])\n";
+	fracturelist << ']';
+	// timesteps.seekp(timesteps.str().length()-1); ///< removes spare comma
+	// timesteps << ']';
+
 	filter << fracturelist.str();
+	// filter << ",\n" << timesteps.str();
+	filter << "\n)\n";
 	filter << "RenameSource(\'Fracture\', fracturevtk)\n";
 
 	filter <<	"\n# find source of fractures\n"
@@ -2826,6 +2836,15 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 			<< "# Rescale transfer function\n"
 			<< Intersection << "Display_materialPWF.RescaleTransferFunction(" << 2*nfrac<<','<<2*nfrac + max_intersections << ".0)\n\n";
 	// }@ FILTERS
+
+
+	// TIMESTEP CONFIGURATION
+	filter  << "\n# get animation scene\n"
+			<< "animationScene1 = GetAnimationScene()\n"
+			<< "# get the time-keeper\n"
+			<< "timeKeeper1 = GetTimeKeeper()\n"
+			<< "# Properties modified on animationScene1\n"
+			<< "animationScene1.PlayMode = 'Snap To TimeSteps'\n";
 
 
 	// {@ FINAL SETUP
