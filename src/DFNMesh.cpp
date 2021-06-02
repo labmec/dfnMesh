@@ -2630,11 +2630,12 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	// PrintVTK(dirname+'/'+"Complete"+'.'+std::to_string(NFractures())+".vtk","skip");
 
 	// Create a filter script
-	std::ofstream filter("graphics/test.py");
+	std::ofstream filter("graphics/GraphicsScript.py");
 	CreateFilterScript(*this,filter,filename,ColorPreset);
 }
 
 void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename,const std::string ColorPreset){
+	std::printf("\n-Creating python filter script\n");
 	filter <<   "#### import the simple module from the paraview\n"
 				"from paraview.simple import *\n"
 				"#### disable automatic camera reset on 'Show'\n"
