@@ -2599,10 +2599,11 @@ void DFNMesh::PreRefine(int n){
 }
 
 void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename, const std::string ColorPreset = "Rainbow Uniform");
-
+// void PlotAllPolygons(DFNMesh& dfn, std::string filename);
 
 
 void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
+	TPZGeoMesh* gmesh = this->Mesh();
 #ifdef PZDEBUG
 	std::cout << "[WARNING] " << __PRETTY_FUNCTION__ << " inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
 #endif // PZDEBUG
@@ -2613,12 +2614,18 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	const std::string dirname = "./graphics";
 	std::filesystem::create_directory(dirname);
 	
+	std::set<int64_t> polygels;
+	std::ofstream polygfile(dirname+"/allPolygons.vtk");
 	// Make sure fracture surfaces are consistent
 	for(auto frac : FractureList()){
 		frac->SetMaterialId(frac->Index());
 		frac->CleanUp();
-		frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1) );
+		TPZVec<TPZGeoEl*> graphical_elements = frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1) );
+		for(TPZGeoEl* gel : graphical_elements){polygels.insert(gel->Index());}
 	}
+	// PlotAllPolygons(dirname + "allPolygons.vtk");
+	TPZVTKGeoMesh::PrintGMeshVTK(gmesh,polygels,polygfile);
+
 
 	// Plot each of the fractures
 	for(auto frac : fFractures){
@@ -2659,6 +2666,26 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 			<< "CoarseDisplay.SetRepresentationType('Wireframe')\n"
 			<< "CoarseDisplay.AmbientColor = [0.443137255, 0.450980392, 0.6]\n"
 			<< "CoarseDisplay.DiffuseColor = [0.443137255, 0.450980392, 0.6]\n";
+	
+
+	filter << "\n# create a new \'Legacy VTK Reader\' for DFNPolygons file\n"
+			<< "DFNPolygonsvtk = LegacyVTKReader(FileNames=[\'" << PROJECT_ROOT << "/graphics/allPolygons.vtk'])\n"
+			<< "RenameSource(\'AllDFNPolygons\', DFNPolygonsvtk)\n";
+	// Setup layout and view to create filters
+	filter << "\n\n";
+	filter << 	"# get active view\n"
+				"renderView1 = GetActiveViewOrCreate('RenderView')\n"
+				"# get layout\n"
+				"layout1 = GetLayout()\n";
+
+	
+	filter <<	"\n# find source of allPolygons\n"
+				"DFNPolygons = FindSource(\'"<< "AllDFNPolygons" << "\')\n";
+	
+	filter  << "allPolygonsDisplay = Show("<<"DFNPolygons"<<", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "allPolygonsDisplay.SetRepresentationType('Wireframe')\n"
+			<< "allPolygonsDisplay.AmbientColor = [0.0, 0.0, 0.0]\n"
+			<< "allPolygonsDisplay.DiffuseColor = [0.0, 0.0, 0.0]\n";
 	
 
 
