@@ -47,9 +47,16 @@ void PrintPreamble(){
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine);
 
 
-#ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
-#endif
+#if PZ_LOG
+	#include "log4cxx/fileappender.h"
+	#include "log4cxx/patternlayout.h"
+	#include "log4cxx/propertyconfigurator.h"
+	// #include "log4cxx/level.h"
+	// #include <log4cxx/logger.h>
+	// #include <log4cxx/basicconfigurator.h>
+
+	static TPZLogger logger("dfn.mesh");
+#endif // PZ_LOG
 
 
 
@@ -88,11 +95,12 @@ static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
 using namespace std;
 
 int main(int argc, char* argv[]){
-#ifdef LOG4CXX
+#if PZ_LOG
 	std::string configpath = PROJECT_ROOT "/src/util/DFNlog4cxx.cfg";
-	log4cxx::PropertyConfigurator::configure(configpath);
-	logger->setLevel(log4cxx::Level::getTrace());
-#endif // LOG4CXX
+	TPZLogger::InitializePZLOG(configpath);
+	// log4cxx::PropertyConfigurator::configure(configpath);
+	// logger.setLevel(log4cxx::Level::getDebug());
+#endif // PZ_LOG
 	TPZTimer time("DFNMesh");
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
@@ -138,13 +146,15 @@ int main(int argc, char* argv[]){
 		// Search and fix possibly problematic overlaps of fracture surface and existing mesh elements
 		fracture->CheckSnapInducedOverlap();
 
-#ifdef LOG4CXX
-        if(logger->isDebugEnabled()){
-            std::stringstream sout;
-            fracture->Print(sout);
-            LOGPZ_DEBUG(logger,sout.str());
-        }
-#endif
+// #if PZ_LOG
+//         if(logger.isDebugEnabled()){
+//             std::stringstream sout;
+//             fracture->Print(sout);
+//             LOGPZ_DEBUG(logger,sout.str());
+//         }
+// #endif
+
+		LOGPZ_DEBUG(logger, fracture);
         // we decided that the ribs can be cut. Apply the refinement to the geometric elements
 		fracture->RefineRibs();
         // apply the refinement to the faces

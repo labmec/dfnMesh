@@ -11,8 +11,8 @@
 #include "DFNMesh.h"
 
 
-#ifdef LOG4CXX
-    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+    static TPZLogger logger("dfn.mesh");
 #endif
 
 
@@ -493,9 +493,9 @@ void DFNPolygon::Print(std::ostream & out) const
 
 
 void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
-#ifdef  LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger,"[Start][Sorting nodes to either side of the plane]");
-#endif // LOG4CXX
+#endif // PZ_LOG
     std::cout << " -Sorting nodes to either side of the plane\r" << std::flush;
     int64_t i = fNodesAbove.size();
     const int64_t nnodes = gmesh->NNodes();
@@ -508,9 +508,9 @@ void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
         fNodesAbove[i] = Compute_PointAbove(coord);
     }
     std::cout << "                                           \r" << std::flush;
-#ifdef  LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger,"[End][Sorting nodes to either side of the plane]");
-#endif // LOG4CXX
+#endif // PZ_LOG
 }
 
 void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){

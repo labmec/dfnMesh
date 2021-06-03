@@ -132,9 +132,9 @@ class DFNGraph : public micropather::Graph
             }
             int real_nnodes = fMeshToGraphNode.size();
             fdist.Resize(real_nnodes,real_nnodes);
-            #ifdef LOG4CXX
+            #if PZ_LOG
                 // fdist.Print("cost",std::cout,EFixedColumn);
-            #endif // LOG4CXX
+            #endif // PZ_LOG
         }
         /** 
          * Return the exact cost from the given node to all its neighboring nodes. This

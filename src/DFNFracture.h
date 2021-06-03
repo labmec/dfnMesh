@@ -78,15 +78,15 @@ private:
 
 public:
 
-#ifdef LOG4CXX
+#if PZ_LOG
     /// During debug, I experimented with a log file for each fracture. It's not as 
     /// useful as one would think, but I left it here if you want to use it
-    log4cxx::LoggerPtr fLogger = nullptr;
+    // log4cxx::LoggerPtr fLogger = nullptr;
 
     /** @brief Creates a logger for this object and fills pointer to this->fLogger
       * @note A method to create a separate logger + appender for each DFNFracture. (as opposed to the main logger which logs everything from the DFNMesh)*/
-    log4cxx::LoggerPtr CreateLogger(std::string filename="default", std::string layout_convpattern = "default");
-#endif // LOG4CXX
+    // log4cxx::LoggerPtr CreateLogger(std::string filename="default", std::string layout_convpattern = "default");
+#endif // PZ_LOG
 
 
     /// Empty constructor
@@ -253,16 +253,6 @@ private:
     */
     bool CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid);
 
-    /** @brief Search for quadrilaterals that violate our general criterion for refinement
-     *  @note this is a draft which I commited by accident, it does nothing for now
-    */
-    void SearchForSpecialQuadrilaterals();
-    /** @brief A special quadrilateral is one that should be refined because of a special exception.
-     *  @note this is a draft which I commited by accident, it does nothing for now
-     * @details It has 3 or more neighbour ribs (some of them NOT occupying its 1D sides) whose intersection nodes were snapped toward this quadrilateral.
-     * If this quadrilateral is not refined, it'll (sometimes) induce a non-convex polyhedron with overlapped faces that GMSH can't mesh.
-    */
-    bool IsSpecialQuadrilateral(TPZGeoEl* gel);
 
     void ResetSurfaceMaterial(const int matid);
 
@@ -382,6 +372,10 @@ public:
     void FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList);
 };
 
+inline std::ostream& operator<<(std::ostream &out, const DFNFracture& fracture){
+    fracture.Print(out);
+    return out;
+}
 
 namespace DFN{
     static FracLimit StringToFracLimit(const std::string& name){

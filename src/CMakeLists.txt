@@ -39,8 +39,8 @@ target_link_libraries(dfnTest PRIVATE dfnlib)
 
 
 # A cleaner target to summarize main methods
-add_executable(SimpleDFN main_simple.cpp)
-target_link_libraries(SimpleDFN PRIVATE dfnlib)
+# add_executable(SimpleDFN main_simple.cpp)
+# target_link_libraries(SimpleDFN PRIVATE dfnlib)
 
 # # Quick Tests
 # add_executable(quickTests quicktests.cpp)

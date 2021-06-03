@@ -9,8 +9,8 @@
 #include "DFNNamespace.h"
 #include "TPZRefPattern.h"
 
-#ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+static TPZLogger logger("dfn.mesh");
 #endif
 
 

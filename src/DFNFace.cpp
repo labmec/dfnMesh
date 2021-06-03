@@ -12,8 +12,8 @@
 #include "TPZRefPattern.h"
 #include "tpzgeoelrefpattern.h"
 
-#ifdef LOG4CXX
-    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+    static TPZLogger logger("dfn.mesh");
 #endif
 
 //Constructor
@@ -657,18 +657,18 @@ bool DFNFace::UpdateStatusVec(){
 		}
 	}
 	bool changed = old_fStatus != fStatus;
-#ifdef LOG4CXX
-	// @todo This feels too verbose. Maybe make it logger->IsTraceEnabled()
-	if(changed && logger->isDebugEnabled()){
+#if PZ_LOG
+	// @todo This feels too verbose. Maybe make it logger.IsTraceEnabled()
+	if(changed && logger.isDebugEnabled()){
 		std::stringstream sstream;
 		sstream << "Updated StatusVec in Face #" << fGeoEl->Index();
 		sstream << "\nOld [" << old_fStatus << "]";
 		DFN::SketchStatusVec(old_fStatus,sstream);
 		sstream << "\nNew [" << fStatus << "]";
 		DFN::SketchStatusVec(fStatus,sstream);
-		LOG4CXX_DEBUG(logger,sstream.str());
+		LOGPZ_DEBUG(logger,sstream.str());
 	}
-#endif // LOG4CXX
+#endif // PZ_LOG
 	return changed;
 }
 

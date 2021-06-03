@@ -49,8 +49,8 @@ void PrintPreamble(){
 
 
 
-#ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+static TPZLogger logger("dfn.mesh");
 #endif
 
 
@@ -70,10 +70,10 @@ void Test2();
 using namespace std;
 
 int main(int argc, char* argv[]){
-#ifdef LOG4CXX
+#if PZ_LOG
 	std::string configpath = PROJECT_ROOT "/src/util/DFNlog4cxx.cfg";
 	log4cxx::PropertyConfigurator::configure(configpath);
-#endif // LOG4CXX
+#endif // PZ_LOG
 	PrintPreamble();
 	gmsh::initialize();
 	Test1();

@@ -15,11 +15,11 @@
 #include "DFNNamespace.h"
 #include "DFNGraph.h"
 
-#ifdef LOG4CXX
+#if PZ_LOG
     #include "log4cxx/fileappender.h"
     #include "log4cxx/patternlayout.h"
 
-    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+    static TPZLogger logger("dfn.mesh");
 #endif
 
 
@@ -35,9 +35,9 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limith
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
     fIndex = dfnMesh->NFractures();
-// #ifdef LOG4CXX
+// #if PZ_LOG
 //     fLogger = CreateLogger();
-// #endif // LOG4CXX
+// #endif // PZ_LOG
 }
 
 void DFNFracture::Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid)
@@ -93,8 +93,8 @@ DFNFace* DFNFracture::AddFace(DFNFace &face){
     int index= face.Index();
     auto res = fFaces.emplace(index,std::move(face));
     if(res.second == false) return nullptr;
-#ifdef LOG4CXX
-    if(logger->isDebugEnabled())
+#if PZ_LOG
+    if(logger.isDebugEnabled())
     {
         std::stringstream sout;
         sout << "[Adding face]\n";
@@ -109,15 +109,15 @@ DFNRib* DFNFracture::AddRib(DFNRib &rib){
     auto res = fRibs.insert({index,rib});
     // Check if the rib is already included
     if(res.second == false) return nullptr;
-    #ifdef LOG4CXX
-    if(logger->isDebugEnabled())
+    #if PZ_LOG
+    if(logger.isDebugEnabled())
     {
         std::stringstream sout;
         sout << "[Adding rib]\n";
         res.first->second.Print(sout);
         LOGPZ_DEBUG(logger,sout.str())
     }
-    #endif // LOG4CXX
+    #endif // PZ_LOG
     return &(res.first->second);
 }
 
@@ -139,9 +139,9 @@ DFNFace * DFNFracture::Face(int64_t index){
 
 
 void DFNFracture::CreateFaces(){
-#ifdef LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger, "[Start][Searching faces]")
-#endif // LOG4CXX
+#endif // PZ_LOG
     std::cout<<"\r#Faces intersected = 0";
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
     TPZGeoEl *gel;
@@ -194,9 +194,9 @@ void DFNFracture::CreateFaces(){
     if(gmesh->Dimension() == 3 && fLimit != Etruncated) IsolateFractureLimits();
     
     std::cout<<std::endl;
-#ifdef LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger, "[End][Searching faces]")
-#endif // LOG4CXX
+#endif // PZ_LOG
 }
 
 
@@ -222,9 +222,9 @@ void DFNFracture::CreateFaces(){
 
 
 void DFNFracture::CreateRibs(){
-#ifdef LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger, "[Start][Searching ribs]");
-#endif // LOG4CXX
+#endif // PZ_LOG
     std::cout<<"\r\n#Ribs intersected = 0";
     //search gmesh for intersected ribs
     int64_t Nels = fdfnMesh->Mesh()->NElements();
@@ -252,9 +252,9 @@ void DFNFracture::CreateRibs(){
         }
     }
     std::cout<<std::endl;
-#ifdef LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger, "[End][Searching ribs]")
-#endif // LOG4CXX
+#endif // PZ_LOG
 }
 
 
@@ -282,14 +282,14 @@ void DFNFracture::RefineFaces(){
     std::cout << " -Refining faces\r" << std::flush;
     for(auto itr = fFaces.begin(); itr!=fFaces.end(); itr++){
         DFNFace *face = &itr->second;
-#ifdef LOG4CXX
-        if(logger->isDebugEnabled())
+#if PZ_LOG
+        if(logger.isDebugEnabled())
         {
             std::stringstream sout;
             face->Print(sout,true);
             LOGPZ_DEBUG(logger, sout.str())
         }
-#endif // LOG4CXX
+#endif // PZ_LOG
         face->Refine();
     }
     std::cout << "                \r" << std::flush;
@@ -304,8 +304,8 @@ void DFNFracture::RefineFaces(){
 
 void DFNFracture::SnapIntersections_ribs(REAL tolDist)
 {
-#ifdef LOG4CXX
-    if(logger->isInfoEnabled()){
+#if PZ_LOG
+    if(logger.isInfoEnabled()){
         std::stringstream stream;
         stream <<"[Start][Snapping intersections Ribs]";
         if(fIndex < 0)
@@ -314,7 +314,7 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
             {stream << "[Fracture " << fIndex << "]";}
         LOGPZ_INFO(logger,stream.str());
     }
-#endif // LOG4CXX
+#endif // PZ_LOG
 
     if(tolDist < 0.) tolDist = fdfnMesh->TolDist();
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
@@ -323,8 +323,8 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
     }
 
 
-#ifdef LOG4CXX
-    if(logger->isInfoEnabled()){
+#if PZ_LOG
+    if(logger.isInfoEnabled()){
         std::stringstream stream;
         stream <<"[End][Snapping intersections Ribs]";
         if(fIndex < 0)
@@ -333,7 +333,7 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
             {stream << "[Fracture " << fIndex << "]";}
         LOGPZ_INFO(logger,stream.str());
     }
-#endif // LOG4CXX
+#endif // PZ_LOG
 }
 
 
@@ -343,8 +343,8 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
 
 
 void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
-#ifdef LOG4CXX
-    if(logger->isInfoEnabled()){
+#if PZ_LOG
+    if(logger.isInfoEnabled()){
         std::stringstream stream;
         stream <<"[Start][Snapping intersections Faces]";
         if(fIndex < 0)
@@ -353,7 +353,7 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
             {stream << "[Fracture " << fIndex << "]";}
         LOGPZ_INFO(logger,stream.str());
     }
-#endif // LOG4CXX
+#endif // PZ_LOG
     
     // Negative entries default to fdfnMesh tolerances
     if(tolDist < 0.) tolDist = fdfnMesh->TolDist();
@@ -365,8 +365,8 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
     }
 
 
-#ifdef LOG4CXX
-    if(logger->isInfoEnabled()){
+#if PZ_LOG
+    if(logger.isInfoEnabled()){
         std::stringstream stream;
         stream <<"[End][Snapping intersections Faces]";
         if(fIndex < 0)
@@ -375,190 +375,12 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
             {stream << "[Fracture " << fIndex << "]";}
         LOGPZ_INFO(logger,stream.str());
     }
-#endif // LOG4CXX
-    /// @note this is a draft which I commited by accident, it does nothing for now
-    SearchForSpecialQuadrilaterals();
+#endif // PZ_LOG
 }
 
 
 
 
-bool DFNFracture::IsSpecialQuadrilateral(TPZGeoEl* gel){
-    if(gel->Type() != MElementType::EQuadrilateral) DebugStop();
-
-    // If this DFNFracture has already found me, and has decided I'm not special, you can move on to the next quadrilateral
-    DFNFace* dfnface = Face(gel->Index());
-    if(dfnface){
-        if(dfnface->NeedsRefinement()) return false;
-        if(!dfnface->AllSnapsWentToSameNode()) return false;
-    }
-
-
-
-    DebugStop();
-    return false;
-}
-
-
-void DFNFracture::SearchForSpecialQuadrilaterals(){
-    return;
-    // This is only a problem in 3D
-    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    if(gmesh->Dimension() != 3) return;
-    if(fRibs.size() == 0) return;
-
-    // Loop over quadrilaterals
-    for(TPZGeoEl* gel : gmesh->ElementVec()){
-        if(!gel) continue;
-        if(gel->Type() != MElementType::EQuadrilateral) continue;
-        if(gel->HasSubElement()) continue;
-
-        if(!IsSpecialQuadrilateral(gel)) continue;
-        DebugStop();
-    }
-}
-
-
-
-
-
-
-// void DFNFracture::GetOuterLoop(std::vector<int> &loop){
-//     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-//     // Compute fracture edges' lenghts
-//     int nedges = fPolygon.GetCornersX().Cols();
-//     TPZVec<REAL> edgelength(nedges,0);
-//     Matrix fraccorners(3,nedges);
-//     fraccorners = fPolygon.GetCornersX();
-//     for(int i = 0; i < nedges; i++){
-//         edgelength[i] = sqrtl(pow(fraccorners(0,i)-fraccorners(0,(i+1)%nedges),2)
-//                               +pow(fraccorners(1,i)-fraccorners(1,(i+1)%nedges),2)
-//                               +pow(fraccorners(2,i)-fraccorners(2,(i+1)%nedges),2));
-//     }
-    
-// 	// vector of pointers to maps
-//     // @todo refactor this to tpzautopointer<map> to prevent memory leak
-// 	// TPZManVector<std::map<REAL, int64_t>* > edgemap(nedges);
-// 	TPZManVector<TPZAutoPointer<std::map<REAL, int64_t>> > edgemap(nedges);
-//     for(int i = 0; i < nedges; i++){
-//         edgemap[i] = new std::map<REAL, int64_t>;
-//     }
-//     // The set of points that have already been checked
-//     std::set<int64_t> checked;
-
-//     // iterate over all endfaces and map it to the fracture-edge that cuts it
-//     for (auto it = fFaces.begin(); it != fFaces.end(); it++){
-//         // get intersection node index and coordinates
-//         DFNFace *iface = &it->second;
-//         // @todo iface->IsOnBoundary2
-//         TPZManVector<REAL,3> ipointcoord = iface->IntersectionCoord();
-//         if(ipointcoord.size()<2) continue;
-//         int64_t ipointindex = iface->IntersectionIndex();
-
-//         // check if point was already checked
-//         auto aux = checked.insert(ipointindex);
-//         bool already_checked = !aux.second;
-//         if(already_checked) continue;
-
-//         // @todo if(ipointindex == any of the polygon.CornerIndex) continue;
-//         // iterate over edges to check if ipoint belongs to it
-//         for(int iedge = 0; iedge < nedges; iedge++){
-// 			//vectors from ipoint to iedge's nodes
-// 			TPZManVector<REAL, 3> v1(3);
-// 				v1[0] = fraccorners(0,iedge) - ipointcoord[0];
-// 				v1[1] = fraccorners(1,iedge) - ipointcoord[1];
-// 				v1[2] = fraccorners(2,iedge) - ipointcoord[2];
-// 			TPZManVector<REAL, 3> v2(3);
-// 				v2[0] = fraccorners(0,(iedge+1)%nedges) - ipointcoord[0];
-// 				v2[1] = fraccorners(1,(iedge+1)%nedges) - ipointcoord[1];
-// 				v2[2] = fraccorners(2,(iedge+1)%nedges) - ipointcoord[2];
-// 			// square of cross product
-// 			REAL temp = pow(v1[1]*v2[2] - v1[2]*v2[1],2);
-// 				temp += pow(v1[2]*v2[0] - v1[0]*v2[2],2);
-// 				temp += pow(v1[0]*v2[1] - v1[1]*v2[0],2);
-// 				temp = sqrtl(temp);
-//             // check if point is in edge by calculating if it's normal distance to the edge is zero
-//             REAL dist = temp/edgelength[iedge];
-// 			if(dist<gDFN_SmallNumber){
-// 				// compute local 1D coordinate (alpha)
-// 				REAL norm = sqrtl(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
-// 				REAL alpha = norm/edgelength[iedge];
-// 				if(alpha > 1+gDFN_SmallNumber){std::cout<<"\nMisattribution of point to edge\n";DebugStop();}
-// 				// map intersection indexes from smallest alpha to biggest
-//                 // map <alpha, index>
-// 				edgemap[iedge]->insert({alpha, ipointindex});
-// 			}
-//         }
-//     }
-//     bool warning_message_Q = true;
-//     //Once intersections on fracture-edges have been properly ordered and mapped by edge
-// 	//iterate over edges to split them
-// 	for (int iedge = 0; iedge < nedges; iedge++)
-// 	{
-// 		int64_t nels = gmesh->NElements();
-// 		TPZManVector<int64_t,2> inodes(2);     //index of nodes to be connected
-//         int icorner = iedge; //for readability
-
-// 		// connect first end-face intersection to iedge's first node
-//         inodes[0] = fPolygon.CornerIndex(icorner);
-// 		auto it = edgemap[iedge]->begin();
-//         if(edgemap[iedge]->size() == 0){
-//             #ifdef PZDEBUG
-//                 if(warning_message_Q){
-//                     PZError<<"\n Warning: Is there an edge of a fracture that doesn't cut any element? \n\n";
-//                     warning_message_Q = false;
-//                 }
-//             #endif //PZDEBUG
-//             // DebugStop();
-//         }
-//         // iterate over iedge's map
-//         while(it != edgemap[iedge]->end()){
-//             inodes[1] = it->second;
-//             gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
-//             loop.push_back((int) nels);
-//             inodes[0] = inodes[1];
-//             it++;
-//         }
-
-// 		// connect last end-intersection to edge last node
-//         inodes[1] = fPolygon.CornerIndex((icorner+1)%nedges);
-// 		gmesh->CreateGeoElement(EOned, inodes, DFNMaterial::Efracture, nels);
-//         loop.push_back((int) nels);
-//     }
-	
-//     gmesh->BuildConnectivity();
-//     // correct duplicates
-//     int nlines = loop.size();
-//     TPZGeoEl* gel;
-//     for(int iline=0; iline<nlines; iline++){
-//         int iedge = loop[iline];
-//         gel = gmesh->Element(iedge);
-//         if(!gel || gel->Dimension() != 1) DebugStop();
-//         TPZGeoElSide gelside(gel,2);
-//         TPZGeoElSide neig = gelside.Neighbour();
-//         bool newedge_Q = true;
-//         for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
-//             if(neig.Element()->Dimension() != 1) continue;
-//             // if duplicate, replace in loop and delete duplicate
-//             newedge_Q = false;
-//             loop[iline] = neig.Element()->Index(); 
-//             gmesh->DeleteElement(gel,iedge);
-//         }
-//         // if it's new, add it to fOutline
-//         if(newedge_Q){fOutline.insert({iedge,gel});}
-//     }
-
-//     // fix orientation
-//     for(int iline=1; iline<nlines; iline++){
-//         int iline_index = loop[iline];
-//         gel = gmesh->Element(iline_index);
-//         int anterior_index = loop[(iline+nlines-1)%nlines];
-//         TPZGeoEl *anterior = gmesh->Element(anterior_index);
-//         if(gel->NodeIndex(0) != anterior->NodeIndex(1)){
-//             loop[iline] *= -1;
-//         }
-//     }
-// }
 
 
 
@@ -595,117 +417,6 @@ void GetCurveLoop(TPZGeoEl* el, std::vector<int> &loop, const int shift=0){
 
 
 
-// void DFNFracture::MeshFractureSurface_old(){
-//     fdfnMesh->Mesh()->BuildConnectivity();
-//     // GMsh does not accept zero index entities
-//     const int shift = 1;
-//     // First construct the edges of the fracture surface
-//     std::vector<int> outerLoop;
-//     GetOuterLoop(outerLoop);
-//     std::vector<TPZGeoEl*> facesInSurface;
-//     GetFacesInSurface(facesInSurface);
-    
-//     // initialize GMsh
-//     // gmsh::initialize();
-// 	std::string modelname = "modelsurface";
-// 	gmsh::model::add(modelname);
-//     gmsh::model::setCurrent(modelname);
-//     gmsh::option::setNumber("Mesh.Algorithm", 5); // (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)
-//     // INSERT POINTS
-//         // iterate over fOutline and get points
-//     std::set<int64_t> pointset;
-//     {
-//         int64_t index = -1;
-//         TPZManVector<REAL,3> projcoord(3,0);
-//         TPZManVector<REAL,3> realcoord(3,0);
-//         for(auto itr : fOutline){
-//             TPZGeoEl* gel = itr.second;
-//             for(int inode=0; inode<gel->NCornerNodes(); inode++){
-//                 index = gel->NodeIndex(inode);
-//                 bool newpoint = pointset.insert(index).second;
-//                 if(!newpoint){continue;}
-//                 gel->NodePtr(inode)->GetCoordinates(realcoord);
-//                 projcoord = fPolygon.GetProjectedX(realcoord);
-//                 gmsh::model::geo::addPoint(projcoord[0],projcoord[1],projcoord[2],0.,index+shift);
-
-//             }
-//         }
-//     }
-//     // INSERT LINES
-//     std::vector<int> curvesInSurface;
-//     {
-//         for(auto iter = fOutline.begin(); iter != fOutline.end(); iter++){
-//             int64_t iel = iter->first+shift;
-//             TPZGeoEl *gel = iter->second;
-//             if(gel->Dimension() != 1) continue;
-//             int64_t node0 = gel->NodeIndex(0)+shift;
-//             int64_t node1 = gel->NodeIndex(1)+shift;
-
-//             gmsh::model::geo::addLine(node0,node1,iel);
-//             gmsh::model::geo::mesh::setTransfiniteCurve(iel,2); // to reduce number of nodes created by GMsh
-//             bool lineIsInEdge = (std::find(outerLoop.begin(),outerLoop.end(),iel-shift) != outerLoop.end());
-//             if(lineIsInEdge == false){
-//                 curvesInSurface.push_back(iel);
-//             }
-//         }
-//     }
-//     // CURVE LOOPS
-//         for(auto itr = outerLoop.begin(); itr != outerLoop.end(); itr++){
-//             *itr += shift;
-//         }
-//         int surfaceIndex = 0 + shift;
-//         std::vector<int> wiretags(facesInSurface.size()+1,-1);
-//         wiretags[0] = gmsh::model::geo::addCurveLoop(outerLoop,surfaceIndex);
-//     // Holes in surface
-//         for(int iface=0;iface<facesInSurface.size();iface++){
-//             TPZGeoEl* face = facesInSurface[iface];
-//             std::vector<int> loop;
-//             GetCurveLoop(face,loop,shift);
-//             wiretags[iface+1] = gmsh::model::geo::addCurveLoop(loop);
-//         }
-
-//     // SURFACE + HOLES
-//         gmsh::model::geo::addPlaneSurface(wiretags,surfaceIndex);
-    
-//     // lines in surface
-//         // @comment GMsh requires synchronize before embedding geometric entities
-//         gmsh::model::geo::synchronize();
-//         gmsh::model::mesh::embed(1,curvesInSurface,2,surfaceIndex);
-//     // PHYSICAL GROUPS
-//         // physical curve
-//         int nlines = curvesInSurface.size() + outerLoop.size();
-//         if(curvesInSurface.size() > outerLoop.size()){
-//             curvesInSurface.reserve(nlines);
-//             curvesInSurface.insert(curvesInSurface.end(), outerLoop.begin(), outerLoop.end() );
-
-//             gmsh::model::addPhysicalGroup(1,curvesInSurface,DFNMaterial::Efracture);
-//         }else{
-//             outerLoop.reserve(nlines);
-//             outerLoop.insert(outerLoop.end(), curvesInSurface.begin(), curvesInSurface.end() );
-
-//             gmsh::model::addPhysicalGroup(1,outerLoop,DFNMaterial::Efracture);
-//         }
-//         // physical surface
-//         gmsh::model::addPhysicalGroup(2,{surfaceIndex},DFNMaterial::Efracture);
-
-//     // synchronize before meshing
-//         gmsh::model::geo::synchronize();
-//     // mesh
-//         gmsh::model::mesh::generate(2);
-//         // gmsh::model::mesh::optimize("Netgen");
-//     // write (for testing)
-//         // gmsh::write("testAPI.msh");
-//     // import meshed plane back into PZ geoMesh
-//         TPZVec<int64_t> newelements;
-//         ImportElementsFromGMSH(fdfnMesh->Mesh(),2,pointset,newelements);
-//     // close GMsh
-//     gmsh::model::remove();
-// 	// gmsh::clear();
-//     // gmsh::finalize();
-    
-//     InsertElementsInSurface(newelements);
-//     fdfnMesh->CreateSkeletonElements(1, DFNMaterial::Efracture);
-// }
 
 void DFNFracture::SetPolygonIndex(std::pair<int64_t,int> face_orient, int polyg_index,TPZVec<std::array<int, 2>>& Polygon_per_face){
 	switch(face_orient.second){
@@ -799,9 +510,9 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 void DFNFracture::MeshFractureSurface(){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::cout<<"\r#SubPolygons meshed = 0";
-    #ifdef LOG4CXX
+    #if PZ_LOG
         LOGPZ_INFO(logger,"[Start][Meshing Fracture Surface] Frac# " << fIndex);
-    #endif // LOG4CXX
+    #endif // PZ_LOG
     // fdfnMesh->CreateSkeletonElements(1);
     fdfnMesh->ExpandPolyhPerFace();
     // SubPolygons are subsets of the fracture surface contained by a polyhedral volume
@@ -848,18 +559,18 @@ void DFNFracture::MeshFractureSurface(){
             if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
             polygon_counter++;
             
-            #ifdef LOG4CXX
-            if(logger->isDebugEnabled())
+            #if PZ_LOG
+            if(logger.isDebugEnabled())
                 {LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh # " << polyhindex);}
-            #endif // LOG4CXX
+            #endif // PZ_LOG
 
             // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
                 
-                #ifdef LOG4CXX
-                    if(logger->isDebugEnabled()){LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());}
-                #endif // LOG4CXX
+                #if PZ_LOG
+                    if(logger.isDebugEnabled()){LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());}
+                #endif // PZ_LOG
                 
                 InsertFaceInSurface(ExistingGel->Index());
                 continue;
@@ -876,9 +587,9 @@ void DFNFracture::MeshFractureSurface(){
     std::cout << "                       \r" << std::flush;
     fdfnMesh->CreateSkeletonElements(1);
 
-    #ifdef LOG4CXX
+    #if PZ_LOG
         LOGPZ_INFO(logger,"[End][Meshing Fracture Surface] Frac# " << fIndex);
-    #endif // LOG4CXX
+    #endif // PZ_LOG
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
@@ -1084,10 +795,10 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 
     InsertFaceInSurface(newelements);
 
-    #ifdef LOG4CXX
-        if(logger->isDebugEnabled())
+    #if PZ_LOG
+        if(logger.isDebugEnabled())
             {LOGPZ_DEBUG(logger,"\tNew elements indices : [" << newelements << "]");}
-    #endif // LOG4CXX
+    #endif // PZ_LOG
 
 }
 
@@ -1495,13 +1206,13 @@ void Move(TPZFMatrix<REAL>& cornercoord, const TPZManVector<REAL,3>& centroid, R
 void DFNFracture::CreateOrthogonalFracture(DFNFracture& orthfracture, const int edgeindex){
     
 
-#ifdef LOG4CXX
-    if(logger->isDebugEnabled()){
+#if PZ_LOG
+    if(logger.isDebugEnabled()){
         std::stringstream stream;
         stream << "[Start][Recover limit "<<edgeindex<<"][Fracture " << fIndex << "]";
         LOGPZ_DEBUG(logger,stream.str());
     }
-#endif // LOG4CXX
+#endif // PZ_LOG
 
     
     // consistency checks
@@ -1574,13 +1285,13 @@ void DFNFracture::RecoverFractureLimits(){
     if(fRibs.size() == 0) return;
 
 
-#ifdef LOG4CXX
-    if(logger->isInfoEnabled()){
+#if PZ_LOG
+    if(logger.isInfoEnabled()){
         std::stringstream stream;
         stream << "[Start][Recover fracture limits][Fracture " << fIndex << "]";
         LOGPZ_INFO(logger,stream.str());
     }
-#endif // LOG4CXX
+#endif // PZ_LOG
 
     // int buggylimit = -1;
 
@@ -1609,13 +1320,13 @@ void DFNFracture::RecoverFractureLimits(){
     //     // Try again with updated polyhedra
     // }
 
-#ifdef LOG4CXX
-        if(logger->isDebugEnabled()){
+#if PZ_LOG
+        if(logger.isDebugEnabled()){
             std::stringstream stream;
             stream << "[End][Recover limit "<<ilimit<<"][Fracture " << fIndex << "]";
             LOGPZ_DEBUG(logger,stream.str());
         }
-#endif // LOG4CXX
+#endif // PZ_LOG
 
 
     }
@@ -1625,9 +1336,9 @@ void DFNFracture::RecoverFractureLimits(){
     fdfnMesh->Mesh()->BuildConnectivity();
 
 
-#ifdef LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger,"[End][Recover fracture limits][Fracture " << fIndex << "]");
-#endif // LOG4CXX
+#endif // PZ_LOG
 
 
 }
@@ -1884,51 +1595,51 @@ void DFNFracture::Print(std::ostream & out) const
 
 
 
-#ifdef LOG4CXX
-    /** @brief Creates a logger for this object and fills pointer to this->fLogger
-      * @note A method to create a separate logger + appender for each DFNFracture. (as opposed to the main logger which logs everything from the DFNMesh)*/
-    log4cxx::LoggerPtr DFNFracture::CreateLogger(std::string filename, std::string layout_convpattern){
-        using namespace log4cxx;
-        // Default parameters
-        if(filename == "default") filename = "LOG/dfn.fracture" + to_string(fIndex) + ".log";
-        if(layout_convpattern == "default") layout_convpattern = "%m%n";
+#if PZ_LOG
+    // /** @brief Creates a logger for this object and fills pointer to this->fLogger
+    //   * @note A method to create a separate logger + appender for each DFNFracture. (as opposed to the main logger which logs everything from the DFNMesh)*/
+    // log4cxx::LoggerPtr DFNFracture::CreateLogger(std::string filename, std::string layout_convpattern){
+    //     using namespace log4cxx;
+    //     // Default parameters
+    //     if(filename == "default") filename = "LOG/dfn.fracture" + to_string(fIndex) + ".log";
+    //     if(layout_convpattern == "default") layout_convpattern = "%m%n";
 
-        // Create logger
-        std::string loggername = "dfn.mesh.frac" + to_string(fIndex);
-        LoggerPtr fLogger = log4cxx::Logger::getLogger(loggername);
+    //     // Create logger
+    //     std::string loggername = "dfn.mesh.frac" + to_string(fIndex);
+    //     LoggerPtr fLogger = log4cxx::Logger::getLogger(loggername);
         
-        // Create appender
-        std::string appendername = "appender_frac" + to_string(fIndex);
-        FileAppender* appender = new FileAppender();
-        appender->setAppend(false);
-        appender->setName(appendername);
-        appender->setFile(filename);
+    //     // Create appender
+    //     std::string appendername = "appender_frac" + to_string(fIndex);
+    //     FileAppender* appender = new FileAppender();
+    //     appender->setAppend(false);
+    //     appender->setName(appendername);
+    //     appender->setFile(filename);
 
-        // Setup layout
-        PatternLayout* layOut = new PatternLayout();
-        layOut->setConversionPattern(layout_convpattern);
-                // "%m%n");
-                // "[%-5p] %c{1}:%L - %m%n");
-                // "%d{yyyyf-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n");
-        appender->setLayout(LayoutPtr(layOut));
+    //     // Setup layout
+    //     PatternLayout* layOut = new PatternLayout();
+    //     layOut->setConversionPattern(layout_convpattern);
+    //             // "%m%n");
+    //             // "[%-5p] %c{1}:%L - %m%n");
+    //             // "%d{yyyyf-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n");
+    //     appender->setLayout(LayoutPtr(layOut));
 
-        // Activate options and open log file
-        log4cxx::helpers::Pool p;
-        appender->activateOptions(p);
+    //     // Activate options and open log file
+    //     log4cxx::helpers::Pool p;
+    //     appender->activateOptions(p);
         
-        // Add appender
-        fLogger->addAppender(log4cxx::AppenderPtr(appender));
+    //     // Add appender
+    //     fLogger->addAppender(log4cxx::AppenderPtr(appender));
 
-        // Set level and additivity
-        fLogger->setAdditivity(false);
-        fLogger->setLevel(log4cxx::Level::getInfo());
+    //     // Set level and additivity
+    //     fLogger->setAdditivity(false);
+    //     fLogger->setLevel(log4cxx::Level::getInfo());
 
-        // LOG4CXX_INFO(fLogger,"test1");
-        // LOG4CXX_INFO(fLogger,"test2");
+    //     // LOG4CXX_INFO(fLogger,"test1");
+    //     // LOG4CXX_INFO(fLogger,"test2");
 
-        return fLogger;
-    }
-#endif // LOG4CXX
+    //     return fLogger;
+    // }
+#endif // PZ_LOG
 
 
 
@@ -2122,9 +1833,9 @@ void DFNFracture::RemoveRefinedDFNFaces(const int vol_index){
         // Check if it's a DFNFace
         auto itr = fFaces.find(index);
         if(itr == fFaces.end()) continue;
-        #ifdef LOG4CXX
+        #if PZ_LOG
             LOGPZ_DEBUG(logger,"DFNFace # " << index << " \"(Removed from Frac# " << fIndex << ")\"");
-        #endif // LOG4CXX
+        #endif // PZ_LOG
         // Remove it from DFNFaces
         fFaces.erase(itr++); // righthand-increment the iterator to avoid problems with destructor. First copies the iterator to std::map::erase(iterator), then increments, then executes map::erase()
         // fFaces.erase(faceindex);

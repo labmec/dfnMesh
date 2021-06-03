@@ -10,8 +10,8 @@
 #include <filesystem>
 #include "pzlog.h"
 
-#ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+static TPZLogger logger("dfn.mesh");
 #endif
 
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
@@ -42,8 +42,8 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 			throw std::bad_exception();
 		}
 		
-#ifdef LOG4CXX
-		if(logger->isDebugEnabled())
+#if PZ_LOG
+		if(logger.isDebugEnabled())
 		{
 			std::stringstream sout;
 			sout << "[Polyhedra initialization]\n";
@@ -51,7 +51,7 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 			sout << "\n\n";
 			LOGPZ_DEBUG(logger,sout.str());
 		}
-#endif // LOG4CXX
+#endif // PZ_LOG
 	}
 	else{PZError << "\n2D meshes are currently unsupported\n"; DebugStop();}
 	// @todo delete this after a robust decision is made on how to handle custom material ids (previously set boundary conditions, skeleton with id -1, etc...)
@@ -373,9 +373,9 @@ DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandlin
 	// materialid = frac_tag*max_intersections;
 	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling, materialid);
 
-#ifdef LOG4CXX
+#if PZ_LOG
     LOGPZ_INFO(logger, "[Start][Fracture " << fracture->Index() << "]");
-#endif // LOG4CXX
+#endif // PZ_LOG
 
 	std::cout<<"\nFracture #"<<fracture->Index();
 	fFractures.push_back(fracture);
@@ -1736,14 +1736,14 @@ DFNPolyhedron* DFNMesh::CreatePolyhedron(const TPZVec<std::pair<int64_t,int>>& s
 	fPolyhedra.resize(ipolyh+1);
 	DFNPolyhedron& newpolyhedron = fPolyhedra[ipolyh];
 	newpolyhedron.Initialize(this,ipolyh,shell,coarseindex,isConvex);
-#ifdef LOG4CXX
-	if(logger->isDebugEnabled()){
+#if PZ_LOG
+	if(logger.isDebugEnabled()){
 		std::stringstream stream;
 		stream << "[Adding Polyhedron]";
 		newpolyhedron.Print(stream);
 		LOGPZ_DEBUG(logger,stream.str());
 	}
-#endif // LOG4CXX
+#endif // PZ_LOG
 	return &newpolyhedron;
 }
 
@@ -1836,9 +1836,9 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 }
 
 void DFNMesh::UpdatePolyhedra(){
-#ifdef LOG4CXX
-	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[Start][Update Polyhedra]");
-#endif // LOG4CXX
+#if PZ_LOG
+	if(logger.isInfoEnabled()) LOGPZ_INFO(logger,"[Start][Update Polyhedra]");
+#endif // PZ_LOG
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
 	std::cout<<"-Updating polyhedral volumes\r"<<std::flush;
@@ -1907,15 +1907,15 @@ void DFNMesh::UpdatePolyhedra(){
 		}
 	}
 	std::cout<<"                               \r"<<std::flush;
-#ifdef LOG4CXX
-	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[End][Update Polyhedra]");
-	if(logger->isDebugEnabled()){
+#if PZ_LOG
+	if(logger.isInfoEnabled()) LOGPZ_INFO(logger,"[End][Update Polyhedra]");
+	if(logger.isDebugEnabled()){
 		std::stringstream stream;
 		stream << "[Result][Update Polyhedra]\n";
 		PrintPolyhedra(stream);
 		LOGPZ_DEBUG(logger,stream.str());
 	}
-#endif // LOG4CXX
+#endif // PZ_LOG
 }
 
 void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
