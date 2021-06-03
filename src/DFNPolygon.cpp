@@ -470,7 +470,7 @@ TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int ma
         el_nodes[1] = polyg_nodes[iel];
         el_nodes[2] = polyg_nodes[(iel+1)%nnodes];
         int64_t dummyindex=-1;
-        gmesh->CreateGeoElement(ETriangle,el_nodes,matid,dummyindex,0);
+        els[iel] = gmesh->CreateGeoElement(ETriangle,el_nodes,matid,dummyindex,0);
     }
     return els;
 }
