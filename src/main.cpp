@@ -48,9 +48,9 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 
 
 #if PZ_LOG
-	#include "log4cxx/fileappender.h"
-	#include "log4cxx/patternlayout.h"
-	#include "log4cxx/propertyconfigurator.h"
+	// #include "log4cxx/fileappender.h"
+	// #include "log4cxx/patternlayout.h"
+	// #include "log4cxx/propertyconfigurator.h"
 	// #include "log4cxx/level.h"
 	// #include <log4cxx/logger.h>
 	// #include <log4cxx/basicconfigurator.h>
@@ -98,8 +98,6 @@ int main(int argc, char* argv[]){
 #if PZ_LOG
 	std::string configpath = PROJECT_ROOT "/src/util/DFNlog4cxx.cfg";
 	TPZLogger::InitializePZLOG(configpath);
-	// log4cxx::PropertyConfigurator::configure(configpath);
-	// logger.setLevel(log4cxx::Level::getDebug());
 #endif // PZ_LOG
 	TPZTimer time("DFNMesh");
 	PrintPreamble();

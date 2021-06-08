@@ -16,8 +16,8 @@
 #include "DFNGraph.h"
 
 #if PZ_LOG
-    #include "log4cxx/fileappender.h"
-    #include "log4cxx/patternlayout.h"
+    // #include "log4cxx/fileappender.h"
+    // #include "log4cxx/patternlayout.h"
 
     static TPZLogger logger("dfn.mesh");
 #endif
