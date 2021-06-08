@@ -146,14 +146,6 @@ int main(int argc, char* argv[]){
 		// Search and fix possibly problematic overlaps of fracture surface and existing mesh elements
 		fracture->CheckSnapInducedOverlap();
 
-// #if PZ_LOG
-//         if(logger.isDebugEnabled()){
-//             std::stringstream sout;
-//             fracture->Print(sout);
-//             LOGPZ_DEBUG(logger,sout.str());
-//         }
-// #endif
-
 		LOGPZ_DEBUG(logger, fracture);
         // we decided that the ribs can be cut. Apply the refinement to the geometric elements
 		fracture->RefineRibs();
@@ -167,11 +159,11 @@ int main(int argc, char* argv[]){
 			dfn.UpdatePolyhedra();
 		}
 #ifdef PZDEBUG
-        {
-            std::ofstream logtest("LOG/dfn.summary.log");
-            dfn.Print(logtest,argv[1]);
-			// dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
-        }
+        // {
+        //     std::ofstream logtest("LOG/dfn.summary.log");
+        //     dfn.Print(logtest,argv[1]);
+		// 	// dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
+        // }
 #endif //PZDEBUG
 	}
 	// Recover Limits

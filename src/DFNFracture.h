@@ -69,7 +69,7 @@ private:
 	std::set<int64_t> fSurfaceFaces;
 	
 	/// Set (of indices) of 1D geo elements on fracture surface. 
-    /// @comment Right now, I'm thinking of filling this datastructure only temporarily, to use in DFNFracture::RecoverFractureLimits recovery. This may change later...
+    /// @comment This structure is used (and built) twice. First at the recovery of fracture limits, then later at the search for fracture-fracture instersections.
 	std::set<int64_t> fSurfaceEdges;
 
     TPZStack<int> f_frac_frac_intersections;
@@ -109,16 +109,18 @@ public:
     
     /// Return the corner nodes of the fracture
     DFNPolygon &Polygon();
-    
+
+    /// Get pointer to the DFNMesh
     DFNMesh* dfnMesh() const{return fdfnMesh;}
 
-
+    /// Get reference to the set of 2D elements at the surface of this fracture
 	std::set<int64_t>& Surface(){return fSurfaceFaces;}
 
     int MaterialId() const{return fmatid;}
     void SetMaterialId(int matid){fmatid = matid;}
     int Index() const{return fIndex;}
 
+    /// Number of 2D elements at the surface of this fracture
     int NSurfElements() const{return fSurfaceFaces.size();}
     
     /// return the indices of all polyhedra intersected by the fracture
@@ -351,15 +353,13 @@ public:
     /** @brief Find edges that define the intersection between this and another DFNFracture, by solving a shortest
      * path in graph problem to best approximate a segment.
      * @param OtherFrac The other fracture the code should search for intersection
-     * @param CommonFaces A set of ids of 2D geo-elements common to the surfaces of 
-     * these 2 fractures. If given empty, it'll try to compute a set_intersection to fill this set
      * @param Segment 2 coordinates representing an initial and a final point that graph should approximate
      * @param EdgeList [output] A stack to fill with the result of the search
      * @details This code performs 2 geometrical searches to get, within the set of nodes of the 
      * CommonFaces, the mesh nodes that are closest to the coordinates informed in the Segment
     */
     bool FindFractureIntersection_NonTrivial(const DFNFracture& OtherFrac, 
-                                            const std::set<int64_t>& CommonFaces, 
+                                            // const std::set<int64_t>& CommonFaces, 
                                             const Segment& Segment,
                                             TPZStack<int64_t>& EdgeList);
 

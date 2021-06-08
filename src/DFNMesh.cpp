@@ -1128,7 +1128,7 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 			TPZStack<int64_t> intersection_edges;
 			// If fractures have overlapped surfaces, it's a non trivial case
 			if(common_faces.size() > 0 && geom_intersection_Q){
-				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],common_faces,int_segment,intersection_edges);
+				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],int_segment,intersection_edges);
 			}else{
 				fFractures[jfrac]->FindFractureIntersection_Trivial(*fFractures[kfrac],intersection_edges);
 			}

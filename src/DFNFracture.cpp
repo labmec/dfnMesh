@@ -1532,7 +1532,9 @@ void DFNFracture::CleanUp(){
     for(TPZGeoEl* gel : to_remove){
         fSurfaceFaces.erase(gel->Index());
     }
-    // fdfnMesh->UpdatePolyhedra();
+
+    // Build the set with every 1D element at the surface of this fracture
+    GetEdgesInSurface(fSurfaceEdges);
 }
 
 
@@ -1843,7 +1845,7 @@ void DFNFracture::RemoveRefinedDFNFaces(const int vol_index){
 }
 
 bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFrac, 
-                                                    const std::set<int64_t>& CommonFaces, 
+                                                    // const std::set<int64_t>& CommonFaces, 
                                                     const Segment& Segment,
                                                     TPZStack<int64_t>& EdgeList)
 {
@@ -1851,19 +1853,15 @@ bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFr
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     EdgeList.clear();
 
+    LOGPZ_DEBUG(logger, "[Intersection search][Shortest path] Frac# " << this->Index() << " vs Frac# " << OtherFrac.Index())
+
     // Get common edges
-    std::set<int64_t> common_edges; // Edges of the graph
+    const std::set<int64_t> common_edges = DFN::set_intersection(this->fSurfaceEdges,OtherFrac.fSurfaceEdges);
     std::set<int64_t> nodes; // Nodes of the graph
-    for(auto index : CommonFaces){
-        TPZGeoEl* face = gmesh->Element(index);
-        const int nsides = face->NSides();
-        for(int iside = face->FirstSide(1); iside < nsides-1; iside++){
-            TPZGeoEl* edge = DFN::GetSkeletonNeighbour(face,iside);
-            bool test = common_edges.insert(edge->Index()).second;
-            if(!test) continue;
-            nodes.insert(edge->NodeIndex(0));
-            nodes.insert(edge->NodeIndex(1));
-        }
+    for(auto index : common_edges){
+        TPZGeoEl* edge = gmesh->Element(index);
+        nodes.insert(edge->NodeIndex(0));
+        nodes.insert(edge->NodeIndex(1));
     }
 
     // Get initial and final node for the path (closest nodes to the coordinates defined in Segment)
@@ -1896,7 +1894,7 @@ bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFr
     if(start == end) return false;
 
     // Build a graph and solve
-    DFNGraph graph(gmesh,common_edges);
+    DFNGraph graph(fdfnMesh,common_edges);
     graph.ComputeShortestPath(start,end,EdgeList);
 
     return EdgeList.size();
@@ -1911,6 +1909,8 @@ bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFr
 void DFNFracture::FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::set<int64_t> EdgeList_set;
+
+    LOGPZ_DEBUG(logger, "[Intersection search][Neighbour MatID] Frac# " << this->Index() << " vs Frac# " << OtherFrac.Index())
 
     const std::set<int64_t>& othersurface = OtherFrac.fSurfaceFaces;
     
@@ -1953,6 +1953,10 @@ void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int
 	Segment int_segment;
 	const int nfrac = fdfnMesh->NFractures();
     TPZGeoMesh* gmesh = this->fdfnMesh->Mesh();
+
+    // Build the set with every 1D element at the surface of this fracture
+    GetEdgesInSurface(fSurfaceEdges);
+
 	// Test every pair of fractures for intersection
     int jfrac = this->fIndex;
     for(int kfrac = 0; kfrac<nfrac; kfrac++){
@@ -1968,7 +1972,7 @@ void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int
         TPZStack<int64_t> intersection_edges;
         // If fractures have overlapped surfaces, it's a non trivial case
         if(common_faces.size() > 0 && geom_intersection_Q){
-            this->FindFractureIntersection_NonTrivial(*fdfnMesh->FractureList()[kfrac],common_faces,int_segment,intersection_edges);
+            this->FindFractureIntersection_NonTrivial(*fdfnMesh->FractureList()[kfrac],int_segment,intersection_edges);
         }else{
             this->FindFractureIntersection_Trivial(*fdfnMesh->FractureList()[kfrac],intersection_edges);
         }

@@ -25,15 +25,19 @@ class DFNGraph : public micropather::Graph
         // A matrix to cache the connectivities by edge for efficiency
         TPZFMatrix<int64_t> fedges;
 
+        /// Pointer to the DFN
+        DFNMesh* fDFN = nullptr;
+
     public:
         /// Default constructor
-        DFNGraph(TPZGeoMesh* gmesh, const std::set<int64_t>& edges, int nnodes = 0){
+        DFNGraph(DFNMesh* dfnmesh, const std::set<int64_t>& edges, int nnodes = 0){
             fpather = new MicroPather(this,20);
             fdist.Resize(nnodes,nnodes);
             fedges.Resize(nnodes,nnodes);
+            fDFN = dfnmesh;
             
-            ComputeCostMatrix(gmesh, edges);
-            CacheEdgeConnectivity(gmesh, edges);
+            ComputeCostMatrix(dfnmesh->Mesh(), edges);
+            CacheEdgeConnectivity(dfnmesh->Mesh(), edges);
             
             fleast = ComputeMinimumLength();
         }
@@ -108,8 +112,16 @@ class DFNGraph : public micropather::Graph
 
             // Test gets the success result as an enum
             int test = fpather->Solve(graphstart,graphend,&solution,&totalCost);
-            if(test == MicroPather::NO_SOLUTION)
-                {PZError << "\nCouldn't solve for shortest path while analysing graph for inter-fracture intersection."; DebugStop();}
+            if(test == MicroPather::NO_SOLUTION){
+                PZError << "\nCouldn't solve for shortest path while analysing graph for inter-fracture intersection.\n"
+                        << "\nstart_localindex = " << graphstart
+                        << "\nend_localindex   = " << graphend
+                        << "\nstart_globalindex = " << start
+                        << "\nend_globalindex = " << end;
+                PZError << "\nConnectivity Matrix for the graph:\n";
+                fedges.Print("GraphConnectivity", PZError, MatrixOutputFormat::EFormatted);
+                fDFN->DFN_DebugStop();
+            }
             
             // if(test == MicroPather::SOLVED)
             ConvertNodePathToEdgePath(solution,Path);
