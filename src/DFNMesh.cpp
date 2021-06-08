@@ -2642,6 +2642,8 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 }
 
 void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename,const std::string ColorPreset){
+	const std::string cwd = std::filesystem::current_path();
+
 	std::printf("\n-Creating python filter script\n");
 	filter <<   "#### import the simple module from the paraview\n"
 				"from paraview.simple import *\n"
@@ -2649,7 +2651,7 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 				"paraview.simple._DisableFirstRenderCameraReset()\n";
 	
 	filter << "\n# create a new \'Legacy VTK Reader\' for CoarseMesh file\n"
-			<< "coarseMeshvtk = LegacyVTKReader(FileNames=[\'" << PROJECT_ROOT << "/graphics/CoarseMesh.vtk'])\n"
+			<< "coarseMeshvtk = LegacyVTKReader(FileNames=[\'" << cwd << "/graphics/CoarseMesh.vtk'])\n"
 			<< "RenameSource(\'CoarseMesh\', coarseMeshvtk)\n";
 	// Setup layout and view to create filters
 	filter << "\n\n";
@@ -2669,7 +2671,7 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 	
 
 	filter << "\n# create a new \'Legacy VTK Reader\' for DFNPolygons file\n"
-			<< "DFNPolygonsvtk = LegacyVTKReader(FileNames=[\'" << PROJECT_ROOT << "/graphics/allPolygons.vtk'])\n"
+			<< "DFNPolygonsvtk = LegacyVTKReader(FileNames=[\'" << cwd << "/graphics/allPolygons.vtk'])\n"
 			<< "RenameSource(\'AllDFNPolygons\', DFNPolygonsvtk)\n";
 	// Setup layout and view to create filters
 	filter << "\n\n";
@@ -2701,7 +2703,7 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 	fracturelist << "FileNames=[";
 	// timesteps << "TimestepValues=[";
 	for(auto frac : dfn.FractureList()){
-		fracturelist << "\n\t\'" << PROJECT_ROOT "/graphics/Fracture." << frac->Index() << ".vtk\',";
+		fracturelist << "\n\t\'" << cwd << "/graphics/Fracture." << frac->Index() << ".vtk\',";
 		// timesteps << ' ' << frac->Index() << ',';
 	}
 	fracturelist.seekp(fracturelist.str().length()-1); ///< removes spare comma
