@@ -2653,6 +2653,20 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename,const std::string ColorPreset){
 	const std::string cwd = std::filesystem::current_path();
 
+	// TUTORIAL
+	filter  << "########################################################################\n"
+			<< "#  _   _                 _                                              \n"
+			<< "# | | | | _____      __ | |_ ___    _   _ ___  ___   _ __ ___   ___   _ \n"
+			<< "# | |_| |/ _ \\ \\ /\\ / / | __/ _ \\  | | | / __|/ _ \\ | '_ ` _ \\ / _ \\ (_)\n"
+			<< "# |  _  | (_) \\ V  V /  | || (_) | | |_| \\__ \\  __/ | | | | | |  __/  _ \n"
+			<< "# |_| |_|\\___/ \\_/\\_/    \\__\\___/   \\__,_|___/\\___| |_| |_| |_|\\___| (_)\n"
+			<< "#                                                                       \n"
+			<< "# 1. Clear paraview (File > Disconnect > Yes);\n"
+			<< "# 2. Open python shell (View > Python Shell);\n"
+			<< "# 3. Select 'Run Script' in the lower right corner of the Python Shell;\n"
+			<< "# 4. Search and execute this python script;\n"
+			<< "########################################################################\n\n\n";
+
 	std::printf("\n-Creating python filter script\n");
 	filter <<   "#### import the simple module from the paraview\n"
 				"from paraview.simple import *\n"
