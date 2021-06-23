@@ -11,27 +11,24 @@
 #include "DFNMesh.h"
 
 
-#ifdef LOG4CXX
-    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+    static TPZLogger logger("dfn.mesh");
 #endif
 
 
 //Constructor
 DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) 
 :   fPointsIndex(CornerPoints.Cols(),-1), 
-    fArea(-1.), 
+    fArea(-1.),
     fAxis(3,3,0.)
 {
-    //If data is consistent, fAxis was computed during consistency check
-    fCornerPoints = CornerPoints;
-    ComputeAxis();
-    if( !Check_Data_Consistency() )	{
-		std::cout<<"Error at DFNPolygon: Bad input data \n";
-		DebugStop();
-	}
-	ComputeArea();
-    // initialize the fNodesAbove data structure
-    SortNodes(gmesh);
+  //If data is consistent, fAxis was computed during consistency check
+  fCornerPoints = CornerPoints;
+  ComputeAxis();
+  Check_Data_Consistency();
+  ComputeArea();
+  // initialize the fNodesAbove data structure
+  SortNodes(gmesh);
 }
 
 // Copy constructor
@@ -83,7 +80,13 @@ void DFNPolygon::ComputeAxis()
     //Ax2 norm
     REAL norm = sqrt(fAxis(0,2)*fAxis(0,2)+fAxis(1,2)*fAxis(1,2)+fAxis(2,2)*fAxis(2,2));
     
-    if(norm < 1.e-8) DebugStop();
+    if(norm < 1.e-8){
+        PZError << "\n[FATAL] User defined polygon seems to be inconsistent."
+                << " Your first 3 corners might be co-linear nodes.\n"
+                << "Corner nodes:\n"
+                << fCornerPoints << '\n';
+        DebugStop();
+    }
     
     for (int i = 0; i < 3; i++) // i< axis number (x y z)
     {
@@ -97,30 +100,49 @@ void DFNPolygon::ComputeAxis()
 
 
 
-
-
-
 bool DFNPolygon::Check_Data_Consistency() const
 {
-	
-    int cols = fCornerPoints.Cols();
-	//Coplanarity verification for quadrilateral polygon
-	if(cols > 3){
-        for(int ic = 3; ic<cols; ic++)
-        {
-            //scalar product between Ax2 and <P3-P1> should be zero
-            REAL ver = fAxis.GetVal(0,2)*(fCornerPoints.g(0,ic)-fCornerPoints.g(0,1))
-                      +fAxis.GetVal(1,2)*(fCornerPoints.g(1,ic)-fCornerPoints.g(1,1))
-                      +fAxis.g(2,2)*(fCornerPoints.g(2,ic)-fCornerPoints.g(2,1));
-            //Checks if points are coplanar
-            if(std::abs(ver) > gDFN_SmallNumber){
-                std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
-                DebugStop();
-            }
-        }
-	}
+  
+  int cols = fCornerPoints.Cols();
+  //Coplanarity verification for polygon
+  if(cols > 3){
+    for(int ic = 3; ic<cols; ic++) {
+      //scalar product between Ax2 and <P(ic)-P1> should be zero
+      
+      // 1) Compute the normalized vector <P(ic)-P1>
+      TPZManVector<REAL,3> vecToTest(3,0.);
+      REAL normvec = 0.;
+      for (int idim = 0; idim < 3; idim++) {
+        vecToTest[idim] = fCornerPoints.g(idim,ic) - fCornerPoints.g(idim,1);
+        normvec += vecToTest[idim]*vecToTest[idim];
+      }
+      normvec = sqrt(normvec);
+      for (int idim = 0; idim < 3; idim++)
+        vecToTest[idim] /= normvec;
+      
+#ifdef PZDEBUG
+      const REAL newnorm = sqrt(vecToTest[0]*vecToTest[0] + vecToTest[1]*vecToTest[1] + vecToTest[2]*vecToTest[2]);
+      if((std::abs(newnorm) - 1.) > ZeroTolerance()){
+        std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
+        DebugStop();
+      }
+#endif
 
-	return true;
+      // 2) Perform dot product
+      REAL ver = fAxis.GetVal(0,2)*vecToTest[0]
+      +fAxis.GetVal(1,2)*vecToTest[1]
+      +fAxis.g(2,2)*vecToTest[2];
+      
+      // 3) Checks if points are coplanar
+      if(std::abs(ver) > gDFN_SmallNumber){
+        std::cout<<"Fracture corner points are not coplanar"<<"\n"<<std::endl;
+        DebugStop();
+        return false;
+      }
+    }
+  }
+  
+  return true;
 }
 
 /**
@@ -454,7 +476,7 @@ TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int ma
         el_nodes[1] = polyg_nodes[iel];
         el_nodes[2] = polyg_nodes[(iel+1)%nnodes];
         int64_t dummyindex=-1;
-        gmesh->CreateGeoElement(ETriangle,el_nodes,matid,dummyindex,0);
+        els[iel] = gmesh->CreateGeoElement(ETriangle,el_nodes,matid,dummyindex,0);
     }
     return els;
 }
@@ -477,9 +499,10 @@ void DFNPolygon::Print(std::ostream & out) const
 
 
 void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
-#ifdef  LOG4CXX
     LOGPZ_INFO(logger,"[Start][Sorting nodes to either side of the plane]");
-#endif // LOG4CXX
+    LOGPZ_DEBUG(logger, "Nodes above before = \n\t{" << fNodesAbove << '}')
+
+
     std::cout << " -Sorting nodes to either side of the plane\r" << std::flush;
     int64_t i = fNodesAbove.size();
     const int64_t nnodes = gmesh->NNodes();
@@ -492,9 +515,10 @@ void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
         fNodesAbove[i] = Compute_PointAbove(coord);
     }
     std::cout << "                                           \r" << std::flush;
-#ifdef  LOG4CXX
+
+    LOGPZ_DEBUG(logger, "Nodes above after = \n\t{" << fNodesAbove << '}');
     LOGPZ_INFO(logger,"[End][Sorting nodes to either side of the plane]");
-#endif // LOG4CXX
+
 }
 
 void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){

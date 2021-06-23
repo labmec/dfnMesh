@@ -37,14 +37,14 @@ ENDIF(APPLE)
 
 # NeoPZ
 IF (WIN32)
-	find_package( PZ PATHS "C:/Arquivos de Programas/PZ" REQUIRED NO_DEFAULT_PATH)
+	find_package( NeoPZ PATHS "C:/Arquivos de Programas/PZ" REQUIRED NO_DEFAULT_PATH)
 ELSE()
-	find_package( PZ REQUIRED HINTS ../lib/neopz-install)
+	find_package( NeoPZ REQUIRED HINTS "../lib/neopz-develop")
 ENDIF (WIN32)
 
-include_directories(${PZ_INCLUDE_DIRS})
+# include_directories(${PZ_INCLUDE_DIRS})
 MESSAGE( STATUS "PZ_INCLUDE_DIRS:         " ${PZ_INCLUDE_DIRS} )
-MESSAGE( STATUS "PZ_DIR:                  " ${PZ_DIR} )
+MESSAGE( STATUS "PZ_DIR:                  " ${NeoPZ_DIR} )
 
 
 # Location to search files or libraries
@@ -114,15 +114,8 @@ endif()
 
 
 # linking with GMSH
-option(GMsh_as_library "Whether GMsh should be used as debuggable library. It's only useful if GMsh was compiled in debug." ON)
-if (GMsh_as_library)
-# if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-	find_library(GMSH_LIB gmsh HINTS /home/pedro/projetos/library/gmsh-install/lib ../lib/gmsh-install/lib NO_DEFAULT_PATH)
-	find_path(GMSH_INC gmsh.h HINTS /home/pedro/projetos/library/gmsh-install/include ../lib/gmsh-install/include NO_DEFAULT_PATH)
-ELSE()
-	find_library(GMSH_LIB gmsh)
-	find_path(GMSH_INC gmsh.h)
-ENDIF()
+find_library(GMSH_LIB gmsh HINTS "/home/pedro/projetos/library/gmsh-install/lib" "../lib/gmsh-install/lib" NO_DEFAULT_PATH)
+find_path(GMSH_INC gmsh.h HINTS "/home/pedro/projetos/library/gmsh-install/include" "../lib/gmsh-install/include" NO_DEFAULT_PATH)
 
 link_libraries(${GMSH_LIB})
 if(NOT GMSH_LIB)
@@ -132,7 +125,7 @@ endif()
 if(NOT GMSH_INC)
   message(FATAL_ERROR "Could not find gmsh.h")
 endif()
-include_directories(${GMSH_INC})
+# include_directories(${GMSH_INC})
 
 
 # linking std threads
@@ -142,7 +135,7 @@ find_package(Threads REQUIRED)
 # @WARNING this is only triggered during configure time.
 # I've added it as a request from Phil, but we gotta remember this duplicated file-tree can potentially lead to confusion since now the developer has to mind which example they are editing and which example the CLI is calling.
 # Notice that 'build/examples' will only get updated when calling 'cmake' command, and this also means that, if developer was editing 'build/examples' instead of 'source/examples', the former will get overwritten in an acidental/automatic call of 'cmake' command
-file(COPY "examples" DESTINATION .)
+file(COPY "examples" DESTINATION "./src")
 
 add_subdirectory(src)
 # add_subdirectory(testcollapsed)

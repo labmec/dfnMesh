@@ -12,6 +12,9 @@
 #include "gmsh.h"
 #include "TPZGeoMeshBuilder.h"
 
+#ifndef PZ_LOG
+#define PZ_LOG 0
+#endif // PZ_LOG
 
 /// 2*3.1415...
 #define gDFN_2PI 6.2831853071795865
@@ -345,20 +348,20 @@ void Print(const std::set<T>& s, std::ostream& out = std::cout, std::string name
 // "2 1 1 2 3\n"
 // "2 1 1 3 0";
 
-#ifdef LOG4CXX
-    static LoggerPtr nsp_logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+    static TPZLogger nsp_logger("dfn.mesh");
     #define LOG_DFN_DEBUG(B) LOGPZ_DEBUG(nsp_logger,B)
     #define LOG_DFN_INFO(B)  LOGPZ_INFO(nsp_logger,B)
     #define LOG_DFN_WARN(B)  LOGPZ_WARN(nsp_logger,B)
     #define LOG_DFN_ERROR(B) LOGPZ_ERROR(nsp_logger,B)
     #define LOG_DFN_FATAL(B) LOGPZ_FATAL(nsp_logger,B)
-#else // LOG4CXX
+#else // PZ_LOG
     #define LOG_DFN_DEBUG(B) {std::cout << '\n' << B;}
     #define LOG_DFN_INFO(B)  {std::cout << '\n' << B;}
     #define LOG_DFN_WARN(B)  {std::cout << '\n' << B;}
     #define LOG_DFN_ERROR(B) {std::cout << '\n' << B;}
     #define LOG_DFN_FATAL(B) {std::cout << '\n' << B;}
-#endif // LOG4CXX
+#endif // PZ_LOG
 
 
 

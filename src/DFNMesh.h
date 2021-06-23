@@ -46,6 +46,10 @@ private:
     // A set of polyhedral volumes
     TPZStack<DFNPolyhedron,20> fPolyhedra;
 
+    // // mat ids in use for this DFNMesh
+    // std::set<int> matids_in_use;
+
+    const int max_intersections = 1000;
 public:
     
     /// Constructor
@@ -110,6 +114,8 @@ public:
     void ExportGMshCAD_fractures(std::ofstream& out);
     void ExportGMshCAD_boundaryconditions(std::ofstream& out);
     void ExportGMshCAD_fractureIntersections(std::ofstream& out);
+
+    void ExportDetailedGraphics(const std::string ColorPreset = "Rainbow Uniform");
     
     // /// Uses gmsh API to tetrahedralize a DFNVolume
     // void Tetrahedralize(DFNVolume *volume);
@@ -239,8 +245,8 @@ public:
     /** @brief For a specific face, pass its polyhedral index to its children*/
     void InheritPolyhedra(TPZGeoEl* father);
     
-    /// Set all material ids to 1
-    void ClearMaterials();
+    /// Set all material ids to matid
+    void ClearMaterials(int matid = DFNMaterial::Eintact);
 
     /// @brief At any point in the code, dump a colored VTK file for graphical debugging 
     /// @warning This method can break the code downstream. It's meant for graphical debugging only.
@@ -294,6 +300,8 @@ private:
 public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
+
+    
 
 };
 

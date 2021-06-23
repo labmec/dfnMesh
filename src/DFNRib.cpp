@@ -9,17 +9,13 @@
 #include "pzgeoel.h"
 #include "pzgnode.h"
 #include "pzgmesh.h"
-#include "pzbiharmonic.h"
-#include "pzcmesh.h"
-#include "pzintel.h"
-#include "pzcompel.h"
 #include "TPZRefPatternDataBase.h"
 #include "DFNFracture.h"
 #include <math.h>
 
-#ifdef LOG4CXX
-    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
-#endif // LOG4CXX
+#if PZ_LOG
+    static TPZLogger logger("dfn.mesh");
+#endif // PZ_LOG
 
 /// Default constructor takes a pointer to geometric element
 DFNRib::DFNRib(TPZGeoEl *gel, DFNFracture *Fracture) :
@@ -161,10 +157,10 @@ void DFNRib::SnapIntersection_force(int closestnode){
     // Snap intersection
     fIntersectionIndex = fGeoEl->NodeIndex(closestnode);
     fIntersectionSide = closestnode;
-#ifdef LOG4CXX
-    if(logger->isTraceEnabled())
-        LOG4CXX_TRACE(logger,"Snap rib " << Index() << ". Towards LocalNode " << closestnode << "  - GlobalNode " << fGeoEl->NodeIndex(closestnode));
-#endif // LOG4CXX
+#if PZ_LOG
+    if(logger.isDebugEnabled())
+        LOGPZ_DEBUG(logger,"Snap rib " << Index() << ". Towards LocalNode " << closestnode << "  - GlobalNode " << fGeoEl->NodeIndex(closestnode));
+#endif // PZ_LOG
     // When an intersection gets snapped, neighbours should also be snapped to keep refinements consistant
     UpdateNeighbours(closestnode);
 }

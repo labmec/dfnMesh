@@ -9,8 +9,8 @@
 #include "DFNNamespace.h"
 #include "TPZRefPattern.h"
 
-#ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+static TPZLogger logger("dfn.mesh");
 #endif
 
 
@@ -64,9 +64,9 @@ namespace DFN{
         }
 
         // Singular Value Decomposition (SVD): A = U*SIGMA*VT
-#ifdef USING_MKL
+#ifdef PZ_USING_LAPACK
         {
-            // using MKL dgvesd()
+            // using LAPACK dgvesd()
             // U (3x3)
             TPZFMatrix<REAL> U(3,3,0.);
             // S (3x1) = Diagonal of Sigma with non zero elements
@@ -79,10 +79,10 @@ namespace DFN{
             normal[1] = U(1,2);
             normal[2] = U(2,2);
         }
-#else
-            PZError << "\nThis method needs NeoPZ compiled with MKL\n"<<__PRETTY_FUNCTION__;
+#else // PZ_USING_LAPACK
+            PZError << "\nThis method needs NeoPZ compiled with LAPACK\n"<<__PRETTY_FUNCTION__;
             DebugStop();
-#endif // USING_MKL
+#endif // PZ_USING_LAPACK
 
 #ifdef PZDEBUG
         {

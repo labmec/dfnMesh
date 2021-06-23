@@ -128,7 +128,9 @@ void ReadFile(	const std::string			& filename,
 		2.1213  1.2247 -2.1213 -1.2247
 		0.000  -2.4495  0.000   2.4495
 	 */
-	string line, word;
+	using namespace std;
+
+	std::string line, word;
 	eltype = MMeshType::ENoType;
 	// const string Domain = "Domain";
 	// const string Mesh("Mesh"), Fractures("NumberOfFractures");
@@ -137,7 +139,7 @@ void ReadFile(	const std::string			& filename,
 	TPZManVector<REAL,3> L(3,-1.);
 	x0.Fill(0.);
 	// Read file
-	ifstream file(filename);
+	std::ifstream file(filename);
 	if (!file){
 		std::cout << "\nCouldn't find file \"" << filename << "\""<< std::endl;
 		DebugStop();
@@ -593,6 +595,9 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 		TPZGmshReader reader;
 		gmesh = reader.GeometricGmshMesh4(mshfile, gmesh);
 	}
+
+	std::ofstream out1("graphics/CoarseMesh.vtk");
+	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);
 	return gmesh;
 }
 

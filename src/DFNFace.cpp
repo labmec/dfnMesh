@@ -12,15 +12,14 @@
 #include "TPZRefPattern.h"
 #include "tpzgeoelrefpattern.h"
 
-#ifdef LOG4CXX
-    static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+    static TPZLogger logger("dfn.mesh");
 #endif
 
 //Constructor
 DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec) :
 	fGeoEl(gel),
-	fFracture(fracture),
-	fCoord(0)
+	fFracture(fracture)
 {
 	int nsides = gel->NSides();
 	fStatus.Resize(nsides,0);
@@ -34,8 +33,7 @@ DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec)
 //Constructor
 DFNFace::DFNFace(TPZGeoEl *gel, DFNFracture *fracture) :
     fGeoEl(gel),
-    fFracture(fracture),
-    fCoord(0)
+    fFracture(fracture)
 {
 	// DebugStop();
     int nsides = gel->NSides();
@@ -53,7 +51,6 @@ DFNFace::DFNFace(const DFNFace &copy){
 DFNFace &DFNFace::operator=(const DFNFace &copy){
     fGeoEl = copy.fGeoEl;
 	fStatus = copy.fStatus;
-	fCoord = copy.fCoord;
 	fIntersectionIndex = copy.fIntersectionIndex;
 	fFracture = copy.fFracture;
 	fRibs = copy.fRibs;
@@ -660,67 +657,67 @@ bool DFNFace::UpdateStatusVec(){
 		}
 	}
 	bool changed = old_fStatus != fStatus;
-#ifdef LOG4CXX
-	// @todo This feels too verbose. Maybe make it logger->IsTraceEnabled()
-	if(changed && logger->isDebugEnabled()){
+#if PZ_LOG
+	// @todo This feels too verbose. Maybe make it logger.IsTraceEnabled()
+	if(changed && logger.isDebugEnabled()){
 		std::stringstream sstream;
 		sstream << "Updated StatusVec in Face #" << fGeoEl->Index();
 		sstream << "\nOld [" << old_fStatus << "]";
 		DFN::SketchStatusVec(old_fStatus,sstream);
 		sstream << "\nNew [" << fStatus << "]";
 		DFN::SketchStatusVec(fStatus,sstream);
-		LOG4CXX_DEBUG(logger,sstream.str());
+		LOGPZ_DEBUG(logger,sstream.str());
 	}
-#endif // LOG4CXX
+#endif // PZ_LOG
 	return changed;
 }
 
 
 
 
-bool DFNFace::FindInPlanePoint(){
-    // Convert TPZGeoEl into DFNPolygon
-    TPZGeoEl *gelface = fGeoEl;
-    TPZFMatrix<REAL> corners(3,4);
-    int n;
-    // check if face is quadrilateral
-    if(gelface->Type() == MElementType::ETriangle){
-        n = 1;
-    }else{ //gelface->Type() == EQuadrilateral
-        n = 2;
-    }
+// bool DFNFace::FindInPlanePoint(){
+//     // Convert TPZGeoEl into DFNPolygon
+//     TPZGeoEl *gelface = fGeoEl;
+//     TPZFMatrix<REAL> corners(3,4);
+//     int n;
+//     // check if face is quadrilateral
+//     if(gelface->Type() == MElementType::ETriangle){
+//         n = 1;
+//     }else{ //gelface->Type() == EQuadrilateral
+//         n = 2;
+//     }
 
-    gelface->NodesCoordinates(corners);
-    for(int iplane = 0; iplane < n; iplane++){
-        // divide quadrilaterals into 2 triangles in order to account for sets of points which are not coplanar
-        TPZFMatrix<REAL> subcorners(3,3,0);
-        if(n>1){
-            for(int j = 0; j<3; j++){
-                subcorners(j,0) = corners(j,2*iplane);
-                subcorners(j,1) = corners(j,2*iplane+1);
-                subcorners(j,2) = corners(j,(2*iplane+3)%4);
-            }
-        }else{
-            subcorners = corners;
-        }
-        DFNPolygon faceplane(subcorners, fGeoEl->Mesh());
-        // Check fPolygon's ribs for intersection with faceplane
-        int nribs = fFracture->Polygon().GetCornersX().Cols();
-        for(int irib = 0; irib < nribs; irib++){
-            TPZManVector<REAL,3> p1(3);
-            TPZManVector<REAL,3> p2(3);
-            for(int i = 0; i<3; i++){
-                p1[i] = fFracture->Polygon().GetCornersX().g(i, irib);
-                p2[i] = fFracture->Polygon().GetCornersX().g(i, (irib+1)%nribs);
-            }
-            if(faceplane.Check_pair(p1, p2, fCoord)){
-				fStatus[fGeoEl->NSides()-1] = 1;
-                return true;
-            }
-        }
-    }
-    return false;
-}
+//     gelface->NodesCoordinates(corners);
+//     for(int iplane = 0; iplane < n; iplane++){
+//         // divide quadrilaterals into 2 triangles in order to account for sets of points which are not coplanar
+//         TPZFMatrix<REAL> subcorners(3,3,0);
+//         if(n>1){
+//             for(int j = 0; j<3; j++){
+//                 subcorners(j,0) = corners(j,2*iplane);
+//                 subcorners(j,1) = corners(j,2*iplane+1);
+//                 subcorners(j,2) = corners(j,(2*iplane+3)%4);
+//             }
+//         }else{
+//             subcorners = corners;
+//         }
+//         DFNPolygon faceplane(subcorners, fGeoEl->Mesh());
+//         // Check fPolygon's ribs for intersection with faceplane
+//         int nribs = fFracture->Polygon().GetCornersX().Cols();
+//         for(int irib = 0; irib < nribs; irib++){
+//             TPZManVector<REAL,3> p1(3);
+//             TPZManVector<REAL,3> p2(3);
+//             for(int i = 0; i<3; i++){
+//                 p1[i] = fFracture->Polygon().GetCornersX().g(i, irib);
+//                 p2[i] = fFracture->Polygon().GetCornersX().g(i, (irib+1)%nribs);
+//             }
+//             if(faceplane.Check_pair(p1, p2, fCoord)){
+// 				fStatus[fGeoEl->NSides()-1] = 1;
+//                 return true;
+//             }
+//         }
+//     }
+//     return false;
+// }
 
 void DFNFace::UpdateMaterial(){
 	DebugStop(); // deprecated

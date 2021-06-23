@@ -25,15 +25,19 @@ class DFNGraph : public micropather::Graph
         // A matrix to cache the connectivities by edge for efficiency
         TPZFMatrix<int64_t> fedges;
 
+        /// Pointer to the DFN
+        DFNMesh* fDFN = nullptr;
+
     public:
         /// Default constructor
-        DFNGraph(TPZGeoMesh* gmesh, const std::set<int64_t>& edges, int nnodes = 0){
+        DFNGraph(DFNMesh* dfnmesh, const std::set<int64_t>& edges, int nnodes = 0){
             fpather = new MicroPather(this,20);
             fdist.Resize(nnodes,nnodes);
             fedges.Resize(nnodes,nnodes);
+            fDFN = dfnmesh;
             
-            ComputeCostMatrix(gmesh, edges);
-            CacheEdgeConnectivity(gmesh, edges);
+            ComputeCostMatrix(dfnmesh->Mesh(), edges);
+            CacheEdgeConnectivity(dfnmesh->Mesh(), edges);
             
             fleast = ComputeMinimumLength();
         }
@@ -103,13 +107,21 @@ class DFNGraph : public micropather::Graph
             // solution gets the nodes of the shortest path
             micropather::MPVector<int> solution;
 
-            int graphstart = (int)MeshToGraphNode(start);
-            int graphend = (int)MeshToGraphNode(end);
+            int graphstart = MeshToGraphNode(start);
+            int graphend = MeshToGraphNode(end);
 
             // Test gets the success result as an enum
             int test = fpather->Solve(graphstart,graphend,&solution,&totalCost);
-            if(test == MicroPather::NO_SOLUTION)
-                {PZError << "\nCouldn't solve for shortest path while analysing graph for inter-fracture intersection."; DebugStop();}
+            if(test == MicroPather::NO_SOLUTION){
+                PZError << "\nCouldn't solve for shortest path while analysing graph for inter-fracture intersection.\n"
+                        << "\nstart_localindex = " << graphstart
+                        << "\nend_localindex   = " << graphend
+                        << "\nstart_globalindex = " << start
+                        << "\nend_globalindex = " << end;
+                PZError << "\nConnectivity Matrix for the graph:\n";
+                fedges.Print("GraphConnectivity", PZError, MatrixOutputFormat::EFormatted);
+                fDFN->DFN_DebugStop();
+            }
             
             // if(test == MicroPather::SOLVED)
             ConvertNodePathToEdgePath(solution,Path);
@@ -132,9 +144,9 @@ class DFNGraph : public micropather::Graph
             }
             int real_nnodes = fMeshToGraphNode.size();
             fdist.Resize(real_nnodes,real_nnodes);
-            #ifdef LOG4CXX
-                fdist.Print("cost",std::cout,EFixedColumn);
-            #endif // lLOG4CXX
+            #if PZ_LOG
+                // fdist.Print("cost",std::cout,EFixedColumn);
+            #endif // PZ_LOG
         }
         /** 
          * Return the exact cost from the given node to all its neighboring nodes. This
@@ -152,8 +164,7 @@ class DFNGraph : public micropather::Graph
             }
         }
         /**
-            This function is only used in DEBUG mode - it dumps output to stdout. Since int 
-            aren't really human readable, normally you print out some concise info (like "(1,2)") 
+            This function is only used in DEBUG mode - normally you print out some concise info (like "(1,2)") 
             without an ending newline.
         */
         virtual void PrintStateInfo( int node ){
@@ -184,8 +195,8 @@ class DFNGraph : public micropather::Graph
             if(nnodes < 2) DebugStop();
 
             for(int inode=0; inode<nnodes-1; inode++){
-                int i = (int64_t)NodePath[inode];
-                int j = (int64_t)NodePath[inode+1];
+                int i = NodePath[inode];
+                int j = NodePath[inode+1];
                 EdgePath.push_back(fedges.g(i,j));
             }
         }

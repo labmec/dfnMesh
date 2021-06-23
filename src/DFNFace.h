@@ -28,12 +28,14 @@ private:
 	/// pointer to its original geometric element
 	TPZGeoEl *fGeoEl;
 
-	/** A status vector describes the topology of the intersection
-     *  each vector entry corresponds to a side, which may contain 
+	/** A status vector describes the topology of the intersection. 
+     *  Each vector entry corresponds to a side, which may contain 
      *  an intersection node with the fracture.
-     * @details The vector usually starts with 1 entries on its 1D sides (4~7 for quads and 3~5 for triangles), then snapping algorithms may move them to the nodes. If a face starts with nodes set to 1, then that means a tolerance was verified at the rib level before the face was created.
-     * For example: 
-     * {1,0,1,0,0,0,0,0,0} is a quadrilateral face intersected by a fracture, whose intersection nodes have been snapped to nodes 0 and 2;
+     * @details The vector usually starts with zero everywhere and a pair of ones on two of its 1D sides (4~7 for quads and 3~5 for triangles), 
+     * then snapping algorithms may move them to the nodes.\n 
+     * If a face starts with nodes set to 1, then that means a tolerance was verified at the rib level before the face was created.
+     * @example For example: 
+     * {1,0,1,0,0,0,0,0,0} is a quadrilateral face, intersected by a fracture, whose intersection nodes have been snapped to nodes 0 and 2;
      * {0,0,0,0,1,0,1,0,0} is a quadrilateral face intersected by a fracture passing through sides 4 and 6 (the 1st and 3rd edges), where no snap was performed;
      * {1,0,0,0,1,0,0} is a triangular face intersected by a fracture passing through sides 0 and 2. Meaning one intersection was snapped to node 0 and the other wasn't snapped;
      * {0,0,0,0,0,0,0} is an uninitialized Status vector of a triangle;
@@ -44,7 +46,7 @@ private:
 
 	/// Anticipated coordinates of an in-plane intersection node (if any has beeen found)
     /// This vector is only filled if this face intersects the limits of the fracture polygon
-	TPZManVector<REAL, 3> fCoord;
+	// TPZManVector<REAL, 3> fCoord;
 	
 	/// Index of in-plane intersection node
 	int64_t fIntersectionIndex = -1;
@@ -60,7 +62,7 @@ private:
 
 public:
     /// Empty constructor
-    DFNFace() : fGeoEl(nullptr), fStatus(9,0), fRibs(0), fCoord(0){};
+    DFNFace() : fGeoEl(nullptr), fStatus(9,0), fRibs(0){};
     
     /// Default constructor takes a pointer to geometric element and a fracture
     DFNFace(TPZGeoEl *gel, DFNFracture *fracture, TPZVec<DFNRib *> &ribvec);
@@ -99,12 +101,14 @@ public:
     int64_t IntersectionIndex() const {return fIntersectionIndex;}
     
     /// Set anticipated in-plane intersection coordinates (real coordinates are defined by DFNRib::SnapIntersection_try())
-    void SetIntersectionCoord(TPZManVector<REAL, 3> coord){
-        fCoord = coord;
-    }
+    /// @deprecated (But could be brought back to support 2D DFNs)
+    // void SetIntersectionCoord(TPZManVector<REAL, 3> coord){
+    //     fCoord = coord;
+    // }
 
     /// Get in-plane intersection coordinates
-    TPZManVector<REAL, 3> IntersectionCoord() const {return fCoord;}
+    /// @deprecated (But could be brought back to support 2D DFNs)
+    // TPZManVector<REAL, 3> IntersectionCoord() const {return fCoord;}
     
     /// Set ribs of face
     void SetRibs(TPZVec<DFNRib*> &RibVec) {fRibs = RibVec;}
@@ -153,7 +157,7 @@ public:
      * @note 2: Won't create a node in mesh. This must be done later.
      * @TODO this could be done later
     */
-    bool FindInPlanePoint();
+    // bool FindInPlanePoint();
     
     /// Reference to status vector
     const TPZVec<int> &StatusVec(){return fStatus;}

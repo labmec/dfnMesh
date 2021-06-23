@@ -69,20 +69,24 @@ private:
 	std::set<int64_t> fSurfaceFaces;
 	
 	/// Set (of indices) of 1D geo elements on fracture surface. 
-    /// @comment Right now, I'm thinking of filling this datastructure only temporarily, to use in DFNFracture::RecoverFractureLimits recovery. This may change later...
+    /// @comment This structure is used (and built) twice. First at the recovery of fracture limits, then later at the search for fracture-fracture instersections.
 	std::set<int64_t> fSurfaceEdges;
+
+    TPZStack<int> f_frac_frac_intersections;
+
+    int fmatid_BC = fmatid-1;
 
 public:
 
-#ifdef LOG4CXX
+#if PZ_LOG
     /// During debug, I experimented with a log file for each fracture. It's not as 
     /// useful as one would think, but I left it here if you want to use it
-    log4cxx::LoggerPtr fLogger = nullptr;
+    // log4cxx::LoggerPtr fLogger = nullptr;
 
     /** @brief Creates a logger for this object and fills pointer to this->fLogger
       * @note A method to create a separate logger + appender for each DFNFracture. (as opposed to the main logger which logs everything from the DFNMesh)*/
-    log4cxx::LoggerPtr CreateLogger(std::string filename="default", std::string layout_convpattern = "default");
-#endif // LOG4CXX
+    // log4cxx::LoggerPtr CreateLogger(std::string filename="default", std::string layout_convpattern = "default");
+#endif // PZ_LOG
 
 
     /// Empty constructor
@@ -105,15 +109,18 @@ public:
     
     /// Return the corner nodes of the fracture
     DFNPolygon &Polygon();
-    
+
+    /// Get pointer to the DFNMesh
     DFNMesh* dfnMesh() const{return fdfnMesh;}
 
-
+    /// Get reference to the set of 2D elements at the surface of this fracture
 	std::set<int64_t>& Surface(){return fSurfaceFaces;}
 
     int MaterialId() const{return fmatid;}
+    void SetMaterialId(int matid){fmatid = matid;}
     int Index() const{return fIndex;}
 
+    /// Number of 2D elements at the surface of this fracture
     int NSurfElements() const{return fSurfaceFaces.size();}
     
     /// return the indices of all polyhedra intersected by the fracture
@@ -248,19 +255,17 @@ private:
     */
     bool CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid);
 
-    /** @brief Search for quadrilaterals that violate our general criterion for refinement
-     *  @note this is a draft which I commited by accident, it does nothing for now
-    */
-    void SearchForSpecialQuadrilaterals();
-    /** @brief A special quadrilateral is one that should be refined because of a special exception.
-     *  @note this is a draft which I commited by accident, it does nothing for now
-     * @details It has 3 or more neighbour ribs (some of them NOT occupying its 1D sides) whose intersection nodes were snapped toward this quadrilateral.
-     * If this quadrilateral is not refined, it'll (sometimes) induce a non-convex polyhedron with overlapped faces that GMSH can't mesh.
-    */
-    bool IsSpecialQuadrilateral(TPZGeoEl* gel);
+
+    void ResetSurfaceMaterial(const int matid);
 
 public:
 
+    /// @brief Check if 2D element on surface has at most 1 other neighbour (through edges) on this fracture surface
+    bool CheckIsLegalSurfaceElement(const int64_t elindex) const;
+
+    void PlotVTK(const std::string exportname, bool putGraphicalElements = true);
+    void SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int);
+    void SetupGraphicsFractureBC();
 
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
@@ -351,15 +356,13 @@ public:
     /** @brief Find edges that define the intersection between this and another DFNFracture, by solving a shortest
      * path in graph problem to best approximate a segment.
      * @param OtherFrac The other fracture the code should search for intersection
-     * @param CommonFaces A set of ids of 2D geo-elements common to the surfaces of 
-     * these 2 fractures. If given empty, it'll try to compute a set_intersection to fill this set
      * @param Segment 2 coordinates representing an initial and a final point that graph should approximate
      * @param EdgeList [output] A stack to fill with the result of the search
      * @details This code performs 2 geometrical searches to get, within the set of nodes of the 
      * CommonFaces, the mesh nodes that are closest to the coordinates informed in the Segment
     */
     bool FindFractureIntersection_NonTrivial(const DFNFracture& OtherFrac, 
-                                            const std::set<int64_t>& CommonFaces, 
+                                            // const std::set<int64_t>& CommonFaces, 
                                             const Segment& Segment,
                                             TPZStack<int64_t>& EdgeList);
 
@@ -372,6 +375,10 @@ public:
     void FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList);
 };
 
+inline std::ostream& operator<<(std::ostream &out, const DFNFracture& fracture){
+    fracture.Print(out);
+    return out;
+}
 
 namespace DFN{
     static FracLimit StringToFracLimit(const std::string& name){

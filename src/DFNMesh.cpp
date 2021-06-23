@@ -7,11 +7,11 @@
 #include "DFNMesh.h"
 #include "TPZVTKGeoMesh.h"
 #include "TPZGeoMeshBuilder.h"
-
+#include <filesystem>
 #include "pzlog.h"
 
-#ifdef LOG4CXX
-static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#if PZ_LOG
+static TPZLogger logger("dfn.mesh");
 #endif
 
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
@@ -35,15 +35,16 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 	fFractures.clear();
 	// fVolumes.clear();
 	if(fGMesh->Dimension() == 3){
-		try{InitializePolyhedra();}
-		catch(...){
-			DumpVTK();
-			PZError << "\nFailed to initialize polyhedra. VTK representation written to vtkmesh.vtk\n";
-			throw std::bad_exception();
-		}
+		InitializePolyhedra();
+		// try{InitializePolyhedra();}
+		// catch(...){
+		// 	DumpVTK();
+		// 	PZError << "\nFailed to initialize polyhedra. VTK representation written to vtkmesh.vtk\n";
+		// 	throw std::bad_exception();
+		// }
 		
-#ifdef LOG4CXX
-		if(logger->isDebugEnabled())
+#if PZ_LOG
+		if(logger.isDebugEnabled())
 		{
 			std::stringstream sout;
 			sout << "[Polyhedra initialization]\n";
@@ -51,7 +52,7 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 			sout << "\n\n";
 			LOGPZ_DEBUG(logger,sout.str());
 		}
-#endif // LOG4CXX
+#endif // PZ_LOG
 	}
 	else{PZError << "\n2D meshes are currently unsupported\n"; DebugStop();}
 	// @todo delete this after a robust decision is made on how to handle custom material ids (previously set boundary conditions, skeleton with id -1, etc...)
@@ -368,13 +369,15 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 
 
 DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid){
-	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling,materialid);
-#ifdef LOG4CXX
-	// std::stringstream sout;
-	// sout << "\n[Start][Fracture " << fracture->Index() << "]";
-    // if(logger->isInfoEnabled()) LOGPZ_INFO(logger, sout.str());
+	// For the export graphics code, we're starting with this limit of max_intersections and reserving material ids within every 1000 for frac_frac_intersections. It's just for graphics
+	// int frac_tag = this->NFractures() + 1;
+	// materialid = frac_tag*max_intersections;
+	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling, materialid);
+
+#if PZ_LOG
     LOGPZ_INFO(logger, "[Start][Fracture " << fracture->Index() << "]");
-#endif // LOG4CXX
+#endif // PZ_LOG
+
 	std::cout<<"\nFracture #"<<fracture->Index();
 	fFractures.push_back(fracture);
 	return fracture;
@@ -1119,19 +1122,19 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 			const DFNPolygon& kpolygon = fFractures[kfrac]->Polygon();
 			bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,int_segment);
 
-			std::set<int64_t> surface_j = fFractures[jfrac]->Surface();
-			std::set<int64_t> surface_k = fFractures[kfrac]->Surface();
+			const std::set<int64_t>& surface_j = fFractures[jfrac]->Surface();
+			const std::set<int64_t>& surface_k = fFractures[kfrac]->Surface();
 			std::set<int64_t> common_faces = DFN::set_intersection(surface_j,surface_k);
 
 			TPZStack<int64_t> intersection_edges;
 			// If fractures have overlapped surfaces, it's a non trivial case
-			if(common_faces.size() > 0){
-				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],common_faces,int_segment,intersection_edges);
+			if(common_faces.size() > 0 && geom_intersection_Q){
+				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],int_segment,intersection_edges);
 			}else{
 				fFractures[jfrac]->FindFractureIntersection_Trivial(*fFractures[kfrac],intersection_edges);
 			}
 			if(intersection_edges.size() == 0) continue;
-			stringstream stream;
+			std::stringstream stream;
 			// Setup Physical Groups for each intersection
 			stream << "\nfracIntersection_" << jfrac << '_' << kfrac << "[] = { ";
 			for(int64_t iedge : intersection_edges){
@@ -1670,11 +1673,11 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
 
 
 
-void DFNMesh::ClearMaterials(){
+void DFNMesh::ClearMaterials(int matid){
 	std::cout << "\n\n[WARNING] Boundary conditions were erased to print VTK graphics.\n\n" << std::flush;
 	for(auto el : fGMesh->ElementVec()){
 		if(!el) continue;
-		el->SetMaterialId(DFNMaterial::Eintact);
+		el->SetMaterialId(matid);
 	}
 }
 
@@ -1734,14 +1737,14 @@ DFNPolyhedron* DFNMesh::CreatePolyhedron(const TPZVec<std::pair<int64_t,int>>& s
 	fPolyhedra.resize(ipolyh+1);
 	DFNPolyhedron& newpolyhedron = fPolyhedra[ipolyh];
 	newpolyhedron.Initialize(this,ipolyh,shell,coarseindex,isConvex);
-#ifdef LOG4CXX
-	if(logger->isDebugEnabled()){
+#if PZ_LOG
+	if(logger.isDebugEnabled()){
 		std::stringstream stream;
 		stream << "[Adding Polyhedron]";
 		newpolyhedron.Print(stream);
 		LOGPZ_DEBUG(logger,stream.str());
 	}
-#endif // LOG4CXX
+#endif // PZ_LOG
 	return &newpolyhedron;
 }
 
@@ -1812,6 +1815,13 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 	TPZStack<std::pair<int64_t,int>,6> shell(6,{-1,0});	///< oriented faces that enclose the polyhedron
 	shell.clear();
 	int ipolyh = fPolyhedra.size();
+	
+	#if PZDEBUG
+		// TPZManVector<REAL,3> qsi(3,0.33333333); Matrix jac; Matrix axes; REAL detjac; Matrix jacinv;
+		// vol->Jacobian(qsi,jac, axes, detjac, jacinv);
+		// LOGPZ_DEBUG(logger, "detjac vol " << vol->Index() << " = " << detjac)
+		// if(detjac < 0.) DebugStop();
+	#endif //PZDEBUG
 	// Loop over 2D sides
 	for(int iside=vol->FirstSide(2); iside < vol->NSides()-1; iside++){
 		// Get oriented face in that side
@@ -1834,12 +1844,12 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 }
 
 void DFNMesh::UpdatePolyhedra(){
-#ifdef LOG4CXX
-	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[Start][Update Polyhedra]");
-#endif // LOG4CXX
+#if PZ_LOG
+	if(logger.isInfoEnabled()) LOGPZ_INFO(logger,"[Start][Update Polyhedra]");
+#endif // PZ_LOG
 	// Start by sorting faces around edges and filling the this->fSortedFaces datastructure
 	this->SortFacesAroundEdges();
-	std::cout<<" -Updating polyhedral volumes\r"<<std::flush;
+	std::cout<<"-Updating polyhedral volumes\r"<<std::flush;
 	fPolyh_per_face.Resize(fGMesh->NElements(),{-1,-1});
 	// Refined faces pass down their polyh index to their subelements
 	InheritPolyhedra();
@@ -1905,15 +1915,15 @@ void DFNMesh::UpdatePolyhedra(){
 		}
 	}
 	std::cout<<"                               \r"<<std::flush;
-#ifdef LOG4CXX
-	if(logger->isInfoEnabled()) LOGPZ_INFO(logger,"[End][Update Polyhedra]");
-	if(logger->isDebugEnabled()){
+#if PZ_LOG
+	if(logger.isInfoEnabled()) LOGPZ_INFO(logger,"[End][Update Polyhedra]");
+	if(logger.isDebugEnabled()){
 		std::stringstream stream;
 		stream << "[Result][Update Polyhedra]\n";
 		PrintPolyhedra(stream);
 		LOGPZ_DEBUG(logger,stream.str());
 	}
-#endif // LOG4CXX
+#endif // PZ_LOG
 }
 
 void DFNMesh::ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack){
@@ -2592,6 +2602,317 @@ void DFNMesh::PreRefine(int n){
 		// CreateSkeletonElements(maxdim-1);
 		// CreateSkeletonElements(maxdim-2);
 		// UpdatePolyhedra();
+		// DFN::PlotJacobian(fGMesh,"LOG/jacplot." + std::to_string(i+1) + ".vtk");
 	}
 
+}
+
+void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename, const std::string ColorPreset = "Rainbow Uniform");
+// void PlotAllPolygons(DFNMesh& dfn, std::string filename);
+
+
+void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
+	TPZGeoMesh* gmesh = this->Mesh();
+#ifdef PZDEBUG
+	std::cout << "[WARNING] " << __PRETTY_FUNCTION__ << " inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
+#endif // PZDEBUG
+	ClearMaterials(GMESHNOMATERIAL);
+	
+	// Standard control
+	const std::string filename = "Fracture";
+	const std::string dirname = "./graphics";
+	std::filesystem::create_directory(dirname);
+	
+	std::set<int64_t> polygels;
+	std::ofstream polygfile(dirname+"/allPolygons.vtk");
+	// Make sure fracture surfaces are consistent
+	for(auto frac : FractureList()){
+		frac->SetMaterialId(frac->Index());
+		frac->CleanUp();
+		TPZVec<TPZGeoEl*> graphical_elements = frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1) );
+		for(TPZGeoEl* gel : graphical_elements){polygels.insert(gel->Index());}
+	}
+	// PlotAllPolygons(dirname + "allPolygons.vtk");
+	TPZVTKGeoMesh::PrintGMeshVTK(gmesh,polygels,polygfile);
+
+
+	// Plot each of the fractures
+	for(auto frac : fFractures){
+		std::string exportname = dirname + '/' + filename + "." + std::to_string(frac->Index()) + ".vtk";
+		frac->PlotVTK(exportname);
+	}
+
+	// Plot complete graphics
+	// PrintVTK(dirname+'/'+"Complete"+'.'+std::to_string(NFractures())+".vtk","skip");
+
+	// Create a filter script
+	std::ofstream filter("graphics/GraphicsScript.py");
+	CreateFilterScript(*this,filter,filename,ColorPreset);
+}
+
+void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename,const std::string ColorPreset){
+	const std::string cwd = std::filesystem::current_path();
+
+	// TUTORIAL
+	filter  << "########################################################################\n"
+			<< "#  _   _                 _                                              \n"
+			<< "# | | | | _____      __ | |_ ___    _   _ ___  ___   _ __ ___   ___   _ \n"
+			<< "# | |_| |/ _ \\ \\ /\\ / / | __/ _ \\  | | | / __|/ _ \\ | '_ ` _ \\ / _ \\ (_)\n"
+			<< "# |  _  | (_) \\ V  V /  | || (_) | | |_| \\__ \\  __/ | | | | | |  __/  _ \n"
+			<< "# |_| |_|\\___/ \\_/\\_/    \\__\\___/   \\__,_|___/\\___| |_| |_| |_|\\___| (_)\n"
+			<< "#                                                                       \n"
+			<< "# 1. Clear paraview (File > Disconnect > Yes);\n"
+			<< "# 2. Open python shell (View > Python Shell);\n"
+			<< "# 3. Select 'Run Script' in the lower right corner of the Python Shell;\n"
+			<< "# 4. Search and execute this python script;\n"
+			<< "########################################################################\n\n\n";
+
+	std::printf("\n-Creating python filter script\n");
+	filter <<   "#### import the simple module from the paraview\n"
+				"from paraview.simple import *\n"
+				"#### disable automatic camera reset on 'Show'\n"
+				"paraview.simple._DisableFirstRenderCameraReset()\n";
+	
+	filter << "\n# create a new \'Legacy VTK Reader\' for CoarseMesh file\n"
+			<< "coarseMeshvtk = LegacyVTKReader(FileNames=[\'" << cwd << "/graphics/CoarseMesh.vtk'])\n"
+			<< "RenameSource(\'CoarseMesh\', coarseMeshvtk)\n";
+	// Setup layout and view to create filters
+	filter << "\n\n";
+	filter << 	"# get active view\n"
+				"renderView1 = GetActiveViewOrCreate('RenderView')\n"
+				"# get layout\n"
+				"layout1 = GetLayout()\n";
+
+	
+	filter <<	"\n# find source of Coarse Mesh\n"
+				"CoarseMesh = FindSource(\'"<< "CoarseMesh.vtk" << "\')\n";
+	
+	filter  << "CoarseDisplay = Show("<<"CoarseMesh"<<", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "CoarseDisplay.SetRepresentationType('Wireframe')\n"
+			<< "CoarseDisplay.AmbientColor = [0.443137255, 0.450980392, 0.6]\n"
+			<< "CoarseDisplay.DiffuseColor = [0.443137255, 0.450980392, 0.6]\n";
+	
+
+	filter << "\n# create a new \'Legacy VTK Reader\' for DFNPolygons file\n"
+			<< "DFNPolygonsvtk = LegacyVTKReader(FileNames=[\'" << cwd << "/graphics/allPolygons.vtk'])\n"
+			<< "RenameSource(\'AllDFNPolygons\', DFNPolygonsvtk)\n";
+	// Setup layout and view to create filters
+	filter << "\n\n";
+	filter << 	"# get active view\n"
+				"renderView1 = GetActiveViewOrCreate('RenderView')\n"
+				"# get layout\n"
+				"layout1 = GetLayout()\n";
+
+	
+	filter <<	"\n# find source of allPolygons\n"
+				"DFNPolygons = FindSource(\'"<< "AllDFNPolygons" << "\')\n";
+	
+	filter  << "allPolygonsDisplay = Show("<<"DFNPolygons"<<", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "allPolygonsDisplay.SetRepresentationType('Wireframe')\n"
+			<< "allPolygonsDisplay.AmbientColor = [0.0, 0.0, 0.0]\n"
+			<< "allPolygonsDisplay.DiffuseColor = [0.0, 0.0, 0.0]\n";
+	
+
+
+
+
+
+
+	filter << "# create a new \'Legacy VTK Reader\' for Fracture list\n"
+			<< "fracturevtk = LegacyVTKReader(";
+	
+	std::stringstream fracturelist;
+	// std::stringstream timesteps;
+	fracturelist << "FileNames=[";
+	// timesteps << "TimestepValues=[";
+	for(auto frac : dfn.FractureList()){
+		fracturelist << "\n\t\'" << cwd << "/graphics/Fracture." << frac->Index() << ".vtk\',";
+		// timesteps << ' ' << frac->Index() << ',';
+	}
+	fracturelist.seekp(fracturelist.str().length()-1); ///< removes spare comma
+	fracturelist << ']';
+	// timesteps.seekp(timesteps.str().length()-1); ///< removes spare comma
+	// timesteps << ']';
+
+	filter << fracturelist.str();
+	// filter << ",\n" << timesteps.str();
+	filter << "\n)\n";
+	filter << "RenameSource(\'Fracture\', fracturevtk)\n";
+
+	filter <<	"\n# find source of fractures\n"
+				"Fracture = FindSource(\'"<< filename << "\')\n";
+	// Update current layout and view to create filters
+	filter << "\n\n";
+	filter << 	"# get active view\n"
+				"renderView1 = GetActiveViewOrCreate('RenderView')\n"
+				"# get layout\n"
+				"layout1 = GetLayout()\n";
+
+	// FILTERS
+	// @{
+
+	int nfrac = dfn.NFractures();
+
+	filter << "\n\n";
+	std::string rootfilter = "Fracture";
+	std::string frac = "Fracture";
+	std::string Polygon = "Polygon";
+	std::string Surface = "Surface";
+	std::string Boundary = "Boundary";
+	std::string Intersection = "Intersections";
+	std::string Shrink = "Shrink";
+	std::string two_dim = "two_dim";
+	std::string one_dim = "one_dim";
+	filter  << "\n# (2D filter)" << "\n"
+			<< two_dim <<" = Threshold(Input=" <<rootfilter<<")\n"
+			<< two_dim <<".Scalars = ['CELLS', 'Dimension']\n"
+			<< two_dim <<".ThresholdRange = [2, 2]\n"
+			<< "RenameSource('2D', "<<two_dim<<")\n";
+	
+	filter  << "\n# Shrink (" <<two_dim<< ")\n"
+			<< Shrink <<" = Shrink(Input=" <<two_dim<<")\n"
+			<< Shrink <<".ShrinkFactor = 0.9\n"
+			<< "RenameSource('Shrink', "<<Shrink<<")\n";
+
+
+	filter  << "\n\n# (" << Surface << ")\n"
+			<< Surface << " = Threshold(Input="<<Shrink<<")\n"
+			<< Surface << ".Scalars = ['CELLS', 'material']\n"
+			<< Surface << ".ThresholdRange = [0, "<<nfrac-1<<"]\n"
+			<< "RenameSource('" << Surface << "', " << Surface << ")\n"
+			<< "# show data in view\n"
+			<< Surface << "Display = Show(" << Surface << ", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "# set representation type\n"
+			<< Surface << "Display.SetRepresentationType('Surface')\n";
+	filter  << "# set scalar coloring using an separate color/opacity maps\n"
+			<< "ColorBy(" << Surface << "Display, ('CELLS', 'material'), separate=True)\n"
+			<< "# Hide colormap bar\n"
+			<< Surface << "Display.SetScalarBarVisibility(renderView1, False)\n"
+			<< "# rescale color and/or opacity maps used to include current data range\n"
+			<< Surface << "Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			<< "# get separate color transfer function/color map for 'material'\n"
+			<< Surface << "Display_materialLUT = GetColorTransferFunction('material', " << Surface << "Display, separate=True)\n"
+			<< "# get separate opacity transfer function/opacity map for 'material'\n"
+			<< Surface << "Display_materialPWF = GetOpacityTransferFunction('material', " << Surface << "Display, separate=True)\n"
+			<< "# Apply a preset using its name. Note this may not work as expected when presets have duplicate names.\n"
+			<< Surface << "Display_materialLUT.ApplyPreset('"<<ColorPreset<<"', True)\n"
+			<< "# Rescale transfer function\n"
+			<< Surface << "Display_materialLUT.RescaleTransferFunction(0.0, " << nfrac-1 << ".0)\n"
+			<< "# Rescale transfer function\n"
+			<< Surface << "Display_materialPWF.RescaleTransferFunction(0.0, " << nfrac-1 << ".0)\n\n";
+	
+
+
+	filter  << "\n# " << two_dim <<" (Polygon)" << "\n"
+			<< Polygon <<" = Threshold(Input=" <<two_dim<<")\n"
+			<< Polygon <<".Scalars = ['CELLS', 'material']\n"
+			<< Polygon <<".ThresholdRange = [" << -(nfrac+1) <<','<< -1 <<"]\n"
+			<< "RenameSource('Polygon', "<<Polygon<<")\n";
+	filter  << Polygon <<"Display = Show("<<Polygon<<", renderView1,'UnstructuredGridRepresentation')\n"
+			<< Polygon<<"Display.SetRepresentationType('Wireframe')\n"
+			<< Polygon<<"Display.AmbientColor = [0.0, 0.0, 0.0]\n"
+			<< Polygon<<"Display.DiffuseColor = [0.0, 0.0, 0.0]\n";
+			// << "ColorBy("<<Polygon<<"Display, ('CELLS', 'material'))\n"
+			// << Polygon<<"Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			// << Polygon<<"Display.SetScalarBarVisibility(renderView1, False)\n";
+	
+	filter  << "\n# (1D filter)" << "\n"
+			<< one_dim <<" = Threshold(Input=" <<rootfilter<<")\n"
+			<< one_dim <<".Scalars = ['CELLS', 'Dimension']\n"
+			<< one_dim <<".ThresholdRange = [1, 1]\n"
+			<< "RenameSource('1D', "<<one_dim<<")\n";
+	
+	
+
+
+	filter  << "\n\n# (" << Boundary << ")\n"
+			<< Boundary << " = Threshold(Input="<<one_dim<<")\n"
+			<< Boundary << ".Scalars = ['CELLS', 'material']\n"
+			<< Boundary << ".ThresholdRange = ["<<nfrac<<", "<<2*nfrac-1<<"]\n"
+			<< "RenameSource('" << Boundary << "', " << Boundary << ")\n"
+			<< "# show data in view\n"
+			<< Boundary << "Display = Show(" << Boundary << ", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "# set representation type\n"
+			<< Boundary << "Display.SetRepresentationType('Surface With Edges')\n";
+	filter  << "# set scalar coloring using an separate color/opacity maps\n"
+			<< "ColorBy(" << Boundary << "Display, ('CELLS', 'material'), separate=True)\n"
+			<< "# Hide colormap bar\n"
+			<< Boundary << "Display.SetScalarBarVisibility(renderView1, False)\n"
+			// << Boundary<<"Display.AmbientColor = [1.0, 0.0, 0.0]\n"
+			// << Boundary<<"Display.DiffuseColor = [1.0, 0.0, 0.0]\n"
+			<< "# Set Line Width\n"
+			<< Boundary<<"Display.LineWidth = 4.0\n"
+			<< "# rescale color and/or opacity maps used to include current data range\n"
+			<< Boundary << "Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			<< "# get separate color transfer function/color map for 'material'\n"
+			<< Boundary << "Display_materialLUT = GetColorTransferFunction('material', " << Boundary << "Display, separate=True)\n"
+			<< "# get separate opacity transfer function/opacity map for 'material'\n"
+			<< Boundary << "Display_materialPWF = GetOpacityTransferFunction('material', " << Boundary << "Display, separate=True)\n"
+			<< "# Apply a preset using its name. Note this may not work as expected when presets have duplicate names.\n"
+			<< Boundary << "Display_materialLUT.ApplyPreset('"<<ColorPreset<<"', True)\n"
+			<< "# Rescale transfer function\n"
+			<< Boundary << "Display_materialLUT.RescaleTransferFunction("<<nfrac<<".0, "<<2*nfrac-1<<".0)\n"
+			<< "# Rescale transfer function\n"
+			<< Boundary << "Display_materialPWF.RescaleTransferFunction("<<nfrac<<".0, "<<2*nfrac-1<<".0)\n\n";
+
+
+	int TriangleNumber = nfrac*(nfrac+1)/2; ///< Triangle Number bounds the range for frac-to-frac intersections (wikipedia explains it better than I, but you can see this as the answer for the question "how many unique entries in a square symmetric matrix")
+	int max_intersections = TriangleNumber;
+
+	filter  << "\n\n# (" << Intersection << ")\n"
+			<< Intersection << " = Threshold(Input="<<one_dim<<")\n"
+			<< Intersection << ".Scalars = ['CELLS', 'material']\n"
+			<< Intersection << ".ThresholdRange = [" << 2*nfrac<<','<<2*nfrac + max_intersections << "]\n"
+			<< "RenameSource('" << Intersection << "', " << Intersection << ")\n"
+			<< "# show data in view\n"
+			<< Intersection << "Display = Show(" << Intersection << ", renderView1,'UnstructuredGridRepresentation')\n"
+			<< "# set representation type\n"
+			<< Intersection << "Display.SetRepresentationType('Surface With Edges')\n";
+	filter  << "# set scalar coloring using an separate color/opacity maps\n"
+			<< "ColorBy(" << Intersection << "Display, ('CELLS', 'material'), separate=True)\n"
+			<< "# Hide colormap bar\n"
+			<< Intersection << "Display.SetScalarBarVisibility(renderView1, False)\n"
+			// << Intersection <<"Display.AmbientColor = [0.0, 1.0, 0.0]\n"
+			// << Intersection <<"Display.DiffuseColor = [0.0, 1.0, 0.0]\n"
+			<< "# Set Line Width\n"
+			<< Intersection<<"Display.LineWidth = 4.0\n"
+			<< "# rescale color and/or opacity maps used to include current data range\n"
+			<< Intersection << "Display.RescaleTransferFunctionToDataRange(True, False)\n"
+			<< "# get separate color transfer function/color map for 'material'\n"
+			<< Intersection << "Display_materialLUT = GetColorTransferFunction('material', " << Intersection << "Display, separate=True)\n"
+			<< "# get separate opacity transfer function/opacity map for 'material'\n"
+			<< Intersection << "Display_materialPWF = GetOpacityTransferFunction('material', " << Intersection << "Display, separate=True)\n"
+			<< "# Apply a preset using its name. Note this may not work as expected when presets have duplicate names.\n"
+			<< Intersection << "Display_materialLUT.ApplyPreset('"<<ColorPreset<<"', True)\n"
+			<< "# Rescale transfer function\n"
+			<< Intersection << "Display_materialLUT.RescaleTransferFunction(" << 2*nfrac<<','<<2*nfrac + max_intersections << ".0)\n"
+			<< "# Rescale transfer function\n"
+			<< Intersection << "Display_materialPWF.RescaleTransferFunction(" << 2*nfrac<<','<<2*nfrac + max_intersections << ".0)\n\n";
+	// }@ FILTERS
+
+
+	// TIMESTEP CONFIGURATION
+	filter  << "\n# get animation scene\n"
+			<< "animationScene1 = GetAnimationScene()\n"
+			<< "# get the time-keeper\n"
+			<< "timeKeeper1 = GetTimeKeeper()\n"
+			<< "# Properties modified on animationScene1\n"
+			<< "animationScene1.PlayMode = 'Snap To TimeSteps'\n";
+
+
+	// {@ FINAL SETUP
+	filter  << '\n' << '\n';
+	filter  << "Hide(" << Polygon << ", renderView1)\n";
+
+	filter  << "\n\nrenderView1.Update()\n"
+			<< "# current camera placement for renderView1\n"
+			<< "renderView1.InteractionMode = '3D'\n"
+			<< "renderView1.CameraPosition = [3.47, 4.0, 10000.0]\n"
+			<< "renderView1.CameraFocalPoint = [3.47, 4.0, 0.0]\n"
+			<< "renderView1.CameraParallelScale = 7.1307240904601645\n"
+			<< "\n# reset view to fit data\n"
+			<< "renderView1.ResetCamera()\n";
+	// }@ FINAL SETUP
+
+	filter.flush();
 }

@@ -47,42 +47,10 @@ void PrintPreamble(){
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine);
 
 
-#if PZ_LOG
-	// #include "log4cxx/fileappender.h"
-	// #include "log4cxx/patternlayout.h"
-	// #include "log4cxx/propertyconfigurator.h"
-	// #include "log4cxx/level.h"
-	// #include <log4cxx/logger.h>
-	// #include <log4cxx/basicconfigurator.h>
+#ifdef LOG4CXX
+static LoggerPtr logger(Logger::getLogger("dfn.mesh"));
+#endif
 
-	static TPZLogger logger("dfn.mesh");
-#endif // PZ_LOG
-
-
-
-/** @brief a Quick script I've written to setup PZ's datastructure so we could test bug_snap_overlap3.json*/
-// void ScriptForBug3(TPZGeoMesh* gmesh){
-// 	std::vector<int> ref0 = {20,0,1,2};
-// 	std::vector<int> ref1 = {21,3,4,5};
-// 	std::vector<int> ref2 = {22,6,7,8};
-// 	std::vector<int> ref3 = {23,9,10,11};
-// 	std::vector<int> ref4 = {19,12,13,14,15,16,17};
-
-// 	std::vector<std::vector<int>> refs = {ref0, ref1, ref2, ref3, ref4};
-
-// 	for(auto& ref : refs){
-// 		TPZGeoEl* father = gmesh->Element(ref[0]);
-// 		int nchildren = ref.size()-1;
-// 		TPZManVector<TPZGeoEl*,6> children(nchildren,nullptr);
-// 		for(int i=1; i<=nchildren; i++){
-// 			children[i-1] = gmesh->Element(ref[i]);
-// 		}
-// 		DFN::CreateRefPattern(father,children);
-// 		for(int i=0; i<nchildren;i++) father->SetSubElement(i,children[i]);
-// 		children.Fill(nullptr);
-// 		children.clear();
-// 	}
-// }
 
 
 //-------------------------------------------------------------------------------------------------
@@ -95,10 +63,11 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 using namespace std;
 
 int main(int argc, char* argv[]){
-#if PZ_LOG
+#ifdef LOG4CXX
 	std::string configpath = PROJECT_ROOT "/src/util/DFNlog4cxx.cfg";
-	TPZLogger::InitializePZLOG(configpath);
-#endif // PZ_LOG
+	log4cxx::PropertyConfigurator::configure(configpath);
+	logger->setLevel(log4cxx::Level::getTrace());
+#endif // LOG4CXX
 	TPZTimer time("DFNMesh");
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
@@ -117,10 +86,6 @@ int main(int argc, char* argv[]){
 	time.start();
     /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh,tol_dist,tol_angle,prerefine);
-
-	// dfn.InheritPolyhedra();
-	// dfn.PrintPolyhedra();
-
 
     // Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
@@ -141,28 +106,19 @@ int main(int argc, char* argv[]){
         // this method will snap the ribs with small angles to coincide with
 		fracture->SnapIntersections_faces(tol_dist,tol_angle);
 
-		// Search and fix possibly problematic overlaps of fracture surface and existing mesh elements
-		fracture->CheckSnapInducedOverlap();
+		// (optional) Search and fix possibly problematic overlaps of fracture surface and existing mesh elements
+		// This is a (relatively costly) patch. For this main_simple target, it's frequently not useful
+		// fracture->CheckSnapInducedOverlap();
 
-		LOGPZ_DEBUG(logger, fracture);
         // we decided that the ribs can be cut. Apply the refinement to the geometric elements
 		fracture->RefineRibs();
         // apply the refinement to the faces
 		fracture->RefineFaces();
-		// dfn.PrintVTKColorful();
-	// Mesh fracture surface
-		if(gmesh->Dimension() == 3){
-			// divide the fracture in simple geometries using the mesh created in RefineFaces
-			fracture->MeshFractureSurface();
-			dfn.UpdatePolyhedra();
-		}
-#ifdef PZDEBUG
-        // {
-        //     std::ofstream logtest("LOG/dfn.summary.log");
-        //     dfn.Print(logtest,argv[1]);
-		// 	// dfn.DumpVTK(false,false,"LOG/vtkmesh.vtk");
-        // }
-#endif //PZDEBUG
+		
+		// Mesh fracture surface
+		// divide the fracture in simple geometries using the mesh created in RefineFaces
+		fracture->MeshFractureSurface();
+		dfn.UpdatePolyhedra();
 	}
 	// Recover Limits
 	for(auto frac : dfn.FractureList()){
@@ -175,12 +131,9 @@ int main(int argc, char* argv[]){
     dfn.ExportGMshCAD("dfnExport.geo");
 
 	
-	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
-	// dfn.FractureList()[0]->PlotVTK("LOG/vtkmesh.0.vtk");
-	dfn.ExportDetailedGraphics();
 	dfn.DumpVTK(true,true);
 	dfn.PrintSummary();
 	dfn.PrintVTK("skip","LOG/pzmesh.txt");
