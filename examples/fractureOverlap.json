@@ -1,0 +1,36 @@
+/** @brief: An example to force 2 fracture surfaces to overlap
+*/
+{
+    "$schema": "./dfn_schema.json",
+    "PZGenGrid": {
+        "x0": [-1,-1,-1],
+        "xf": [1,1,1],
+        "MMeshType": "EHexahedral",
+        "Nels": [1,1,1]
+    },
+    "TolDist": 0.5,
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Eextended",
+            "MaterialID": 10,
+            "Nodes": [
+                [-1.3,-1.3, 0.01],
+                [ 1.1,-1.3,-0.01],
+                [ 1.1, 1.1,-0.01],
+                [-1.3, 1.1, 0.01]
+            ]
+        },
+        {
+            "Index": 1,
+            "Limit": "Eextended",
+            "MaterialID": 11,
+            "Nodes": [
+                [-1.1,-1.1, 0.005],
+                [ 1.3,-1.1, 0.005],
+                [ 1.3, 1.3, 0.005],
+                [-1.1, 1.3, 0.005]
+            ]
+        }
+    ]
+}
