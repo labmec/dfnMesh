@@ -1394,8 +1394,35 @@ void DFNFracture::InsertFaceInSurface(int64_t elindex){
         // gel->SetMaterialId(fmatid); // Don't set material id here, otherwise fracture BC recovery will fail
         if(gel->Dimension() !=2) DebugStop();
         fSurfaceFaces.insert(gel->Index());
+        #if PZDEBUG
+            if(!CheckIsLegalSurfaceElement(gel->Index())){
+                fdfnMesh->DFN_DebugStop();
+            }
+        #endif
     }
 }
+
+bool DFNFracture::CheckIsLegalSurfaceElement(const int64_t elindex) const{
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    TPZGeoEl* gel = gmesh->Element(elindex);
+    if(!gel) return false;
+
+    for(int iside = gel->FirstSide(1); iside < gel->NSides()-1; iside++){
+        TPZGeoElSide gelside(gel,iside);
+        TPZGeoElSide neig;
+        int nneigh_in_surface = 0;
+        for(neig = gelside.Neighbour(); neig != gelside; ++neig){
+            nneigh_in_surface += (fSurfaceFaces.find(neig.Element()->Index()) != fSurfaceFaces.end());
+        }
+        if(nneigh_in_surface > 1){
+            PZError << "\n\n[FATAL] Found inconsistent surface\n" << std::endl;
+            fdfnMesh->DFN_DebugStop();
+            return false;
+        }
+    }
+    return true;
+}
+
 
 void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();

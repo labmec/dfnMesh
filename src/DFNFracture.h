@@ -260,6 +260,9 @@ private:
 
 public:
 
+    /// @brief Check if 2D element on surface has at most 1 other neighbour (through edges) on this fracture surface
+    bool CheckIsLegalSurfaceElement(const int64_t elindex) const;
+
     void PlotVTK(const std::string exportname, bool putGraphicalElements = true);
     void SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int);
     void SetupGraphicsFractureBC();
