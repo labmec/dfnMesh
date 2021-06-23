@@ -80,7 +80,13 @@ void DFNPolygon::ComputeAxis()
     //Ax2 norm
     REAL norm = sqrt(fAxis(0,2)*fAxis(0,2)+fAxis(1,2)*fAxis(1,2)+fAxis(2,2)*fAxis(2,2));
     
-    if(norm < 1.e-8) DebugStop();
+    if(norm < 1.e-8){
+        PZError << "\n[FATAL] User defined polygon seems to be inconsistent."
+                << " Your first 3 corners might be co-linear nodes.\n"
+                << "Corner nodes:\n"
+                << fCornerPoints << '\n';
+        DebugStop();
+    }
     
     for (int i = 0; i < 3; i++) // i< axis number (x y z)
     {
@@ -493,9 +499,10 @@ void DFNPolygon::Print(std::ostream & out) const
 
 
 void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
-#if PZ_LOG
     LOGPZ_INFO(logger,"[Start][Sorting nodes to either side of the plane]");
-#endif // PZ_LOG
+    LOGPZ_DEBUG(logger, "Nodes above before = \n\t{" << fNodesAbove << '}')
+
+
     std::cout << " -Sorting nodes to either side of the plane\r" << std::flush;
     int64_t i = fNodesAbove.size();
     const int64_t nnodes = gmesh->NNodes();
@@ -508,9 +515,10 @@ void DFNPolygon::SortNodes(const TPZGeoMesh* gmesh){
         fNodesAbove[i] = Compute_PointAbove(coord);
     }
     std::cout << "                                           \r" << std::flush;
-#if PZ_LOG
+
+    LOGPZ_DEBUG(logger, "Nodes above after = \n\t{" << fNodesAbove << '}');
     LOGPZ_INFO(logger,"[End][Sorting nodes to either side of the plane]");
-#endif // PZ_LOG
+
 }
 
 void DFNPolygon::PlotNodesAbove_n_Below(TPZGeoMesh* gmesh){

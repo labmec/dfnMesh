@@ -559,18 +559,13 @@ void DFNFracture::MeshFractureSurface(){
             if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
             polygon_counter++;
             
-            #if PZ_LOG
-            if(logger.isDebugEnabled())
-                {LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh # " << polyhindex);}
-            #endif // PZ_LOG
+            LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh# " << polyhindex);
 
             // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
                 
-                #if PZ_LOG
-                    if(logger.isDebugEnabled()){LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());}
-                #endif // PZ_LOG
+                LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());
                 
                 InsertFaceInSurface(ExistingGel->Index());
                 continue;

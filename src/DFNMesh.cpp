@@ -35,12 +35,13 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 	fFractures.clear();
 	// fVolumes.clear();
 	if(fGMesh->Dimension() == 3){
-		try{InitializePolyhedra();}
-		catch(...){
-			DumpVTK();
-			PZError << "\nFailed to initialize polyhedra. VTK representation written to vtkmesh.vtk\n";
-			throw std::bad_exception();
-		}
+		InitializePolyhedra();
+		// try{InitializePolyhedra();}
+		// catch(...){
+		// 	DumpVTK();
+		// 	PZError << "\nFailed to initialize polyhedra. VTK representation written to vtkmesh.vtk\n";
+		// 	throw std::bad_exception();
+		// }
 		
 #if PZ_LOG
 		if(logger.isDebugEnabled())
@@ -1814,6 +1815,13 @@ int DFNMesh::CreateGelPolyhedron(TPZGeoEl* vol, int coarseindex){
 	TPZStack<std::pair<int64_t,int>,6> shell(6,{-1,0});	///< oriented faces that enclose the polyhedron
 	shell.clear();
 	int ipolyh = fPolyhedra.size();
+	
+	#if PZDEBUG
+		// TPZManVector<REAL,3> qsi(3,0.33333333); Matrix jac; Matrix axes; REAL detjac; Matrix jacinv;
+		// vol->Jacobian(qsi,jac, axes, detjac, jacinv);
+		// LOGPZ_DEBUG(logger, "detjac vol " << vol->Index() << " = " << detjac)
+		// if(detjac < 0.) DebugStop();
+	#endif //PZDEBUG
 	// Loop over 2D sides
 	for(int iside=vol->FirstSide(2); iside < vol->NSides()-1; iside++){
 		// Get oriented face in that side
@@ -2594,6 +2602,7 @@ void DFNMesh::PreRefine(int n){
 		// CreateSkeletonElements(maxdim-1);
 		// CreateSkeletonElements(maxdim-2);
 		// UpdatePolyhedra();
+		// DFN::PlotJacobian(fGMesh,"LOG/jacplot." + std::to_string(i+1) + ".vtk");
 	}
 
 }
