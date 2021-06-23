@@ -195,4 +195,9 @@ class DFNPolygon
 
 };
 
+inline std::ostream& operator<<(std::ostream &out, const DFNPolygon& polygon){
+    polygon.Print(out);
+    return out;
+}
+
 #endif /* DFNPolygon */

@@ -261,13 +261,17 @@ private:
     */
     void FillChildrenAndNewNodes(TPZManVector<TPZManVector<int64_t,4>,6> &child, TPZManVector<TPZManVector<REAL,3>> &newnode);
 
-    /// Given an index of a snappable node in the RefMesh, get the local rib index that contains it as intersection node
+    /// Given an index of a snappable node in the RefMesh, get the local rib index that contains it as intersection node. 
     /// This perfoms floating point operations: at most 2 vector<double, 3> subtractions and the norm of the resulting vector
+    /// @deprecated I found a way to do it with no flop
     int ComputeRibContainingNode(const int64_t snapNode) const;
 
 };
 
-
+inline std::ostream& operator<<(std::ostream &out, const DFNFace& face){
+    face.Print(out);
+    return out;
+}
 
 /** @brief Enumeration of possible SplitPatterns to be used when refining faces to 
  * conform to their intersection with the fracture.

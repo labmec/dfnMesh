@@ -133,6 +133,10 @@ class DFNPolyhedron
 		bool IsTetrahedron() const;
 };
 
+inline std::ostream& operator<<(std::ostream &out, const DFNPolyhedron& polyhedron){
+    polyhedron.Print(out);
+    return out;
+}
 
 #endif /* DFNPolyhedron_h */
 

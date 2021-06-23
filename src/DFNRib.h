@@ -166,4 +166,9 @@ public:
 
 };
 
+inline std::ostream& operator<<(std::ostream &out, const DFNRib& rib){
+    rib.Print(out);
+    return out;
+}
+
 #endif /* DFNRib_h */
