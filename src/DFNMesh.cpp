@@ -1659,7 +1659,7 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
                 if(matid == -1) matid = gel->MaterialId();
                 // TPZGeoElBC(gelside, matid);
                 // if(gel->MaterialId() == DFNMaterial::Efracture) TPZGeoElBC(gelside, DFNMaterial::Efracture);
-                else TPZGeoElBC(gelside, matid);
+                TPZGeoElBC(gelside, matid);
             }
         }
     }
