@@ -1537,7 +1537,7 @@ void DFNFracture::ResetSurfaceMaterial(const int matid){
 
 
 
-void DFNFracture::CleanUp(){
+void DFNFracture::CleanUp(int surface_matid){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     TPZStack<TPZGeoEl*> to_add;
     TPZStack<TPZGeoEl*> to_remove;
@@ -1549,8 +1549,8 @@ void DFNFracture::CleanUp(){
         }
         if(father->Dimension() != 2) DebugStop();
         if(!father->HasSubElement()){
-            father->SetMaterialId(this->fmatid);
-            DFN::SetEdgesMaterialId(father,this->fmatid);
+            father->SetMaterialId(surface_matid);
+            DFN::SetEdgesMaterialId(father,surface_matid);
             continue;
         }
         father->YoungestChildren(to_add);
@@ -1558,8 +1558,8 @@ void DFNFracture::CleanUp(){
     }
     for(TPZGeoEl* gel : to_add){
         AddToSurface(gel);
-        gel->SetMaterialId(this->fmatid);
-        DFN::SetEdgesMaterialId(gel,this->fmatid);
+        gel->SetMaterialId(surface_matid);
+        DFN::SetEdgesMaterialId(gel,surface_matid);
     }
     for(TPZGeoEl* gel : to_remove){
         fSurfaceFaces.erase(gel->Index());
@@ -2058,9 +2058,9 @@ void DFNFracture::SetupGraphicsFractureBC(){
     }
 }
 
-void DFNFracture::PlotVTK(const std::string exportname, bool putGraphicalElements){
+void DFNFracture::PlotVTK(const int surface_matid, const std::string exportname, bool putGraphicalElements){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    this->CleanUp();
+    this->CleanUp(surface_matid);
     TPZStack<int> fracfrac_int;
     // this->ResetSurfaceMaterial(fmatid);
     SetupGraphicsFractureBC();

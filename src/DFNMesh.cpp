@@ -951,7 +951,7 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	// fGMesh->BuildConnectivity();
 	// Surface cleanup (necessary if limit recovery is done after all fractures have been inserted to the mesh)
 	for(auto frac : FractureList()){
-		frac->CleanUp();
+		frac->CleanUp(frac->MaterialId());
 	}
 	// gmsh doesn't accept index zero elements
 	// const int shift = 1;
@@ -1680,10 +1680,21 @@ void DFNMesh::ClearMaterials(int matid){
 		el->SetMaterialId(matid);
 	}
 }
+void DFNMesh::ClearMaterials(const int matid, TPZVec<int>& backup){
+	backup.Resize(fGMesh->NElements(),-1);
+	for(auto el : fGMesh->ElementVec()){
+		if(!el) continue;
+		backup[el->Index()] = el->MaterialId();
+		el->SetMaterialId(matid);
+	}
+}
 
-void DFNMesh::RestoreMaterials(TPZGeoMesh *originalmesh){
-	// @todo
-	DebugStop();
+void DFNMesh::RestoreMaterials(TPZVec<int>& backup){
+	backup.Resize(fGMesh->NElements(),-1);
+	for(auto el : fGMesh->ElementVec()){
+		if(!el) continue;
+		el->SetMaterialId(backup[el->Index()]);
+	}
 }
 
 // template<int Talloc>
@@ -2544,8 +2555,8 @@ void DFNMesh::DumpVTK(bool polygon_representation, bool clearmaterials, std::str
 	if(clearmaterials) ClearMaterials();
 	std::cout<<" -Dumping VTK graphics\r"<<std::flush;
 	for(auto frac : FractureList()){
-		if(clearmaterials) frac->CleanUp();
-		if(polygon_representation) frac->Polygon().InsertGeomRepresentation(fGMesh);
+		if(clearmaterials) frac->CleanUp(frac->MaterialId());
+		if(polygon_representation) frac->Polygon().InsertGeomRepresentation(fGMesh,100+frac->Index(),1);
 	}
 	if(clearmaterials) 
 		PrintVTKColorful(filename,"skip");
@@ -2614,9 +2625,10 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	TPZGeoMesh* gmesh = this->Mesh();
 #ifdef PZDEBUG
-	std::cout << "[WARNING] " << __PRETTY_FUNCTION__ << " inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
+	std::cout << "\n[WARNING] " << __PRETTY_FUNCTION__ << " inserts graphical elements that may leave the TPZGeoMesh inconsistent. It was meant to be called at the end of your script.";
 #endif // PZDEBUG
-	ClearMaterials(GMESHNOMATERIAL);
+	TPZVec<int> matid_backup;
+	ClearMaterials(GMESHNOMATERIAL,matid_backup);
 	
 	// Standard control
 	const std::string filename = "Fracture";
@@ -2627,19 +2639,23 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	std::ofstream polygfile(dirname+"/allPolygons.vtk");
 	// Make sure fracture surfaces are consistent
 	for(auto frac : FractureList()){
-		frac->SetMaterialId(frac->Index());
-		frac->CleanUp();
-		TPZVec<TPZGeoEl*> graphical_elements = frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1) );
+		// frac->SetMaterialId(frac->Index());
+		frac->CleanUp(frac->Index());
+		TPZVec<TPZGeoEl*> graphical_elements = frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1), 1);
 		for(TPZGeoEl* gel : graphical_elements){polygels.insert(gel->Index());}
 	}
 	// PlotAllPolygons(dirname + "allPolygons.vtk");
 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh,polygels,polygfile);
+	for(int64_t index : polygels){
+		TPZGeoEl* graphic_gel = gmesh->Element(index);
+		gmesh->DeleteElement(graphic_gel);
+	}
 
 
 	// Plot each of the fractures
 	for(auto frac : fFractures){
 		std::string exportname = dirname + '/' + filename + "." + std::to_string(frac->Index()) + ".vtk";
-		frac->PlotVTK(exportname);
+		frac->PlotVTK(frac->Index(),exportname);
 	}
 
 	// Plot complete graphics
@@ -2648,6 +2664,9 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	// Create a filter script
 	std::ofstream filter("graphics/GraphicsScript.py");
 	CreateFilterScript(*this,filter,filename,ColorPreset);
+
+
+	RestoreMaterials(matid_backup);
 }
 
 void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename,const std::string ColorPreset){

@@ -443,15 +443,16 @@ void DFNPolygon::ComputeCentroid(TPZVec<REAL>& centroid){
     centroid[1] /= nnodes;
     centroid[2] /= nnodes;
 }
-/**
- * @brief Inserts a few geometrical elements to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
-*/
-TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid){
+
+
+
+TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid, int exclusive_dim){
     int nnodes = this->NCornerNodes();
     if(nnodes <= 4) return {InsertGeoEl(gmesh,matid)};
     
     // Create nodes
-    TPZManVector<int64_t> polyg_nodes(nnodes+1,0);
+    int needscentroid = (nnodes > 4 && exclusive_dim!=1);
+    TPZManVector<int64_t> polyg_nodes(nnodes+needscentroid,0);
     TPZManVector<REAL, 3> coord(3,0);
     int64_t nodeindex=-1;
     for(int inode=0; inode < nnodes; ++inode){
@@ -462,22 +463,45 @@ TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int ma
         coord[2] = fCornerPoints(2,inode);
         gmesh->NodeVec()[nodeindex].Initialize(coord,*gmesh);
     }
-    // Create centroid
-    nodeindex = gmesh->NodeVec().AllocateNewElement();
-    polyg_nodes[nnodes] = nodeindex;
-    this->ComputeCentroid(coord);
-    gmesh->NodeVec()[nodeindex].Initialize(coord,*gmesh);
-    // Create elements
-    int nels = nnodes;
-    TPZVec<TPZGeoEl*> els(nels,nullptr);
-    TPZManVector<int64_t> el_nodes(3,-1);
-    el_nodes[0] = polyg_nodes[nnodes]; ///< centroid
-    for(int iel=0; iel<nels; ++iel){
-        el_nodes[1] = polyg_nodes[iel];
-        el_nodes[2] = polyg_nodes[(iel+1)%nnodes];
-        int64_t dummyindex=-1;
-        els[iel] = gmesh->CreateGeoElement(ETriangle,el_nodes,matid,dummyindex,0);
+
+    int nels2D = nnodes*(exclusive_dim!=1 && nnodes>4)  // 2D elements for non-quad and non-triang
+                +(nnodes <= 4);                     // 2D element if quad or triangle
+    int nels1D = nnodes*(exclusive_dim!=2);             // Boundary elements
+    int nels = nels1D + nels2D;
+    TPZStack<TPZGeoEl*> els;
+    
+    
+    TPZManVector<int64_t,3> el_nodes(3,-1);
+    if(exclusive_dim != 1){ // 2D elements
+        if(needscentroid){
+            // Create centroid
+            nodeindex = gmesh->NodeVec().AllocateNewElement();
+            polyg_nodes[nnodes] = nodeindex;
+            this->ComputeCentroid(coord);
+            gmesh->NodeVec()[nodeindex].Initialize(coord,*gmesh);
+            el_nodes[0] = polyg_nodes[nnodes]; ///< centroid
+            // Create 2D elements
+            for(int iel=0; iel<nels2D; ++iel){
+                el_nodes[1] = polyg_nodes[iel];
+                el_nodes[2] = polyg_nodes[(iel+1)%nnodes];
+                int64_t dummyindex=-1;
+                els.push_back(gmesh->CreateGeoElement(ETriangle,el_nodes,matid,dummyindex,0));
+            }
+        }else{
+            els.push_back(InsertGeoEl(gmesh,matid));
+        }
     }
+
+    if(exclusive_dim != 2){// 1D elements at boundary
+        el_nodes.resize(2);
+        for(int inode=0; inode<nnodes; inode++){
+            el_nodes[0] = polyg_nodes[inode];
+            el_nodes[1] = polyg_nodes[(inode+1)%nnodes];
+            int64_t dummyindex = -1;
+            els.push_back(gmesh->CreateGeoElement(MElementType::EOned,el_nodes,matid,dummyindex,0));
+        }
+    }
+    gmesh->BuildConnectivity();
     return els;
 }
 

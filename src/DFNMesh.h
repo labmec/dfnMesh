@@ -247,6 +247,9 @@ public:
     
     /// Set all material ids to matid
     void ClearMaterials(int matid = DFNMaterial::Eintact);
+    void ClearMaterials(const int matid, TPZVec<int>& backup);
+    // Restores material ids from a backup vector
+    void RestoreMaterials(TPZVec<int>& backup);
 
     /// @brief At any point in the code, dump a colored VTK file for graphical debugging 
     /// @warning This method can break the code downstream. It's meant for graphical debugging only.
@@ -291,8 +294,6 @@ private:
     
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
-    // @todo
-    void RestoreMaterials(TPZGeoMesh *originalmesh);
 
 
     /** @brief set polyh index -1 for every face in a stack*/

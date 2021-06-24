@@ -263,7 +263,7 @@ public:
     /// @brief Check if 2D element on surface has at most 1 other neighbour (through edges) on this fracture surface
     bool CheckIsLegalSurfaceElement(const int64_t elindex) const;
 
-    void PlotVTK(const std::string exportname, bool putGraphicalElements = true);
+    void PlotVTK(const int surface_matid, const std::string exportname, bool putGraphicalElements = true);
     void SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int);
     void SetupGraphicsFractureBC();
 
@@ -340,7 +340,7 @@ public:
 
     /** @brief Clears material ids that might have been changed by other fractures and updates fracture surface list of elements
      * @note Because limit recovery is done after all fractures have been inserted, some cleaning is necessary*/
-    void CleanUp();
+    void CleanUp(int surface_matid);
 
     /** @} */
 

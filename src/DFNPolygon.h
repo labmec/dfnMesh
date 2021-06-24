@@ -167,9 +167,15 @@ class DFNPolygon
 	TPZGeoEl* InsertGeoEl(TPZGeoMesh* gmesh, int matid = 100, TPZVec<int64_t>* nodes = nullptr);
 
 	/**
-	 * @brief Inserts a few geometrical elements to graphically represent this polygon. If NCorners <= 4 it'll be only one element.
+	 * @brief Inserts a few geometric elements to graphically represent this polygon. 
+	 * @param gmesh - Pointer to geometric mesh where to insert elements; 
+	 * @param matid - Material id to use for graphical element(s); 
+	 * @param exclusive_dim - Exclusive dimension of graphical elements: 
+	 * If given 2, inserts 2D elements to cover surface of polygon; 
+	 * If given 1, inserts only 1D elements for the polygon boundary; 
+	 * If given 0, do both 1D and 2D.
 	*/
-	TPZVec<TPZGeoEl*> InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid = 100);
+	TPZVec<TPZGeoEl*> InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid = 100, int exclusive_dim = 0);
 
 	void ComputeCentroid(TPZVec<REAL>& centroid);
 
