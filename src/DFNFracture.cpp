@@ -564,10 +564,20 @@ void DFNFracture::MeshFractureSurface(){
             // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
-                
-                LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());
-                
-                InsertFaceInSurface(ExistingGel->Index());
+                if(fSurfaceFaces.find(ExistingGel->Index()) != fSurfaceFaces.end() ){
+                    // If this is the second time we're trying to add ExistingGel to the surface, then it's a splinter and it should be removed from the surface
+                    // Splinter = an element attributed to the fracture surface but kind of loose from it. Like a splinter peeling off of wood
+                    TPZStack<TPZGeoEl*> children;
+                    if(ExistingGel->HasSubElement()) {DebugStop(); ExistingGel->YoungestChildren(children);}
+                    else{children.push_back(ExistingGel);}
+                    
+                    for(auto subel : children)
+                        {RemoveFromSurface(subel);}
+                    LOGPZ_DEBUG(logger,"\tSplinter removed. Element index : " << ExistingGel->Index());
+                }else{
+                    LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());
+                    InsertFaceInSurface(ExistingGel->Index());
+                }
                 continue;
             }
             MeshPolygon(subpolygon);
@@ -1395,9 +1405,9 @@ void DFNFracture::InsertFaceInSurface(int64_t elindex){
         if(gel->Dimension() !=2) DebugStop();
         fSurfaceFaces.insert(gel->Index());
         #if PZDEBUG
-            if(!CheckIsLegalSurfaceElement(gel->Index())){
-                fdfnMesh->DFN_DebugStop();
-            }
+            // if(!CheckIsLegalSurfaceElement(gel->Index())){
+            //     fdfnMesh->DFN_DebugStop();
+            // }
         #endif
     }
 }
