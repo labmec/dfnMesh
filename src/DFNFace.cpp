@@ -798,6 +798,9 @@ int64_t DFNFace::LineInFace() const{
 			}
 		}
 	}
+	PZError  << "\n[FATAL] Failed to find an edge inside a DFNFace that connects its 2 intersection nodes.\n" << "DFNFace:" << *this;
+	LOGPZ_FATAL(logger, "\nFailed to find an edge inside a DFNFace that connects its 2 intersection nodes.\n" << "DFNFace:" << *this);
+	fFracture->dfnMesh()->DFN_DebugStop();
 	DebugStop();
 	return -1;
 }
