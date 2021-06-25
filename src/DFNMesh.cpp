@@ -2640,7 +2640,7 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	// Make sure fracture surfaces are consistent
 	for(auto frac : FractureList()){
 		// frac->SetMaterialId(frac->Index());
-		frac->CleanUp(frac->Index());
+		// frac->CleanUp(frac->Index());
 		TPZVec<TPZGeoEl*> graphical_elements = frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1), 1);
 		for(TPZGeoEl* gel : graphical_elements){polygels.insert(gel->Index());}
 	}
