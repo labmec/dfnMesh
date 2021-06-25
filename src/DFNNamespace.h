@@ -11,6 +11,7 @@
 #include "pzgmesh.h"
 #include "gmsh.h"
 #include "TPZGeoMeshBuilder.h"
+#include <iterator>
 
 #ifndef PZ_LOG
 #define PZ_LOG 0
@@ -280,13 +281,22 @@ operator<<(      std::ostream&      out,
 
 // I used this a few times to debug some sets. Is not a part of the code really... just an utility.
 template<typename T>
-void Print(const std::set<T>& s, std::ostream& out = std::cout, std::string name = "no-name"){
-    out << "\nstd::set : "<<name<<"\n{ ";
-    for(auto& el : s){
-        out << el << ", ";
+void Print(const std::set<T>& s, std::ostream& out = std::cout){
+    out << "std::set : "<<"\n{ ";
+    if(!s.empty()){
+        std::copy(s.begin(), std::prev(s.end()), std::ostream_iterator<T>(out, ", "));
+        out << *std::prev(s.end());
     }
-    out << "\b\b }\n"<<std::endl;
+    out << " }\n"<<std::endl;
 }
+
+// Insertion operator for std::set into std::ostream
+template<typename T>
+inline std::ostream& operator<<(std::ostream& out, const std::set<T>& s){
+    Print(s, out);
+    return out;
+}
+
 
 #ifdef WIN32
     #define __PRETTY_FUNCTION__ __FUNCTION__

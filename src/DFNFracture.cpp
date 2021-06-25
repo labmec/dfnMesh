@@ -222,9 +222,9 @@ void DFNFracture::CreateFaces(){
 
 
 void DFNFracture::CreateRibs(){
-#if PZ_LOG
+
     LOGPZ_INFO(logger, "[Start][Searching ribs]");
-#endif // PZ_LOG
+
     std::cout<<"\r\n#Ribs intersected = 0";
     //search gmesh for intersected ribs
     int64_t Nels = fdfnMesh->Mesh()->NElements();
@@ -252,9 +252,9 @@ void DFNFracture::CreateRibs(){
         }
     }
     std::cout<<std::endl;
-#if PZ_LOG
+
     LOGPZ_INFO(logger, "[End][Searching ribs]")
-#endif // PZ_LOG
+
 }
 
 
@@ -1182,6 +1182,7 @@ void DFNFracture::GetEdgesInSurface(std::set<int64_t>& edges){
             edges.insert(edgeindex);
         }
     }
+    LOGPZ_DEBUG(logger,"Edges in surface [frac " << fIndex << "]:\n" << fSurfaceEdges);
 }
 
 

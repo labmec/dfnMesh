@@ -144,7 +144,7 @@ int main(int argc, char* argv[]){
 		// Search and fix possibly problematic overlaps of fracture surface and existing mesh elements
 		fracture->CheckSnapInducedOverlap();
 
-		LOGPZ_DEBUG(logger, fracture);
+		LOGPZ_DEBUG(logger, *fracture);
         // we decided that the ribs can be cut. Apply the refinement to the geometric elements
 		fracture->RefineRibs();
         // apply the refinement to the faces
