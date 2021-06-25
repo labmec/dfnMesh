@@ -1565,8 +1565,8 @@ void DFNFracture::CleanUp(int surface_matid){
         fSurfaceFaces.erase(gel->Index());
     }
 
-    // Build the set with every 1D element at the surface of this fracture
-    GetEdgesInSurface(fSurfaceEdges);
+    // // Build the set with every 1D element at the surface of this fracture
+    // GetEdgesInSurface(fSurfaceEdges);
 }
 
 
