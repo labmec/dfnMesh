@@ -762,13 +762,12 @@ int64_t DFNFace::LineInFace() const{
 			}
 		}
 	}
-	int nchildren = fGeoEl->NSubElements();
-	if(nchildren == 0){nchildren++;}
+	int nchildren = (this->NeedsRefinement()?fGeoEl->NSubElements():1);
 	// queue all possible lines by checking 1D neighbours of children
 	std::set<TPZGeoEl *> candidate_ribs;
 	for(int ichild=0; ichild<nchildren; ichild++){
 		TPZGeoEl* child;
-		if(fGeoEl->HasSubElement()){
+		if(nchildren > 1){
 			child = fGeoEl->SubElement(ichild);
 		}else{
 			child = fGeoEl;
@@ -1039,13 +1038,20 @@ void DFNFace::Print(std::ostream &out, bool print_refmesh) const
 		out<<splitcase;
 	}
 
+	SketchStatusVec(out);
+
+	int64_t edge_in_surface = -1;
+	if(this->NeedsRefinement() && !fGeoEl->HasSubElement()){}
+	else{edge_in_surface = LineInFace();}
+	out << "\nEdge in face: {" 
+		<< (edge_in_surface >= 0 ? std::to_string(edge_in_surface) : "") 
+		<< '}';
+
 	out<<"\nCorner Nodes:\n";
 	for(int i=0; i<fGeoEl->NCornerNodes(); i++){
 		out<<"\t"<<i<<": index: "<<fGeoEl->NodeIndex(i)<<" "; 
 		fGeoEl->Node(i).Print(out);
 	}
-
-	SketchStatusVec(out);
 
 	if(print_refmesh){
 		int nels = fRefMesh.NElements();
@@ -1142,6 +1148,6 @@ void DFNFace::SketchStatusVec(std::ostream& out) const{
 		}
 		default: DebugStop();
 	}
-	sout << "\n";
+	// sout << "\n";
 	out << sout.str();
 }
