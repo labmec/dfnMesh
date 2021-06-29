@@ -304,17 +304,8 @@ void DFNFracture::RefineFaces(){
 
 void DFNFracture::SnapIntersections_ribs(REAL tolDist)
 {
-#if PZ_LOG
-    if(logger.isInfoEnabled()){
-        std::stringstream stream;
-        stream <<"[Start][Snapping intersections Ribs]";
-        if(fIndex < 0)
-            {stream << "[Orthogonal plane]";}
-        else
-            {stream << "[Fracture " << fIndex << "]";}
-        LOGPZ_INFO(logger,stream.str());
-    }
-#endif // PZ_LOG
+    if(fIndex < 0) {LOGPZ_INFO(logger,"[Start][Snapping intersections Ribs]" << "[Orthogonal plane]");}
+    else           {LOGPZ_INFO(logger,"[Start][Snapping intersections Ribs]" << "[Fracture " << fIndex << "]");}
 
     if(tolDist < 0.) tolDist = fdfnMesh->TolDist();
     for(auto itr = fRibs.begin(); itr!=fRibs.end(); itr++){
@@ -323,17 +314,8 @@ void DFNFracture::SnapIntersections_ribs(REAL tolDist)
     }
 
 
-#if PZ_LOG
-    if(logger.isInfoEnabled()){
-        std::stringstream stream;
-        stream <<"[End][Snapping intersections Ribs]";
-        if(fIndex < 0)
-            {stream << "[Orthogonal plane]";}
-        else
-            {stream << "[Fracture " << fIndex << "]";}
-        LOGPZ_INFO(logger,stream.str());
-    }
-#endif // PZ_LOG
+    if(fIndex < 0) {LOGPZ_INFO(logger,"[End][Snapping intersections Ribs]" << "[Orthogonal plane]");}
+    else           {LOGPZ_INFO(logger,"[End][Snapping intersections Ribs]" << "[Fracture " << fIndex << "]");}
 }
 
 
