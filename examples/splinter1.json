@@ -1,0 +1,21 @@
+{
+    "$schema": "./dfn_schema.json",
+    "comment": "An example to reproduce splinter formation on the surface of fractures. Cause by snap algorithms inducing a pinching of the fracture surface, which makes the fracture inconsistent (specially since this splinter confuses the algorithm that recovers a fracture boundary)",
+    "Mesh": "examples/splinter1.msh",
+    "PreRefine": 1,
+    "TolDist": 10,
+    "TolAngle": 3.14159,
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Eextended",
+            "MaterialID": 10,
+            "Nodes": [
+                [-2.07993545096313, 0.419897772136508, -1.872846598304726],
+                [1.609844231381858, 1.880784894669647, -1.371513664047515],
+                [2.00528370078621, -0.267834942945551, 1.979166926436103],
+                [-1.684495981558784, -1.72872206547869, 1.4778339921788912]
+            ]
+        }
+    ]
+}

@@ -24,9 +24,12 @@ add_test(NAME Octagon COMMAND dfnTest "examples/exampleOctagon.json" WORKING_DIR
 add_test(NAME SnapOverlap1 COMMAND dfnTest "examples/bug_snap_overlap1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME SnapOverlap2 COMMAND dfnTest "examples/bug_snap_overlap2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+# Splinter formation AKA fracture self-overlap
+add_test(NAME SplinterFormation COMMAND dfnTest "examples/bug_splinters.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 # Frac 3D benchmarks
 add_test(NAME Fl_Benchmark_3 COMMAND dfnTest "examples/flemisch_benchmark/fl_case3.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    # I ran into an infinite loop when logging DFNFaces. I think I fixed it, but here's a timeout last resource just to be safe. Ctest's default timeout is 1500 which is too damn long
+    # I ran into an infinite loop when logging DFNFaces. I fixed it, but here's a timeout last resource just to be safe. Ctest's default timeout is 1500 which is too damn long
     set_tests_properties(Fl_Benchmark_3 PROPERTIES TIMEOUT 20)
 add_test(NAME Fl_Benchmark_2 COMMAND dfnTest "examples/flemisch_benchmark/fl_case2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Fl_Benchmark_1 COMMAND dfnTest "examples/flemisch_benchmark/fl_case1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

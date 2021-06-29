@@ -1,0 +1,23 @@
+{
+    "$schema": "./dfn_schema.json",
+    "Comment": "An isolated subset of BenchMark4. This had very confusing fracture surface inconsistencies. We fixed in commit 5321d49",
+    "Mesh": "examples/splinter2.msh",
+    // "TolAngle": 1.57,
+    "TolDist": 10000.0,
+    "PreRefine": 0,
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Erecovered",
+            "Nodes": [
+                [141.1524849472441   , 258.0472015704347 , -100.0],
+                [136.43189040563638  , 147.0920292605242 , -32.440483271122275],
+                [134.99304120642512  , 113.27261108781066, 0.0],
+                [134.42835716196254  , 99.99999999999991 , 18.994906386025605],
+                [134.42835716196254  , 100.0             , 500.0],
+                [193.99144215084033  , 1500.0            , 500.0],
+                [193.99144215084033  , 1500.0            , -100.0]
+            ]
+        }
+    ]
+}
