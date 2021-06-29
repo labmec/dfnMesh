@@ -448,7 +448,6 @@ void DFNPolygon::ComputeCentroid(TPZVec<REAL>& centroid){
 
 TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid, int exclusive_dim){
     int nnodes = this->NCornerNodes();
-    if(nnodes <= 4) return {InsertGeoEl(gmesh,matid)};
     
     // Create nodes
     int needscentroid = (nnodes > 4 && exclusive_dim!=1);
