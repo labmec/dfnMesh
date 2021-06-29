@@ -1583,11 +1583,10 @@ bool DFNFracture::CheckFaceAbove(TPZGeoEl* face, bool use_face_centroid){
         return fPolygon.Compute_PointAbove(centroid);
     // Or it can be done (robust but often costly) by checking the centroid of each edge of the face
     }else{// use_edges_centroid
-        TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(face);
         int count=0;
-        for(int64_t index : edgeindices){
-            TPZGeoEl* edge = gmesh->Element(index);
-            TPZGeoElSide edgeside(edge,2);
+        const int nsides = face->NSides();
+        for(int iside=face->FirstSide(1); iside < nsides; iside++){
+            TPZGeoElSide edgeside(face,iside);
             edgeside.CenterX(centroid);
             count += fPolygon.Compute_PointAbove(centroid);
         }
