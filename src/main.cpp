@@ -118,6 +118,8 @@ int main(int argc, char* argv[]){
     /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh,tol_dist,tol_angle,prerefine);
 
+	// std::ofstream out1("graphics/CoarseMesh.vtk");
+	// TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);
 	// dfn.InheritPolyhedra();
 	// dfn.PrintPolyhedra();
 

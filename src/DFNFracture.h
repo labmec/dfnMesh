@@ -243,8 +243,8 @@ private:
     // Special setup of fracture mat id when working in 2D
     void SetFracMaterial_2D();
 
-    /** @brief For every child of every face in fFaces, check if it's above or below the fracture plane. It changes the material id of the elements and corrects the real fracture datastructures accordingly
-     * @attention This method was written to be called by a virtual fracture. One that is auxiliar orthogonal to a real fracture.
+    /** @brief Sort 2D elements on the surface of realfracture as being either above or below an orthogonal plane. Removes from surface those that are found to be 'below'
+     * @attention This method was written to be called by a virtual fracture. One that is auxiliar and orthogonal to a real fracture.
     */
     void SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture);
     void RemoveFromSurface(TPZGeoEl* gel);

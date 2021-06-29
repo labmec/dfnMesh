@@ -1155,6 +1155,7 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
 
 
 void DFNFracture::GetEdgesInSurface(std::set<int64_t>& edges){
+    edges.clear();
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     TPZManVector<int64_t,4> edgeindices;
     for(int64_t faceindex : fSurfaceFaces){
@@ -1272,19 +1273,12 @@ void DFNFracture::RecoverFractureLimits(){
     // Nothing to do for fractures that haven't intersected the mesh
     if(fRibs.size() == 0) return;
 
-
-#if PZ_LOG
-    if(logger.isInfoEnabled()){
-        std::stringstream stream;
-        stream << "[Start][Recover fracture limits][Fracture " << fIndex << "]";
-        LOGPZ_INFO(logger,stream.str());
-    }
-#endif // PZ_LOG
+    LOGPZ_INFO(logger,"[Start][Recover fracture limits][Fracture " << fIndex << "]");
 
     // int buggylimit = -1;
-
-    this->UpdateFractureSurface();
-    this->GetEdgesInSurface(fSurfaceEdges);
+    DFNFracture& realfracture = *this;
+    realfracture.UpdateFractureSurface();
+    realfracture.GetEdgesInSurface(fSurfaceEdges);
 
     // Number of limit edges in this fracture's DFNPolygon
     int nlimits = fPolygon.NCornerNodes();
@@ -1294,12 +1288,13 @@ void DFNFracture::RecoverFractureLimits(){
     // try{
         DFNFracture orthfracture;
         CreateOrthogonalFracture(orthfracture,ilimit);
-        orthfracture.FindRibs(fSurfaceEdges);
+        realfracture.GetEdgesInSurface(realfracture.fSurfaceEdges);
+        orthfracture.FindRibs(realfracture.fSurfaceEdges);
         orthfracture.SnapIntersections_ribs(fdfnMesh->TolDist());
         orthfracture.SnapIntersections_faces(fdfnMesh->TolDist(),fdfnMesh->TolAngle());
         orthfracture.RefineRibs();
         orthfracture.RefineFaces();
-        orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Eintact,*this);
+        orthfracture.SortFacesAboveBelow(fmatid,DFNMaterial::Eintact,realfracture);
     // }catch(...){
     //     if(ilimit == buggylimit) DebugStop();
     //     else buggylimit = ilimit;
@@ -1308,13 +1303,7 @@ void DFNFracture::RecoverFractureLimits(){
     //     // Try again with updated polyhedra
     // }
 
-#if PZ_LOG
-        if(logger.isDebugEnabled()){
-            std::stringstream stream;
-            stream << "[End][Recover limit "<<ilimit<<"][Fracture " << fIndex << "]";
-            LOGPZ_DEBUG(logger,stream.str());
-        }
-#endif // PZ_LOG
+    LOGPZ_INFO(logger,"[ End ][Recover limit "<<ilimit<<"][Fracture " << fIndex << "]");
 
 
     }
@@ -1419,88 +1408,22 @@ bool DFNFracture::CheckIsLegalSurfaceElement(const int64_t elindex) const{
 
 void DFNFracture::SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    fPolygon.SortNodes(gmesh);
+    fPolygon.SortNodes(gmesh);  //< Sort all nodes of the mesh as either being above or below the current orthogonal plane
+    realfracture.UpdateFractureSurface(); //< Swap any refined surface element for its children
 
-
-    // Has to be done for all faces on the surface of RealFracture before rechecking for OrthogonalFracture.fFaces
-    TPZStack<int64_t> to_remove;
+    std::vector<int64_t> to_remove;
+    // Has to be done for all faces on the surface of RealFracture, because we're calling DFNFracture::RecoverFractureLimits after all fractures were inserted into the DFN
+    // If you wanna try something different, call RecoverFractureLimts() after each individual fracture has been inserted, then the range of this loop will be:
+    // for(auto dfnface : this->fFaces){ int64_t index = dfnface->fGeoEl->Index(); // And you can check the subelements of each dfnface to_add or to_remove
     for(const int64_t index : realfracture.fSurfaceFaces){
         TPZGeoEl* face = gmesh->Element(index);
-        if(this->CheckFaceAbove(face,false)) continue;
-        
-        to_remove.push_back(index);
-        TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(face);
-        for(int64_t index : edgeindices){
-            TPZGeoEl* edge = gmesh->Element(index);
-            if(edge->HasSubElement()){
-                realfracture.RemoveFromSurface(edge);
-                continue;
-            }
-            TPZGeoElSide edgeside(edge,2);
-            TPZManVector<REAL,3> centroid(3,0.);
-            edgeside.CenterX(centroid);
-            if(!fPolygon.Compute_PointAbove(centroid))
-                {realfracture.RemoveFromSurface(edge);}
-        }
+        if(this->CheckFaceAbove(face,false)) {continue;}
+        else {to_remove.push_back(index);}
     }
     for(const int64_t index : to_remove){
         TPZGeoEl* face = gmesh->Element(index);
         realfracture.RemoveFromSurface(face);
     }
-
-    for(auto& it : fFaces){
-        DFNFace& face = it.second;
-        // This classification is only useful for faces with 2 intersected ribs
-        if(face.NIntersectedRibs() < 2) continue;
-
-        TPZGeoEl* father = face.GeoEl();
-        TPZStack<TPZGeoEl*> children;
-        TPZManVector<int64_t,4> edgeindices;
-        if(father->HasSubElement()){
-            father->YoungestChildren(children);
-            //? only if father was refined, remove it from the surface of realfracture together with its edges?
-        }else{
-            children.push_back(father);
-        }
-        // If I remove the father regardless, it'll get added back in case it shouldn't have been deleted
-        realfracture.RemoveFromSurface(father);
-        // And remove father edges that are off plane limits
-        edgeindices = DFN::GetEdgeIndices(father);
-        for(int64_t index : edgeindices){
-            TPZGeoEl* edge = gmesh->Element(index);
-            if(edge->HasSubElement()){
-                realfracture.RemoveFromSurface(edge);
-                continue;
-            }
-            TPZGeoElSide edgeside(edge,2);
-            TPZManVector<REAL,3> centroid(3,0.);
-            edgeside.CenterX(centroid);
-            if(!fPolygon.Compute_PointAbove(centroid))
-                {realfracture.RemoveFromSurface(edge);}
-        }
-
-        // Now add back children that are within the limits of fracture surface
-        for(TPZGeoEl* child : children){
-            
-            if(this->CheckFaceAbove(child,false)){
-                realfracture.AddToSurface(child);
-                edgeindices = DFN::GetEdgeIndices(child);
-                for(int64_t index : edgeindices){
-                    TPZGeoEl* edge = gmesh->Element(index);
-                    realfracture.AddToSurface(edge);
-                }
-            }
-            else{
-                // child->SetMaterialId(father->MaterialId());
-                edgeindices = DFN::GetEdgeIndices(child);
-                for(int64_t index : edgeindices){
-                    TPZGeoEl* edge = gmesh->Element(index);
-                    // edge->SetMaterialId(father->MaterialId());
-                }
-            }
-        }
-    }
-
 }
 
 void DFNFracture::ResetSurfaceMaterial(const int matid){
