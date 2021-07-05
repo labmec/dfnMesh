@@ -1,0 +1,19 @@
+{
+    "$schema": "./dfn_schema.json",
+    "Mesh" : "examples/sphere.msh",
+    "TolDist": 1e+4,
+    "TolAngle": 3.14,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0,
+            "Limit": "Etruncated",
+            "MaterialID": 10,
+            "Nodes":[
+                [ 0.00,-1.05,-0.05],
+                [ 0.00, 1.05,-0.05],
+                [ 0.00, 1.05, 1.05],
+                [ 0.00,-1.05, 1.05]
+            ]
+        }
+    ]
+}

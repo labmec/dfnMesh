@@ -26,6 +26,9 @@ target_include_directories(dfnlib PUBLIC ${DFN_INCLUDE_DIRS})
 # Default Target
 add_executable(dfnTest main.cpp)
 target_link_libraries(dfnTest PRIVATE dfnlib)
+# A cleaner more efficient target for animations
+add_executable(animations main_animations.cpp)
+target_link_libraries(animations PRIVATE dfnlib)
 # add_pz_target(
 #   NAME dfnTest
 #   SOURCES ${headers} "main.cpp" ${sources}
