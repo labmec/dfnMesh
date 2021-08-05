@@ -948,7 +948,7 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
  */ 
 void DFNMesh::ExportGMshCAD(std::string filename){
 	std::cout<<" -Exporting Gmsh CAD file\r"<<std::flush;
-    const bool isOnlyOneIDForBCFrac = false;
+    const bool isOnlyOneIDForBCFrac = true;
 	// fGMesh->BuildConnectivity();
 	// Surface cleanup (necessary if limit recovery is done after all fractures have been inserted to the mesh)
 	for(auto frac : FractureList()){
