@@ -948,10 +948,14 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
  */ 
 void DFNMesh::ExportGMshCAD(std::string filename){
 	std::cout<<" -Exporting Gmsh CAD file\r"<<std::flush;
+    const bool isOnlyOneIDForBCFrac = false;
 	// fGMesh->BuildConnectivity();
 	// Surface cleanup (necessary if limit recovery is done after all fractures have been inserted to the mesh)
 	for(auto frac : FractureList()){
-		frac->CleanUp();
+        frac->CleanUp();
+        const int matidfrac = -1000;
+        if (!isOnlyOneIDForBCFrac)
+            frac->ModifyBoundaryMatID(matidfrac - frac->Index());
 	}
 	// gmsh doesn't accept index zero elements
 	// const int shift = 1;
@@ -971,8 +975,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	// write fractures
     ExportGMshCAD_fractures(out);
 	// boundary conditions
-	ExportGMshCAD_boundaryconditions(out);
-	ExportGMshCAD_fractureIntersections(out);
+	ExportGMshCAD_boundaryconditions(out,isOnlyOneIDForBCFrac);
+	ExportGMshCAD_fractureIntersections(out,isOnlyOneIDForBCFrac);
     
     
 	out << "\n// OPTIONS\n";
@@ -1037,7 +1041,7 @@ void DFNMesh::ExportGMshCAD_fractures(std::ofstream& out){
 	
 	out << stream.str() << std::endl;
 }
-void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
+void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out, const bool isOnlyOneIDForBCFrac){
 	std::multimap<int, int64_t> physicalgroups;
     if(fPolyhedra.size() == 0)
     {
@@ -1094,14 +1098,21 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 	out << stream.str() << std::endl;
 	
 	for(DFNFracture* fracture : fFractures){
-		int bcindex = 10;
-		fracture->ExportFractureBC(bcindex+fracture->Index(),out);
-		out << "Physical Curve(\"BCfrac" 
-			<< fracture->Index() 
-			<< "\", " << fracture->Index() + bcindex
-			<< ") = {BCfrac"
-			<< fracture->Index()
-			<< "[]};\n";
+		const int bcindex = 10;
+        if(isOnlyOneIDForBCFrac) {
+            fracture->ExportFractureBC(bcindex+fracture->Index(),out);
+            out << "Physical Curve(\"BCfrac"
+                << fracture->Index()
+                << "\", " << fracture->Index() + bcindex
+                << ") = {BCfrac"
+                << fracture->Index()
+                << "[]};\n";
+        }
+        else{
+            const int matidBase = -1000;
+            fracture->ExportFractureBCDifferentTags(matidBase-fracture->Index(),out);
+        }
+		
 	}
 }
 
@@ -1109,7 +1120,7 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 
 
 
-void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
+void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out, const bool isOnlyOneIDForBCFrac){
 	/// A geometrical intersection between 2 bounded planes in R^3 is a line segment, 
 	/// so we represent it by the coordinates of its nodes
 	Segment int_segment;
@@ -1148,8 +1159,11 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 			// When importing back meshes to PZ, we'll need to avoid elements belonging to more than one physical group
 			// and boundary conditions should differ from intersections. When these sets intersect, frac-intersection should 'get' the element
 			// so we take the set difference using gmsh list operations
-			stream << "\nBCfrac" << jfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
-			stream << "\nBCfrac" << kfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
+            if (isOnlyOneIDForBCFrac) {
+                stream << "\nBCfrac" << jfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
+                stream << "\nBCfrac" << kfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
+            }
+            // else TODO: Should we subtract from all BCS in this case?
 			out << stream.str() << std::endl;
 		}
 	}

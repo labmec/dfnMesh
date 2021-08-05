@@ -73,6 +73,8 @@ private:
 	std::set<int64_t> fSurfaceEdges;
 
     TPZStack<int> f_frac_frac_intersections;
+    
+    TPZVec<std::pair<TPZGeoNode*,REAL> > fDelimitingNodes;
 
     int fmatid_BC = fmatid-1;
 
@@ -346,12 +348,45 @@ public:
 
     /** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
-
+    
+    /**
+     * Modifies the matids of the TPZGeoElBCs on the boundary. This lets one easily identify what elements
+     * are in the boundary for future assesment of boundary conditions
+     */
+    void ModifyBoundaryMatID(const int matidboundary);
+    
+    /**
+     * For a given TPZGeoEl, checks if any of its nodes are one of the delimiting nodes of the user given DFNPolygon
+     * TODO: This method uses geometrical distances for now and can be optimized. Also, there is hardcoded tolerance that may not be robust
+     */
+    void CheckIfNodesAreDelimitingNodes(TPZGeoEl* gel);
+                
+        
     /** @brief This is a draft to find the boundary conditions for fractures. I had the idea and quickly wrote down... but have not tested yet.
      * Supposedly, the way it's written, it should allow a user to essentially merge 2 or more fractures into one.
      * Meaning, they would have a continuous boundary 
     */
     void ExportFractureBC(int matid, std::ofstream& out);
+    
+    /**
+     * Function to try to quickly find a GeoEl with the required matid that is the boundary
+     */
+    TPZGeoEl* findBCGeoElWithMatID(const int matid) const;
+
+    /**
+     * Checks is a certain node is a delimiting node from DFNPolygon
+     */
+    const bool IsDelimitingNode(TPZGeoNode *node) const;
+
+    /**
+     * Loops over the GeoEls closed list to find one that start on a delimiting node.
+     */
+    TPZGeoEl* FindGeoStartingOnDelimitingNode(TPZGeoEl* gel, const int matid) const;
+    
+    /**
+     * Function to export boundary conditions that are different in each side of the fracture. May not work with some cases that have fracture intesections
+     */
+    void ExportFractureBCDifferentTags(int matid, std::ofstream& out);
 
     /** @brief Find edges that define the intersection between this and another DFNFracture, by solving a shortest
      * path in graph problem to best approximate a segment.

@@ -112,8 +112,8 @@ public:
     void ExportGMshCAD_faces(std::ofstream& out);
     void ExportGMshCAD_volumes(std::ofstream& out);
     void ExportGMshCAD_fractures(std::ofstream& out);
-    void ExportGMshCAD_boundaryconditions(std::ofstream& out);
-    void ExportGMshCAD_fractureIntersections(std::ofstream& out);
+    void ExportGMshCAD_boundaryconditions(std::ofstream& out, const bool isOnlyOneIDForBCFrac = true);
+    void ExportGMshCAD_fractureIntersections(std::ofstream& out, const bool isOnlyOneIDForBCFrac = true);
 
     void ExportDetailedGraphics(const std::string ColorPreset = "Rainbow Uniform");
     

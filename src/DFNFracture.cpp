@@ -35,6 +35,7 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limith
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
     fIndex = dfnMesh->NFractures();
+    fDelimitingNodes.resize(0);
 // #if PZ_LOG
 //     fLogger = CreateLogger();
 // #endif // PZ_LOG
@@ -67,6 +68,7 @@ DFNFracture &DFNFracture::operator=(const DFNFracture &copy){
     fLimit = copy.fLimit;
     fSurfaceFaces = copy.fSurfaceFaces;
     fSurfaceEdges = copy.fSurfaceEdges;
+    fDelimitingNodes = copy.fDelimitingNodes;
     return *this;
 }
 
@@ -939,12 +941,6 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
 
 
 
-
-
-
-
-
-
 /** @brief Identify Ribs, Faces and Polyhedra that are affected by the limits of the fracture*/
 void DFNFracture::IsolateFractureLimits(){
     FindOffboundRibs();
@@ -1028,6 +1024,7 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
             }
             if(!IsBoundarySide) continue;
             TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
+            if (!gelbc) DebugStop();
             gelbc->SetMaterialId(matid); // @todo I'll probably want to remove this, right? fracture bc materialid is a concern of the resulting .geo file
             stream << gelbc->Index()+gmshshift << ",";
             /** @todo maybe add to a set?
@@ -1041,14 +1038,229 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
     out << stream.str() << std::endl;
 }
 
+TPZGeoEl* DFNFracture::findBCGeoElWithMatID(const int matid) const {
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    int fracdim = gmesh->Dimension()-1;
+    int bcdim = fracdim-1;
+    // Finds the first GeoElBC it can on the boundary (id = matid)
+    TPZGeoEl* gel = nullptr;
+    bool isFoundEl = false;
+    for(int64_t index : this->fSurfaceFaces){
+        gel = gmesh->Element(index);
+        if(!gel) continue;
+        if(gel->Dimension() != fracdim) continue;
+        if(gel->HasSubElement()) PZError << "\nYou should call DFNFracture::CleanUp before calling this method.\n";
+        int nsides = gel->NSides();
+        for(int iside = gel->FirstSide(bcdim); iside < nsides-1; iside++){
+            bool IsBoundarySide = true;
+            TPZGeoElSide gelside(gel,iside);
+            for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
+                if(neig.Element()->Dimension() != 2) continue;
+                if(neig.Element()->HasSubElement()) continue;
+                // if(fSurfaceFaces.find(neig.Element()->Index()) != fSurfaceFaces.end()){
+                const int neigmatid = gel->MaterialId();
+                if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
+                    IsBoundarySide = false;
+                    break;
+                }
+            }
+            
+            if (!IsBoundarySide) continue;
+            gel = DFN::GetSkeletonNeighbour(gel,iside);
+            if (gel->MaterialId() != matid) {
+                DebugStop();
+            }
+            else{
+                isFoundEl = true;
+                break;
+            }
+        }
+        if (isFoundEl) break;
+    }
+    return gel;
+}
 
+void DFNFracture::ExportFractureBCDifferentTags(int matid, std::ofstream& out){
+    
+    const int bcindex = 100;
+    
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    int fracdim = gmesh->Dimension()-1;
+    int bcdim = fracdim-1;
+    TPZGeoEl* firstgel = findBCGeoElWithMatID(matid);
+    if(!firstgel) DebugStop();
+    
+    std::stringstream stream;
+    int iside = 0;
+        
+    TPZGeoEl* gel = FindGeoStartingOnDelimitingNode(firstgel, matid);
+    TPZGeoElSide gelside(gel,0), gelsideToFind(gel,1);
+    TPZGeoElSide neig = gelside.Neighbour();
+    
+    gel->NodePtr(0)->Print();
+    gel->NodePtr(1)->Print();
+    std::cout << std::endl;
+    
+    stream << "\nBCfrac" << this->fIndex << "_" << iside++ << "[] = { ";
+    stream << gel->Index()+gmshshift << ",";
+    
+    while (neig != gelsideToFind) {
+        if (neig.Element()->MaterialId() != matid) {
+            neig = neig.Neighbour();
+            if (neig == gelside) {
+                DebugStop(); // should be a closed boundary
+            }
+            continue;
+        }
 
+        TPZGeoEl* nextel = neig.Element();
+        if (nextel->Dimension() != bcdim) DebugStop();
+    
+        nextel->NodePtr(0)->Print();
+        nextel->NodePtr(1)->Print();
+        std::cout << std::endl;
+        
+        int side = neig.Side();
+        int nextsideid = side == 0 ? 1 : 0;
+        
+        if (IsDelimitingNode(nextel->NodePtr(side))) {
+            const int fracindex = this->Index();
+            stream.seekp(stream.str().length()-1);
+            stream << "};" << std::endl;
+            stream << "Physical Curve(\"BCfrac"
+                << fracindex << "_" << iside - 1
+                << "\", " << (fracindex+1)*bcindex + iside
+                << ") = {BCfrac"
+                << fracindex << "_" << iside - 1
+                << "[]};\n";
+            stream << "\nBCfrac" << this->fIndex << "_" << iside++ << "[] = { ";
+        }
+        stream << nextel->Index()+gmshshift << ",";
+        
+        gelside = TPZGeoElSide(nextel,nextsideid);
+        neig = gelside.Neighbour();
+    }
 
+    const int fracindex = this->Index();
+    stream.seekp(stream.str().length()-1);
+    stream << "};" << std::endl;
+    stream << "Physical Curve(\"BCfrac"
+        << fracindex << "_" << iside - 1
+        << "\", " << (fracindex+1)*bcindex + iside
+        << ") = {BCfrac"
+        << fracindex << "_" << iside - 1
+        << "[]};\n\n";
 
+    out << stream.str() << std::endl;
+}
 
+const bool DFNFracture::IsDelimitingNode(TPZGeoNode *node) const {
+    for (auto& pos : fDelimitingNodes) {
+        if (node->Id() == pos.first->Id()) {
+            return true;
+        }
+    }
+    return false;
+}
 
+TPZGeoEl* DFNFracture::FindGeoStartingOnDelimitingNode(TPZGeoEl* gel, const int matid) const {
+    
+    
+    if (IsDelimitingNode(gel->NodePtr(1))) {
+        return gel;
+    }
+    
+    TPZGeoElSide gelside(gel,0), gelsideToFind(gel,1);
+    TPZGeoElSide neig = gelside.Neighbour();
+    
+    while (neig != gelsideToFind) {
+        if (neig.Element()->MaterialId() != matid) {
+            neig = neig.Neighbour();
+            if (neig == gelside) {
+                DebugStop(); // should be a closed boundary
+            }
+            continue;
+        }
 
+        TPZGeoEl* nextel = neig.Element();
+        
+        if (IsDelimitingNode(nextel->NodePtr(1))) {
+            return nextel;
+        }
+        
+        int side = neig.Side();
+        int nextsideid = side == 0 ? 1 : 0;
+        gelside = TPZGeoElSide(nextel,nextsideid);
+        neig = gelside.Neighbour();
+    }
+}
 
+void DFNFracture::ModifyBoundaryMatID(const int matidboundary){
+    
+    const int npolnodes = fPolygon.NCornerNodes();
+    fDelimitingNodes.resize(npolnodes);
+    for (auto& pos : fDelimitingNodes){
+        pos.first = nullptr;
+        pos.second = std::numeric_limits<REAL>::max();
+    }
+    
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    int fracdim = gmesh->Dimension()-1;
+    int bcdim = fracdim-1;
+    TPZGeoEl* gel = nullptr;
+    for(int64_t index : this->fSurfaceFaces){
+        gel = gmesh->Element(index);
+        if(!gel) continue;
+        if(gel->Dimension() != fracdim) continue;
+        if(gel->HasSubElement()) PZError << "\nYou should call DFNFracture::CleanUp before calling this method.\n";
+        int nsides = gel->NSides();
+        for(int iside = gel->FirstSide(bcdim); iside < nsides-1; iside++){
+            TPZGeoElSide gelside(gel,iside);
+            bool IsBoundarySide = true;
+            for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
+                if(neig.Element()->Dimension() != 2) continue;
+                if(neig.Element()->HasSubElement()) continue;
+                // if(fSurfaceFaces.find(neig.Element()->Index()) != fSurfaceFaces.end()){
+                if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
+                    IsBoundarySide = false;
+                    break;
+                }
+            }
+            if(!IsBoundarySide) continue;
+            TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);
+            if (!gelbc) DebugStop();
+            CheckIfNodesAreDelimitingNodes(gelbc);
+            gelbc->SetMaterialId(matidboundary);
+//            std::cout << gelbc->MaterialId() << "\t" << gelbc->Index() << std::endl;
+        }
+    }
+}
+
+void DFNFracture::CheckIfNodesAreDelimitingNodes(TPZGeoEl* gel) {
+    using namespace DFN;
+    
+    const REAL tol = 1.e-8; // hardcoded for now. Could be a problem....
+    const int gelnnodes = gel->NNodes();
+    if (gelnnodes != 2) DebugStop();
+    for (int i = 0; i < fPolygon.NCornerNodes(); i++) {
+        REAL currentDist = fDelimitingNodes[i].second;
+        if (currentDist < tol) continue; // already found this polygon node
+        TPZManVector<REAL,3> polcoor(3,0.);
+        fPolygon.iCornerX(i, polcoor);
+        for (int in = 0; in < gelnnodes; in++) {
+            TPZManVector<REAL,3> nodecoor(3,0.);
+            TPZGeoNode* nodeptr = gel->NodePtr(in);
+            nodeptr->GetCoordinates(nodecoor);
+            nodecoor  = polcoor - nodecoor;
+            REAL norm = DFN::Norm<REAL>(nodecoor);
+            if (norm < currentDist) {
+                fDelimitingNodes[i].first = nodeptr;
+                fDelimitingNodes[i].second = norm;
+                currentDist = norm;
+            }
+        }
+    }
+}
 
 
 // void              ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZVec<TPZGeoEl*>& newgels){

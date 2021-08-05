@@ -92,6 +92,21 @@ namespace DFN{
         result[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
         return result;
     }
+
+    template<typename Ttype>
+    Ttype DistPointLine(TPZManVector<Ttype,3> &pt, TPZManVector<Ttype,3> &linept1, TPZManVector<Ttype,3> &linept2) {
+        TPZManVector<Ttype,3> line(3,0.);
+        for (int i = 0; i < 3; i++) {
+            line[i] = linept2[i] - linept1[i];
+            pt[i] = linept1[i] - pt[i];
+        }
+        
+        REAL normline = Norm<Ttype>(line);
+        REAL dist = Norm<Ttype>(CrossProduct<REAL>(pt, line))/normline;
+        
+        return dist;
+    }
+
     template <typename T>
     TPZVec<T> operator-(TPZVec<T>& v1,TPZVec<T>& v2){
         int64_t size1 = v1.size();
