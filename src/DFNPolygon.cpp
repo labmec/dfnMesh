@@ -606,8 +606,10 @@ bool DFNPolygon::ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segmen
         int nnodesA = polyg[A]->NCornerNodes();
         for(int inode=0; inode<nnodesA; inode++){
             // Get 2 consecutive corners
+            // @suggestion: This code is affected by machine precision. A further extension to this implementation would be to displace p1 and p2 from polyg[A] centroid by some geometrical tolerance (using a displacement vector from the centroid to each node). Fractures that perfectly end on another may not have their intersection properly computed, and this small displacement would fix that.
             polyg[A]->iCornerX(inode,p1);
             polyg[A]->iCornerX((inode+1)%nnodesA,p2);
+            
             // Check if corners lie in opposite sides, and if the 
             // intersection point is within bounds of the polygon
             bool intersects_Q = polyg[B]->Check_pair(p1,p2,intpoint);

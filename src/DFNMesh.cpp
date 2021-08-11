@@ -1121,14 +1121,15 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 			const DFNPolygon& jpolygon = fFractures[jfrac]->Polygon();
 			const DFNPolygon& kpolygon = fFractures[kfrac]->Polygon();
 			bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,int_segment);
-
+			if(!geom_intersection_Q) continue;
+			
 			const std::set<int64_t>& surface_j = fFractures[jfrac]->Surface();
 			const std::set<int64_t>& surface_k = fFractures[kfrac]->Surface();
 			std::set<int64_t> common_faces = DFN::set_intersection(surface_j,surface_k);
 
 			TPZStack<int64_t> intersection_edges;
 			// If fractures have overlapped surfaces, it's a non trivial case
-			if(common_faces.size() > 0 && geom_intersection_Q){
+			if(common_faces.size() > 0){
 				fFractures[jfrac]->FindFractureIntersection_NonTrivial(*fFractures[kfrac],int_segment,intersection_edges);
 			}else{
 				fFractures[jfrac]->FindFractureIntersection_Trivial(*fFractures[kfrac],intersection_edges);
@@ -1145,11 +1146,6 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 			stream << "\nfracIntersection_" << kfrac << '_' << jfrac << "[] = fracIntersection_" << jfrac << '_' << kfrac << ';';
 			stream <<"\nPhysical Curve(\"fracIntersection_" << jfrac << '_' << kfrac<<"\") = "
 								  << "fracIntersection_" << jfrac << '_' << kfrac<<"[];";
-			// When importing back meshes to PZ, we'll need to avoid elements belonging to more than one physical group
-			// and boundary conditions should differ from intersections. When these sets intersect, frac-intersection should 'get' the element
-			// so we take the set difference using gmsh list operations
-			stream << "\nBCfrac" << jfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
-			stream << "\nBCfrac" << kfrac <<"[] -= fracIntersection_"<<jfrac<<'_'<<kfrac<<"[];";
 			out << stream.str() << std::endl;
 		}
 	}

@@ -1901,6 +1901,7 @@ void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int
         const DFNPolygon& jpolygon = this->Polygon();
         const DFNPolygon& kpolygon = fdfnMesh->FractureList()[kfrac]->Polygon();
         bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,int_segment);
+        if(!geom_intersection_Q){continue;}
 
         const std::set<int64_t>& surface_j = this->Surface();
         const std::set<int64_t>& surface_k = fdfnMesh->FractureList()[kfrac]->Surface();
@@ -1908,7 +1909,7 @@ void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int
 
         TPZStack<int64_t> intersection_edges;
         // If fractures have overlapped surfaces, it's a non trivial case
-        if(common_faces.size() > 0 && geom_intersection_Q){
+        if(common_faces.size() > 0){
             this->FindFractureIntersection_NonTrivial(*fdfnMesh->FractureList()[kfrac],int_segment,intersection_edges);
         }else{
             this->FindFractureIntersection_Trivial(*fdfnMesh->FractureList()[kfrac],intersection_edges);
