@@ -109,6 +109,7 @@ public:
     
     /// Return the corner nodes of the fracture
     DFNPolygon &Polygon();
+    const DFNPolygon& Polygon() const {return fPolygon;}
 
     /// Get pointer to the DFNMesh
     DFNMesh* dfnMesh() const{return fdfnMesh;}
@@ -356,14 +357,11 @@ public:
     /** @brief Find edges that define the intersection between this and another DFNFracture, by solving a shortest
      * path in graph problem to best approximate a segment.
      * @param OtherFrac The other fracture the code should search for intersection
-     * @param Segment 2 coordinates representing an initial and a final point that graph should approximate
      * @param EdgeList [output] A stack to fill with the result of the search
      * @details This code performs 2 geometrical searches to get, within the set of nodes of the 
      * CommonFaces, the mesh nodes that are closest to the coordinates informed in the Segment
     */
-    bool FindFractureIntersection_NonTrivial(const DFNFracture& OtherFrac, 
-                                            // const std::set<int64_t>& CommonFaces, 
-                                            const Segment& Segment,
+    bool FindFractureIntersection(const DFNFracture& OtherFrac, 
                                             TPZStack<int64_t>& EdgeList);
 
     /** @brief Find edges that define the intersection between this and another DFNFracture, by searching for

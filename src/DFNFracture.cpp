@@ -1781,19 +1781,29 @@ void DFNFracture::RemoveRefinedDFNFaces(const int vol_index){
     }
 }
 
-bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFrac, 
-                                                    // const std::set<int64_t>& CommonFaces, 
-                                                    const Segment& Segment,
+bool DFNFracture::FindFractureIntersection(const DFNFracture& OtherFrac, 
                                                     TPZStack<int64_t>& EdgeList)
 {
     using namespace DFN;
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     EdgeList.clear();
 
-    LOGPZ_DEBUG(logger, "[Intersection search][Shortest path] Frac# " << this->Index() << " vs Frac# " << OtherFrac.Index())
+    // Check for user defined real geometrical intersection
+    Segment Segment;
+    const DFNPolygon& jpolygon = this->Polygon();
+    const DFNPolygon& kpolygon = OtherFrac.Polygon();
+    bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,Segment);
+    if(!geom_intersection_Q){return false;}
+
+    LOGPZ_DEBUG(logger, "[Intersection search] Frac# " << this->Index() << " vs Frac# " << OtherFrac.Index())
 
     // Get common edges
     const std::set<int64_t> common_edges = DFN::set_intersection(this->fSurfaceEdges,OtherFrac.fSurfaceEdges);
+    if(common_edges.size() == 0){
+        LOGPZ_DEBUG(logger, "\"This fracture pair has no common edge in their surface. Intersection may have been coalesced into a single node.\"");
+        return false;
+    }
+
     std::set<int64_t> nodes; // Nodes of the graph
     for(auto index : common_edges){
         TPZGeoEl* edge = gmesh->Element(index);
@@ -1828,8 +1838,10 @@ bool DFNFracture::FindFractureIntersection_NonTrivial(const DFNFracture& OtherFr
      * 2. Change tolerances (see DFNMesh::fTolDist & DFNMesh::fTolAngle)
      * 3. Design the coarse mesh to have a convenient node that can help to represent this intersection
      */
-    if(start == end) return false;
-
+    if(start == end){
+        LOGPZ_DEBUG(logger, "Fracture intersection has been coalesced into a single node. Node index == " << start);
+        return false;
+    }
     // Build a graph and solve
     DFNGraph graph(fdfnMesh,common_edges);
     graph.ComputeShortestPath(start,end,EdgeList);
@@ -1898,22 +1910,9 @@ void DFNFracture::SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int
     int jfrac = this->fIndex;
     for(int kfrac = 0; kfrac<nfrac; kfrac++){
         if(kfrac == jfrac) continue;
-        const DFNPolygon& jpolygon = this->Polygon();
-        const DFNPolygon& kpolygon = fdfnMesh->FractureList()[kfrac]->Polygon();
-        bool geom_intersection_Q = jpolygon.ComputePolygonIntersection(kpolygon,int_segment);
-        if(!geom_intersection_Q){continue;}
-
-        const std::set<int64_t>& surface_j = this->Surface();
-        const std::set<int64_t>& surface_k = fdfnMesh->FractureList()[kfrac]->Surface();
-        std::set<int64_t> common_faces = DFN::set_intersection(surface_j,surface_k);
 
         TPZStack<int64_t> intersection_edges;
-        // If fractures have overlapped surfaces, it's a non trivial case
-        if(common_faces.size() > 0){
-            this->FindFractureIntersection_NonTrivial(*fdfnMesh->FractureList()[kfrac],int_segment,intersection_edges);
-        }else{
-            this->FindFractureIntersection_Trivial(*fdfnMesh->FractureList()[kfrac],intersection_edges);
-        }
+        this->FindFractureIntersection(*fdfnMesh->FractureList()[kfrac],intersection_edges);
         if(intersection_edges.size() == 0) continue;
         
         int min = std::min(jfrac,kfrac);
