@@ -3,6 +3,12 @@
 	#ifdef HAVE_CONFIG_H
 		#include <pz_config.h>
 	#endif
+
+#if PZ_LOG
+	#undef PZ_LOG
+	#define PZ_LOG 0
+#endif // PZ_LOG
+#undef PZDEBUG
 	
 	#include "TPZGenGrid2D.h"
 	#include "TPZGenGrid3D.h"
@@ -47,10 +53,6 @@ void PrintPreamble(){
 TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine);
 
 
-#if PZ_LOG
-#undef PZ_LOG
-#define PZ_LOG 0
-#endif // PZ_LOG
 
 
 
