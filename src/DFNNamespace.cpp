@@ -424,7 +424,7 @@ namespace DFN{
 
     void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements){
         // GMsh does not accept zero index entities
-        const int shift = 1;
+        constexpr int shift = 1;
 
         // First, if GMsh has created new nodes, these should be inserted in PZGeoMesh
         // create a map <node,point>
@@ -524,6 +524,21 @@ namespace DFN{
             }
         }
         gmesh->BuildConnectivity();
+
+#if PZDEBUG
+        // for(int64_t index : newelements){
+        //     TPZGeoEl* gel = gmesh->Element(index);
+        //     TPZVec<REAL> qsi(gel->Dimension(),0.); TPZFNMatrix<9,REAL> jac; TPZFNMatrix<9,REAL> axes; REAL detjac; TPZFNMatrix<9,REAL> jacinv;
+        //     gel->Jacobian(qsi,jac,axes,detjac,jacinv);
+        //     if(detjac < gDFN_SmallNumber){
+        //         LOGPZ_FATAL(logger,"Gmsh created element with zero or negative det jacobian."
+        //                             << "\n\tdetjac = " << detjac
+        //                             << "\n\tElement = \n" << gel
+        //         );
+        //         DebugStop();
+        //     }
+        // }
+#endif
     }
 
     TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
