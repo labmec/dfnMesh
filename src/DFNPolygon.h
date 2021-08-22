@@ -9,15 +9,7 @@
 #define DFNPolygon_h
 
 #include "pzfmatrix.h"
-#include "pzvec.h"
-#include "pzmanvector.h"
 #include "pzstack.h"
-
-#include <stdio.h>
-#include <tuple>
-#include "pzmatrix.h"
-#include "pzcompel.h"
-#include "pzgeoelbc.h"
 
 
 typedef TPZFMatrix<REAL> Matrix;
@@ -42,13 +34,16 @@ class DFNPolygon
 	Matrix fAxis ;
 
 	/// Area of polygon
-	double fArea;
+	double fArea = -1.0;
 
 	/// If nodes of this polygon have been added to a geometric mesh, this vector holds GeoNodes indices
 	TPZManVector<int64_t> fPointsIndex;
 
     /// Tracks which nodes are above this Polygon - for each node of the geometric mesh, indicates whether the node is above the plane
     TPZVec<bool> fNodesAbove;
+	
+	/// Index of biggest absolute component of normal vector (for costless projection)
+	int fMax_component = -1;
 	
   public:
 	/// Empty constructor

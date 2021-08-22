@@ -45,6 +45,7 @@ DFNPolygon::DFNPolygon(const DFNPolygon &copy){
 	fArea = copy.area();
 	fPointsIndex = copy.fPointsIndex;
     fNodesAbove = copy.fNodesAbove;
+    fMax_component = copy.fMax_component;
 	return *this;
  }
 
@@ -96,6 +97,19 @@ void DFNPolygon::ComputeAxis()
     Matrix transf(3,3,0.);
     fAxis.GramSchmidt(orth,transf);
     fAxis = orth;
+
+    // Get max absolute component of normal vector
+    {
+        REAL abs_x = fabs(fAxis(0,2));
+        REAL abs_y = fabs(fAxis(1,2));
+        REAL abs_z = fabs(fAxis(2,2));
+
+        fMax_component = 2;
+        if (abs_x > abs_y) {
+            if (abs_x > abs_z) fMax_component = 0;
+        }
+        else if (abs_y > abs_z) fMax_component = 1;
+    }
 }
 
 
@@ -261,31 +275,36 @@ TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1
 
 bool DFNPolygon::IsPointInPolygon(const TPZVec<REAL> &point) const
 {
+    // Projecting all points to 2D by ignoring the max absolute component of the normal vector of this polygon
+    int x = (fMax_component+1)%3;   // Projected x 
+    int y = (x+1)%3;                // Projected y
+
+    int N_intersections = 0;
     int ncorners = fCornerPoints.Cols();
-    REAL area = 0;
+
+    TPZManVector<REAL, 3> pA(3,0.); // First node of the i-th edge
+    TPZManVector<REAL, 3> pB(3,0.); // Second node of the i-th edge
+    // Set a ray leaving the point and going to infinite along x
+    // Count how many edges of the projected polygon are intersected by the ray
     for(int i = 0; i<ncorners; i++){
-        //Define vectors from the point to a each one of a pair of corners
-        TPZManVector<REAL, 3> ax1(3);
-            ax1[0] = fCornerPoints.g(0,i) - point[0];
-            ax1[1] = fCornerPoints.g(1,i) - point[1];
-            ax1[2] = fCornerPoints.g(2,i) - point[2];
-        TPZManVector<REAL, 3> ax2(3);
-            ax2[0] = fCornerPoints.g(0,(i+1)%ncorners) - point[0];
-            ax2[1] = fCornerPoints.g(1,(i+1)%ncorners) - point[1];
-            ax2[2] = fCornerPoints.g(2,(i+1)%ncorners) - point[2];
-        //Compute area of trangle outlined by these vectors
-        REAL temp = pow(ax1[1]*ax2[2] - ax1[2]*ax2[1],2);
-            temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
-            temp += pow(ax1[0]*ax2[1] - ax1[1]*ax2[0],2);
-                  
-        area += sqrtl(temp)/2;
+        pA[x] = fCornerPoints.g(x,i);
+        pA[y] = fCornerPoints.g(y,i);
+        // pA[fMax_component] = fCornerPoints.g(fMax_component,i);
+        pB[x] = fCornerPoints.g(x,(i+1)%ncorners);
+        pB[y] = fCornerPoints.g(y,(i+1)%ncorners);
+        // pB[fMax_component] = fCornerPoints.g(fMax_component,(i+1)%ncorners);
+        
+        // Consecutive vertices on opposite sides of the point
+        if((point[y] > pB[y]) != (point[y] > pA[y])){
+            // Parametrize intersection
+            REAL alpha = (point[y] - pB[y])/(pA[y]-pB[y]);
+            // If intersection point is to the right, it's hit by the ray
+            N_intersections += (pB[x] + alpha*(pA[x]-pB[x]) > point[x]);
+        }
     }
 	
-    // std::cout<<" ___ ";
-
-    //If total computed area is equal to the polygon's area, then
-    //point is in polygon
-    return( fabs(area-fArea) < gDFN_SmallNumber );
+    // An odd number of intersections, means point is inside polygon
+    return (N_intersections%2);
 }
 
 
@@ -330,12 +349,13 @@ REAL DFNPolygon::ComputeArea(){
     REAL abs_y = fabs(normal[1]);
     REAL abs_z = fabs(normal[2]);
 
-    int  ignore;           // coord to ignore: 0=x, 1=y, 2=z
-    ignore = 2;                         // ignore z-coord
-    if (abs_x > abs_y) {
-        if (abs_x > abs_z) ignore = 0;  // ignore x-coord
-    }
-    else if (abs_y > abs_z) ignore = 1; // ignore y-coord
+    // int  ignore;           // coord to ignore: 0=x, 1=y, 2=z
+    // ignore = 2;                         // ignore z-coord
+    // if (abs_x > abs_y) {
+    //     if (abs_x > abs_z) ignore = 0;  // ignore x-coord
+    // }
+    // else if (abs_y > abs_z) ignore = 1; // ignore y-coord
+    int ignore = fMax_component;
 
     // compute area of the 2D projection
     REAL area = 0;
