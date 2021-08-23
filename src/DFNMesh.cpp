@@ -1115,6 +1115,12 @@ void DFNMesh::ExportGMshCAD_fractureIntersections(std::ofstream& out){
 	Segment int_segment;
 	out << "\n// INTER-FRACTURE INTERSECTIONS\n";
 	const int nfrac = this->NFractures();
+
+	// Build the set with every 1D element at the surface of each fracture
+    for(auto fracture : fFractures){
+		fracture->GetEdgesInSurface();
+	}
+
 	// Test every pair of fractures for intersection
 	for(int jfrac = 0; jfrac<nfrac; jfrac++){
 		for(int kfrac = jfrac+1; kfrac<nfrac; kfrac++){

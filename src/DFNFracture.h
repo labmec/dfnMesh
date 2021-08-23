@@ -332,6 +332,7 @@ public:
     void FindOffboundFaces();
     /** @brief Fill a set with every 1D element that is contained in the surface of this fracture*/
     void GetEdgesInSurface(std::set<int64_t>& edges);
+    void GetEdgesInSurface(){GetEdgesInSurface(fSurfaceEdges);}
     /** @brief Creates a fracture (orthogonal to this) that contains the specified edge and whose normal vector is oriented towards the interior of this
      * @param orthfracture [out] The reference to the created fracture
      * @param edgeindex Index of the edge of the original fracture that is calling this method
