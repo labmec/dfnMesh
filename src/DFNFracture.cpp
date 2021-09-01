@@ -742,7 +742,7 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
 /** @brief Mesh a convex polygon from a list of sequentialy connected edges. If not simple, calls on Gmsh
  * @param polygon a loop of edges that don't necessarily occupy the same plane
 */
-void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon){
+void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon ){
     // New elements to be created
     TPZStack<int64_t> newelements(1,-1);
 
@@ -1638,36 +1638,36 @@ std::set<int> DFNFracture::IdentifyIntersectedPolyhedra(){
 
 
 void DFNFracture::CheckSnapInducedOverlap(){
-
-    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    std::set<int64_t> SnapRibs = this->IdentifySnapRibs();
-    std::set<int> IntersectedPolyh = this->IdentifyIntersectedPolyhedra();
-    
-    // Gather problematic volumes
-    TPZStack<int> problem_volumes;
-    for(int vol_index : IntersectedPolyh){
-        const DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
-        if(IsProblemVolume(SnapRibs,volume)){
-            problem_volumes.push_back(vol_index);
+    {
+        TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+        std::set<int64_t> SnapRibs = this->IdentifySnapRibs();
+        std::set<int> IntersectedPolyh = this->IdentifyIntersectedPolyhedra();
+        
+        // Gather problematic volumes
+        TPZStack<int> problem_volumes;
+        for(int vol_index : IntersectedPolyh){
+            const DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
+            if(IsProblemVolume(SnapRibs,volume)){
+                problem_volumes.push_back(vol_index);
+            }
         }
+
+        // Mesh problematic volumes
+        if(problem_volumes.size() == 0) return;
+        for(int vol_index : problem_volumes){
+            DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
+            volume.Refine();
+            this->RemoveRefinedDFNFaces(vol_index);
+        }
+
+        // Update DFNFracture data
+        fdfnMesh->UpdatePolyhedra();
+        fPolygon.SortNodes(gmesh);
+        this->CreateRibs();
+        this->CreateFaces();
+        this->SnapIntersections_ribs();
+        this->SnapIntersections_faces();
     }
-
-    // Mesh problematic volumes
-    if(problem_volumes.size() == 0) return;
-    for(int vol_index : problem_volumes){
-        DFNPolyhedron& volume = fdfnMesh->Polyhedron(vol_index);
-        volume.Refine();
-        this->RemoveRefinedDFNFaces(vol_index);
-    }
-
-    // Update DFNFracture data
-    fdfnMesh->UpdatePolyhedra();
-    fPolygon.SortNodes(gmesh);
-    this->CreateRibs();
-    this->CreateFaces();
-    this->SnapIntersections_ribs();
-    this->SnapIntersections_faces();
-
 // #ifdef PZDEBUG
 //     fdfnMesh->PrintSummary();
 // #endif // PZDEBUG
@@ -1687,6 +1687,8 @@ bool DFNFracture::IsProblemVolume(const std::set<int64_t>& AllSnapRibs, const DF
     if(IntersectedVolume.IsTetrahedron()) return false;
 
     /// @return False if volume has N_SnapRibs <= 1
+    // @definition: SnapRibs := Set of edges in the surface of this fracture which existed in the mesh before this fracture was inserted.
+    // @definition: volumeSnapRibs := Set of SnapRibs that are in the shell of this polyhedral volume
     std::set<int64_t> volumeSnapRibs = IntersectedVolume.GetEdges_InSet(AllSnapRibs);
     int n_snapribs = volumeSnapRibs.size();
     if(n_snapribs <= 1) return false;

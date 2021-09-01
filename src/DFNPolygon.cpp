@@ -282,20 +282,21 @@ bool DFNPolygon::IsPointInPolygon(const TPZVec<REAL> &point) const
     int N_intersections = 0;
     int ncorners = fCornerPoints.Cols();
 
-    TPZManVector<REAL, 3> pA(3,0.); // First node of the i-th edge
-    TPZManVector<REAL, 3> pB(3,0.); // Second node of the i-th edge
-    // Set a ray leaving the point and going to infinite along x
+    constexpr REAL ignore = -999.;
+    TPZManVector<REAL, 3> pA(3,ignore); // First node of the i-th edge
+    TPZManVector<REAL, 3> pB(3,ignore); // Second node of the i-th edge
+    // Set a ray leaving the point and going to infinity along x axis
     // Count how many edges of the projected polygon are intersected by the ray
     for(int i = 0; i<ncorners; i++){
         pA[x] = fCornerPoints.g(x,i);
         pA[y] = fCornerPoints.g(y,i);
-        // pA[fMax_component] = fCornerPoints.g(fMax_component,i);
+        // pA[fMax_component] = ignore;
         pB[x] = fCornerPoints.g(x,(i+1)%ncorners);
         pB[y] = fCornerPoints.g(y,(i+1)%ncorners);
-        // pB[fMax_component] = fCornerPoints.g(fMax_component,(i+1)%ncorners);
+        // pB[fMax_component] = ignore;
         
         // Consecutive vertices on opposite sides of the point
-        if((point[y] > pB[y]) != (point[y] > pA[y])){
+        if((point[y] > pB[y]) != (point[y] > pA[y])){ // Implies pA[y]-pB[y] != 0
             // Parametrize intersection
             REAL alpha = (point[y] - pB[y])/(pA[y]-pB[y]);
             // If intersection point is to the right, it's hit by the ray
