@@ -273,7 +273,7 @@ public:
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
 
     /// Triangulates fracture surface from outline
-    void MeshFractureSurface();
+    void MeshFractureSurface(TPZStack<DFNPolyhedron*> &badVolumes);
 
     /** @brief Following directive DFNFracture::fLimit, modify the extended 
      * limits of this fracture to better represent the limits (boundary edges) 
@@ -373,6 +373,8 @@ public:
      * @param EdgeList [output] A stack to fill with the result of the search
     */
     void FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList);
+    
+    void RollBack(TPZGeoMesh *gmeshBackup);
 };
 
 inline std::ostream& operator<<(std::ostream &out, const DFNFracture& fracture){

@@ -304,6 +304,9 @@ private:
 public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
+    
+    /** @brief Rollback to the state before the last fracture was introduced*/
+    void RollBackLastFracture(TPZGeoMesh *gmeshBackup);
 
     
 

@@ -2990,3 +2990,18 @@ void DFNMesh::PrintProblematicRolodex(const int &indexNotFoundCard, TRolodex &ro
     std::ofstream out("ProblemRolodex.vtk");
     TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out);
 }
+
+void DFNMesh::RollBackLastFracture(TPZGeoMesh *gmeshBackup) {
+    for (int i = 0; i < fFractures.size()-1; i++) {
+        fFractures[i]->RollBack(gmeshBackup);
+    }
+    
+    delete fGMesh;
+    
+    DFNFracture *frac = fFractures[fFractures.size()-1];
+    delete frac;
+    fFractures[fFractures.size()-1] = nullptr;
+    fFractures.resize(fFractures.size()-1);
+    
+    fGMesh = gmeshBackup;
+}

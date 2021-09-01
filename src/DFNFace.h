@@ -85,6 +85,9 @@ public:
     /// Pointer to geometric element
     TPZGeoEl* GeoEl() const {return fGeoEl;}
     
+    /// Sets the geoel
+    void SetGeoEl(TPZGeoEl* geoEl) {fGeoEl = geoEl;}
+    
     /// Element index
     int64_t Index() const {return fGeoEl->Index();}
 

@@ -489,7 +489,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 
 }
 
-void DFNFracture::MeshFractureSurface(){
+void DFNFracture::MeshFractureSurface(TPZStack<DFNPolyhedron*> &badVolumes){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::cout<<"\r#SubPolygons meshed = 0";
     #if PZ_LOG
@@ -1981,4 +1981,16 @@ void DFNFracture::PlotVTK(const int surface_matid, const std::string exportname,
 
     std::ofstream file(exportname);
     TPZVTKGeoMesh::PrintGMeshVTKmy_material(gmesh, file, myMaterial, true, true);
+}
+
+void DFNFracture::RollBack(TPZGeoMesh *gmeshBackup) {
+    for(auto ribit : fRibs){
+        const int geoindex = ribit.second.GeoEl()->Index();
+        ribit.second.SetGeoEl(gmeshBackup->Element(geoindex));
+    }
+    
+    for(auto faceit : fFaces){
+        const int geoindex = faceit.second.GeoEl()->Index();
+        faceit.second.SetGeoEl(gmeshBackup->Element(geoindex));
+    }
 }

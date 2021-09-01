@@ -76,6 +76,9 @@ public:
     /// Element pointer
     TPZGeoEl* GeoEl() const {return fGeoEl;}
     
+    /// Sets the GeoEl
+    void SetGeoEl(TPZGeoEl* geoEl) {fGeoEl = geoEl;}
+    
     /// Set index of intersection node
     void SetIntersectionIndex(int64_t index){fIntersectionIndex = index;}
     

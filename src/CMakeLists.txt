@@ -35,6 +35,13 @@ target_link_libraries(animations PRIVATE dfnlib)
 #   REQUIRED PZ_USING_MKL)
 # target_link_libraries(dfnTest PRIVATE ${GMSH_LIB})
 
+# Target for testing rollback
+add_executable(dfnGoBack main_goback.cpp)
+target_link_libraries(dfnGoBack PRIVATE dfnlib)
+# A cleaner more efficient target for animations
+# add_executable(animations main_animations.cpp)
+# target_link_libraries(animations PRIVATE dfnlib)
+
 
 # Target for performance tests
 # add_executable(perfTest main_perftests.cpp)
