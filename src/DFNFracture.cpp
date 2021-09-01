@@ -562,7 +562,7 @@ void DFNFracture::MeshFractureSurface(){
                 }
                 continue;
             }
-            MeshPolygon(subpolygon);
+            MeshPolygon(subpolygon,polyhindex);
             std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
@@ -694,7 +694,6 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
 	// Insert lines ____________________________________
     std::vector<int> lineloop;
     lineloop.resize(nedges);
-    std::array<int,10> lineloopdebug;
 	for(int i=0; i<nedges; i++){
         int64_t iline = abs(orientedpolygon[i]);
 		TPZGeoEl *gel = gmesh->Element(iline);
@@ -704,7 +703,6 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
 		gmsh::model::geo::mesh::setTransfiniteCurve(iline+gmshshift,2);
         int orientation = (orientedpolygon[i] > 0 ? 1 : -1);
         lineloop[i] = (iline+gmshshift)*orientation;
-        lineloopdebug[i] = lineloop[i];
 	}
 	// Insert faces ____________________________________
     // wiretag is a dummy vector with the shifted index of the face/curve-loop
@@ -741,8 +739,10 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
 
 /** @brief Mesh a convex polygon from a list of sequentialy connected edges. If not simple, calls on Gmsh
  * @param polygon a loop of edges that don't necessarily occupy the same plane
+ * * @param polyhindex passed only for debugging purposes in case one needs to plot the polyhedron
 */
-void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon ){
+void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex){
+    
     // New elements to be created
     TPZStack<int64_t> newelements(1,-1);
 

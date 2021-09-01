@@ -1,6 +1,7 @@
 #include "pzgmesh.h"
 #include "DFNPolyhedron.h"
 #include "DFNMesh.h"
+#include "TPZVTKGeoMesh.h"
 
 /// Assignment operator
 DFNPolyhedron &DFNPolyhedron::operator=(const DFNPolyhedron &copy){
@@ -170,4 +171,25 @@ bool DFNPolyhedron::IsTetrahedron() const{
     // }
 
     // return ntriangles == 4;
+}
+
+void DFNPolyhedron::PrintVTK() const {
+    
+    TPZGeoMesh bogusMesh;
+    TPZGeoMesh *gmesh = fDFN->Mesh();
+    bogusMesh.ElementVec().Resize(gmesh->NElements());
+    for (int i = 0; i < bogusMesh.NElements(); i++) {
+        bogusMesh.ElementVec()[i] = nullptr;
+    }
+    bogusMesh.NodeVec() = gmesh->NodeVec();
+    
+    std::set<int64_t> elindexes;
+    for (auto shell : fShell) {
+        TPZGeoEl *gel = gmesh->Element(shell.first);
+        TPZGeoEl *copiedgel = gel->Clone(bogusMesh);
+        copiedgel->SetMaterialId(shell.second);
+    }
+    std::string filename = "polyhedron_index_" + std::to_string(fIndex) + ".vtk";
+    std::ofstream out(filename);
+    TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out);
 }

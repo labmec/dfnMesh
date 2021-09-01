@@ -17,6 +17,31 @@ static TPZLogger logger("dfn.mesh");
 namespace DFN{
     
 
+    void PrintGeoEl(TPZGeoEl* gel) {
+
+        if (!gel) {
+            DebugStop();
+        }
+        const int index = gel->Index();
+        std::string filename = "gel_index_" + std::to_string(index) + ".vtk";
+        std::cout << "\n =====> Printing Element to " << filename << std::endl;
+        TPZGeoMesh *gmesh = gel->Mesh();
+        
+        TPZGeoMesh bogusMesh;
+        bogusMesh.ElementVec().Resize(gmesh->NElements());
+        for (int i = 0; i < bogusMesh.NElements(); i++) {
+            bogusMesh.ElementVec()[i] = nullptr;
+        }
+        bogusMesh.NodeVec() = gmesh->NodeVec();
+        
+        // Adding el to print to bogus mesh
+        TPZGeoEl* copiedEl = gel->Clone(bogusMesh);
+        copiedEl->SetMaterialId(2);
+        
+        std::ofstream out(filename);
+        TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out);
+    }
+
     /**
      * @brief Get a pointer to an element that is superposed in a lower dimensional side of a geometric element
      * @return nullptr if there is no element in that side
@@ -526,18 +551,19 @@ namespace DFN{
         gmesh->BuildConnectivity();
 
 #if PZDEBUG
-        // for(int64_t index : newelements){
-        //     TPZGeoEl* gel = gmesh->Element(index);
-        //     TPZVec<REAL> qsi(gel->Dimension(),0.); TPZFNMatrix<9,REAL> jac; TPZFNMatrix<9,REAL> axes; REAL detjac; TPZFNMatrix<9,REAL> jacinv;
-        //     gel->Jacobian(qsi,jac,axes,detjac,jacinv);
-        //     if(detjac < gDFN_SmallNumber){
-        //         LOGPZ_FATAL(logger,"Gmsh created element with zero or negative det jacobian."
-        //                             << "\n\tdetjac = " << detjac
-        //                             << "\n\tElement = \n" << gel
-        //         );
-        //         DebugStop();
-        //     }
-        // }
+//         for(int64_t index : newelements){
+//             TPZGeoEl* gel = gmesh->Element(index);
+//             TPZVec<REAL> qsi(gel->Dimension(),0.); TPZFNMatrix<9,REAL> jac; TPZFNMatrix<9,REAL> axes; REAL detjac; TPZFNMatrix<9,REAL> jacinv;
+//             gel->Jacobian(qsi,jac,axes,detjac,jacinv);
+//             if(detjac < gDFN_SmallNumber){
+//                 DFN::PrintGeoEl(gel);
+//                 LOGPZ_FATAL(logger,"Gmsh created element with zero or negative det jacobian."
+//                                     << "\n\tdetjac = " << detjac
+//                                     << "\n\tElement = \n" << gel
+//                 );
+//                 DebugStop();
+//             }
+//         }
 #endif
     }
 

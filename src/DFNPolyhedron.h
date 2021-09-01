@@ -128,6 +128,11 @@ class DFNPolyhedron
 		 * @details Any quadrilateral in the shell will get refined to at least 2 triangles
 		*/
 		void Refine();
+    
+        /**
+         * Prints the shells of the polyhedron to vtk
+         */
+        void PrintVTK() const;
 
 		/// Checks if this Polyhedron is a tetrahedron
 		bool IsTetrahedron() const;

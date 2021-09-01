@@ -980,12 +980,12 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     // out<<"\nRecombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
     // out<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
 	// out << "\nCoherence;";
-	out << "\nCoherence Mesh;";
-	out << "\n// Transfinite Curve {:} = 2;";
-	out << "\n// Transfinite Surface{:};";
-	out << "\n// Transfinite Volume{:};";
-	out << "\n// Recombine Surface{:};";
-	out << "\n// Recombine Volume{:};";
+//	out << "\nCoherence Mesh;";
+//	out << "\nTransfinite Curve {:} = 2;";
+//	out << "\nTransfinite Surface{:};";
+//	out << "\nTransfinite Volume{:};";
+//	out << "\nRecombine Surface{:};";
+//	out << "\nRecombine Volume{:};";
 	out.flush();
 	std::cout<<"                         \r"<<std::flush;
 }
@@ -1973,8 +1973,14 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 	for(int i=0; i<edges.size(); i++){
 		int64_t iedge = edges[i];
 		TRolodex& rolodex = fSortedFaces[iedge];
-		try{ cards[i] = rolodex.Card(initial_face_orient.first);}
-		catch(...){DFN_DebugStop();}
+		try{
+            cards[i] = rolodex.Card(initial_face_orient.first);
+        }
+		catch(...){
+            PrintProblematicRolodex(initial_face_orient.first,rolodex);
+//            fPolyhedra[133].PrintVTK();
+            DFN_DebugStop();
+        }
 	}
 
 	// Determine orientation of neighbour cards
@@ -2362,7 +2368,8 @@ void DFNMesh::SortFacesAroundEdges(){
 
 		TPZGeoElSide edgeside(gel,2);
 		// @todo std::set<int> mats = {DFNMaterial::Efracture, DFNMaterial::Eskeleton}; int nfaces = edgeside.NNeighbours(2,mats);
-		int nfaces = edgeside.NNeighbours(2);
+        const int dimOfNeigh = 2;
+		int nfaces = edgeside.NNeighbours(dimOfNeigh);
 		int ncards = rolodex.NCards();
 		// skip if there aren't any new faces on the rolodex
 		if(nfaces <= ncards) continue;
@@ -2378,6 +2385,10 @@ void DFNMesh::SortFacesAroundEdges(){
 				reference_orientation = (DFN::OrientationMatch(reference_el,edgeside)?1:-1);
 			}
 			REAL angle = DFN::DihedralAngle(reference_el,neig,reference_orientation);
+            std::map<REAL,TPZGeoElSide>::iterator it = facemap.find(angle);
+            if (it != facemap.end()) {
+                DebugStop(); // two faces with same angle in rolodex!
+            }
 			facemap.insert({angle,neig});
 		}
 		int j = 0;
@@ -2927,4 +2938,55 @@ void CreateFilterScript(DFNMesh& dfn, std::ofstream& filter,std::string filename
 	// }@ FINAL SETUP
 
 	filter.flush();
+}
+
+void DFNMesh::PrintProblematicRolodex(const int &indexNotFoundCard, TRolodex &rol) {
+    
+    std::cout << "\n =====> Printing problematic rolodex to ProblemRolodex.vtk" << std::endl;
+    
+    if (indexNotFoundCard < 0) {
+        DebugStop();
+    }
+    
+    TPZGeoMesh bogusMesh;
+    bogusMesh.ElementVec().Resize(Mesh()->NElements());
+    for (int i = 0; i < bogusMesh.NElements(); i++) {
+        bogusMesh.ElementVec()[i] = nullptr;
+    }
+    bogusMesh.NodeVec() = Mesh()->NodeVec();
+    
+    // Not found card
+    TPZGeoEl* notfoundcard = Mesh()->Element(indexNotFoundCard);
+    if (!notfoundcard) {
+        DebugStop();
+    }
+    TPZGeoEl* copiedNotFoundCard = notfoundcard->Clone(bogusMesh);
+    copiedNotFoundCard->SetMaterialId(3);
+
+    // Axle
+    TPZGeoEl* axle = Mesh()->Element(rol.fedgeindex);
+    if (!axle) {
+        DebugStop();
+    }
+    TPZGeoEl* newaxle = axle->Clone(bogusMesh);
+    newaxle->SetMaterialId(2);
+    
+    // All the preexisting cards in rolodex
+    for (auto& card : rol.fcards) {
+        const int index = card.fgelindex;
+        if (index < 0) {
+            DebugStop();
+        }
+        if (index == indexNotFoundCard) {
+            std::cout << "\n====> Card is in rolodex! Everything should be fine!" << std::endl;
+        }
+        TPZGeoEl *gelInRolodex = Mesh()->Element(index);
+        if (!gelInRolodex) {
+            DebugStop();
+        }
+        TPZGeoEl* newel = gelInRolodex->Clone(bogusMesh);
+    }
+    
+    std::ofstream out("ProblemRolodex.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out);
 }

@@ -199,8 +199,9 @@ private:
     */
     /** @brief Mesh a convex polygon from a list of sequentialy connected edges. If not simple, calls on Gmsh
      * @param polygon a loop of edges that don't necessarily occupy the same plane
+     * @param polyhindex passed only for debugging purposes in case one needs to plot the polyhedron
     */
-    void MeshPolygon(TPZStack<int64_t>& polygon);
+    void MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex);
     /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
      * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
     */

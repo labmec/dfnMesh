@@ -123,9 +123,17 @@ int main(int argc, char* argv[]){
 	// dfn.InheritPolyhedra();
 	// dfn.PrintPolyhedra();
 
+    
 
     // Loop over fractures and refine mesh around them
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
+        
+        // At the beggining of each step create a backup copy of
+        // -> DFNMesh with its respective fGMesh and other attributes
+        // -> All the DFNFractures so far with its respective faces and ribs
+        // These have to be hard copies? Means, when there is a pointer, we should do a new
+        
+        
         // a polygon represents a set of points in a plane
         // poly_stack[iplane] is a matrix 3xn where n is the number of points 
 		DFNPolygon polygon(polyg_stack[iplane], gmesh);
@@ -153,11 +161,15 @@ int main(int argc, char* argv[]){
 		fracture->RefineFaces();
 		// dfn.PrintVTKColorful();
 	// Mesh fracture surface
+        
+        //dfn.Polyhedra()[133].PrintVTK();
 		if(gmesh->Dimension() == 3){
 			// divide the fracture in simple geometries using the mesh created in RefineFaces
 			fracture->MeshFractureSurface();
 			dfn.UpdatePolyhedra();
 		}
+        
+        
 #ifdef PZDEBUG
         // {
         //     std::ofstream logtest("LOG/dfn.summary.log");

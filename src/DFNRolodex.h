@@ -168,8 +168,4 @@ inline std::ostream& operator<<(std::ostream &out, const TRolodex& rolodex){
     return out;
 }
 
-
-
-
-
 #endif /* DFNRolodex_h */
