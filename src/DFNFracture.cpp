@@ -1984,12 +1984,12 @@ void DFNFracture::PlotVTK(const int surface_matid, const std::string exportname,
 }
 
 void DFNFracture::RollBack(TPZGeoMesh *gmeshBackup) {
-    for(auto ribit : fRibs){
+    for(auto& ribit : fRibs){
         const int geoindex = ribit.second.GeoEl()->Index();
         ribit.second.SetGeoEl(gmeshBackup->Element(geoindex));
     }
     
-    for(auto faceit : fFaces){
+    for(auto& faceit : fFaces){
         const int geoindex = faceit.second.GeoEl()->Index();
         faceit.second.SetGeoEl(gmeshBackup->Element(geoindex));
     }
