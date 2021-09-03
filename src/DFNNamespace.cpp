@@ -126,7 +126,7 @@ namespace DFN{
      * orientation, with the right thumb place over the shared 1D side, and considering the first element node distribution.
      * If thumb orientation matches the orientation of gelside, use 1, else, use -1.
      */
-    float DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation){
+    REAL DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation){
 
         // Consistency checks
         if(gelside.Element()->Dimension() != 2)     DebugStop();

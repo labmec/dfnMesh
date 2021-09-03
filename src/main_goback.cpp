@@ -167,20 +167,19 @@ int main(int argc, char* argv[]){
         //dfn.Polyhedra()[133].PrintVTK();
 		if(dfn.Mesh()->Dimension() == 3){
 			// divide the fracture in simple geometries using the mesh created in RefineFaces
-            TPZStack<DFNPolyhedron*> badVolumes;
+            TPZStack<int> badVolumes;
 			fracture->MeshFractureSurface(badVolumes);
             // now verify angles and create possible list of polyhedra that needs remeshing
-//            if (badVolumes.size() > 0){
-            if (count == 1){
+            if (badVolumes.size() > 0){
+//            if (count == 1){                
                 iplane--;                
-                dfn.RollBackLastFracture(gmeshbackup);
+                dfn.RollBackLastFracture(gmeshbackup,badVolumes);
                 count++;
                 continue;
             }
             else{
-                count++;
+                std::cout << "All polyhedra are consistent" << std::endl;
             }
-            
             
 			dfn.UpdatePolyhedra();
 		}

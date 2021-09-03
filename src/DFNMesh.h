@@ -305,8 +305,12 @@ public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
     
-    /** @brief Rollback to the state before the last fracture was introduced*/
-    void RollBackLastFracture(TPZGeoMesh *gmeshBackup);
+    /**
+     * @brief Rollback to the state before the last fracture was introduced
+     * @param gmeshBackup geometric mesh before actual fracture cutting process
+     * @param badVolumes list with polyhedra volumes that need to be refined into simplexes
+     */
+    void RollBackLastFracture(TPZGeoMesh *gmeshBackup, TPZStack<int>& badVolumes);
 
     
 

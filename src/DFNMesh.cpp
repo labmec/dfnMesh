@@ -980,12 +980,12 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     // out<<"\nRecombine Surface {Physical Surface("<<DFNMaterial::Eintact<<")};";
     // out<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
 	// out << "\nCoherence;";
-//	out << "\nCoherence Mesh;";
-//	out << "\nTransfinite Curve {:} = 2;";
-//	out << "\nTransfinite Surface{:};";
-//	out << "\nTransfinite Volume{:};";
-//	out << "\nRecombine Surface{:};";
-//	out << "\nRecombine Volume{:};";
+	out << "\nCoherence Mesh;";
+	out << "\nTransfinite Curve {:} = 2;";
+	out << "\nTransfinite Surface{:};";
+	out << "\nTransfinite Volume{:};";
+	out << "\nRecombine Surface{:};";
+	out << "\nRecombine Volume{:};";
 	out.flush();
 	std::cout<<"                         \r"<<std::flush;
 }
@@ -2991,7 +2991,10 @@ void DFNMesh::PrintProblematicRolodex(const int &indexNotFoundCard, TRolodex &ro
     TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out, true, true);
 }
 
-void DFNMesh::RollBackLastFracture(TPZGeoMesh *gmeshBackup) {
+void DFNMesh::RollBackLastFracture(TPZGeoMesh *gmeshBackup, TPZStack<int>& badVolumes) {
+    LOGPZ_DEBUG(logger,"\nBad volumes found during cut of fracture"
+                << NFractures() << "\nThe volume indexes are = "
+                << badVolumes);
     for (int i = 0; i < fFractures.size()-1; i++) {
         fFractures[i]->RollBack(gmeshBackup);
     }
@@ -3004,4 +3007,10 @@ void DFNMesh::RollBackLastFracture(TPZGeoMesh *gmeshBackup) {
     fFractures.resize(fFractures.size()-1);
     
     fGMesh = gmeshBackup;
+    
+    // refine polyhedra
+    for (auto& polindex : badVolumes){
+        DFNPolyhedron& volume = Polyhedron(polindex);
+        volume.Refine();
+    }
 }

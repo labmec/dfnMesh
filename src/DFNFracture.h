@@ -200,8 +200,9 @@ private:
     /** @brief Mesh a convex polygon from a list of sequentialy connected edges. If not simple, calls on Gmsh
      * @param polygon a loop of edges that don't necessarily occupy the same plane
      * @param polyhindex passed only for debugging purposes in case one needs to plot the polyhedron
+     * @param newelements newly created elements based on the intersection
     */
-    void MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex);
+    void MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, TPZStack<int64_t>& newelements);
     /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
      * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
     */
@@ -271,9 +272,12 @@ public:
 
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
     TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
-
-    /// Triangulates fracture surface from outline
-    void MeshFractureSurface(TPZStack<DFNPolyhedron*> &badVolumes);
+    
+    /**
+     * @brief Triangulates fracture surface from outline
+     * @param badVolumes list of volume polyhedras that have small angles and need to be refined into simplexes during rollback
+     */
+    void MeshFractureSurface(TPZStack<int> &badVolumes);
 
     /** @brief Following directive DFNFracture::fLimit, modify the extended 
      * limits of this fracture to better represent the limits (boundary edges) 
@@ -374,7 +378,23 @@ public:
     */
     void FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList);
     
+    /**
+     * @brief returns data structure to state before starting the cut by current fracture
+     * @param gmeshbackup geometric mesh before performing operations regarding the cut of the fracture
+     */
     void RollBack(TPZGeoMesh *gmeshBackup);
+    
+    /**
+     * @brief Checks if the angles between a subpolygon and and a face of a polyhedron is too small. If so, pushes_back to badVolumes
+     * @param subpolygon vector with edges of subpolygon
+     * @param polyhindex index of polyhedron
+     * @param newelements elements created during cutting by fracture procedure
+     * @param badVolumes list (to be filled) with polyhedra that need to be refined into simplexes
+     */
+    void CheckSubPolygonAngles(TPZStack<int64_t>& subpolygon,
+                               const int& polyhindex,
+                               TPZStack<int64_t>& newelements,
+                               TPZStack<int>& badVolumes);
 };
 
 inline std::ostream& operator<<(std::ostream &out, const DFNFracture& fracture){

@@ -90,7 +90,7 @@ namespace DFN{
      * orientation, with the right thumb place over the shared 1D side, and considering the first element node distribution.
      * If thumb orientation matches the orientation of gelside, use 1, else, use -1.
      */
-    float DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1);
+    REAL DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1);
 
     /**
      * @brief Get a vector from node 0 to node 1 of a 1D side

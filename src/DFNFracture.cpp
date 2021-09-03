@@ -489,7 +489,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 
 }
 
-void DFNFracture::MeshFractureSurface(TPZStack<DFNPolyhedron*> &badVolumes){
+void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::cout<<"\r#SubPolygons meshed = 0";
     #if PZ_LOG
@@ -504,6 +504,7 @@ void DFNFracture::MeshFractureSurface(TPZStack<DFNPolyhedron*> &badVolumes){
     int polygon_counter = 0;
     // Loop over DFNFaces
     for(auto& itr : fFaces){
+        TPZStack<int64_t> newelements;
         DFNFace& initial_face = itr.second;
         if(initial_face.NInboundRibs() < 1) continue;
 
@@ -562,7 +563,8 @@ void DFNFracture::MeshFractureSurface(TPZStack<DFNPolyhedron*> &badVolumes){
                 }
                 continue;
             }
-            MeshPolygon(subpolygon,polyhindex);
+            MeshPolygon(subpolygon,polyhindex,newelements);
+            CheckSubPolygonAngles(subpolygon,polyhindex,newelements,badVolumes);
             std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
@@ -741,10 +743,12 @@ void DFNFracture::MeshPolygon_GMSH(TPZStack<int64_t>& orientedpolygon, std::set<
  * @param polygon a loop of edges that don't necessarily occupy the same plane
  * * @param polyhindex passed only for debugging purposes in case one needs to plot the polyhedron
 */
-void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex){
+void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, TPZStack<int64_t>& newelements){
     
     // New elements to be created
-    TPZStack<int64_t> newelements(1,-1);
+//    TPZStack<int64_t> newelements(1,-1);
+    newelements.resize(1);
+    newelements.Fill(-1);
 
     // Get set of nodes
     std::set<int64_t> nodes;
@@ -1992,5 +1996,83 @@ void DFNFracture::RollBack(TPZGeoMesh *gmeshBackup) {
     for(auto& faceit : fFaces){
         const int geoindex = faceit.second.GeoEl()->Index();
         faceit.second.SetGeoEl(gmeshBackup->Element(geoindex));
+    }
+    
+    
+}
+
+void DFNFracture::CheckSubPolygonAngles (TPZStack<int64_t>& subpolygon, const int& polyhindex,TPZStack<int64_t>& newelements,TPZStack<int>& badVolumes) {
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    DFNPolyhedron& pol = fdfnMesh->Polyhedron(polyhindex);
+//    for(auto& oriented_face : pol.Shell()){
+//        const int faceindex = oriented_face.first;
+//        const int faceorient = oriented_face.second;
+//        DFNFace *face = Face(faceindex);
+//        if (!face)
+//            continue;
+//        const int lineindex = face->LineInFace();
+//        if (lineindex < 0)
+//            continue;
+//    }
+
+#ifdef PZDEBUG
+    if (newelements.size() < 1) {
+        DebugStop();
+    }
+#endif
+    
+    if (newelements.size() == 1) {
+        return;
+    }
+    
+    for (int64_t isubpol :subpolygon) {
+        TPZGeoEl* edge = gmesh->Element(abs(isubpol));
+        TPZGeoElSide edgeside(edge,edge->NSides()-1);
+        TPZGeoElSide neig = edgeside.Neighbour();
+        TPZGeoElSide surfelside;
+        for (; neig != edgeside ; neig++) {
+            if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
+                continue;
+
+            const int indexneig = neig.Element()->Index();
+            int64_t *p = std::find(newelements.begin(), newelements.end(), indexneig);
+            if (p != newelements.end()){
+                surfelside = neig;
+                break;
+            }
+        }
+        if (!surfelside.Element()) {
+            DebugStop();
+        }
+        
+        neig = edgeside.Neighbour();
+        for (; neig != edgeside ; neig++) {
+            if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
+                continue;
+            
+            const int neigindex = neig.Element()->Index();
+            auto it = pol.Shell().find(neigindex);
+            if (it == pol.Shell().end()){
+                TPZGeoEl* father = neig.Element()->Father();
+                if (!father) {
+                    continue;
+                }
+                const int fatherindex = father->Index();
+                it = pol.Shell().find(fatherindex);
+                if (it == pol.Shell().end()) {
+                    continue;
+                }
+            }
+            
+            const int faceindex = it->first;
+            const int orient = DFN::OrientationMatch(neig, edgeside) ? 1 : -1;
+            const REAL diangle = DFN::DihedralAngle(neig, surfelside, orient);
+            
+            if (diangle < fdfnMesh->TolAngle()) {
+                badVolumes.push_back(pol.Index());
+                return;
+            }
+            
+        }
     }
 }

@@ -165,7 +165,8 @@ int main(int argc, char* argv[]){
         //dfn.Polyhedra()[133].PrintVTK();
 		if(gmesh->Dimension() == 3){
 			// divide the fracture in simple geometries using the mesh created in RefineFaces
-			fracture->MeshFractureSurface();
+            TPZStack<int> badVolumes;
+            fracture->MeshFractureSurface(badVolumes);
 			dfn.UpdatePolyhedra();
 		}
         
