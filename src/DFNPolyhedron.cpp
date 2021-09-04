@@ -193,3 +193,14 @@ void DFNPolyhedron::PrintVTK() const {
     std::ofstream out(filename);
     TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out);
 }
+
+
+bool DFNPolyhedron::IsBoundedBy(const int64_t faceindex) const{
+    return IsBoundedBy(faceindex,1)||IsBoundedBy(faceindex,-1);
+}
+bool DFNPolyhedron::IsBoundedBy(const std::pair<int64_t, int> orientedFace) const{
+    return IsBoundedBy(orientedFace.first,orientedFace.second);
+}
+bool DFNPolyhedron::IsBoundedBy(const int64_t faceindex, const int orientation) const{
+    return fIndex == fDFN->GetPolyhedralIndex(faceindex,orientation);
+}

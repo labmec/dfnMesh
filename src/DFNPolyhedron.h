@@ -136,6 +136,22 @@ class DFNPolyhedron
 
 		/// Checks if this Polyhedron is a tetrahedron
 		bool IsTetrahedron() const;
+
+		/** @brief Check if the 2D element of a given index is on the shell of this volume. Checks both possible orientations.
+		 * @param faceindex Index of 2D geoelement
+		*/
+		bool IsBoundedBy(const int64_t faceindex) const;
+		/** @brief Check if the oriented 2D element of a given index is on the shell of this volume
+		 * @param faceindex Index of 2D geoelement
+		 * @param orientation Element orientation (positive means element normal vector points toward the interior of the volume)
+		*/
+		bool IsBoundedBy(const int64_t faceindex, const int orientation) const;
+		/** @brief Check if the oriented 2D element of a given index is on the shell of this volume
+		 * @details faceindex: Index of 2D geoelement
+		 * @details orientation: Element orientation (positive means element normal vector points toward the interior of the volume)
+		 * @param orientedFace: Paired {elIndex, orientation}.
+		*/
+		bool IsBoundedBy(const std::pair<int64_t, int> orientedFace) const;
 };
 
 inline std::ostream& operator<<(std::ostream &out, const DFNPolyhedron& polyhedron){

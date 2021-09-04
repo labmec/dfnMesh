@@ -2046,28 +2046,24 @@ void DFNFracture::CheckSubPolygonAngles(const TPZStack<int64_t>& subpolygon, con
             
             const int64_t neigindex = neig.Element()->Index();
             // The face we're looking for is either on the volume shell, or is a subelement of an element that is
-            auto it = pol.Shell().find(neigindex);
+            int64_t shellfaceindex = -1;
             TPZGeoEl* father = neig.Element()->Father();
-            if (it == pol.Shell().end()){
-                if (!father) {
-                    continue;
-                }
-                const int fatherindex = father->Index();
-                it = pol.Shell().find(fatherindex);
-                if (it == pol.Shell().end()) {
-                    continue;
-                }
+            if(pol.IsBoundedBy(neigindex)){
+                shellfaceindex = neigindex;
+            }else{
+                if(!father) {continue;}
+                if(!pol.IsBoundedBy(father->Index())){continue;}
+                shellfaceindex = father->Index();
             }
 
             // Get orientation of internal angle
             // If face_in_shell was refined, we'll compute the internal angle to the child element. So we need its orientation.
             int fatherChildOrientation = 1;
-            const int64_t shellfaceindex = it->first;
             if(father && shellfaceindex == father->Index()){
                 fatherChildOrientation = DFN::SubElOrientation(father,neig.Element()->WhichSubel());
             }
             // Orientation of face_in_shell relative to the polyhedral volume
-            const int shellFaceOrientation = it->second;
+            const int shellFaceOrientation = pol.IsBoundedBy(shellfaceindex,1) ? 1 : -1;
             // Orientation of element relative to the edge in the subpolygon
             const int faceEdgeOrientation = DFN::OrientationMatch(neig, edgeside) ? 1 : -1;
             // Proper orientation of the internal angle
