@@ -377,7 +377,6 @@ namespace DFN{
         }
     }
 
-    /// @todo Rewrite this using the determinant of the matrix of the transformation between parametric space of father-child, so it won't be limited to 2D elements
     int SubElOrientation(TPZGeoEl* father, int ichild){
         if(!father->HasSubElement()) DebugStop();
 
@@ -393,11 +392,6 @@ namespace DFN{
         int orientation=0;
         switch(dim){
             case  2:{
-                // TPZManVector<REAL,3> father_normal(3,0.);
-                // TPZManVector<REAL,3> child_normal(3,0.);
-                // ElementOrientation(father,father_normal);
-                // ElementOrientation(child,child_normal);
-                // orientation = int(DFN::DotProduct<float>(father_normal,child_normal));
                 TPZTransform<REAL> transf = father->GetTransform(child->NSides()-1,ichild);
                 REAL det = 1.;
                 // TPZFMatrix<REAL> inverse(dim,dim);
