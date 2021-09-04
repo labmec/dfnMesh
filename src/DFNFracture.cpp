@@ -2060,8 +2060,23 @@ void DFNFracture::CheckSubPolygonAngles(const TPZStack<int64_t>& subpolygon, con
             }
 
             // Get orientation of internal angle
+            // If face_in_shell was refined, we'll compute the internal angle to the child element. So we need its orientation.
+            int fatherChildOrientation = 1;
+            const int64_t shellfaceindex = it->first;
+            if(father && shellfaceindex == father->Index()){
+                fatherChildOrientation = DFN::SubElOrientation(father,neig.Element()->WhichSubel());
+            }
+            // Orientation of face_in_shell relative to the polyhedral volume
+            const int shellFaceOrientation = it->second;
+            // Orientation of element relative to the edge in the subpolygon
+            const int faceEdgeOrientation = DFN::OrientationMatch(neig, edgeside) ? 1 : -1;
+            // Proper orientation of the internal angle
+            const int internalAngleOrientation = faceEdgeOrientation*shellFaceOrientation*fatherChildOrientation;
             
-            if (diangle < fdfnMesh->TolAngle()) {
+            // Compute internal angle, and check against a tolerance
+            const REAL internalAngle = DFN::DihedralAngle(neig, surfelside, internalAngleOrientation);
+            constexpr float tol = 2*(M_PI/180);
+            if (internalAngle < tol) {
                 badVolumes.push_back(pol.Index());
                 return;
             }
