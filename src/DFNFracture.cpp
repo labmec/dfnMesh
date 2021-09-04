@@ -2001,40 +2001,33 @@ void DFNFracture::RollBack(TPZGeoMesh *gmeshBackup) {
     
 }
 
-void DFNFracture::CheckSubPolygonAngles (TPZStack<int64_t>& subpolygon, const int& polyhindex,TPZStack<int64_t>& newelements,TPZStack<int>& badVolumes) {
+void DFNFracture::CheckSubPolygonAngles(const TPZStack<int64_t>& subpolygon, const int polyhindex, const TPZStack<int64_t>& newelements,TPZStack<int>& badVolumes){
+    // Consistency
+#ifdef PZDEBUG
+    if(newelements.size() < 1) {DebugStop();}
+    if(subpolygon.size() < 3) {DebugStop();}
+    if(polyhindex < 0 || polyhindex >= fdfnMesh->NPolyhedra()) {DebugStop();}
+#endif
+
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     DFNPolyhedron& pol = fdfnMesh->Polyhedron(polyhindex);
-//    for(auto& oriented_face : pol.Shell()){
-//        const int faceindex = oriented_face.first;
-//        const int faceorient = oriented_face.second;
-//        DFNFace *face = Face(faceindex);
-//        if (!face)
-//            continue;
-//        const int lineindex = face->LineInFace();
-//        if (lineindex < 0)
-//            continue;
-//    }
-
-#ifdef PZDEBUG
-    if (newelements.size() < 1) {
-        DebugStop();
-    }
-#endif
     
-    if (newelements.size() == 1) {
-        return;
-    }
+    // If N Elements == 1, Gmsh was not used to mesh this SubPolygon and we can skip this function
+    if (newelements.size() == 1) {return;}
     
+    // For each edge in subpolygon, there is a neighbour on the fracture surface. 
+    // Check surfel internal dihedral angle with the 2 faces in the volume shell which are its neighbours through the 1D-side occupied by the edge in the subpolygon
     for (int64_t isubpol :subpolygon) {
         TPZGeoEl* edge = gmesh->Element(abs(isubpol));
         TPZGeoElSide edgeside(edge,edge->NSides()-1);
         TPZGeoElSide neig = edgeside.Neighbour();
+        // Get 2D element on the fracture surface
         TPZGeoElSide surfelside;
-        for (; neig != edgeside ; neig++) {
+        for (; neig != edgeside ; ++neig) {
             if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
-                continue;
+                {continue;}
 
-            const int indexneig = neig.Element()->Index();
+            const int64_t indexneig = neig.Element()->Index();
             int64_t *p = std::find(newelements.begin(), newelements.end(), indexneig);
             if (p != newelements.end()){
                 surfelside = neig;
@@ -2045,15 +2038,17 @@ void DFNFracture::CheckSubPolygonAngles (TPZStack<int64_t>& subpolygon, const in
             DebugStop();
         }
         
+        // Search for 2D gel in shell neighbour of surfel through edgeside
         neig = edgeside.Neighbour();
-        for (; neig != edgeside ; neig++) {
+        for (; neig != edgeside ; ++neig) {
             if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
                 continue;
             
-            const int neigindex = neig.Element()->Index();
+            const int64_t neigindex = neig.Element()->Index();
+            // The face we're looking for is either on the volume shell, or is a subelement of an element that is
             auto it = pol.Shell().find(neigindex);
+            TPZGeoEl* father = neig.Element()->Father();
             if (it == pol.Shell().end()){
-                TPZGeoEl* father = neig.Element()->Father();
                 if (!father) {
                     continue;
                 }
@@ -2063,10 +2058,8 @@ void DFNFracture::CheckSubPolygonAngles (TPZStack<int64_t>& subpolygon, const in
                     continue;
                 }
             }
-            
-            const int faceindex = it->first;
-            const int orient = DFN::OrientationMatch(neig, edgeside) ? 1 : -1;
-            const REAL diangle = DFN::DihedralAngle(neig, surfelside, orient);
+
+            // Get orientation of internal angle
             
             if (diangle < fdfnMesh->TolAngle()) {
                 badVolumes.push_back(pol.Index());
