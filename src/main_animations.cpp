@@ -151,7 +151,8 @@ int main(int argc, char* argv[]){
 	// Mesh fracture surface
 		if(gmesh->Dimension() == 3){
 			// divide the fracture in simple geometries using the mesh created in RefineFaces
-			fracture->MeshFractureSurface();
+            TPZStack<int> badVolumes;
+            fracture->MeshFractureSurface(badVolumes);
 			dfn.UpdatePolyhedra();
 		}
 #ifdef PZDEBUG
