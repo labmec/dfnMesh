@@ -341,7 +341,7 @@ void DFNFracture::SnapIntersections_faces(REAL tolDist, REAL tolAngle){
     if(tolDist < 0.) tolDist = fdfnMesh->TolDist();
     if(tolAngle < 0.) tolAngle = fdfnMesh->TolAngle();
     tolAngle = std::cos(tolAngle);
-    for(auto itr : fFaces){
+    for(auto &itr : fFaces){
         DFNFace* face = &itr.second;
         face->SnapIntersection_try(tolDist, tolAngle);
     }
