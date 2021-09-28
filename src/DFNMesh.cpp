@@ -2625,24 +2625,9 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	const std::string dirname = "./graphics";
 	std::filesystem::create_directory(dirname);
 	
-	std::set<int64_t> polygels;
-	std::ofstream polygfile(dirname+"/allPolygons.vtk");
-	// Make sure fracture surfaces are consistent
-	for(auto frac : FractureList()){
-		// frac->SetMaterialId(frac->Index());
-		// frac->CleanUp(frac->Index());
-		TPZVec<TPZGeoEl*> graphical_elements = frac->Polygon().InsertGeomRepresentation(fGMesh, -(frac->Index()+1), 1);
-		for(TPZGeoEl* gel : graphical_elements){polygels.insert(gel->Index());}
-	}
-	// PlotAllPolygons(dirname + "allPolygons.vtk");
-	TPZVTKGeoMesh::PrintGMeshVTK(gmesh,polygels,polygfile);
-	for(int64_t index : polygels){
-		TPZGeoEl* graphic_gel = gmesh->Element(index);
-		gmesh->DeleteElement(graphic_gel);
-	}
-
 
 	// Plot each of the fractures
+	PlotAllPolygons(dirname + "allPolygons.vtk");
 	for(auto frac : fFractures){
 		std::string exportname = dirname + '/' + filename + "." + std::to_string(frac->Index()) + ".vtk";
 		frac->PlotVTK(frac->Index(),exportname);
@@ -3049,4 +3034,64 @@ void DFNMesh::PlotVolumesByCoarseIndex(const int64_t coarseindex, const std::str
         pol.PrintVTK(filename);
         
     }
+}
+
+
+void DFNMesh::PlotAllPolygons(const std::string filepath) const{
+    constexpr int type = 7; // Arbitrary polygon
+    constexpr int eldimension = 2;
+
+	std::ofstream file(filepath);
+    std::stringstream node, connectivity, materialstream, indexstream, dimensionstream, typestream;
+
+    //Header
+    file << "# vtk DataFile Version 3.0\n";
+    file << "DFNPolygon VTK Visualization\n";
+    file << "ASCII\n\n";
+
+    file << "DATASET UNSTRUCTURED_GRID\n";
+
+	int totalNNodes = 0;
+
+	
+	for(DFNFracture* fracture : fFractures){
+		const DFNPolygon& polygon = fracture->Polygon();
+
+		const int elNnodes = polygon.NCornerNodes();
+		connectivity << elNnodes;
+		TPZManVector<REAL,3> cornerX(3,0.0);
+		for(int64_t inode = 0; inode < elNnodes; inode++) {
+			polygon.iCornerX(inode,cornerX);
+			for (int c = 0; c < 3; c++) {
+				REAL coord = cornerX[c];
+				node << coord << " ";
+			}
+			node << '\n';
+			connectivity << ' ' << totalNNodes + inode;
+		}
+    	connectivity << '\n';
+
+		materialstream << fracture->MaterialId() << '\n';
+		indexstream << fracture->Index() << '\n';
+		// dimensionstream << eldimension << '\n';
+		typestream << type << '\n';
+		totalNNodes += elNnodes;
+	}
+    node << '\n';
+	connectivity << '\n';
+
+    file << "POINTS " << totalNNodes << " float\n";
+    file << node.str();
+    int64_t size = totalNNodes+NFractures();
+    file << "CELLS " << NFractures() << ' ' << size << '\n';
+    file << connectivity.str() << '\n';
+
+
+    file << "CELL_TYPES " << NFractures() << '\n' << typestream.str() << '\n';
+    file << "CELL_DATA "<< NFractures() <<'\n';
+    file << "FIELD FieldData 2\n";
+    file << "material 1 " << NFractures() << " int\n" << materialstream.str();
+    file << "elIndex 1 " << NFractures() << " int\n" << indexstream.str();
+    // file << "Dimension 1 " << NFractures() << " int\n" << dimensionstream.str();
+    file.close();
 }
