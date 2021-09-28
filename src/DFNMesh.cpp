@@ -1977,6 +1977,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
             cards[i] = rolodex.Card(initial_face_orient.first);
         }
 		catch(...){
+			PrintRolodexBugReport(iedge);
             PrintProblematicRolodex(initial_face_orient.first,rolodex);
 //            fPolyhedra[133].PrintVTK();
             DFN_DebugStop();
@@ -2001,6 +2002,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 					<< std::make_pair(facingcards[i].first.fgelindex , facingcards[i].second)
 					<< "\nAround rolodex:\n"
 					<< rolodex;
+			PrintRolodexBugReport(iedge);
 			DFN_DebugStop();
 		}
 	}
