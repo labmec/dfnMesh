@@ -644,3 +644,48 @@ bool DFNPolygon::ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segmen
 
     return false;
 }
+
+
+void DFNPolygon::PlotVTK(const std::string filepath, const int materialID, const int64_t index) const{
+    std::ofstream file(filepath);
+
+    std::stringstream node, connectivity;
+
+    //Header
+    file << "# vtk DataFile Version 3.0" << std::endl;
+    file << "DFNPolygon VTK Visualization" << std::endl;
+    file << "ASCII" << std::endl << std::endl;
+
+    file << "DATASET UNSTRUCTURED_GRID" << std::endl;
+    const int elNnodes = this->NCornerNodes();
+    file << "POINTS " << elNnodes << " float\n";
+
+    connectivity << elNnodes;
+    TPZManVector<REAL,3> cornerX(3,0.0);
+    for(int64_t inode = 0; inode < elNnodes; inode++) {
+        iCornerX(inode,cornerX);
+        for (int c = 0; c < 3; c++) {
+            REAL coord = cornerX[c];
+            node << coord << " ";
+        }
+        node << '\n';
+        connectivity << " " << inode;
+    }
+    connectivity << '\n';
+    node << '\n';
+    file << node.str();
+    int64_t size = elNnodes+1;
+    file << "CELLS 1 " << size << '\n';
+    file << connectivity.str() << std::endl;
+
+    constexpr int type = 7; // Arbitrary polygon
+    constexpr int eldimension = 2; 
+
+    file << "CELL_TYPES 1\n7\n";
+    file << "CELL_DATA 1\n";
+    file << "FIELD FieldData 3\n";
+    file << "material 1 1 int\n" << materialID << '\n';
+    file << "elIndex 1 1 int\n" << index << '\n';
+    file << "Dimension 1 1 int\n2";
+    file.close();
+}

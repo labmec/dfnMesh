@@ -174,6 +174,9 @@ class DFNPolygon
 
 	void ComputeCentroid(TPZVec<REAL>& centroid);
 
+	/// Plot polygon graphic to VTK file. You can set a material id and an element index to it and they'll be exported to VTK file
+	void PlotVTK(const std::string filepath, const int materialID = 0, const int64_t index = 0) const;
+
 	/** @brief Print method for logging */
     void Print(std::ostream& out = std::cout) const;
 
