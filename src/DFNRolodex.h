@@ -18,6 +18,7 @@
 
 // A 2D element sorted around an edge (a rolodex card)
 struct TRolodexCard{
+  public: // Data structure
     /// index of the geometric 2d element/side represented by this card
     int64_t fgelindex = -1;
     int fSide = -1;
@@ -29,6 +30,7 @@ struct TRolodexCard{
     /// position of this card in its rolodex
     int fposition = -1;
 
+  public: // Member functions
     /// empty constructor and destructor
     // TRolodexCard(){};
     TRolodexCard(int64_t id=-1, REAL angle=0.0, int side=0)
@@ -102,6 +104,29 @@ public:
     TRolodex(const TRolodex& copy){
         this->operator=(copy);
     }
+
+    /// @brief Constructor from an std::map of sorted cards {angle, face_edgeside}
+    void Initialize(const int64_t AxleIndex, const std::map<REAL,TPZGeoElSide>& SortedCards){
+        fedgeindex = AxleIndex;
+		fcards.clear();
+		fcards.resize(SortedCards.size());
+
+        TPZGeoEl* AxleGel = SortedCards.begin()->second.Element()->Mesh()->Element(AxleIndex);
+        TPZGeoElSide edgeside(AxleGel,2);
+
+        int j = 0;
+		for(auto& iterator : SortedCards){
+			TPZGeoElSide faceside = iterator.second;
+			TRolodexCard& facecard = fcards[j];
+			facecard.fgelindex = faceside.Element()->Index();
+			facecard.fSide = faceside.Side();
+			facecard.fangle_to_reference = iterator.first;
+			facecard.forientation = (DFN::OrientationMatch(edgeside,faceside)?1:-1);
+			facecard.fposition = j;
+			j++;
+		}
+    }
+
     /**
      * @brief Get the next face forward or backwards according to direction and fill the angle between faces
      * @param card_orientation a pair of a card in the rolodex and the direction of the desired next card (backwards -1 or forwards +1)

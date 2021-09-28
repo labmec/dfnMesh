@@ -2392,23 +2392,7 @@ void DFNMesh::SortFacesAroundEdges(){
             }
 			facemap.insert({angle,neig});
 		}
-		int j = 0;
-		// std::cout<<"\n Edge # "<<gel->Index();
-		rolodex.fedgeindex = gel->Index();
-		rolodex.fcards.clear();
-		rolodex.fcards.resize(facemap.size());
-		for(auto iterator : facemap){
-			TPZGeoElSide& faceside = iterator.second;
-			TRolodexCard& facecard = rolodex.fcards[j];
-			facecard.fgelindex = faceside.Element()->Index();
-			facecard.fSide = faceside.Side();
-			facecard.fangle_to_reference = iterator.first;
-			facecard.forientation = (DFN::OrientationMatch(edgeside,faceside)?1:-1);
-			facecard.fposition = j;
-			j++;
-			// std::cout<<"\n"<<faceside.Element()->Index()<<"\t"<< iterator.first;
-		}
-		// std::cout<<"\n";
+		rolodex.Initialize(gel->Index(),facemap);
 	}
 	std::cout<<"                 \r"<<std::flush;
 }
