@@ -2387,6 +2387,7 @@ void DFNMesh::SortFacesAroundEdges(){
 			REAL angle = DFN::DihedralAngle(reference_el,neig,reference_orientation);
             std::map<REAL,TPZGeoElSide>::iterator it = facemap.find(angle);
             if (it != facemap.end()) {
+				this->PrintRolodexBugReport(gel->Index());
                 DebugStop(); // two faces with same angle in rolodex!
             }
 			facemap.insert({angle,neig});
@@ -3013,4 +3014,44 @@ void DFNMesh::RollBackLastFracture(TPZGeoMesh *gmeshBackup, TPZStack<int>& badVo
         DFNPolyhedron& volume = Polyhedron(polindex);
         volume.Refine();
     }
+}
+
+
+
+void DFNMesh::PrintRolodexBugReport(const int64_t AxleIndex){
+	// Consistency
+	if(AxleIndex < 0 || AxleIndex > fGMesh->NElements()) throw std::invalid_argument("AxleIndex does not point to an edge element in the mesh.\n");
+	TPZGeoEl* edge = fGMesh->Element(AxleIndex);
+	if(edge->Dimension() != 1) throw std::invalid_argument("AxleIndex does not point to an edge element in the mesh.\n");
+
+	const std::string dirname = "./LOG/RolodexBugReport";
+	std::filesystem::create_directories(dirname);
+
+	// Plot current Rolodex (if existent)
+	if(AxleIndex < fSortedFaces.size() && fSortedFaces[AxleIndex].NCards() != 0){
+		TRolodex& rolodex = fSortedFaces[AxleIndex];
+		rolodex.PlotVTK(dirname+"/CurrentRolodex.vtk",fGMesh);
+	}
+
+	// Plot Neighbours of edge to see if they match the Rolodex
+	TPZGeoElSide edgeside = {edge,2};
+	constexpr int twoD = 2, UnrefinedOnly = true, orientationMatch = true;
+	DFN::PlotNeighbours(dirname+"/twoDNeighbours.vtk",edgeside,twoD,UnrefinedOnly,orientationMatch);
+
+	// Plot polyhedral volumes
+	std::set<int> toPlot;
+	TPZGeoElSide neig = edgeside.Neighbour();
+	for(/*void*/; neig!= edgeside; ++neig){
+		if(neig.Element()->Dimension() != 2) continue;
+		if(neig.Element()->HasSubElement()) continue;
+
+		int polyhindex = GetPolyhedralIndex(neig.Element()->Index(),+1);
+		if(!(polyhindex < 0)) toPlot.insert(polyhindex);
+		polyhindex = GetPolyhedralIndex(neig.Element()->Index(),-1);
+		if(!(polyhindex < 0)) toPlot.insert(polyhindex);
+	}
+	for(int polyhindex : toPlot){
+		DFNPolyhedron& polyh = Polyhedron(polyhindex);
+		polyh.PrintVTK(dirname+"/Poly_"+std::to_string(polyhindex)+".vtk");
+	}
 }

@@ -159,6 +159,49 @@ public:
 
     /** @return Number of cards*/
     int NCards() const{return fcards.size();}
+
+    void PlotVTK(const std::string filepath, TPZGeoMesh* gmesh){
+    
+        std::cout << "\n =====> Plotting rolodex to " << filepath << std::endl;
+        
+        TPZGeoMesh auxMesh;
+        auxMesh.ElementVec().Resize(gmesh->NElements());
+        for (int i = 0; i < auxMesh.NElements(); i++) {
+            auxMesh.ElementVec()[i] = nullptr;
+        }
+        auxMesh.NodeVec() = gmesh->NodeVec();
+        
+
+        // Axle
+        TPZGeoEl* axle = gmesh->Element(fedgeindex);
+        if (!axle) {
+            DebugStop();
+        }
+        TPZGeoEl* newaxle = axle->Clone(auxMesh);
+        newaxle->SetMaterialId(0);
+        TPZVec<REAL> elData(gmesh->NElements(),-9.0);
+        elData[newaxle->Index()] = 0.0;
+        
+        // All the preexisting cards in rolodex
+        for (auto& card : fcards) {
+            const int index = card.fgelindex;
+            if (index < 0) {
+                DebugStop();
+            }
+            TPZGeoEl *gelInRolodex = gmesh->Element(index);
+            if (!gelInRolodex) {
+                DebugStop();
+            }
+            TPZGeoEl* newel = gelInRolodex->Clone(auxMesh);
+            newel->SetMaterialId(card.forientation);
+            elData[newel->Index()] = card.fangle_to_reference;
+        }
+        
+        std::ofstream out(filepath);
+        TPZVTKGeoMesh::PrintGMeshVTK(&auxMesh, out, elData);
+        // TPZVTKGeoMesh::PrintGMeshVTK(&auxMesh, out, true, true);
+
+    }
 };
 
 

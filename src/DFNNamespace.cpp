@@ -752,4 +752,38 @@ namespace DFN{
         std::ofstream file(filename);
         TPZVTKGeoMesh::PrintGMeshVTK(gmesh,file, elData);
     }
+
+
+
+    void PlotNeighbours(const std::string filepath,
+                        TPZGeoElSide geoelside, 
+                        const int filterDimension, 
+                        const bool UnrefinedOnly, 
+                        const bool orientationMatch){
+        
+        // Consistency
+        if(geoelside.Element() == nullptr) DebugStop();
+
+        TPZGeoMesh* gmesh = geoelside.Element()->Mesh();
+        TPZGeoMesh auxMesh;
+        auxMesh.ElementVec().Resize(gmesh->NElements());
+        for (int i = 0; i < auxMesh.NElements(); i++) {
+            auxMesh.ElementVec()[i] = nullptr;
+        }
+        auxMesh.NodeVec() = gmesh->NodeVec();
+
+        TPZGeoElSide neig = geoelside.Neighbour();
+        for(/*void*/; neig != geoelside; neig++){
+            if(filterDimension > 0 && neig.Element()->Dimension() != filterDimension) continue;
+            if(UnrefinedOnly && neig.Element()->HasSubElement()) continue;
+            
+            TPZGeoEl* newel = neig.Element()->Clone(auxMesh);
+            if(orientationMatch){
+                int orientation = DFN::OrientationMatch(geoelside,neig);
+                newel->SetMaterialId(orientation);
+            }
+        }
+        std::ofstream out(filepath);
+        TPZVTKGeoMesh::PrintGMeshVTK(&auxMesh, out, true, true);
+    }
 } /* namespace DFN*/

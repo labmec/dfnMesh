@@ -173,7 +173,7 @@ bool DFNPolyhedron::IsTetrahedron() const{
     // return ntriangles == 4;
 }
 
-void DFNPolyhedron::PrintVTK() const {
+void DFNPolyhedron::PrintVTK(const std::string filepath) const {
     
     TPZGeoMesh bogusMesh;
     TPZGeoMesh *gmesh = fDFN->Mesh();
@@ -189,7 +189,12 @@ void DFNPolyhedron::PrintVTK() const {
         TPZGeoEl *copiedgel = gel->Clone(bogusMesh);
         copiedgel->SetMaterialId(shell.second);
     }
-    std::string filename = "polyhedron_index_" + std::to_string(fIndex) + ".vtk";
+    std::string filename; 
+    if(filepath.length() == 0){
+        filename = "polyhedron_index_" + std::to_string(fIndex) + ".vtk";
+    }else{
+        filename = filepath;
+    }
     std::ofstream out(filename);
     TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out);
 }

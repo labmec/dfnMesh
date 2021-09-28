@@ -225,6 +225,13 @@ namespace DFN{
     /// Plot determinant of Jacobian Matrix of all elements in the mesh
     void PlotJacobian(TPZGeoMesh* gmesh, std::string filename = "LOG/jacplot.vtk");
 
+    /** @brief Plot Neighbours of a TPZGeoElSide to a vtk file
+     * @param filterDimension: Plot elements of this dimension only. Set to -1 to plot all dimensions.
+     * @param UnrefinedOnly: Directive to plot only elements that were not refined.
+     * @param OrientationMatch: Directive to plot orientation of neighbour with respect to the geoelside.
+     */
+    void PlotNeighbours(const std::string filepath,TPZGeoElSide geoelside, const int filterDimension = -1, const bool UnrefinedOnly = true, const bool orientationMatch = false);
+
 } /*namespace DFN*/
 
 

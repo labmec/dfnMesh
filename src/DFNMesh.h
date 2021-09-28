@@ -312,8 +312,10 @@ public:
      */
     void RollBackLastFracture(TPZGeoMesh *gmeshBackup, TPZStack<int>& badVolumes);
 
-    
-
+    /** @brief Print and plot detailed info about a Rolodex
+     * @param AxleIndex : Index of 1D element which is the axle of the Rolodex
+     */
+    void PrintRolodexBugReport(const int64_t AxleIndex);
 };
 
 
