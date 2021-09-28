@@ -299,11 +299,21 @@ private:
     /** @brief set polyh index -1 for every face in a stack*/
     void ClearPolyhIndex(TPZVec<std::pair<int64_t,int>>& facestack);
     
-    
+    /**
+     * @brief prints the rolodex rol and the element with index indexNotFoundCard
+     */
     void PrintProblematicRolodex(const int &indexNotFoundCard, TRolodex &rol);
+    
+    
 public:
     /** @brief For every face without a polyh index inherit their father's*/
     void InheritPolyhedra();
+
+    /**
+     * @brief Prints the polyhedron associated with element with index coarseindex
+     */
+    void PlotVolumesByCoarseIndex(const int64_t coarseindex, const std::string dirpath) const;
+
     
     /**
      * @brief Rollback to the state before the last fracture was introduced

@@ -132,30 +132,106 @@ namespace DFN{
      * @param lineloop an oriented loop of 3 or 4 edges
     */  
     template<class Tcontainer>
-    TPZGeoEl* MeshSimplePolygon(TPZGeoMesh* gmesh,const Tcontainer& lineloop, int matid){
-        int nnodes = lineloop.size();
-        if(nnodes < 3) DebugStop();
-        TPZManVector<int64_t,4> cornerindices(nnodes,-1);
-        int i=0;
-        for(int64_t edge : lineloop){
-            int64_t index = std::abs(edge);
-            if(edge < 0){
-                cornerindices[i] = gmesh->Element(index)->NodeIndex(1);
+    void MeshSimplePolygon(TPZGeoMesh* gmesh,const Tcontainer& lineloop, int matid, TPZStack<int64_t>& newelements){
+        int nelements = lineloop.size();
+        if(nelements < 3 || nelements > 4) DebugStop();
+        newelements.clear();
+        
+        bool divideInTwoTri = false;
+        int midnode = -1;
+        
+        TPZManVector<REAL,4> globNodes(nelements,-1);
+        for (int64_t in = 0 ; in < nelements ; in++) {
+            const int64_t index = std::abs(lineloop[in]);
+            TPZGeoEl* edge = gmesh->Element(index);
+            if(lineloop[in] < 0){
+                globNodes[in] = edge->NodeIndex(1);
             }else{
-                cornerindices[i] = gmesh->Element(index)->NodeIndex(0);
+                globNodes[in] = edge->NodeIndex(0);
             }
-            i++;
         }
-        int64_t index = -1;
-        MElementType eltype;
-        switch (nnodes){
-            case  2: eltype = MElementType::EInterfaceLinear; break;
-            case  3: eltype = MElementType::ETriangle; break;
-            case  4: eltype = MElementType::EQuadrilateral; break;
-            default: DebugStop();
+            
+        for (int64_t in = 0 ; in < nelements ; in++) {
+            TPZManVector<REAL,3> c0(3,-1.),c1(3,-1.),vec0(3,-1.),vec1(3,-1.);
+          {
+            const int64_t index = std::abs(lineloop[in]);
+            TPZGeoEl* gel = gmesh->Element(index);
+            if(gel->Dimension() != 1) DebugStop();
+            gel->NodePtr(0)->GetCoordinates(c0);
+            gel->NodePtr(1)->GetCoordinates(c1);
+            vec0 = c1 - c0;
+          }
+
+          {
+            const int64_t index = std::abs(lineloop[(in+1)%nelements]);
+            TPZGeoEl* gel = gmesh->Element(index);
+            if(gel->Dimension() != 1) DebugStop();
+            gel->NodePtr(0)->GetCoordinates(c0);
+            gel->NodePtr(1)->GetCoordinates(c1);
+            vec1 = c1 - c0;
+          }
+            
+            TPZManVector<REAL,3> vecnormal = DFN::CrossProduct<REAL>(vec0,vec1);
+            const REAL norm0 = DFN::Norm<REAL>(vec0);
+            const REAL norm1 = DFN::Norm<REAL>(vec1);
+            const REAL norm2 = DFN::Norm<REAL>(vecnormal);
+            
+            const REAL sinangle = norm2/norm1/norm0;
+            constexpr REAL sin10 = 10./180.*M_PI; // AQUINATHAN CHANGE TO 10
+            
+            if(sinangle < sin10){
+                if (divideInTwoTri){
+                    DebugStop(); // 3 parallel edges!
+                }
+                midnode = (in+1)%nelements;
+                divideInTwoTri = true;
+            }
         }
-        TPZGeoEl* new_el = gmesh->CreateGeoElement(eltype,cornerindices,matid,index);
-        return new_el;
+        if (divideInTwoTri && midnode == -1) DebugStop();
+        
+        if (divideInTwoTri){
+            TPZManVector<int64_t,3> cornerindices0(3,-1),cornerindices1(3,-1);
+            cornerindices0[0] = globNodes[midnode];
+            cornerindices0[1] = globNodes[(midnode+1)%nelements];
+            cornerindices0[2] = globNodes[(midnode+2)%nelements];
+
+            cornerindices1[0] = globNodes[(midnode+2)%nelements];
+            cornerindices1[1] = globNodes[(midnode+3)%nelements];
+            cornerindices1[2] = globNodes[midnode];
+            
+            MElementType eltype = MElementType::ETriangle;
+            
+            int64_t elindex = -1;
+            TPZGeoEl* new_el0 = gmesh->CreateGeoElement(eltype,cornerindices0,matid,elindex);
+            newelements.push_back(new_el0->Index());
+            TPZGeoEl* new_el1 = gmesh->CreateGeoElement(eltype,cornerindices1,matid,elindex);
+            newelements.push_back(new_el1->Index());
+            gmesh->BuildConnectivity();
+            
+        }
+        else{
+            TPZManVector<int64_t,4> cornerindices(nelements,-1);
+            int i=0;
+            for(int64_t edge : lineloop){
+                int64_t index = std::abs(edge);
+                if(edge < 0){
+                    cornerindices[i] = gmesh->Element(index)->NodeIndex(1);
+                }else{
+                    cornerindices[i] = gmesh->Element(index)->NodeIndex(0);
+                }
+                i++;
+            }
+            int64_t index = -1;
+            MElementType eltype;
+            switch (nelements){
+    //            case  2: eltype = MElementType::EInterfaceLinear; break;
+                case  3: eltype = MElementType::ETriangle; break;
+                case  4: eltype = MElementType::EQuadrilateral; break;
+                default: DebugStop();
+            }
+            TPZGeoEl* new_el = gmesh->CreateGeoElement(eltype,cornerindices,matid,index);
+            newelements.push_back(new_el->Index());
+        }
     }
 
 

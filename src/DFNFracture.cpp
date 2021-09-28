@@ -775,10 +775,8 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, 
         case 2: DebugStop();
         case 3:             
         case 4: if(isplane){
-                    // TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,this->fmatid); 
                     // If you create elements in the surface with matid = this->fmatid, Fracture Boundary condition recovery may fail
-                    TPZGeoEl* newel = DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Eintact);
-                    newelements[0] = newel->Index();
+                    DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Eintact,newelements);
                     break;
                 }
         default: MeshPolygon_GMSH(polygon,nodes,newelements,isplane);
@@ -2016,7 +2014,8 @@ void DFNFracture::CheckSubPolygonAngles(const TPZStack<int64_t>& subpolygon, con
     if (newelements.size() == 1) {return;}
     
     // For each edge in subpolygon, there is a neighbour on the fracture surface. 
-    // Check surfel internal dihedral angle with the 2 faces in the volume shell which are its neighbours through the 1D-side occupied by the edge in the subpolygon
+    // Check surfel internal dihedral angle with the 2 faces in the volume shell which are its neighbours
+    // through the 1D-side occupied by the edge in the subpolygon
     for (int64_t isubpol :subpolygon) {
         TPZGeoEl* edge = gmesh->Element(abs(isubpol));
         TPZGeoElSide edgeside(edge,edge->NSides()-1);

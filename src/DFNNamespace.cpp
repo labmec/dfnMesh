@@ -190,7 +190,7 @@ namespace DFN{
             TPZGeoEl* elder = gmesh->Element(index)->EldestAncestor();
             ancestors.insert(elder->Index());
         }
-        return ancestors.size() > 1;
+        return ancestors.size() > 2;
     }
 
     /** @brief Alternate name of dfn::IsValidPolygon for readability

@@ -1,0 +1,42 @@
+{
+    "$schema": "./dfn_schema.json",
+    "PZGenGrid":{
+        "Origin": [0.0, 0.0, 0.0],
+        // "x0": [0.0, 0.0, 0.0],
+        // "minX": [0.0, 0.0, 0.0],
+        // "maxX": [0.0, 0.0, 0.0],
+        // "xf": [2.0, 2.0, 2.0],
+        // "Endpoint": [2.0, 2.0, 2.0],
+        "Dimensions": [2.0, 2.0, 2.0],
+        "MMeshType": "EHexahedral",
+        "Nels": [1,1,1]
+        // "nelDiv": [1,1,1]
+    },
+    // "Mesh" : "examples/cube.msh",
+    "TolDist": 1e-4,
+    "TolAngle": 1e-2,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0,
+            "Limit": "Etruncated",
+            "MaterialID": 12,
+            "Nodes":[
+                [0,2,1],
+                [0,0,1],
+                [2,0,1.5],
+                [2,2,1.5]
+            ]
+        }
+        // ,{//Fracture 1
+        //     "Index": 1,
+        //     "Limit": "Etruncated",
+        //     "MaterialID": 5,
+        //     "Nodes":[
+        //         [0.45, 2.50,-0.50],
+        //         [0.45,-0.50,-0.50],
+        //         [0.45,-0.50, 2.50],
+        //         [0.45, 2.50, 2.50]
+        //     ]
+        // }
+    ]
+}

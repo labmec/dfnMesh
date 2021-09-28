@@ -93,6 +93,11 @@ namespace DFN{
     REAL DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1);
 
     /**
+     * @brief print a geometric element to paraview
+     */
+    void PrintGeoEl(TPZGeoEl* gel);
+
+    /**
      * @brief Get a vector from node 0 to node 1 of a 1D side
      */
     void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector);
@@ -139,7 +144,7 @@ namespace DFN{
      * @param lineloop an oriented loop of 3 or 4 edges
     */  
     template<class Tcontainer>
-    TPZGeoEl* MeshSimplePolygon(TPZGeoMesh* gmesh, const Tcontainer& lineloop, int matid);
+    void MeshSimplePolygon(TPZGeoMesh* gmesh, const Tcontainer& lineloop, int matid, TPZStack<int64_t>& newelements);
 
     /** @brief Check if a set of mesh nodes are coplanar
     */

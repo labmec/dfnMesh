@@ -128,6 +128,20 @@ int main(int argc, char* argv[]){
     // Loop over fractures and refine mesh around them
     TPZGeoMesh *gmeshbackup = nullptr;
     int count = 0;
+
+    // Uncomment to print polygons
+//    std::set<int64_t> polygels;
+//    std::ofstream polygfile("allPolygons.vtk");
+//    for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
+//        if(iplane != 11) continue;
+//        DFNPolygon polygon(polyg_stack[iplane], dfn.Mesh());
+//        DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane],matid[iplane]);
+//        TPZVec<TPZGeoEl*> graphical_elements = polygon.InsertGeomRepresentation(dfn.Mesh(), -(fracture->Index()+1), 1);
+//        for(TPZGeoEl* gel : graphical_elements){polygels.insert(gel->Index());}
+//        // PlotAllPolygons(dirname + "allPolygons.vtk");
+//    }
+//    TPZVTKGeoMesh::PrintGMeshVTK(gmesh,polygels,polygfile);
+    
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
         
         // At the beggining of each step create a backup copy of
