@@ -2387,22 +2387,7 @@ void DFNMesh::SortFacesAroundEdges(){
 			REAL angle = DFN::DihedralAngle(reference_el,neig,reference_orientation);
             std::map<REAL,TPZGeoElSide>::iterator it = facemap.find(angle);
             if (it != facemap.end()) {
-
-                int j = 0;
-                rolodex.fedgeindex = gel->Index();
-                rolodex.fcards.clear();
-                rolodex.fcards.resize(facemap.size());
-                for(auto iterator : facemap){
-                    TPZGeoElSide& faceside = iterator.second;
-                    TRolodexCard& facecard = rolodex.fcards[j];
-                    facecard.fgelindex = faceside.Element()->Index();
-                    facecard.fSide = faceside.Side();
-                    facecard.fangle_to_reference = iterator.first;
-                    facecard.forientation = (DFN::OrientationMatch(edgeside,faceside)?1:-1);
-                    facecard.fposition = j;
-                    j++;
-                    // std::cout<<"\n"<<faceside.Element()->Index()<<"\t"<< iterator.first;
-                }
+                rolodex.Initialize(gel->Index(),facemap);
                 PrintProblematicRolodex(neig.Element()->Index(), rolodex);
                 DebugStop(); // two faces with same angle in rolodex!
             }
