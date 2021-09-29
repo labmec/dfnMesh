@@ -187,14 +187,14 @@ int main(int argc, char* argv[]){
 			fracture->MeshFractureSurface(badVolumes);
             // now verify angles and create possible list of polyhedra that needs remeshing
             if (badVolumes.size() > 0){
-//            if (count == 1){                
+                std::cout << "\n====> Found volumes with bad angles. Rolling back and refining polihedra into simplexes..." << std::endl;
                 iplane--;                
                 dfn.RollBackLastFracture(gmeshbackup,badVolumes);
                 count++;
                 continue;
             }
             else{
-                std::cout << "All polyhedra are consistent" << std::endl;
+                std::cout << "\n*** All polyhedra are consistent ***" << std::endl;
             }
             
 			dfn.UpdatePolyhedra();
