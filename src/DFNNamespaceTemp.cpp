@@ -141,52 +141,56 @@ namespace DFN{
         int midnode = -1;
         
         TPZManVector<REAL,4> globNodes(nelements,-1);
-        for (int64_t in = 0 ; in < nelements ; in++) {
-            const int64_t index = std::abs(lineloop[in]);
-            TPZGeoEl* edge = gmesh->Element(index);
-            if(lineloop[in] < 0){
-                globNodes[in] = edge->NodeIndex(1);
-            }else{
-                globNodes[in] = edge->NodeIndex(0);
-            }
-        }
-            
-        for (int64_t in = 0 ; in < nelements ; in++) {
-            TPZManVector<REAL,3> c0(3,-1.),c1(3,-1.),vec0(3,-1.),vec1(3,-1.);
-          {
-            const int64_t index = std::abs(lineloop[in]);
-            TPZGeoEl* gel = gmesh->Element(index);
-            if(gel->Dimension() != 1) DebugStop();
-            gel->NodePtr(0)->GetCoordinates(c0);
-            gel->NodePtr(1)->GetCoordinates(c1);
-            vec0 = c1 - c0;
-          }
-
-          {
-            const int64_t index = std::abs(lineloop[(in+1)%nelements]);
-            TPZGeoEl* gel = gmesh->Element(index);
-            if(gel->Dimension() != 1) DebugStop();
-            gel->NodePtr(0)->GetCoordinates(c0);
-            gel->NodePtr(1)->GetCoordinates(c1);
-            vec1 = c1 - c0;
-          }
-            
-            TPZManVector<REAL,3> vecnormal = DFN::CrossProduct<REAL>(vec0,vec1);
-            const REAL norm0 = DFN::Norm<REAL>(vec0);
-            const REAL norm1 = DFN::Norm<REAL>(vec1);
-            const REAL norm2 = DFN::Norm<REAL>(vecnormal);
-            
-            const REAL sinangle = norm2/norm1/norm0;
-            constexpr REAL sin10 = 10./180.*M_PI; // AQUINATHAN CHANGE TO 10
-            
-            if(sinangle < sin10){
-                if (divideInTwoTri){
-                    DebugStop(); // 3 parallel edges!
+        
+        if(nelements == 4){
+            for (int64_t in = 0 ; in < nelements ; in++) {
+                const int64_t index = std::abs(lineloop[in]);
+                TPZGeoEl* edge = gmesh->Element(index);
+                if(lineloop[in] < 0){
+                    globNodes[in] = edge->NodeIndex(1);
+                }else{
+                    globNodes[in] = edge->NodeIndex(0);
                 }
-                midnode = (in+1)%nelements;
-                divideInTwoTri = true;
+            }
+                
+            for (int64_t in = 0 ; in < nelements ; in++) {
+                TPZManVector<REAL,3> c0(3,-1.),c1(3,-1.),vec0(3,-1.),vec1(3,-1.);
+              {
+                const int64_t index = std::abs(lineloop[in]);
+                TPZGeoEl* gel = gmesh->Element(index);
+                if(gel->Dimension() != 1) DebugStop();
+                gel->NodePtr(0)->GetCoordinates(c0);
+                gel->NodePtr(1)->GetCoordinates(c1);
+                vec0 = c1 - c0;
+              }
+
+              {
+                const int64_t index = std::abs(lineloop[(in+1)%nelements]);
+                TPZGeoEl* gel = gmesh->Element(index);
+                if(gel->Dimension() != 1) DebugStop();
+                gel->NodePtr(0)->GetCoordinates(c0);
+                gel->NodePtr(1)->GetCoordinates(c1);
+                vec1 = c1 - c0;
+              }
+                
+                TPZManVector<REAL,3> vecnormal = DFN::CrossProduct<REAL>(vec0,vec1);
+                const REAL norm0 = DFN::Norm<REAL>(vec0);
+                const REAL norm1 = DFN::Norm<REAL>(vec1);
+                const REAL norm2 = DFN::Norm<REAL>(vecnormal);
+                
+                const REAL sinangle = norm2/norm1/norm0;
+                constexpr REAL sin10 = 10./180.*M_PI;
+                
+                if(sinangle < sin10){
+                    if (divideInTwoTri){
+                        DebugStop(); // 3 parallel edges!
+                    }
+                    midnode = (in+1)%nelements;
+                    divideInTwoTri = true;
+                }
             }
         }
+
         if (divideInTwoTri && midnode == -1) DebugStop();
         
         if (divideInTwoTri){

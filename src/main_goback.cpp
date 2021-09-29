@@ -132,7 +132,7 @@ int main(int argc, char* argv[]){
 //    std::set<int64_t> polygels;
 //    std::ofstream polygfile("allPolygons.vtk");
 //    for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
-//        if(iplane != 11) continue;
+////        if(iplane != 11) continue;
 //        DFNPolygon polygon(polyg_stack[iplane], dfn.Mesh());
 //        DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane],matid[iplane]);
 //        TPZVec<TPZGeoEl*> graphical_elements = polygon.InsertGeomRepresentation(dfn.Mesh(), -(fracture->Index()+1), 1);
@@ -199,7 +199,7 @@ int main(int argc, char* argv[]){
                     count++;
                 }
                 
-                std::cout << "\n====> Found volumes with bad angles. Rolling back and refining polihedra into simplexes..." << std::endl;
+                std::cout << "\n====> Found volumes with bad angles. Rolled back fracture and refined polihedra into simplexes..." << std::endl;
                 std::cout << "This is the " << count << " time rollback is applied to fracture number " << iplane+1 << std::endl;
                 continue;
             }
