@@ -127,7 +127,6 @@ int main(int argc, char* argv[]){
 
     // Loop over fractures and refine mesh around them
     TPZGeoMesh *gmeshbackup = nullptr;
-    int count = 0;
 
     // Uncomment to print polygons
 //    std::set<int64_t> polygels;
@@ -141,6 +140,9 @@ int main(int argc, char* argv[]){
 //        // PlotAllPolygons(dirname + "allPolygons.vtk");
 //    }
 //    TPZVTKGeoMesh::PrintGMeshVTK(gmesh,polygels,polygfile);
+        
+    int fracrollingback = -1; // used for debugging purposes
+    int count = 0;
     
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
         
@@ -187,10 +189,18 @@ int main(int argc, char* argv[]){
 			fracture->MeshFractureSurface(badVolumes);
             // now verify angles and create possible list of polyhedra that needs remeshing
             if (badVolumes.size() > 0){
-                std::cout << "\n====> Found volumes with bad angles. Rolling back and refining polihedra into simplexes..." << std::endl;
                 iplane--;                
                 dfn.RollBackLastFracture(gmeshbackup,badVolumes);
-                count++;
+                if (iplane != fracrollingback) {
+                    fracrollingback = iplane;
+                    count = 0;
+                }
+                else{
+                    count++;
+                }
+                
+                std::cout << "\n====> Found volumes with bad angles. Rolling back and refining polihedra into simplexes..." << std::endl;
+                std::cout << "This is the " << count << " time rollback is applied to fracture number " << iplane+1 << std::endl;
                 continue;
             }
             else{
