@@ -144,6 +144,8 @@ int main(int argc, char* argv[]){
     
 	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
         
+        std::cout << "\n\n\t\t-----------------  Beginning fracture " << iplane << "  -----------------\n" << std::endl;
+        
         // At the beggining of each step create a backup copy of
         // -> DFNMesh with its respective fGMesh and other attributes
         // -> All the DFNFractures so far with its respective faces and ribs
