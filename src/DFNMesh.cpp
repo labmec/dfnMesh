@@ -2999,6 +2999,11 @@ void DFNMesh::PrintRolodexBugReport(const int64_t AxleIndex){
 	const std::string dirname = "./LOG/RolodexBugReport";
 	std::filesystem::create_directories(dirname);
 
+	// Polygons are usually of interest when debugging
+	PlotAllPolygons(dirname+"/AllDFNPolygons.vtk");
+	// You could alternativelly print them as timesteps to ParaView
+	// for(auto frac : fFractures) frac->Polygon().PlotVTK(dirname+"DFNPolygon."+std::to_string(frac->Index())+".vtk");
+
 	// Plot current Rolodex (if existent)
 	if(AxleIndex < fSortedFaces.size() && fSortedFaces[AxleIndex].NCards() != 0){
 		TRolodex& rolodex = fSortedFaces[AxleIndex];
