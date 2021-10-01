@@ -3028,6 +3028,7 @@ void DFNMesh::PrintRolodexBugReport(const int64_t AxleIndex){
 		if(!(polyhindex < 0)) toPlot.insert(polyhindex);
 	}
 	for(int polyhindex : toPlot){
+		if(polyhindex >= NPolyhedra()) continue;
 		DFNPolyhedron& polyh = Polyhedron(polyhindex);
 		polyh.PrintVTK(dirname+"/Poly_"+std::to_string(polyhindex)+".vtk");
 	}
