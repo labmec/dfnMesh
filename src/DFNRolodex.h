@@ -79,8 +79,6 @@ struct TRolodexCard{
 
 
 
-
-
 /// A set of 2D elements around an edge, sorted by an angle to a reference
 // The reference is the first card = fcards.begin() and angles are right-hand oriented according to the orientation of the edge.
 struct TRolodex{
@@ -105,8 +103,17 @@ public:
         this->operator=(copy);
     }
 
+#ifdef PZDEBUG
+    /// Check if angles used to initialize a rolodex are coherent
+    static void CoherentAngleTest(const int64_t AxleIndex, const std::map<REAL, TPZGeoElSide>& SortedCards);
+#endif // PZDEBUG
+
     /// @brief Constructor from an std::map of sorted cards {angle, face_edgeside}
     void Initialize(const int64_t AxleIndex, const std::map<REAL,TPZGeoElSide>& SortedCards){
+#ifdef PZDEBUG
+        TRolodex::CoherentAngleTest(AxleIndex, SortedCards);
+#endif // PZDEBUG
+
         fedgeindex = AxleIndex;
 		fcards.clear();
 		fcards.resize(SortedCards.size());
