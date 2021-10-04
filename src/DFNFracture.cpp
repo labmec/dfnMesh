@@ -2120,8 +2120,10 @@ void DFNFracture::CheckSubPolygonAngles(const TPZStack<int64_t>& subpolygon, con
             
             // Compute internal angle, and check against a tolerance
             const REAL internalAngle = DFN::DihedralAngle(neig, surfelside, internalAngleOrientation);
-            constexpr float tol = 2*(M_PI/180);
-            if (internalAngle < tol) {
+            constexpr float _5deg = 5.*(M_PI/180.);
+            // constexpr float _355deg = 2.*M_PI - 5.*(M_PI/180.);
+            // if (internalAngle < _5deg || internalAngle > _355deg) {
+            if (internalAngle < _5deg) {
                 badVolumes.push_back(pol.Index());
                 return;
             }
