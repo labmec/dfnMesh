@@ -472,21 +472,74 @@ void DFNFracture::SetLoopOrientation(TPZStack<int64_t>& edgelist){
 
 TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-
-    TPZGeoEl* loopedface = DFN::GetLoopedFace(polygon,gmesh);
-    if(loopedface) return loopedface;
-
-    // If edges in the subpolygon don't loop around a single face, try their ancestors
-    std::set<int64_t> RibElders;
-    for(const int64_t rib_index : polygon){
-        TPZGeoEl* rib = gmesh->Element(rib_index);
-        TPZGeoEl* elder = (rib->Father()?rib->EldestAncestor():rib);
-        RibElders.insert(elder->Index());
-    }
     
-    loopedface = DFN::GetLoopedFace(RibElders,gmesh);
-    return loopedface;
+    // Changed on Oct 1st, 2021. See Section 3.3.2 Effects of intersection coalescing on the fracture surface
+    // of Pedro's dissertation for discussion and explanations
+    const bool newMethodology = true;
+    TPZGeoEl* loopedface = nullptr;
+    
+    std::set<int64_t> reducedSubPolygon;
+    
+    if (newMethodology) {
+        std::set<int64_t> nodeSet; // set with all nodes in polygon. Since it is set it will be of unique entries.
+        for(const int64_t rib_index : polygon){
+            TPZGeoEl* rib = gmesh->Element(rib_index);
+            if (rib->NNodes() != 2) DebugStop();
+            for (int i = 0; i < 2; i++)
+                nodeSet.insert(rib->NodeIndex(i));
+        }
+        
+        for(const int64_t rib_index : polygon){
+            TPZGeoEl* rib = gmesh->Element(rib_index);
+            TPZGeoEl* father = rib->Father();
+            int64_t elindextoadd = -1;
+            while (father) {
+                int count = 0;
+                if (father->NNodes() != 2) DebugStop();
+                for (int i = 0; i < 2; i++){
+                    if (nodeSet.count(father->NodeIndex(i)) != 0)
+                        count++;
+                }
+                if (count == 2) {
+                    elindextoadd = father->Index();
+                }
+                
+                father = father->Father();
+            }
+            if (elindextoadd > -1) {
+                // reducedSubPolygon is a set so only unique entries go in
+                reducedSubPolygon.insert(father->Index());
+            }
+            else{
+                reducedSubPolygon.insert(rib_index);
+            }
+        }
+        if (reducedSubPolygon.size() > 4) {
+            return nullptr; // there is no 2D element with more than 4 edges
+        }
+                
+        loopedface = DFN::GetLoopedFace(reducedSubPolygon,gmesh);
+    }
+    else{
+        loopedface = DFN::GetLoopedFace(polygon,gmesh);
+        if(loopedface) return loopedface;
 
+        // If edges in the subpolygon don't loop around a single face, try their ancestors
+        std::set<int64_t> RibElders;
+        for(const int64_t rib_index : polygon){
+            TPZGeoEl* rib = gmesh->Element(rib_index);
+            TPZGeoEl* elder = (rib->Father()?rib->EldestAncestor():rib);
+            RibElders.insert(elder->Index());
+        }
+        
+        loopedface = DFN::GetLoopedFace(RibElders,gmesh);
+        if (loopedface) {
+            std::cout << "a";
+        }
+    }
+
+    return loopedface;
+    
 }
 
 void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
