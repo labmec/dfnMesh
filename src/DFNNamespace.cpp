@@ -894,8 +894,32 @@ namespace DFN{
             newelements.push_back(new_el0->Index());
             TPZGeoEl* new_el1 = gmesh->CreateGeoElement(eltype,cornerindices1,matid,elindex);
             newelements.push_back(new_el1->Index());
-            gmesh->BuildConnectivity();
+            // gmesh->BuildConnectivity();
+
+            constexpr int desloc = 2;
+            const int nedges = nelements;
+            for(int iedge=0; iedge<2; iedge++){
+                {
+                    int edge_index_in_subpolygon = (midnode+iedge)%nedges;
+                    TPZGeoEl* edge = gmesh->Element(std::abs(lineloop[edge_index_in_subpolygon]));
+                    TPZGeoElSide edgeside(edge,2);
+                    TPZGeoElSide faceside(new_el0,iedge+3);
+                    faceside.SetConnectivity(edgeside);
+                    // @maybeToDo set Node connectivity
+                }
+                {
+                    int edge_index_in_subpolygon = (midnode+iedge+desloc)%nedges;
+                    TPZGeoEl* edge = gmesh->Element(std::abs(lineloop[edge_index_in_subpolygon]));
+                    TPZGeoElSide edgeside(edge,2);
+                    TPZGeoElSide faceside(new_el1,iedge+3);
+                    faceside.SetConnectivity(edgeside);
+                    // @maybeToDo set Node connectivity
+                }
+            }
             
+            TPZGeoElSide faceside0(new_el0,5);
+            TPZGeoElSide faceside1(new_el1,5);
+            faceside0.SetConnectivity(faceside1);
         }
         else{
             TPZManVector<int64_t,4> cornerindices(nelements,-1);
@@ -919,6 +943,15 @@ namespace DFN{
             }
             TPZGeoEl* new_el = gmesh->CreateGeoElement(eltype,cornerindices,matid,index);
             newelements.push_back(new_el->Index());
+
+            const int nedges = nelements;
+            for(int iedge=0; iedge<nelements; iedge++){
+                TPZGeoEl* edge = gmesh->Element(std::abs(lineloop[iedge]));
+                TPZGeoElSide edgeside(edge,2);
+                TPZGeoElSide faceside(new_el,iedge+nedges);
+                faceside.SetConnectivity(edgeside);
+                // @maybeToDo set Node connectivity
+            }
         }
     }
 } /* namespace DFN*/
