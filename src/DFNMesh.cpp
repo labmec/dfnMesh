@@ -2388,11 +2388,11 @@ void DFNMesh::SortFacesAroundEdges(){
 			}
 			REAL angle = DFN::DihedralAngle(reference_el,neig,reference_orientation);
             std::map<REAL,TPZGeoElSide>::iterator it = facemap.find(angle);
-            if (it != facemap.end()) {
-                rolodex.Initialize(gel->Index(),facemap);
-                PrintProblematicRolodex(neig.Element()->Index(), rolodex);
-                DebugStop(); // two faces with same angle in rolodex!
-            }
+            // if (it != facemap.end()) {
+            //     rolodex.Initialize(gel->Index(),facemap);
+            //     PrintProblematicRolodex(neig.Element()->Index(), rolodex);
+            //     DebugStop(); // two faces with same angle in rolodex!
+            // }
 			facemap.insert({angle,neig});
 		}
 		rolodex.Initialize(gel->Index(),facemap);
@@ -3014,6 +3014,7 @@ void DFNMesh::PrintRolodexBugReport(const int64_t AxleIndex){
 	TPZGeoElSide edgeside = {edge,2};
 	constexpr int twoD = 2, UnrefinedOnly = true, orientationMatch = true;
 	DFN::PlotNeighbours(dirname+"/twoDNeighbours.vtk",edgeside,twoD,UnrefinedOnly,orientationMatch);
+	DFN::PlotNeighbours(dirname+"/threeDNeighbours.vtk",edgeside,3,UnrefinedOnly,orientationMatch);
 
 	// Plot polyhedral volumes
 	std::set<int> toPlot;
