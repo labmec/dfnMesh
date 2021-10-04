@@ -143,8 +143,12 @@ namespace DFN{
     /** @brief Takes a simple oriented lineloop with 3 or 4 edges and create a geometric element
      * @param lineloop an oriented loop of 3 or 4 edges
     */  
-    template<class Tcontainer>
-    void MeshSimplePolygon(TPZGeoMesh* gmesh, const Tcontainer& lineloop, int matid, TPZStack<int64_t>& newelements);
+    // template<class Tcontainer>
+    void MeshSimplePolygon(TPZGeoMesh* gmesh, const TPZVec<int64_t>& lineloop, int matid, TPZStack<int64_t>& newelements);
+
+    // Auxiliar functions to MeshSimplePolygon
+    bool CheckSubPolygonInternalAngles(TPZGeoMesh* gmesh,const TPZVec<int64_t>& subpolygon, const REAL tol_angle_cos, int& splitThisAngle);
+    void GetSubPolygonGlobalNodeIndices(TPZGeoMesh* gmesh,const TPZVec<int64_t>& subpolygon, TPZVec<int64_t>& globNodes);
 
     /** @brief Check if a set of mesh nodes are coplanar
     */

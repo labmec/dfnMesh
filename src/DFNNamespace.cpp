@@ -786,4 +786,139 @@ namespace DFN{
         std::ofstream out(filepath);
         TPZVTKGeoMesh::PrintGMeshVTK(&auxMesh, out, true, true);
     }
+
+    /// @brief Check if internal angles of a planar quadrilateral SubPolygon violate a threshold.
+    /// @details We're trying to avoid a quadrilateral with consecutive parallel edges, so this functions warns the code of an angle that gets too close to 180deg
+    /// @param tol_angle_cos cos(t),  t being the maximum tolerable angle (convexity of polyhedral volumes guarantees angles between 0 and 180deg)
+    /// @param splitThisAngle [output] local index of the first angle that violates the threshhold
+    bool CheckSubPolygonInternalAngles(TPZGeoMesh* gmesh,const TPZVec<int64_t>& subpolygon, const REAL tol_angle_cos, int& splitThisAngle){
+        const int nelements = subpolygon.size();
+        bool paralleledgesQ = false;
+        for (int64_t in = 0 ; in < nelements ; in++) {
+            TPZManVector<REAL,3> c0(3,-1.),c1(3,-1.),vec0(3,-1.),vec1(3,-1.);
+            {
+                int orientation = sgn(subpolygon[in]);
+                const int64_t index = std::abs(subpolygon[in]);
+                TPZGeoEl* gel = gmesh->Element(index);
+                if(gel->Dimension() != 1) DebugStop();
+                gel->NodePtr(0)->GetCoordinates(c0);
+                gel->NodePtr(1)->GetCoordinates(c1);
+                vec0 = c1 - c0;
+                vec0[0] *= -orientation;
+                vec0[1] *= -orientation;
+                vec0[2] *= -orientation;
+            }
+
+            {
+                int orientation = sgn(subpolygon[(in+1)%nelements]);
+                const int64_t index = std::abs(subpolygon[(in+1)%nelements]);
+                TPZGeoEl* gel = gmesh->Element(index);
+                if(gel->Dimension() != 1) DebugStop();
+                gel->NodePtr(0)->GetCoordinates(c0);
+                gel->NodePtr(1)->GetCoordinates(c1);
+                vec1 = c1 - c0;
+                vec0[0] *= orientation;
+                vec0[1] *= orientation;
+                vec0[2] *= orientation;
+            }
+            
+            const REAL norm0 = DFN::Norm<REAL>(vec0);
+            const REAL norm1 = DFN::Norm<REAL>(vec1);
+            REAL cosangle = DFN::DotProduct<REAL>(vec0,vec1) / norm0 / norm1;
+            
+
+            if(cosangle < tol_angle_cos){
+                if (paralleledgesQ){
+                    DebugStop(); // 3 parallel edges!
+                }
+                splitThisAngle = (in+1)%nelements;
+                paralleledgesQ = true;
+                return paralleledgesQ;
+            }
+        }
+        return paralleledgesQ;
+    }
+
+    // Fill a vector with the global node indices of a subpolygon in the order they appear locally
+    void GetSubPolygonGlobalNodeIndices(TPZGeoMesh* gmesh,const TPZVec<int64_t>& subpolygon, TPZVec<int64_t>& globNodes){
+        const int nelements = subpolygon.size();
+        globNodes.Resize(nelements,-1);
+        for (int64_t in = 0 ; in < nelements ; in++) {
+            const int64_t index = std::abs(subpolygon[in]);
+            TPZGeoEl* edge = gmesh->Element(index);
+            if(subpolygon[in] < 0){
+                globNodes[in] = edge->NodeIndex(1);
+            }else{
+                globNodes[in] = edge->NodeIndex(0);
+            }
+        }        
+    }
+
+
+    /** @brief Takes a simple oriented lineloop with 3 or 4 edges and create a geometric element
+     * @param lineloop an oriented loop of 3 or 4 edges
+    */  
+    // template<class Tcontainer>
+    void MeshSimplePolygon(TPZGeoMesh* gmesh,const TPZVec<int64_t>& lineloop, int matid, TPZStack<int64_t>& newelements){
+        int nelements = lineloop.size();
+        if(nelements < 3 || nelements > 4) DebugStop();
+        newelements.clear();
+        
+        bool parallelEdgesQ = false;
+        int midnode = -1;
+        
+        TPZManVector<int64_t,4> globNodes(nelements,-1);
+        
+        if(nelements == 4){
+            GetSubPolygonGlobalNodeIndices(gmesh,lineloop,globNodes);
+            constexpr REAL cos170 = -0.984807753;
+            parallelEdgesQ = CheckSubPolygonInternalAngles(gmesh,lineloop,cos170,midnode);
+            if (parallelEdgesQ && midnode == -1) DebugStop();
+        }
+
+        
+        if (parallelEdgesQ){
+            TPZManVector<int64_t,3> cornerindices0(3,-1),cornerindices1(3,-1);
+            cornerindices0[0] = globNodes[midnode];
+            cornerindices0[1] = globNodes[(midnode+1)%nelements];
+            cornerindices0[2] = globNodes[(midnode+2)%nelements];
+
+            cornerindices1[0] = globNodes[(midnode+2)%nelements];
+            cornerindices1[1] = globNodes[(midnode+3)%nelements];
+            cornerindices1[2] = globNodes[midnode];
+            
+            MElementType eltype = MElementType::ETriangle;
+            
+            int64_t elindex = -1;
+            TPZGeoEl* new_el0 = gmesh->CreateGeoElement(eltype,cornerindices0,matid,elindex);
+            newelements.push_back(new_el0->Index());
+            TPZGeoEl* new_el1 = gmesh->CreateGeoElement(eltype,cornerindices1,matid,elindex);
+            newelements.push_back(new_el1->Index());
+            gmesh->BuildConnectivity();
+            
+        }
+        else{
+            TPZManVector<int64_t,4> cornerindices(nelements,-1);
+            int i=0;
+            for(int64_t edge : lineloop){
+                int64_t index = std::abs(edge);
+                if(edge < 0){
+                    cornerindices[i] = gmesh->Element(index)->NodeIndex(1);
+                }else{
+                    cornerindices[i] = gmesh->Element(index)->NodeIndex(0);
+                }
+                i++;
+            }
+            int64_t index = -1;
+            MElementType eltype;
+            switch (nelements){
+    //            case  2: eltype = MElementType::EInterfaceLinear; break;
+                case  3: eltype = MElementType::ETriangle; break;
+                case  4: eltype = MElementType::EQuadrilateral; break;
+                default: DebugStop();
+            }
+            TPZGeoEl* new_el = gmesh->CreateGeoElement(eltype,cornerindices,matid,index);
+            newelements.push_back(new_el->Index());
+        }
+    }
 } /* namespace DFN*/
