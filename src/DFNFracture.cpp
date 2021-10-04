@@ -508,7 +508,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
             }
             if (elindextoadd > -1) {
                 // reducedSubPolygon is a set so only unique entries go in
-                reducedSubPolygon.insert(father->Index());
+                reducedSubPolygon.insert(elindextoadd);
             }
             else{
                 reducedSubPolygon.insert(rib_index);
