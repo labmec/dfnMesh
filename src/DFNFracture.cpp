@@ -533,9 +533,6 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
         }
         
         loopedface = DFN::GetLoopedFace(RibElders,gmesh);
-        if (loopedface) {
-            std::cout << "a";
-        }
     }
 
     return loopedface;
