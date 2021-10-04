@@ -1,0 +1,35 @@
+{
+    "$schema": "./dfn_schema.json",
+    "PZGenGrid": {
+        "x0": [-1,-1,-1],
+        "xf": [1,1,1],
+        "MMeshType": "EHexahedral",
+        "Nels": [1,1,1]
+    },
+    "TolAngle": 0.0001,
+    "TolDist": 0.2,
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+            "MaterialID": 10,
+            "Nodes": [
+                [-1.1,-1.1,-1.1],
+                [ 0.1, 1.1,-1.1],
+                [ 0.1, 1.1, 1.1],
+                [-1.1,-1.1, 1.1]
+            ]
+        },
+        {
+            "Index": 1,
+            "Limit": "Etruncated",
+            "MaterialID": 10,
+            "Nodes": [
+                [-1.1,-1.1,-0.7],
+                [ 1.1,-1.1,-0.7],
+                [ 1.1, 1.1,-0.7],
+                [-1.1, 1.1,-0.7]
+            ]
+        }
+    ]
+}
