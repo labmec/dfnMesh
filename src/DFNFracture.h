@@ -187,12 +187,10 @@ private:
     /// Checks neighbour's dimension and returns true if it is equal
     bool HasEqualDimensionNeighbour(TPZGeoElSide &gelside);
     
-    /// Finds intersection point of fracture boundaries and geometric mesh faces
-    bool FindEndFracturePoint(DFNFace &face, TPZManVector<REAL,3> &ipoint);
+    /// Plot VTK for a SubPolygon
+    /// @param relativefolderpath Relative path for output folder from directory ./LOG
+    void PlotVTK_SubPolygon(const TPZVec<int64_t>& subpolygon, const int volumeindex, const std::string relativefolderpath);
     
-
-    // void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
-
     /**
      * @name Surface Meshing auxiliar methods
      * @{

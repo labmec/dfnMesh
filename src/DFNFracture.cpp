@@ -8,7 +8,7 @@
 #include "DFNMesh.h"
 #include <math.h>
 #include <cstdio>
-// #include <unordered_set>
+#include <filesystem>
 #include <algorithm>
 #include "TPZRefPatternDataBase.h"
 #include "TPZGeoMeshBuilder.h"
@@ -816,22 +816,30 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, 
     // std::cout<<"SubPolygon# "<<polygon_counter<<": "<<polygon<<std::endl;
     // If polygon is planar quadrilateral or triangle, we can skip gmsh
     bool isplane = false;
-    try{isplane = DFN::AreCoPlanar(gmesh,nodes,1e-5);}
-    catch(...){fdfnMesh->DFN_DebugStop();}
-
-    switch(nedges){
-        case 0: 
-        case 1: 
-        case 2: DebugStop();
-        case 3:             
-        case 4: if(isplane){
-                    // If you create elements in the surface with matid = this->fmatid, Fracture Boundary condition recovery may fail
-                    DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Eintact,newelements);
-                    break;
-                }
-        default: MeshPolygon_GMSH(polygon,nodes,newelements,isplane);
+    try{
+        isplane = DFN::AreCoPlanar(gmesh,nodes,1e-5);
+        switch(nedges){
+            case 0: 
+            case 1: 
+            case 2: DebugStop();
+            case 3:             
+            case 4: if(isplane){
+                        // If you create elements in the surface with matid = this->fmatid, Fracture Boundary condition recovery may fail
+                        DFN::MeshSimplePolygon(gmesh,polygon,DFNMaterial::Eintact,newelements);
+                        break;
+                    }
+            default: MeshPolygon_GMSH(polygon,nodes,newelements,isplane);
+        }
     }
-
+    catch(...){
+        PlotVTK_SubPolygon(polygon,polyhindex,"FailedSubPolygon");
+        PZError << "Failed to mesh a SubPolygon\n"
+                << "Oriented edge indices:\n";
+        for(int64_t index : polygon)
+            PZError << (index>0?' ':'-') << std::abs(index) << '\n';
+        PZError << "Plotted SubPolygon to ./LOG/FailedSubPolygon/";
+        fdfnMesh->DFN_DebugStop();
+    }
     InsertFaceInSurface(newelements);
 
     #if PZ_LOG
@@ -2130,4 +2138,27 @@ void DFNFracture::CheckVolumeAngles(const TPZStack<int64_t>& subpolygon, const i
             
         }
     }
+}
+
+
+
+void DFNFracture::PlotVTK_SubPolygon(const TPZVec<int64_t>& subpolygon, const int volumeindex, const std::string relativefolderpath){
+    const std::string dirpath = "./LOG/"+relativefolderpath;
+    std::filesystem::create_directories(dirpath);
+
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+
+    // Plot subpolygon edges
+    {
+        std::ofstream outstream(dirpath+"/SubPolygon.vtk");
+        std::set<int64_t> subpolygon_set;
+        for(int64_t index : subpolygon) subpolygon_set.insert(std::abs(index));
+        TPZVTKGeoMesh::PrintGMeshVTK(gmesh,subpolygon_set,outstream);
+    }
+
+    // Plot polyhedral volume
+    fdfnMesh->Polyhedron(volumeindex).PrintVTK(dirpath+"/Volume.vtk");
+
+    // Plot fracture plane
+    fPolygon.PlotVTK(dirpath+"/FracturePlane.vtk",fmatid,fIndex);
 }
