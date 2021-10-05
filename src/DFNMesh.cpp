@@ -2629,7 +2629,7 @@ void DFNMesh::ExportDetailedGraphics(const std::string ColorPreset){
 	
 
 	// Plot each of the fractures
-	PlotAllPolygons(dirname + "allPolygons.vtk");
+	PlotAllPolygons(dirname + "/allPolygons.vtk");
 	for(auto frac : fFractures){
 		std::string exportname = dirname + '/' + filename + "." + std::to_string(frac->Index()) + ".vtk";
 		frac->PlotVTK(frac->Index(),exportname);
