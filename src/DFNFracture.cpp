@@ -2061,7 +2061,7 @@ void DFNFracture::CheckVolumeAngles(const TPZStack<int64_t>& subpolygon, const i
     DFNPolyhedron& pol = fdfnMesh->Polyhedron(polyhindex);
     
     // If N Elements == 1, Gmsh was not used to mesh this SubPolygon and we can skip this function
-    if (newelements.size() == 1) {return;}
+    // if (newelements.size() == 1) {return;}
     
     // For each edge in subpolygon, there is a neighbour on the fracture surface. 
     // Check surfel internal dihedral angle with the 2 faces in the volume shell which are its neighbours
