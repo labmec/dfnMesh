@@ -391,10 +391,10 @@ public:
      * @param newelements elements created during cutting by fracture procedure
      * @param badVolumes list (to be filled) with polyhedra that need to be refined into simplexes
      */
-    void CheckSubPolygonAngles(const TPZStack<int64_t>& subpolygon,
-                               const int polyhindex,
-                               const TPZStack<int64_t>& newelements,
-                               TPZStack<int>& badVolumes);
+    void CheckVolumeAngles( const TPZStack<int64_t>& subpolygon,
+                            const int polyhindex,
+                            const TPZStack<int64_t>& newelements,
+                                  TPZStack<int>& badVolumes);
 };
 
 inline std::ostream& operator<<(std::ostream &out, const DFNFracture& fracture){

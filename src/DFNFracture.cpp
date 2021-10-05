@@ -614,7 +614,7 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
                 continue;
             }
             MeshPolygon(subpolygon,polyhindex,newelements);
-            CheckSubPolygonAngles(subpolygon,polyhindex,newelements,badVolumes);
+            CheckVolumeAngles(subpolygon,polyhindex,newelements,badVolumes);
             std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
@@ -2049,7 +2049,7 @@ void DFNFracture::RollBack(TPZGeoMesh *gmeshBackup) {
     
 }
 
-void DFNFracture::CheckSubPolygonAngles(const TPZStack<int64_t>& subpolygon, const int polyhindex, const TPZStack<int64_t>& newelements,TPZStack<int>& badVolumes){
+void DFNFracture::CheckVolumeAngles(const TPZStack<int64_t>& subpolygon, const int polyhindex, const TPZStack<int64_t>& newelements,TPZStack<int>& badVolumes){
     // Consistency
 #ifdef PZDEBUG
     if(newelements.size() < 1) {DebugStop();}
