@@ -54,13 +54,15 @@ class DFNPolygon
 	/// Default constructor. Matrix should be 3xN (3 coordinates for each of the N corner points)
     // the first 3 points cannot be colinear
 	DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh);
+    
+    DFNPolygon(const Matrix &CornerPoints);
 
 	/// Copy constructor
 	DFNPolygon(const DFNPolygon &copy);
 
 	/// Assignment operator
 	DFNPolygon &operator=(const DFNPolygon &copy);
-
+    
 	/// Return number of corners of polygon
 	int NCornerNodes() const{return fCornerPoints.Cols();}
 	int NEdges() const{return fCornerPoints.Cols();}
@@ -193,9 +195,18 @@ class DFNPolygon
 	/// Compute an intersection segment between 2 DFNPolygons (if there is any)
 	bool ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segment& intersection_segment) const;
 
+    /// For a subpolygon, returns the cosine of the "worst angle". The bigger is the angles, the less planar is the subpolygon
+    const REAL GetWorstAngleCos();
+    
   private:
 	/// Checks consistency and initializes the datastructure of the object
 	bool Check_Data_Consistency() const;
+    
+    /// Calculates the area of a subtriangle given by a centroid and two consecutives indexes (i and i+1)
+    const REAL SubTriangleArea(TPZVec<REAL>& centroid, const int i) const;
+    
+    /// Returns the cross products of of the nodes in index i, j, and k
+    TPZManVector<REAL,3> GetCrossProduct(const int i, const int j, const int k);
 
 };
 

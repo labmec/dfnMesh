@@ -189,7 +189,7 @@ private:
     
     /// Plot VTK for a SubPolygon
     /// @param relativefolderpath Relative path for output folder from directory ./LOG
-    void PlotVTK_SubPolygon(const TPZVec<int64_t>& subpolygon, const int volumeindex, const std::string relativefolderpath);
+    void PlotVTK_SubPolygon(const TPZVec<int64_t>& subpolygon, const int volumeindex, const std::string relativefolderpath) const;
     
     /**
      * @name Surface Meshing auxiliar methods
@@ -213,6 +213,11 @@ private:
                         int inlet_side,
                         TPZStack<int64_t>& subpolygon);
 
+    /**
+     * @brief Checks if a subpolygon can be considered planar "enough". Tolerance when this method was created was 45 degrees. 
+     */
+    const bool CheckSubPolygonPlanarity(TPZStack<int64_t>& subpolygon, const int polyhindex) const;
+    
     /// @brief Given a side and an oriented face, get a neighbour that shares the same polyhedron
     std::pair<int64_t,int> PolyhNeighbour(std::pair<int64_t,int>& currentface_orient, int currentside, int& neigside);
 

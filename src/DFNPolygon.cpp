@@ -9,6 +9,8 @@
 #include "DFNPolygon.h"
 #include <math.h>
 #include "DFNMesh.h"
+#include "pzvec_extras.h"
+
 
 
 #if PZ_LOG
@@ -29,6 +31,10 @@ DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh)
   ComputeArea();
   // initialize the fNodesAbove data structure
   SortNodes(gmesh);
+}
+
+DFNPolygon::DFNPolygon(const Matrix &CornerPoints) {
+    fCornerPoints = CornerPoints;
 }
 
 // Copy constructor
@@ -688,4 +694,69 @@ void DFNPolygon::PlotVTK(const std::string filepath, const int materialID, const
     file << "elIndex 1 1 int\n" << index << '\n';
     file << "Dimension 1 1 int\n2";
     file.close();
+}
+
+using namespace DFN;
+
+const REAL DFNPolygon::GetWorstAngleCos() {
+    REAL area = 0.;
+    TPZManVector<REAL,3> centroid(3,0.);
+    ComputeCentroid(centroid);
+    const int npts = fCornerPoints.Cols();
+    for (int i = 0; i < npts; i++) {
+        area += SubTriangleArea(centroid, i);
+    }
+    
+    TPZManVector<REAL,3> crossprod;
+    TPZStack<TPZManVector<REAL,3>> allnormals;
+    const REAL eps = 1.e-2;
+    for (int i = 0; i < npts; i++) {
+        for (int j = i+1; j < npts-2; j++) {
+            for (int k = j+1; k < npts; k++) {
+                crossprod = GetCrossProduct(i,j,k);
+                const REAL norm = DFN::Norm<REAL>(crossprod);
+                if (norm/2. < eps*area)
+                    continue;
+                                
+                crossprod /= norm;
+                allnormals.Push(crossprod);
+            }
+        }
+    }
+    
+    REAL worstAngleCos = 1.;
+    for (int i = 0; i < allnormals.size(); i++) {
+        for (int j = i+1; j < allnormals.size(); j++) {
+            const REAL cosangle = DFN::DotProduct<REAL>(allnormals[i], allnormals[j]);
+            if (cosangle < worstAngleCos){
+                worstAngleCos = cosangle;
+            }
+        }
+    }
+    return worstAngleCos;
+}
+
+
+const REAL DFNPolygon::SubTriangleArea(TPZVec<REAL>& centroid, const int i) const {
+    const int npts = fCornerPoints.Cols();
+    const int inext = (i+1)%npts;
+    TPZManVector<REAL,3> vec0 = TPZVec<REAL>({fCornerPoints(0,i),fCornerPoints(1,i),fCornerPoints(2,i)});
+    vec0 = vec0 - centroid;
+    TPZManVector<REAL,3> vec1 = {fCornerPoints(0,inext),fCornerPoints(1,inext),fCornerPoints(2,inext)};
+    vec1 = vec1 - centroid;
+    
+    const REAL area = DFN::Norm<REAL>(DFN::CrossProduct<REAL>(vec0, vec1))/2.;
+    
+    return area;
+}
+
+TPZManVector<REAL,3> DFNPolygon::GetCrossProduct(const int i, const int j, const int k) {
+    TPZManVector<REAL,3> vec0 = TPZVec<REAL>({fCornerPoints(0,i),fCornerPoints(1,i),fCornerPoints(2,i)});
+    for (int idim = 0; idim < 3; idim++) vec0[idim] = vec0[idim] - fCornerPoints(idim,j);
+    TPZManVector<REAL,3> vec1 = {fCornerPoints(0,k),fCornerPoints(1,k),fCornerPoints(2,k)};
+    for (int idim = 0; idim < 3; idim++) vec1[idim] = vec1[idim] - fCornerPoints(idim,j);
+
+    TPZManVector<REAL,3> crossprod = DFN::CrossProduct<REAL>(vec0, vec1);
+    
+    return crossprod;
 }

@@ -539,6 +539,51 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     
 }
 
+const bool DFNFracture::CheckSubPolygonPlanarity(TPZStack<int64_t>& subpolygon, const int polyhindex) const {
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    const int nelements = subpolygon.size();
+    TPZManVector<int64_t,4> cornerindices(nelements,-1);
+    int i=0;
+    for(int64_t edge : subpolygon){
+        int64_t index = std::abs(edge);
+        if(edge < 0){
+            cornerindices[i] = gmesh->Element(index)->NodeIndex(1);
+        }else{
+            cornerindices[i] = gmesh->Element(index)->NodeIndex(0);
+        }
+        i++;
+    }
+    
+    TPZFMatrix<REAL> nodeMat(3,nelements);
+    i = 0;
+    for(auto inod : cornerindices){
+        TPZGeoNode& nod = gmesh->NodeVec()[inod];
+        for (int j = 0; j < 3; j++) {
+            nodeMat(j,i) = nod.Coord(j);
+        }
+        i++;
+    }
+    
+    DFNPolygon polyg(nodeMat);
+    const REAL cosangle = polyg.GetWorstAngleCos();
+    const auto limit = M_SQRT2/2.;
+    
+    if (cosangle < limit) {
+        polyg.Print();
+        PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubPolygon");
+        const REAL cosangle = polyg.GetWorstAngleCos();
+#if PZ_LOG
+        std::stringstream sout;
+        sout << "\nSubpolygon with bad planarity found!"
+        << "\nCosine of worst angle = " << cosangle << std::endl;
+        polyg.Print(sout);
+        LOGPZ_INFO(logger,sout.str());
+#endif // PZ_LOG
+        return false;
+    }
+    return true;
+}
+
 void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     std::cout<<"\r#SubPolygons meshed = 0";
@@ -591,6 +636,11 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
             if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
             polygon_counter++;
+            
+            const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
+            if (!isSubPolPlanarEnough) {
+                badVolumes.push_back(polyhindex);
+            }
             
             LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh# " << polyhindex);
 
@@ -2142,7 +2192,7 @@ void DFNFracture::CheckVolumeAngles(const TPZStack<int64_t>& subpolygon, const i
 
 
 
-void DFNFracture::PlotVTK_SubPolygon(const TPZVec<int64_t>& subpolygon, const int volumeindex, const std::string relativefolderpath){
+void DFNFracture::PlotVTK_SubPolygon(const TPZVec<int64_t>& subpolygon, const int volumeindex, const std::string relativefolderpath) const{
     const std::string dirpath = "./LOG/"+relativefolderpath;
     std::filesystem::create_directories(dirpath);
 

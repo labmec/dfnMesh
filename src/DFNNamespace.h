@@ -55,7 +55,7 @@ namespace DFN{
 
     /** @brief Returns the norm of a vector with template precision*/
     template<typename Ttype>
-    Ttype Norm(TPZManVector<Ttype, 3> &vec);
+    Ttype Norm(const TPZManVector<Ttype, 3> &vec);
 
     /** @brief Returns the norm of a vector with float precision*/
     template<typename Ttype>
@@ -66,7 +66,7 @@ namespace DFN{
      * @param ReturnType CrossProduct<ReturnType>(vec1,vec2)
     */
     template<typename TReturnType, typename T2>
-    TPZVec<TReturnType> CrossProduct(TPZManVector<T2,3> &vec1, TPZManVector<T2,3> &vec2);
+    TPZManVector<TReturnType,3> CrossProduct(TPZManVector<T2,3> &vec1, TPZManVector<T2,3> &vec2);
 
     template<typename Ttype>
     TPZVec<float> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2);

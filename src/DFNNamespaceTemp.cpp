@@ -47,7 +47,7 @@ namespace DFN{
 
     /** @brief Returns the norm of a vector with template precision*/
     template<typename Ttype>
-    Ttype Norm(TPZManVector<Ttype, 3> &vec){
+    Ttype Norm(const TPZManVector<Ttype, 3> &vec){
         Ttype norm = 0.;
         for(int j=0, size=vec.size(); j<size; j++){
             norm += vec[j]*vec[j];
@@ -70,7 +70,7 @@ namespace DFN{
      * @param ReturnType CrossProduct<ReturnType>(vec1,vec2)
     */
     template<typename T1, typename T2>
-    TPZVec<T1> CrossProduct(TPZManVector<T2,3> &vec1, TPZManVector<T2,3> &vec2){
+    TPZManVector<T1,3> CrossProduct(TPZManVector<T2,3> &vec1, TPZManVector<T2,3> &vec2){
         if(vec1.size() != 3){throw std::invalid_argument("CrossProduct requires vector of dimension 3\n");}
         if(vec2.size() != 3){throw std::invalid_argument("CrossProduct requires vector of dimension 3\n");}
         
