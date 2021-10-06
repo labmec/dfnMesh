@@ -955,3 +955,13 @@ namespace DFN{
         }
     }
 } /* namespace DFN*/
+
+
+void DFN::GmshConfig(){
+    // gmsh::logger::start();
+    // std::vector<std::string> log;
+    // gmsh::logger::get(log);
+    // // gmsh::logger::stop();
+    // gmsh::option::
+    gmsh::option::setNumber("General.Verbosity",1);
+}

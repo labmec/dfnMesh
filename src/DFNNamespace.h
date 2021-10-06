@@ -241,6 +241,8 @@ namespace DFN{
      */
     void PlotNeighbours(const std::string filepath,TPZGeoElSide geoelside, const int filterDimension = -1, const bool UnrefinedOnly = true, const bool orientationMatch = false);
 
+    /// Configures the logger used by Gmsh
+    void GmshConfig();
 } /*namespace DFN*/
 
 

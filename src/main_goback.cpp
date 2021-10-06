@@ -112,6 +112,7 @@ int main(int argc, char* argv[]){
 	int prerefine = 0;
 	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle,matid,limit_directives,prerefine);
 	gmsh::initialize();
+	DFN::GmshConfig();
 	
 	// ScriptForBug2(gmesh);
 	time.start();
