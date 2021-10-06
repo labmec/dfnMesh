@@ -46,9 +46,9 @@ namespace DFN{
      * @brief Get a pointer to an element that is superposed in a lower dimensional side of a geometric element
      * @return nullptr if there is no element in that side
     */
-    TPZGeoEl* GetSkeletonNeighbour(TPZGeoEl* gel, int side){
+    TPZGeoEl* GetSkeletonNeighbour(const TPZGeoEl* gel, int side){
         if(gel->SideDimension(side) == gel->Dimension()) return nullptr;
-        TPZGeoElSide gelside(gel,side);
+        const TPZGeoElSide gelside(const_cast<TPZGeoEl*>(gel),side);
         TPZGeoElSide neig;
         for(neig = gelside.Neighbour(); neig!=gelside; neig=neig.Neighbour()){
             if(neig.Element()->Dimension() == gel->SideDimension(side)){
@@ -430,11 +430,11 @@ namespace DFN{
         return sideorientation * neig_side_orientation;
     }
 
-    void SetEdgesMaterialId(TPZGeoEl* gel, int matid){
-        TPZManVector<int64_t,4> edgeindices = DFN::GetEdgeIndices(gel);
-        TPZGeoMesh* gmesh = gel->Mesh();
-        for(int64_t index : edgeindices){
-            gmesh->Element(index)->SetMaterialId(matid);
+    void SetEdgesMaterialId(const TPZGeoEl* gel, const int matid){
+        for(int iside=gel->FirstSide(1); iside<gel->NSides(); iside++){
+            TPZGeoEl* edge = DFN::GetSkeletonNeighbour(gel,iside);
+            if(!edge) continue;
+            edge->SetMaterialId(matid);
         }
     }
 

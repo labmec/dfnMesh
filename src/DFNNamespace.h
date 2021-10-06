@@ -117,7 +117,7 @@ namespace DFN{
      * @brief Get a pointer to an element that is superposed in a lower dimensional side of a geometric element
      * @return nullptr if there is no element in that side
     */
-    TPZGeoEl* GetSkeletonNeighbour(TPZGeoEl* gel, int side);
+    TPZGeoEl* GetSkeletonNeighbour(const TPZGeoEl* gel, int side);
 
     /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
     /// @param dim: Filter by dimension. Set -1 to skip filter
@@ -198,7 +198,7 @@ namespace DFN{
     */
     int SkeletonOrientation(TPZGeoElSide& volside, TPZGeoEl* face);
 
-    void SetEdgesMaterialId(TPZGeoEl* gel, int matid);
+    void SetEdgesMaterialId(const TPZGeoEl* gel, const int matid);
 
     // Get the sign of a number
     template <typename T> int sgn(T val) {
