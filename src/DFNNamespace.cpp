@@ -545,20 +545,8 @@ namespace DFN{
         gmesh->BuildConnectivity();
 
 #if PZDEBUG
-//         for(int64_t index : newelements){
-//             TPZGeoEl* gel = gmesh->Element(index);
-//             TPZVec<REAL> qsi(gel->Dimension(),0.); TPZFNMatrix<9,REAL> jac; TPZFNMatrix<9,REAL> axes; REAL detjac; TPZFNMatrix<9,REAL> jacinv;
-//             gel->Jacobian(qsi,jac,axes,detjac,jacinv);
-//             if(detjac < gDFN_SmallNumber){
-//                 DFN::PrintGeoEl(gel);
-//                 LOGPZ_FATAL(logger,"Gmsh created element with zero or negative det jacobian."
-//                                     << "\n\tdetjac = " << detjac
-//                                     << "\n\tElement = \n" << gel
-//                 );
-//                 DebugStop();
-//             }
-//         }
-#endif
+        // DFN::TestPositiveJacobian(gmesh,newelements);
+#endif // PZDEBUG
     }
 
     TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
@@ -953,6 +941,24 @@ namespace DFN{
                 // @maybeToDo set Node connectivity
             }
         }
+    }
+
+    bool TestPositiveJacobian(TPZGeoMesh* gmesh, const TPZVec<int64_t>& el_indices){
+        for(const int64_t index : el_indices){
+            TPZGeoEl* gel = gmesh->Element(index);
+            TPZVec<REAL> qsi(gel->Dimension(),0.); TPZFNMatrix<9,REAL> jac; TPZFNMatrix<9,REAL> axes; REAL detjac; TPZFNMatrix<9,REAL> jacinv;
+            gel->Jacobian(qsi,jac,axes,detjac,jacinv);
+            if(detjac < 1e-8){
+                // DFN::PrintGeoEl(gel);
+                LOGPZ_FATAL(logger,"Gmsh created element with zero or negative det jacobian."
+                                    << "\n\tdetjac = " << detjac
+                                    << "\n\tElement = \n" << gel
+                );
+                DebugStop();
+                return false;
+            }
+        }
+        return true;
     }
 } /* namespace DFN*/
 

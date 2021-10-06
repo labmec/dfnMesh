@@ -234,6 +234,9 @@ namespace DFN{
     /// Plot determinant of Jacobian Matrix of all elements in the mesh
     void PlotJacobian(TPZGeoMesh* gmesh, std::string filename = "LOG/jacplot.vtk");
 
+    /// Test if all elements have positive jacobian. Return false is any is negative
+    bool TestPositiveJacobian(TPZGeoMesh* gmesh, const TPZVec<int64_t>& el_indices);
+
     /** @brief Plot Neighbours of a TPZGeoElSide to a vtk file
      * @param filterDimension: Plot elements of this dimension only. Set to -1 to plot all dimensions.
      * @param UnrefinedOnly: Directive to plot only elements that were not refined.
