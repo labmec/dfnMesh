@@ -187,6 +187,9 @@ void DFNPolyhedron::PrintVTK(const std::string filepath) const {
     for (auto shell : fShell) {
         TPZGeoEl *gel = gmesh->Element(shell.first);
         TPZGeoEl *copiedgel = gel->Clone(bogusMesh);
+        if(copiedgel->HasSubElement()){
+            copiedgel->SetSubElement(0,nullptr);
+        }
         copiedgel->SetMaterialId(shell.second);
     }
     std::string filename; 
