@@ -569,9 +569,9 @@ const bool DFNFracture::CheckSubPolygonPlanarity(TPZStack<int64_t>& subpolygon, 
     const auto limit = M_SQRT2/2.;
     
     if (cosangle < limit) {
-        polyg.Print();
-        PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubPolygon");
-        const REAL cosangle = polyg.GetWorstAngleCos();
+//        polyg.Print();
+//        PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubPolygon");
+//        const REAL cosangle = polyg.GetWorstAngleCos();
 #if PZ_LOG
         std::stringstream sout;
         sout << "\nSubpolygon with bad planarity found!"
