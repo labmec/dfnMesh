@@ -132,7 +132,10 @@ class DFNPolyhedron
         /**
          * Prints the shells of the polyhedron to vtk
          */
-        void PrintVTK(const std::string filepath = "") const;
+        void PlotVTK(const std::string filepath = "") const;
+
+		/// Plots this volume and its neighbour volumes
+		void PlotVTK_NeighbourVolumes(const std::string filepath = "") const;
 
 		/// Checks if this Polyhedron is a tetrahedron
 		bool IsTetrahedron() const;

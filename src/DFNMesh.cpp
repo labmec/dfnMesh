@@ -3031,7 +3031,7 @@ void DFNMesh::PrintRolodexBugReport(const int64_t AxleIndex){
 	for(int polyhindex : toPlot){
 		if(polyhindex >= NPolyhedra()) continue;
 		DFNPolyhedron& polyh = Polyhedron(polyhindex);
-		polyh.PrintVTK(dirname+"/Poly_"+std::to_string(polyhindex)+".vtk");
+		polyh.PlotVTK(dirname+"/Poly_"+std::to_string(polyhindex)+".vtk");
 	}
 }
 
@@ -3040,7 +3040,7 @@ void DFNMesh::PlotVolumesByCoarseIndex(const int64_t coarseindex, const std::str
     for (auto& pol : fPolyhedra) {
         if(pol.CoarseIndex() != coarseindex) continue;
         std::string filename = dirpath + "poly_" + std::to_string(pol.Index()) + "." + std::to_string(NFractures()) + ".vtk";
-        pol.PrintVTK(filename);
+        pol.PlotVTK(filename);
         
     }
 }

@@ -3,6 +3,10 @@
 #include "DFNMesh.h"
 #include "TPZVTKGeoMesh.h"
 
+#if PZ_LOG
+    static TPZLogger logger("dfn.mesh");
+#endif
+
 /// Assignment operator
 DFNPolyhedron &DFNPolyhedron::operator=(const DFNPolyhedron &copy){
     fShell.clear();
@@ -173,7 +177,7 @@ bool DFNPolyhedron::IsTetrahedron() const{
     // return ntriangles == 4;
 }
 
-void DFNPolyhedron::PrintVTK(const std::string filepath) const {
+void DFNPolyhedron::PlotVTK(const std::string filepath) const {
     
     TPZGeoMesh bogusMesh;
     TPZGeoMesh *gmesh = fDFN->Mesh();
@@ -202,6 +206,29 @@ void DFNPolyhedron::PrintVTK(const std::string filepath) const {
     TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out);
 }
 
+void DFNPolyhedron::PlotVTK_NeighbourVolumes(const std::string filepathprefix) const{
+    std::string pathprefix = filepathprefix.length() == 0 ? "./LOG/NeigVolume_" : filepathprefix;
+
+    // I SHOULD PROBABLY NOT PLOT MYSELF USING THE SAME PATHPREFIX SO NOT TO INDUCE CONFUSION
+    // this->PlotVTK(pathprefix+std::to_string(fIndex));
+    
+    for(const auto& [faceindex, defaultorient] : fShell){
+        int neigVolumeIndex = fDFN->GetPolyhedralIndex(faceindex,defaultorient);
+        if(neigVolumeIndex != this->fIndex){
+            LOGPZ_WARN(logger, "OrientedFace " << faceindex <<" | "<< defaultorient << " is listed for volume " << this->fIndex << " but thinks it belongs to volume " << neigVolumeIndex);
+        }
+
+        for(int i = 0; i < 2; i++){
+            const int orient = 2*i-1;
+            neigVolumeIndex = fDFN->GetPolyhedralIndex(faceindex,orient);
+            if(neigVolumeIndex == this->fIndex) continue;
+            if(neigVolumeIndex < 0) continue;
+            const DFNPolyhedron& neigVolume = fDFN->Polyhedron(neigVolumeIndex);
+            neigVolume.PlotVTK(pathprefix + std::to_string(neigVolumeIndex) + ".vtk");
+        }
+    }
+
+}
 
 bool DFNPolyhedron::IsBoundedBy(const int64_t faceindex) const{
     return IsBoundedBy(faceindex,1)||IsBoundedBy(faceindex,-1);

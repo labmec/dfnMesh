@@ -436,7 +436,7 @@ std::pair<int64_t,int> DFNFracture::PolyhNeighbour(std::pair<int64_t,int>& curre
             return {neigindex,-1};
         }
     }
-    fdfnMesh->DFN_DebugStop();
+    // fdfnMesh->DFN_DebugStop();
     return {-1,0};
 }
 
@@ -699,6 +699,12 @@ void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
     int outlet_side = current_dfnface->OtherRibSide(inlet_side);
     int nextinlet_side = -1;
     std::pair<int64_t,int> nextface_orient = PolyhNeighbour(currentface_orient, outlet_side, nextinlet_side);
+    if(nextface_orient.second == 0){
+        int volumeindex = fdfnMesh->GetPolyhedralIndex(currentface_orient);
+        PlotVTK_SubPolygon(subpolygon,volumeindex,"FailedSubPolygon");
+        fdfnMesh->Polyhedron(volumeindex).PlotVTK_NeighbourVolumes("./LOG/FailedSubPolygon/NeigVolume_");
+        DebugStop();
+    }
 #ifdef PZDEBUG
     if(!Face(nextface_orient.first)){ std::cout<<"\nPolyhNeighbour returned a next face that was not intersected by the fracture\n"; fdfnMesh->DFN_DebugStop();}
 #endif // PZDEBUG
@@ -2207,7 +2213,7 @@ void DFNFracture::PlotVTK_SubPolygon(const TPZVec<int64_t>& subpolygon, const in
     }
 
     // Plot polyhedral volume
-    fdfnMesh->Polyhedron(volumeindex).PrintVTK(dirpath+"/Volume.vtk");
+    fdfnMesh->Polyhedron(volumeindex).PlotVTK(dirpath+"/Volume.vtk");
 
     // Plot fracture plane
     fPolygon.PlotVTK(dirpath+"/FracturePlane.vtk",fmatid,fIndex);
