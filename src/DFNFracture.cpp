@@ -541,7 +541,10 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
 
 const bool DFNFracture::CheckSubPolygonPlanarity(TPZStack<int64_t>& subpolygon, const int polyhindex) const {
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    const DFNPolyhedron& volume = fdfnMesh->Polyhedron(polyhindex);
     const int nelements = subpolygon.size();
+    if(nelements < 4) return true;
+    // if(volume.IsTetrahedron()) return true; // @todo leaving this commented for debug
     TPZManVector<int64_t,4> cornerindices(nelements,-1);
     int i=0;
     for(int64_t edge : subpolygon){
@@ -579,6 +582,8 @@ const bool DFNFracture::CheckSubPolygonPlanarity(TPZStack<int64_t>& subpolygon, 
         polyg.Print(sout);
         LOGPZ_INFO(logger,sout.str());
 #endif // PZ_LOG
+        if(volume.IsTetrahedron() ) DebugStop();
+        if(nelements < 4) DebugStop(); 
         return false;
     }
     return true;
@@ -635,12 +640,13 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             
             // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
             if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
-            polygon_counter++;
             
             const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
             if (!isSubPolPlanarEnough) {
                 badVolumes.push_back(polyhindex);
+                continue;
             }
+            polygon_counter++;
             
             LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh# " << polyhindex);
 

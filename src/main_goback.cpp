@@ -48,41 +48,11 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 
 
 #if PZ_LOG
-	// #include "log4cxx/fileappender.h"
-	// #include "log4cxx/patternlayout.h"
-	// #include "log4cxx/propertyconfigurator.h"
-	// #include "log4cxx/level.h"
-	// #include <log4cxx/logger.h>
-	// #include <log4cxx/basicconfigurator.h>
-
 	static TPZLogger logger("dfn.mesh");
 #endif // PZ_LOG
 
 
 
-/** @brief a Quick script I've written to setup PZ's datastructure so we could test bug_snap_overlap3.json*/
-// void ScriptForBug3(TPZGeoMesh* gmesh){
-// 	std::vector<int> ref0 = {20,0,1,2};
-// 	std::vector<int> ref1 = {21,3,4,5};
-// 	std::vector<int> ref2 = {22,6,7,8};
-// 	std::vector<int> ref3 = {23,9,10,11};
-// 	std::vector<int> ref4 = {19,12,13,14,15,16,17};
-
-// 	std::vector<std::vector<int>> refs = {ref0, ref1, ref2, ref3, ref4};
-
-// 	for(auto& ref : refs){
-// 		TPZGeoEl* father = gmesh->Element(ref[0]);
-// 		int nchildren = ref.size()-1;
-// 		TPZManVector<TPZGeoEl*,6> children(nchildren,nullptr);
-// 		for(int i=1; i<=nchildren; i++){
-// 			children[i-1] = gmesh->Element(ref[i]);
-// 		}
-// 		DFN::CreateRefPattern(father,children);
-// 		for(int i=0; i<nchildren;i++) father->SetSubElement(i,children[i]);
-// 		children.Fill(nullptr);
-// 		children.clear();
-// 	}
-// }
 
 
 //-------------------------------------------------------------------------------------------------
@@ -200,7 +170,8 @@ int main(int argc, char* argv[]){
                     count++;
                 }
                 
-                std::cout << "\n====> Found volumes with bad angles. Rolled back fracture and refined polihedra into simplexes..." << std::endl;
+                std::cout << "\n====> Found volumes with bad angles. Rolled back fracture and refined polyhedra into simplexes..." << std::endl;
+                std::cout << badVolumes.size() << " bad volume" << (badVolumes.size()>1?'s':' ') << std::endl;
                 std::cout << "This is the " << count << " time rollback is applied to fracture number " << iplane+1 << std::endl;
                 continue;
             }
