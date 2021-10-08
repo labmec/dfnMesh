@@ -192,6 +192,10 @@ public:
     /** @return Number of cards*/
     int NCards() const{return fcards.size();}
 
+    /// Plot VTK for unitialized Rolodex
+    static void PlotVTK(const std::string filepath, const TPZGeoElSide Axle, const bool UnrefinedOnly = true, const bool orientationMatch = false);
+    
+    
     void PlotVTK(const std::string filepath, TPZGeoMesh* gmesh){
     
         std::cout << "\n =====> Plotting rolodex to " << filepath << std::endl;

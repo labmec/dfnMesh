@@ -106,7 +106,7 @@ namespace DFN{
      * @brief Check if the side that connects 2 neighbours has the same orientation in each element
      * @note currently exclusive to 1D sides
      */
-    bool OrientationMatch(TPZGeoElSide &neig1, TPZGeoElSide &neig2);
+    bool OrientationMatch(const TPZGeoElSide &neig1, const TPZGeoElSide &neig2);
 
     /**
      * @brief Computes the cossine of the angle at a corner of a 2D element

@@ -2115,7 +2115,7 @@ void DFNMesh::RefineQuads(const TPZVec<std::pair<int64_t,int>>& polyhedron){
 // void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex){
 void DFNMesh::MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex){
 	// GMsh doesn't like zero index entities
-    const int shift = 1;
+    constexpr int shift = 1;
 
 	// copy faces of polyhedron into an std::vector for gmsh
 	std::vector<int> surfaceloop;
@@ -2226,7 +2226,7 @@ void DFNMesh::MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, i
 	// Make sure these new 3D elements have corresponding polyhedra, and coarse index is inherited
 	for(int64_t index : newgels){
 		TPZGeoEl* vol = fGMesh->Element(index);
-		CreateGelPolyhedron(vol,coarseindex);
+		int newid = CreateGelPolyhedron(vol,coarseindex);
 	}
 }
 

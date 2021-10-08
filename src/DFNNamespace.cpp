@@ -265,7 +265,7 @@ namespace DFN{
      * @brief Check if the side that connects 2 neighbours has the same orientation in each element
      * @note currently exclusive to 1D sides
      */
-    bool OrientationMatch(TPZGeoElSide &neig1, TPZGeoElSide &neig2){
+    bool OrientationMatch(const TPZGeoElSide &neig1, const TPZGeoElSide &neig2){
         if(neig1.Dimension() != 1) DebugStop();
         if(!neig1.NeighbourExists(neig2)) DebugStop();
         return (neig1.SideNodeIndex(0) == neig2.SideNodeIndex(0));
