@@ -9,25 +9,29 @@
         constexpr REAL _359degrees = 359.*M_PI/180.;
         const REAL MaxAngle = SortedCards.rbegin()->first;
         if(MaxAngle > _359degrees){
-            PZError << "[FATAL] Something went wrong when computing angles to sort faces around edge #" << AxleIndex
-                    << "\nAngles should go from zero to 2pi. And these were the angles you asked me to initialize:\n"
-                    << "gel index | side | angle\n";
+            std::stringstream msg;
+            msg << "[FATAL] Something went wrong when computing angles to sort faces around edge #" << AxleIndex
+                << "\nAngles should go from zero to 2pi. And these were the angles you asked me to initialize:\n"
+                << "gel index | side | angle\n";
             for(auto& card_it : SortedCards){
-                PZError << std::setw(9) << std::right << card_it.second.Element()->Index() << " | "
-                        << std::setw(4) << std::right << card_it.second.Side() << " | "
-                        << std::left  << card_it.first << "\n";
+                msg << std::setw(9) << std::right << card_it.second.Element()->Index() << " | "
+                    << std::setw(4) << std::right << card_it.second.Side() << " | "
+                    << std::left  << card_it.first << "\n";
             }
-            PZError << "\nMaybe an orientation match problem."
-                    << "\nMaybe Gmsh created a sliver."
-                    << "\nI'll try to plot the rolodex to a VTK file.";
+            msg << "\nMaybe an orientation match problem."
+                << "\nMaybe Gmsh created a sliver."
+                << "\nI'll try to plot the rolodex to a VTK file.";
+            LOGPZ_FATAL(logger,msg.str());
+            
             constexpr char plotpath[] = "./LOG/twoDNeighbours.vtk";
             TPZGeoMesh* gmesh = SortedCards.begin()->second.Element()->Mesh();
             TPZGeoElSide edgeside(gmesh->Element(AxleIndex),2);
             TRolodex::PlotVTK(plotpath,edgeside,true,true);
-            PZError << "\n2D neighbours of edge #" << AxleIndex << " plotted to: " << plotpath << std::endl;
+            LOGPZ_FATAL(logger,"\n2D neighbours of edge #" << AxleIndex << " plotted to: " << plotpath << '\n');
+            
             constexpr char _3Dplotpath[] = "./LOG/threeDNeighbours.vtk";
             DFN::PlotNeighbours(_3Dplotpath,edgeside,3,true,false);
-            PZError << "\n3D neighbours of edge #" << AxleIndex << " plotted to: " << _3Dplotpath << std::endl;
+            LOGPZ_FATAL(logger,"\n3D neighbours of edge #" << AxleIndex << " plotted to: " << _3Dplotpath << '\n');
             DebugStop();
         }
     }
