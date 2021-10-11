@@ -155,6 +155,10 @@ class DFNPolyhedron
 		 * @param orientedFace: Paired {elIndex, orientation}.
 		*/
 		bool IsBoundedBy(const std::pair<int64_t, int> orientedFace) const;
+
+#ifdef PZDEBUG
+		void CoherentRefinementTest(const TPZVec<int64_t>& newgels);
+#endif // PZDEBUG
 };
 
 inline std::ostream& operator<<(std::ostream &out, const DFNPolyhedron& polyhedron){

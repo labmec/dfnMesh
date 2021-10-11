@@ -2,6 +2,7 @@
 #include "DFNPolyhedron.h"
 #include "DFNMesh.h"
 #include "TPZVTKGeoMesh.h"
+#include <filesystem>
 
 #if PZ_LOG
     static TPZLogger logger("dfn.mesh");
@@ -155,9 +156,38 @@ void DFNPolyhedron::Refine(){
         Shell[i].second = oriented_face.second;
         i++;
     }
-    fDFN->MeshPolyhedron(Shell, fCoarseIndex);
+    TPZStack<int64_t> newgels;
+    fDFN->MeshPolyhedron(Shell, fCoarseIndex,newgels);
+#ifdef PZDEBUG
+    CoherentRefinementTest(newgels);
+#endif // PZDEBUG
 }
 
+#ifdef PZDEBUG
+void DFNPolyhedron::CoherentRefinementTest(const TPZVec<int64_t>& newgels){
+    constexpr REAL _2deg = 2.*M_PI/180.;
+    constexpr REAL tol = _2deg;
+    TPZGeoElSide badangle = DFN::TestInternalAngles(fDFN->Mesh(),newgels,tol);
+    if(badangle.Element()){
+        const std::string dirpath = "./LOG/SliverInducingVolume";
+        std::filesystem::create_directories(dirpath);
+        LOGPZ_FATAL(logger,
+            "Gmsh created a sliver when refining volume " << fIndex
+            << "\nThe first internal angle below the threshold of " << tol
+            << " rad, was the side " << badangle.Side() 
+            << " of " << badangle.Element()->TypeName() << ' ' << badangle.Element()->Index()
+            << "\nThere's a .msh file with the Gmsh model for this volume at ./LOG/gmshAPI_LastVolumeMeshed.msh"
+            << "\nI'll plot VTK graphics to " << dirpath << '\n'
+        )
+        this->PlotVTK(dirpath+"/Volume.vtk");
+        this->PlotVTK_NeighbourVolumes(dirpath+"/NeigVolume_");
+        fDFN->PlotAllPolygons(dirpath+"/AllPolygons.vtk");
+        DFN::PlotVTK_elementList(dirpath+"/SubMesh.vtk",newgels,fDFN->Mesh());
+        DFN::PlotVTK_elementList(dirpath+"/CoarseVolume.vtk",{fCoarseIndex},fDFN->Mesh());
+        DebugStop();
+    }
+}
+#endif // PZDEBUG
 
 bool DFNPolyhedron::IsTetrahedron() const{
     bool condition = (fShell.size() == 4 

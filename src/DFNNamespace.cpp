@@ -15,7 +15,17 @@ static TPZLogger logger("dfn.mesh");
 
 
 namespace DFN{
-    
+    // Return angle in radians from a cosine and a sine within the range [0,2pi)
+    REAL Arc(const REAL cos, const REAL sin){
+#ifdef PZDEBUG
+        constexpr REAL fuzzyOne = 1.+gDFN_SmallNumber;
+        if(cos < -fuzzyOne || cos > fuzzyOne || sin < -fuzzyOne || sin > fuzzyOne)
+            DebugStop();
+#endif // PZDEBUG
+        const REAL arccos = std::acos(cos);
+        constexpr REAL _2pi = 2.*M_PI;
+        return sin > 0. ? arccos : _2pi - arccos;
+    }
 
     void PrintGeoEl(TPZGeoEl* gel) {
 
@@ -546,6 +556,7 @@ namespace DFN{
 
 #if PZDEBUG
         // DFN::TestPositiveJacobian(gmesh,newelements);
+        // DFN::TestInternalAngles(gmesh,newelements,2.*M_PI/180.);
 #endif // PZDEBUG
     }
 
@@ -962,12 +973,29 @@ namespace DFN{
         }
     }
 
+
+    TPZGeoElSide TestInternalAngles(TPZGeoMesh* gmesh, const TPZVec<int64_t>& el_indices, const REAL tol){
+        for(const int64_t index : el_indices){
+            TPZGeoEl* gel = gmesh->Element(index);
+            const int d = gel->Dimension() - 2;
+            const int nsides = gel->NSides();
+            for(int iside=0; iside<nsides; iside++){
+                if(gel->SideDimension(iside) != d) continue;
+                const TPZGeoElSide subfacet{gel,iside};
+                REAL angle = DFN::InternalAngle(subfacet);
+                if(angle < tol)
+                    return subfacet;
+            }
+        }
+        return {nullptr,-1};
+    }
+
     bool TestPositiveJacobian(TPZGeoMesh* gmesh, const TPZVec<int64_t>& el_indices){
         for(const int64_t index : el_indices){
             TPZGeoEl* gel = gmesh->Element(index);
             TPZVec<REAL> qsi(gel->Dimension(),0.); TPZFNMatrix<9,REAL> jac; TPZFNMatrix<9,REAL> axes; REAL detjac; TPZFNMatrix<9,REAL> jacinv;
             gel->Jacobian(qsi,jac,axes,detjac,jacinv);
-            if(detjac < 1e-8){
+            if(detjac < 1e-4){
                 // DFN::PrintGeoEl(gel);
                 LOGPZ_FATAL(logger,"Gmsh created element with zero or negative det jacobian."
                                     << "\n\tdetjac = " << detjac
@@ -978,6 +1006,65 @@ namespace DFN{
             }
         }
         return true;
+    }
+
+
+    REAL InternalAngle(const TPZGeoElSide subfacet){
+        // Consistency
+        bool consistentInput = true;
+        consistentInput = consistentInput && subfacet.Element();
+        consistentInput = consistentInput && (subfacet.Dimension() == subfacet.Element()->Dimension()-2);
+        consistentInput = consistentInput && (subfacet.Element()->Dimension() > 1);
+        if(!consistentInput){
+            throw std::invalid_argument("I don't know how to compute internal angle around side "
+                                        +std::to_string(subfacet.Side())
+                                        +" of element "
+                                        +std::to_string(subfacet.Element()->Index()));
+            REAL nonsense = -10.*M_PI;
+            return nonsense;
+        }
+        const int d = subfacet.Element()->Dimension();
+        // @definition: facet = (d-1)-dimensional side of a d-dimensional element
+        // @definition: subfacet = (d-2)-dimensional side of a d-dimensional element
+        // A subfacet side is shared by 2 facets
+        TPZStack<TPZGeoElSide> facets;
+        subfacet.Element()->AllHigherDimensionSides(subfacet.Side(),2,facets);
+        if(facets.size() != 2) DebugStop();
+
+        // Compute normals of facets
+        TPZManVector<REAL,3> midpointQsi(d-1,0.);
+        facets[0].CenterPoint(midpointQsi);
+        TPZManVector<REAL,3> normal0(3,0.);
+        facets[0].Normal(midpointQsi,normal0);
+        facets[1].CenterPoint(midpointQsi);
+        TPZManVector<REAL,3> normal1(3,0.);
+        facets[1].Normal(midpointQsi,normal1);
+        
+        // @note: TPZGeoElSide::Normal() always builds an Outward pointing unitary vector
+
+        // Compute cosine of supplementary angle
+        const REAL cos_sup = DFN::DotProduct<REAL>(normal0,normal1);
+        // Compute sine of supplementary angle
+        TPZManVector<REAL,3> cross = DFN::CrossProduct<REAL>(normal0,normal1);
+        const REAL sin_sup = DFN::Norm<REAL>(cross);
+        // Compute supplementary angle
+        // const REAL sup_angle = DFN::Arc(cos_sup,sin_sup);
+        
+        // Compute internal angle
+        const REAL cos = -cos_sup;
+        const REAL sin =  sin_sup;
+        REAL internal_angle = DFN::Arc(cos,sin);
+        // REAL internal_angle = M_PI - sup_angle;
+
+#ifdef PZDEBUG
+//         // If you'd like to account for non-convex elements, it goes something like this
+//         TPZManVector<double,3> qsi(d,0.); TPZFMatrix<double> jac(d,d); TPZFMatrix<double> axes(3,d); REAL detjac = -999.0; TPZFMatrix<double> jacinv(d,d);
+//         subfacet.Element()->Jacobian(qsi,jac,axes,detjac,jacinv);
+//         if(detjac < 0.)
+//             {internal_angle = DFN::_2PI - internal_angle;}
+#endif // PZDEBUG
+
+        return internal_angle;
     }
 } /* namespace DFN*/
 

@@ -1891,28 +1891,40 @@ void DFNMesh::UpdatePolyhedra(){
 //			std::cout<< ' ' << loading[(buffering++%4)] << '\r' << std::flush;
 				
 			BuildVolume(initial_face_orient,IsConvex,polyhedron,coarseindex);
+			DFNPolyhedron* newvolume = CreatePolyhedron(polyhedron,coarseindex,IsConvex);
 
 			#ifdef PZDEBUG
 				if(coarseindex < 0){
 					this->DumpVTK(true);
-					DFNPolyhedron* bugpolyh = CreatePolyhedron(polyhedron,coarseindex);
 					PZError << "\nFailed to attribute a coarse element index to: ";
-					bugpolyh->Print(PZError,true);
+					newvolume->Print(PZError,true);
+					newvolume->PlotVTK("./LOG/OrphanVolume.vtk");
 					DebugStop();
 				}
 			#endif //PZDEBUG
 
 			if(!IsConvex) {
 				ClearPolyhIndex(polyhedron);
-				MeshPolyhedron(polyhedron,coarseindex);
+				newvolume->Refine();
 				this->SortFacesAroundEdges();
 				--ipolyh_local;
-				// iel = 0;
-			}else{
-				CreatePolyhedron(polyhedron,coarseindex);
-				// DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron,coarseindex);
-				// fPolyhedra.push_back(new_polyhedron);
 			}
+			// if(!IsConvex) {
+			// 	DFNPolyhedron* nonconvexvolume = CreatePolyhedron(polyhedron,coarseindex,IsConvex);
+			// 	ClearPolyhIndex(polyhedron);
+			// 	TPZStack<int64_t> newgels;
+			// 	MeshPolyhedron(polyhedron,coarseindex,newgels);
+			// 	#ifdef PZDEBUG
+			// 		nonconvexvolume->CoherentRefinementTest(newgels);
+			// 	#endif // PZDEBUG
+			// 	this->SortFacesAroundEdges();
+			// 	--ipolyh_local;
+			// 	// iel = 0;
+			// }else{
+			// 	CreatePolyhedron(polyhedron,coarseindex);
+			// 	// DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron,coarseindex);
+			// 	// fPolyhedra.push_back(new_polyhedron);
+			// }
 		}
 	}
 	std::cout<<"                               \r"<<std::flush;
@@ -2110,7 +2122,7 @@ void DFNMesh::RefineQuads(const TPZVec<std::pair<int64_t,int>>& polyhedron){
 
 // template<int Talloc>
 // void DFNMesh::MeshPolyhedron(TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron, int coarseindex){
-void DFNMesh::MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex){
+void DFNMesh::MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, int coarseindex, TPZStack<int64_t>& newgels){
 	// GMsh doesn't like zero index entities
     constexpr int shift = 1;
 
@@ -2144,7 +2156,7 @@ void DFNMesh::MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, i
 	std::string modelname = "model_polyh";
 	gmsh::model::add(modelname);
 	gmsh::model::setCurrent(modelname);
-	std::string mshfilename = "LOG/gmshAPI_polyh.msh";
+	constexpr char mshfilename[] = "LOG/gmshAPI_LastVolumeMeshed.msh";
 	gmsh::option::setNumber("Mesh.Algorithm3D",1);  // (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT) Default value: 1
 	// Insert nodes ____________________________________
 	{TPZManVector<REAL,3> coord(3);
@@ -2200,7 +2212,6 @@ void DFNMesh::MeshPolyhedron(const TPZVec<std::pair<int64_t,int>>& polyhedron, i
 	#endif //PZDEBUG
 	// import meshed volume back into PZ geoMesh
 	std::set<int64_t>& old_nodes = nodes;
-	TPZStack<int64_t> newgels;
 	DFN::ImportElementsFromGMSH(fGMesh,3,old_nodes,newgels);
 	gmsh::model::remove();
 	gmsh::clear();

@@ -249,6 +249,20 @@ namespace DFN{
 
     /// Configures the logger used by Gmsh
     void GmshConfig();
+
+    /** @brief Given an (d-2)-dimensional side of a d-dim element, compute internal angle around that side (in radians)
+     * @details Only works in corners of 2D elements and edges of 3D elements. It'll throw excepetion on anything else.
+     * @throws std::invalid_argument
+     * @param subfacet: Any (d-2)-dimensional side of a d-dimensional element
+    */
+    REAL InternalAngle(const TPZGeoElSide subfacet);
+
+    /** @brief Tests internal angles of a list of elements against a tolerance
+     * @returns A TPZGeoElSide for the (d-2)-dimensional side whose internal angle violates the tolerance
+     * @returns {nullptr, -1} if no internal angle violates the tolerance
+    */
+    TPZGeoElSide TestInternalAngles(TPZGeoMesh* gmesh, const TPZVec<int64_t>& el_indices, const REAL tol);
+
 } /*namespace DFN*/
 
 
