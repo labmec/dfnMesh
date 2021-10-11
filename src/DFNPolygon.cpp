@@ -174,7 +174,7 @@ const Matrix& DFNPolygon::GetCornersX() const{
 }
 
 void DFNPolygon::SetCornersX(const Matrix &CornerPoints){
-    if(fCornerPoints.Cols() != 0) LOG_DFN_WARN("Corners of a DFNPolygon were reset. You need to re-sort nodes above and below.\n");
+    if(fCornerPoints.Cols() != 0) LOGPZ_WARN(logger,"Corners of a DFNPolygon were reset. You need to re-sort nodes above and below.\n");
     fCornerPoints.Resize(CornerPoints.Rows(),CornerPoints.Cols());
     fCornerPoints = CornerPoints;
     ComputeAxis();
@@ -737,13 +737,13 @@ const REAL DFNPolygon::GetWorstAngleCos() {
 }
 
 
-const REAL DFNPolygon::SubTriangleArea(TPZVec<REAL>& centroid, const int i) const {
+const REAL DFNPolygon::SubTriangleArea(const TPZVec<REAL>& centroid, const int i) const {
     const int npts = fCornerPoints.Cols();
     const int inext = (i+1)%npts;
     TPZManVector<REAL,3> vec0 = TPZVec<REAL>({fCornerPoints(0,i),fCornerPoints(1,i),fCornerPoints(2,i)});
-    vec0 = vec0 - centroid;
+    vec0 -= centroid;
     TPZManVector<REAL,3> vec1 = {fCornerPoints(0,inext),fCornerPoints(1,inext),fCornerPoints(2,inext)};
-    vec1 = vec1 - centroid;
+    vec1 -= centroid;
     
     const REAL area = DFN::Norm<REAL>(DFN::CrossProduct<REAL>(vec0, vec1))/2.;
     

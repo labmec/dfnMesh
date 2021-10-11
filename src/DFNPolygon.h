@@ -203,7 +203,7 @@ class DFNPolygon
 	bool Check_Data_Consistency() const;
     
     /// Calculates the area of a subtriangle given by a centroid and two consecutives indexes (i and i+1)
-    const REAL SubTriangleArea(TPZVec<REAL>& centroid, const int i) const;
+    const REAL SubTriangleArea(const TPZVec<REAL>& centroid, const int i) const;
     
     /// Returns the cross products of of the nodes in index i, j, and k
     TPZManVector<REAL,3> GetCrossProduct(const int i, const int j, const int k);

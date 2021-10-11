@@ -25,7 +25,7 @@
             
             constexpr char plotpath[] = "./LOG/twoDNeighbours.vtk";
             TPZGeoMesh* gmesh = SortedCards.begin()->second.Element()->Mesh();
-            TPZGeoElSide edgeside(gmesh->Element(AxleIndex),2);
+            const TPZGeoElSide edgeside(gmesh->Element(AxleIndex),2);
             TRolodex::PlotVTK(plotpath,edgeside,true,true);
             LOGPZ_FATAL(logger,"\n2D neighbours of edge #" << AxleIndex << " plotted to: " << plotpath << '\n');
             

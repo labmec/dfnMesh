@@ -48,39 +48,29 @@ namespace DFN{
     bool IsInterface(TPZGeoEl* gel);
 
     template<typename TReturnType,typename Ttype1,typename Ttype2>
-    TReturnType DotProduct(TPZManVector<Ttype1,3> &vec1, TPZManVector<Ttype2,3> &vec2);
-
-    template<typename Ttype1, typename Ttype2>
-    float DotProduct_f(TPZManVector<Ttype1,3> &vec1, TPZManVector<Ttype2,3> &vec2);
+    TReturnType DotProduct(const TPZManVector<Ttype1,3> &vec1, const TPZManVector<Ttype2,3> &vec2);
 
     /** @brief Returns the norm of a vector with template precision*/
     template<typename Ttype>
     Ttype Norm(const TPZManVector<Ttype, 3> &vec);
-
-    /** @brief Returns the norm of a vector with float precision*/
-    template<typename Ttype>
-    float Norm_f(TPZManVector<Ttype, 3> &vec);
 
     /** 
      * @brief Vector cross product with template return type
      * @param ReturnType CrossProduct<ReturnType>(vec1,vec2)
     */
     template<typename TReturnType, typename T2>
-    TPZManVector<TReturnType,3> CrossProduct(TPZManVector<T2,3> &vec1, TPZManVector<T2,3> &vec2);
-
-    template<typename Ttype>
-    TPZVec<float> CrossProduct_f(TPZManVector<Ttype,3> &vec1, TPZManVector<Ttype,3> &vec2);
+    TPZManVector<TReturnType,3> CrossProduct(const TPZManVector<T2,3> &vec1, const TPZManVector<T2,3> &vec2);
 
     template <typename T>
-    TPZVec<T> operator-(TPZVec<T>& v1,TPZVec<T>& v2);
+    TPZVec<T> operator-(const TPZVec<T>& v1,const TPZVec<T>& v2);
 
     template <typename T>
-    TPZVec<T> operator+(TPZVec<T>& v1,TPZVec<T>& v2);
+    TPZVec<T> operator+(const TPZVec<T>& v1,const TPZVec<T>& v2);
 
     /// @brief Get an orthogonal projection of x onto an arbitrary plane represented by a normal vector and a reference point in the plane
     /// @warning It assumes the given normal vector has norm == 1 and won't verify (to keep it efficient)
     template<typename Ttype>
-    TPZManVector<Ttype, 3> GetProjectedX(TPZManVector<Ttype, 3> &x,TPZManVector<Ttype,3>& inplane_point,TPZManVector<Ttype,3>& normal);
+    TPZManVector<Ttype, 3> GetProjectedX(const TPZManVector<Ttype, 3> &x, const TPZManVector<Ttype,3>& inplane_point, const TPZManVector<Ttype,3>& normal);
 
     /**
      * @brief Returns the oriented dihedral angle between gel and neighbour
@@ -90,7 +80,7 @@ namespace DFN{
      * orientation, with the right thumb place over the shared 1D side, and considering the first element node distribution.
      * If thumb orientation matches the orientation of gelside, use 1, else, use -1.
      */
-    REAL DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation = 1);
+    REAL DihedralAngle(const TPZGeoElSide& gelside, const TPZGeoElSide& neighbour, const int sideorientation = 1);
 
     /**
      * @brief print a geometric element to paraview
@@ -100,7 +90,7 @@ namespace DFN{
     /**
      * @brief Get a vector from node 0 to node 1 of a 1D side
      */
-    void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector);
+    void GetSideVector(const TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector);
 
     /**
      * @brief Check if the side that connects 2 neighbours has the same orientation in each element
@@ -111,17 +101,17 @@ namespace DFN{
     /**
      * @brief Computes the cossine of the angle at a corner of a 2D element
     */
-    REAL CornerAngle_cos(TPZGeoEl *gel, int corner);
+    REAL CornerAngle_cos(TPZGeoEl *gel, const int corner);
 
     /**
      * @brief Get a pointer to an element that is superposed in a lower dimensional side of a geometric element
      * @return nullptr if there is no element in that side
     */
-    TPZGeoEl* GetSkeletonNeighbour(const TPZGeoEl* gel, int side);
+    TPZGeoEl* GetSkeletonNeighbour(const TPZGeoEl* gel, const int side);
 
     /// @brief Check if there is a common neighbour to 3 geoelsides of dimension dim
     /// @param dim: Filter by dimension. Set -1 to skip filter
-    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim = -1);
+    TPZGeoEl* FindCommonNeighbour(const TPZGeoElSide gelside1, const TPZGeoElSide gelside2, const TPZGeoElSide gelside3, const int dim = -1);
 
     /// builds a loop of oriented 1D elements occupying the 1D sides of a 2D el
     /// @param shift: indices will get shifted by a constant 
@@ -138,7 +128,7 @@ namespace DFN{
      * @param centroid: Reference to a vector to fill with centroid coordinates 
      * @param normal: Reference to a vector to fill with normal vector 
     */
-    void BestFitPlane(TPZFMatrix<REAL>& pointcloud, TPZManVector<REAL,3>& centroid, TPZManVector<REAL,3>& normal);
+    void BestFitPlane(const TPZFMatrix<REAL>& pointcloud, TPZManVector<REAL,3>& centroid, TPZManVector<REAL,3>& normal);
 
     /** @brief Takes a simple oriented lineloop with 3 or 4 edges and create a geometric element
      * @param lineloop an oriented loop of 3 or 4 edges
@@ -152,11 +142,11 @@ namespace DFN{
 
     /** @brief Check if a set of mesh nodes are coplanar
     */
-    bool AreCoPlanar(TPZGeoMesh* gmesh, const std::set<int64_t>& nodeindices, REAL tolerance);
+    bool AreCoPlanar(TPZGeoMesh* gmesh, const std::set<int64_t>& nodeindices, const REAL tolerance);
 
     /** @brief Set material ids for a set of element indices and skip negative entries*/
     template<class TContainer>
-    void BulkSetMaterialId(TPZGeoMesh* gmesh, TContainer elementindices, int matid);
+    void BulkSetMaterialId(TPZGeoMesh* gmesh, const TContainer& elementindices, const int matid);
 
     /** @brief Return true if polygon has at least 3 valid edges
      * @note 1: Assumes any negative index represents an edge that was colapsed down to zero dimension
@@ -177,7 +167,7 @@ namespace DFN{
     /** Outward/inward (true/false) orientation of faces in NeoPZ's pyramid */
     static const bool TPZPyramid_faceorient[5] =     {0,1,1,0,0};
     /** @brief Check if a 2D side of a 3D element is oriented outward according to NeoPZ topolgy */
-    bool PZOutwardPointingFace(TPZGeoElSide faceside);
+    bool PZOutwardPointingFace(const TPZGeoElSide faceside);
 
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZManVector<int64_t,4> GetEdgeIndices(TPZGeoEl* face);
@@ -187,10 +177,8 @@ namespace DFN{
     void CreateRefPattern(TPZGeoEl* father, TPZVec<TPZGeoEl*>& children);
 
     /// Return 1 if subel's normal vector matches its father's, and -1 otherwise
-    int SubElOrientation(TPZGeoEl* father, int ichild);
+    int SubElOrientation(TPZGeoEl* father, const int ichild);
 
-    // Get a vector normal to a 2D element that matches its orientation
-    void ElementOrientation(TPZGeoEl* gel, TPZManVector<REAL,3>& orientvec);
 
     /** @brief Given a volume and a face occupying a side of a volume, check if the face is oriented inwards or outwards the volume
      * @return +1 if skeleton is pointing outwards;
@@ -216,14 +204,14 @@ namespace DFN{
      * @param oldnodes: A set of indices of the old nodes that were used to define the geometry in 
      * GMsh (so that new nodes may be identified)
      */
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, const int dimension, const std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements);
 
     /// @brief return a set with the indices of all youngest children in the refinement trees of elements whose indices are listed in 'parents'. If element have no children, its own index is added to the set.
     std::set<int64_t> YoungestChildren(const std::set<int64_t>& parents, TPZGeoMesh* gmesh);
 
     /// @brief return true if a float/double is equal to zero or 2*PI given a tolerance
     template<typename Ttype>
-    bool Is2PIorZero(Ttype angle, Ttype tolerance = (Ttype)gDFN_SmallNumber);
+    bool Is2PIorZero(const Ttype angle, const Ttype tolerance = (Ttype)gDFN_SmallNumber);
 
     void SketchStatusVec(const TPZManVector<int,9>& statusvec, std::ostream& out = std::cout);
 
@@ -242,7 +230,7 @@ namespace DFN{
      * @param UnrefinedOnly: Directive to plot only elements that were not refined.
      * @param OrientationMatch: Directive to plot orientation of neighbour with respect to the geoelside.
      */
-    void PlotNeighbours(const std::string filepath,TPZGeoElSide geoelside, const int filterDimension = -1, const bool UnrefinedOnly = true, const bool orientationMatch = false);
+    void PlotNeighbours(const std::string filepath, const TPZGeoElSide geoelside, const int filterDimension = -1, const bool UnrefinedOnly = true, const bool orientationMatch = false);
 
     /** @brief Plots a list of elements to a VTK file*/
     void PlotVTK_elementList(const std::string filepath, const TPZVec<int64_t>& newgels, TPZGeoMesh* gmesh);
@@ -340,76 +328,6 @@ inline std::ostream& operator<<(std::ostream& out, const std::set<T>& s){
     #define __PRETTY_FUNCTION__ __FUNCTION__
 #endif //WIN32
 
-// template <class T>
-// int printf(TPZVec<T> vec){
-//     for(auto& el : vec){
-//         printf(el);
-//     }
-//     return 1;
-// }
-
-// template <typename T1, typename T2>
-// std::string to_string(std::pair<T1,T2> pair){
-//     std::string buf = "";
-//     buf += std::to_string(pair.first);
-//     buf += '|';
-//     buf += std::to_string(pair.second);
-//     return buf;
-// }
-// template <typename T1, typename T2>
-// int printf(std::pair<T1,T2> pair){
-//     return std::printf(to_string(pair));
-// }
-
-// // TPZGeoElSideIndex &operator= (const TPZGeoElSideIndex &A );
-// TPZGeoElSide operator++(TPZGeoElSide& gelside,int){
-//     TPZGeoElSide pre = gelside;
-//     gelside = gelside.Neighbour();
-//     return pre;
-// }
-
-
-// static const std::string RefQuad_2triang_1 = 
-// "4 3\n"
-// "\n"
-// "161601 noname\n"
-// "\n"
-// "-1 -1  0\n"
-// " 1 -1  0\n"
-// " 1  1  0\n"
-// "-1  1  0\n"
-// "\n"
-// "3 1 0 1 2 3\n"
-// "2 1 0 1 2\n"
-// "2 1 0 2 3";
-// static const std::string RefQuad_2triang_2 = 
-// "4 3\n"
-// "\n"
-// "161602 noname\n"
-// "\n"
-// "-1 -1  0\n"
-// " 1 -1  0\n"
-// " 1  1  0\n"
-// "-1  1  0\n"
-// "\n"
-// "3 1 0 1 2 3\n"
-// "2 1 1 2 3\n"
-// "2 1 1 3 0";
-
-#if PZ_LOG
-    static TPZLogger nsp_logger("dfn.mesh");
-    #define LOG_DFN_DEBUG(B) LOGPZ_DEBUG(nsp_logger,B)
-    #define LOG_DFN_INFO(B)  LOGPZ_INFO(nsp_logger,B)
-    #define LOG_DFN_WARN(B)  LOGPZ_WARN(nsp_logger,B)
-    #define LOG_DFN_ERROR(B) LOGPZ_ERROR(nsp_logger,B)
-    #define LOG_DFN_FATAL(B) LOGPZ_FATAL(nsp_logger,B)
-#else // PZ_LOG
-    #define LOG_DFN_DEBUG(B) {std::cout << '\n' << B;}
-    #define LOG_DFN_INFO(B)  {std::cout << '\n' << B;}
-    #define LOG_DFN_WARN(B)  {std::cout << '\n' << B;}
-    #define LOG_DFN_ERROR(B) {std::cout << '\n' << B;}
-    #define LOG_DFN_FATAL(B) {std::cout << '\n' << B;}
-#endif // PZ_LOG
 
 
 

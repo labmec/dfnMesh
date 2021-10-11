@@ -985,7 +985,7 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, 
 //                 for(/*void*/; neig!=gelside; neig = neig.Neighbour()){
 //                     if(neig.Element()->Dimension() != 2) continue;
 //                     if(!Face(neig.Element()->Index())) continue;
-//                     float temp_angle = DFN::DihedralAngle(gelside,neig,sideorientation);
+//                     float temp_angle = DFN::DihedralAngle<REAL>(gelside,neig,sideorientation);
 //                     if(temp_angle < angle){
 //                         angle = temp_angle;
 //                         next_face = neig.Element();

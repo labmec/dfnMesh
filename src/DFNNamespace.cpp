@@ -56,7 +56,7 @@ namespace DFN{
      * @brief Get a pointer to an element that is superposed in a lower dimensional side of a geometric element
      * @return nullptr if there is no element in that side
     */
-    TPZGeoEl* GetSkeletonNeighbour(const TPZGeoEl* gel, int side){
+    TPZGeoEl* GetSkeletonNeighbour(const TPZGeoEl* gel, const int side){
         if(gel->SideDimension(side) == gel->Dimension()) return nullptr;
         const TPZGeoElSide gelside(const_cast<TPZGeoEl*>(gel),side);
         TPZGeoElSide neig;
@@ -75,7 +75,7 @@ namespace DFN{
      * @param centroid: Reference to a vector to fill with centroid coordinates 
      * @param normal: Reference to a vector to fill with normal vector 
     */
-    void BestFitPlane(TPZFMatrix<REAL>& pointcloud, TPZManVector<REAL,3>& centroid, TPZManVector<REAL,3>& normal){
+    void BestFitPlane(const TPZFMatrix<REAL>& pointcloud, TPZManVector<REAL,3>& centroid, TPZManVector<REAL,3>& normal){
         // Coherence checks
         int npoints = pointcloud.Cols();
         if(npoints < 3) DebugStop();
@@ -121,7 +121,7 @@ namespace DFN{
 
 #ifdef PZDEBUG
         {
-            float norm = Norm_f(normal);
+            float norm = Norm<REAL>(normal);
             if(std::fabs(1.-norm) > gDFN_SmallNumber) DebugStop();
         }
 #endif //PZDEBUG
@@ -136,7 +136,7 @@ namespace DFN{
      * orientation, with the right thumb place over the shared 1D side, and considering the first element node distribution.
      * If thumb orientation matches the orientation of gelside, use 1, else, use -1.
      */
-    REAL DihedralAngle(TPZGeoElSide &gelside, TPZGeoElSide &neighbour, int sideorientation){
+    REAL DihedralAngle(const TPZGeoElSide &gelside, const TPZGeoElSide &neighbour, const int sideorientation){
 
         // Consistency checks
         if(gelside.Element()->Dimension() != 2)     DebugStop();
@@ -157,8 +157,8 @@ namespace DFN{
         TPZGeoEl* gel = gelside.Element();
         TPZGeoMesh* gmesh = gel->Mesh();
         const int side = gelside.Side();
-        TPZManVector<double,3> sharednode0(3,0);
-        TPZManVector<double,3> sharednode1(3,0);
+        TPZManVector<REAL,3> sharednode0(3,0);
+        TPZManVector<REAL,3> sharednode1(3,0);
         gmesh->NodeVec()[gelside.SideNodeIndex(0)].GetCoordinates(sharednode0);
         gmesh->NodeVec()[gelside.SideNodeIndex(1)].GetCoordinates(sharednode1);
         
@@ -175,12 +175,12 @@ namespace DFN{
             default: DebugStop();
         }
         
-        TPZManVector<float,3> normalvec_gel = CrossProduct<float>(tangentvec_gel,tangentvec_edge);
-        TPZManVector<float,3> normalvec_neig = CrossProduct<float>(tangentvec_neig,tangentvec_edge);;
-        TPZManVector<float,3> aux = CrossProduct<float>(normalvec_neig,normalvec_gel);
-        float x = Norm_f(tangentvec_edge)*DotProduct_f(normalvec_neig,normalvec_gel);
-        float y = DotProduct_f(tangentvec_edge,aux);
-        float angle = atan2(y,x);
+        TPZManVector<REAL,3> normalvec_gel = CrossProduct<REAL>(tangentvec_gel,tangentvec_edge);
+        TPZManVector<REAL,3> normalvec_neig = CrossProduct<REAL>(tangentvec_neig,tangentvec_edge);;
+        TPZManVector<REAL,3> aux = CrossProduct<REAL>(normalvec_neig,normalvec_gel);
+        REAL x = Norm<REAL>(tangentvec_edge)*DotProduct<REAL>(normalvec_neig,normalvec_gel);
+        REAL y = DotProduct<REAL>(tangentvec_edge,aux);
+        REAL angle = atan2(y,x);
         
         return (angle >= 0? angle : angle + _2PI);
     }
@@ -211,7 +211,7 @@ namespace DFN{
     }
 
     /** @brief Check if a 2D side of a 3D element is oriented outward according to NeoPZ topolgy */
-    bool PZOutwardPointingFace(TPZGeoElSide faceside){
+    bool PZOutwardPointingFace(const TPZGeoElSide faceside){
         // consistency check
         TPZGeoEl* gel = faceside.Element();
         if(faceside.Dimension() != 2 || gel->Dimension() < 3) 
@@ -250,7 +250,7 @@ namespace DFN{
     /**
      * @brief Computes the cossine of the angle at a corner of a 2D element
     */
-    REAL CornerAngle_cos(TPZGeoEl *gel, int corner){
+    REAL CornerAngle_cos(TPZGeoEl *gel, const int corner){
         int ncorners = gel->NCornerNodes();
         if(corner >= ncorners) DebugStop();
 
@@ -267,7 +267,7 @@ namespace DFN{
         TPZManVector<REAL,3> vec1 = point_posterior - point_corner;
         TPZManVector<REAL,3> vec2 = point_anterior  - point_corner;
 
-        REAL cosine = DotProduct_f(vec1,vec2)/(Norm_f(vec1)*Norm_f(vec2));
+        REAL cosine = DotProduct<REAL>(vec1,vec2)/(Norm<REAL>(vec1)*Norm<REAL>(vec2));
         return cosine;
     }
 
@@ -286,7 +286,7 @@ namespace DFN{
     /**
      * @brief Get a vector from node 0 to node 1 of a 1D side
      */
-    void GetSideVector(TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector){
+    void GetSideVector(const TPZGeoElSide &gelside, TPZManVector<REAL,3>& vector){
         if(gelside.Dimension() != 1) DebugStop();
         int node0 = gelside.SideNodeLocIndex(0);
         int node1 = gelside.SideNodeLocIndex(1);
@@ -361,33 +361,8 @@ namespace DFN{
 	    father->SetRefPattern(refpat);
     }
 
-    void ElementOrientation(TPZGeoEl* gel, TPZManVector<REAL,3>& orientvec){
-        // @todo This could be done using gram-schimidt orthogonalization
-        // gel->Jacobian()
-        switch(gel->Dimension()){
-            case  1:{
-                TPZGeoElSide gelside(gel,2);
-                DFN::GetSideVector(gelside,orientvec); break;
-            }
-            case  2:{
-                TPZGeoElSide edgeside1(gel,gel->FirstSide(1));
-                TPZGeoElSide edgeside2(gel,gel->FirstSide(1)+1);
-                TPZManVector<REAL,3> edgevec1(3,0.);
-                TPZManVector<REAL,3> edgevec2(3,0.);
-                DFN::GetSideVector(edgeside1,edgevec1);
-                DFN::GetSideVector(edgeside2,edgevec2);
-                orientvec = CrossProduct<REAL>(edgevec1,edgevec2);
-                REAL norm = Norm<REAL>(orientvec);
-                orientvec[0] /= norm;
-                orientvec[1] /= norm;
-                orientvec[2] /= norm;
-                break;
-            }
-            default: PZError << "\nTried to get orientation vector of element of dimension ="<<gel->Dimension()<<"\n";DebugStop();
-        }
-    }
 
-    int SubElOrientation(TPZGeoEl* father, int ichild){
+    int SubElOrientation(TPZGeoEl* father, const int ichild){
         if(!father->HasSubElement()) DebugStop();
 
         TPZGeoEl* child = father->SubElement(ichild);
@@ -451,7 +426,7 @@ namespace DFN{
 
 
 
-    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, int dimension, std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements){
+    void ImportElementsFromGMSH(TPZGeoMesh * gmesh, const int dimension, const std::set<int64_t> &oldnodes, TPZStack<int64_t> &newelements){
         // GMsh does not accept zero index entities
         constexpr int shift = 1;
 
@@ -560,7 +535,7 @@ namespace DFN{
 #endif // PZDEBUG
     }
 
-    TPZGeoEl* FindCommonNeighbour(TPZGeoElSide& gelside1, TPZGeoElSide& gelside2, TPZGeoElSide& gelside3, int dim){
+    TPZGeoEl* FindCommonNeighbour(const TPZGeoElSide gelside1, const TPZGeoElSide gelside2, const TPZGeoElSide gelside3, const int dim){
         TPZGeoMesh* gmesh = gelside1.Element()->Mesh();
         std::set<int64_t> neighbours1;
         std::set<int64_t> neighbours2;
@@ -631,7 +606,7 @@ namespace DFN{
     }
 
     template<typename Ttype>
-    bool Is2PIorZero(Ttype angle, Ttype tolerance){
+    bool Is2PIorZero(const Ttype angle, const Ttype tolerance){
         PZError << "\nUninplemented type\n";
         DebugStop();
         return false;
@@ -639,12 +614,12 @@ namespace DFN{
 
     // float
     template<>
-    bool Is2PIorZero<float>(float angle, float tolerance){
+    bool Is2PIorZero<float>(const float angle, const float tolerance){
         return abs(float(DFN::_2PI) - angle) < tolerance || abs(angle) < tolerance;
     }
     // double
     template<>
-    bool Is2PIorZero<double>(double angle, double tolerance){
+    bool Is2PIorZero<double>(const double angle, const double tolerance){
         return abs(DFN::_2PI - angle) < tolerance || abs(angle) < tolerance;
     }
 
@@ -674,7 +649,7 @@ namespace DFN{
 		out << sout.str();
     }
 
-    bool AreCoPlanar(TPZGeoMesh* gmesh,const std::set<int64_t>& nodeindices, REAL tolerance){
+    bool AreCoPlanar(TPZGeoMesh* gmesh,const std::set<int64_t>& nodeindices, const REAL tolerance){
         int nnodes = nodeindices.size();
         if(nnodes < 4) return true; // this return may introduce a bug for sets of 3 nodes that are colinear, I'll fix it if the code ever breaks because of it.
         TPZManVector<TPZManVector<REAL,3>,3> p(3,{0.,0.,0.});
@@ -755,7 +730,7 @@ namespace DFN{
 
 
     void PlotNeighbours(const std::string filepath,
-                        TPZGeoElSide geoelside, 
+                        const TPZGeoElSide geoelside, 
                         const int filterDimension, 
                         const bool UnrefinedOnly, 
                         const bool orientationMatch){
