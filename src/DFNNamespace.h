@@ -31,7 +31,7 @@
 namespace DFN{
 
     /// 2*3.1415...
-    const double _2PI = 2.*M_PI;//6.2831853071795865;
+    constexpr double _2PI = 2.*M_PI;//6.2831853071795865;
     // A small number for geometric tolerances
     // static const double gSmallNumber = 1.e-4;
 

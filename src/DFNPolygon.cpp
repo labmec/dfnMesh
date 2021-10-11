@@ -28,7 +28,7 @@ DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh)
   fCornerPoints = CornerPoints;
   ComputeAxis();
   Check_Data_Consistency();
-  ComputeArea();
+//   ComputeArea();
   // initialize the fNodesAbove data structure
   SortNodes(gmesh);
 }

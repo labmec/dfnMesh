@@ -11,13 +11,14 @@
         if(MaxAngle > _359degrees){
             PZError << "[FATAL] Something went wrong when computing angles to sort faces around edge #" << AxleIndex
                     << "\nAngles should go from zero to 2pi. And these were the angles you asked me to initialize:\n"
-                    << "gel index | side | angle";
+                    << "gel index | side | angle\n";
             for(auto& card_it : SortedCards){
                 PZError << std::setw(9) << std::right << card_it.second.Element()->Index() << " | "
                         << std::setw(4) << std::right << card_it.second.Side() << " | "
                         << std::left  << card_it.first << "\n";
             }
             PZError << "\nMaybe an orientation match problem."
+                    << "\nMaybe Gmsh created a sliver."
                     << "\nI'll try to plot the rolodex to a VTK file.";
             constexpr char plotpath[] = "./LOG/twoDNeighbours.vtk";
             TPZGeoMesh* gmesh = SortedCards.begin()->second.Element()->Mesh();
