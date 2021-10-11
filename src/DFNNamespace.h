@@ -244,6 +244,9 @@ namespace DFN{
      */
     void PlotNeighbours(const std::string filepath,TPZGeoElSide geoelside, const int filterDimension = -1, const bool UnrefinedOnly = true, const bool orientationMatch = false);
 
+    /** @brief Plots a list of elements to a VTK file*/
+    void PlotVTK_elementList(const std::string filepath, const TPZVec<int64_t>& newgels, TPZGeoMesh* gmesh);
+
     /// Configures the logger used by Gmsh
     void GmshConfig();
 } /*namespace DFN*/

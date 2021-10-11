@@ -35,9 +35,9 @@ DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limith
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
     fIndex = dfnMesh->NFractures();
-// #if PZ_LOG
-//     fLogger = CreateLogger();
-// #endif // PZ_LOG
+#ifdef PZDEBUG
+    fPolygon.PlotVTK("./LOG/CurrentFracture.vtk",fmatid,fIndex);
+#endif // PZDEBUG
 }
 
 void DFNFracture::Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid)

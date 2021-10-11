@@ -2420,6 +2420,7 @@ void DFNMesh::DumpVTK(bool polygon_representation, bool clearmaterials, std::str
 
 void DFNMesh::DFN_DebugStop(){
 	fGMesh->BuildConnectivity();
+	PlotAllPolygons("./LOG/AllDFNPolygons.vtk");
 	PrintSummary();
 	std::ofstream pzmesh("LOG/pzmesh.txt");
 	fGMesh->Print(pzmesh);

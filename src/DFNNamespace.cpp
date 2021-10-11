@@ -775,6 +775,25 @@ namespace DFN{
         TPZVTKGeoMesh::PrintGMeshVTK(&auxMesh, out, true, true);
     }
 
+    void PlotVTK_elementList(const std::string filepath, const TPZVec<int64_t>& newgels, TPZGeoMesh* gmesh){
+        if(newgels.size() == 0) return;
+
+        TPZGeoMesh graphicMesh;
+        graphicMesh.ElementVec().Resize(gmesh->NElements());
+        for (int i = 0; i < graphicMesh.NElements(); i++) {
+            graphicMesh.ElementVec()[i] = nullptr;
+        }
+        graphicMesh.NodeVec() = gmesh->NodeVec();
+
+        for(int64_t index : newgels){
+            TPZGeoEl* newel = gmesh->Element(index)->Clone(graphicMesh);
+            if(newel->HasSubElement()) newel->SetSubElement(0,nullptr);
+        }
+
+        std::ofstream out(filepath);
+        TPZVTKGeoMesh::PrintGMeshVTK(&graphicMesh, out, true, true);
+    }
+
     /// @brief Check if internal angles of a planar quadrilateral SubPolygon violate a threshold.
     /// @details We're trying to avoid a quadrilateral with consecutive parallel edges, so this functions warns the code of an angle that gets too close to 180deg
     /// @param tol_angle_cos cos(t),  t being the maximum tolerable angle (convexity of polyhedral volumes guarantees angles between 0 and 180deg)
