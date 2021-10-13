@@ -201,6 +201,13 @@ private:
      * @param newelements newly created elements based on the intersection
     */
     void MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, TPZStack<int64_t>& newelements);
+    
+    /**
+     * @brief Check if there are any duplicated edge elements in the subpolygon
+     * @param subpolygon a loop of edges elements that don't necessarily occupy the same plane
+     */
+    const bool CheckForDuplicateEdges(const TPZStack<int64_t>& subpolygon) const;
+    
     /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
      * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
     */

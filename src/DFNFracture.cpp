@@ -641,6 +641,12 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
             if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
             
+            const bool isDuplicateEdges = CheckForDuplicateEdges(subpolygon);
+            if (isDuplicateEdges) {
+                badVolumes.push_back(polyhindex);
+                continue;
+            }
+            
             const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
             if (!isSubPolPlanarEnough) {
                 badVolumes.push_back(polyhindex);
@@ -685,6 +691,16 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
     #if PZ_LOG
         LOGPZ_INFO(logger,"[End][Meshing Fracture Surface] Frac# " << fIndex);
     #endif // PZ_LOG
+}
+
+const bool DFNFracture::CheckForDuplicateEdges(const TPZStack<int64_t>& subpolygon) const {
+    for (int64_t i = 0; i < subpolygon.size(); i++) {
+        for (int64_t j = i + 1; j < subpolygon.size(); j++) {
+            if (subpolygon[i] == subpolygon[j])
+                return true;
+        }
+    }
+    return false;
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
