@@ -218,6 +218,14 @@ private:
      * @param subpolygon a loop of edges elements that don't necessarily occupy the same plane
      */
     void ClearDuplicateEdges(const std::set<int>& locDuplicateIndices, TPZStack<int64_t>& subpolygon) const;
+
+    /**
+     * @brief Checks if subpolygon forms a closed loop
+     * @param subpolygon a loop of edges elements that don't necessarily occupy the same plane
+     * @param badVolumes list of volume polyhedras that have small angles and need to be refined into simplexes during rollback
+     */
+    const bool CheckIfPolygonIsClosedLoop(const TPZStack<int64_t>& subpolygon) const;
+
     
     /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
      * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane

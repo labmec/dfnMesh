@@ -640,21 +640,7 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             
             // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
             if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
-            
-            std::set<int> locDuplicateIndices;
-            const bool hasDuplicateEdges = CheckForDuplicateEdges(subpolygon,locDuplicateIndices);
-            if (hasDuplicateEdges) {
-                ClearDuplicateEdges(locDuplicateIndices, subpolygon);
-                // NS: When should we tag this as a bad volume?
-//                badVolumes.push_back(polyhindex);
-//                continue;
-            }
-            
-            const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
-            if (!isSubPolPlanarEnough) {
-                badVolumes.push_back(polyhindex);
-                continue;
-            }
+
             polygon_counter++;
             
             LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh# " << polyhindex);
@@ -678,6 +664,25 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
                 }
                 continue;
             }
+            
+            SetLoopOrientation(subpolygon);
+            std::set<int> locDuplicateIndices;
+            const bool hasDuplicateEdges = CheckForDuplicateEdges(subpolygon,locDuplicateIndices);            
+            if (hasDuplicateEdges) {
+                ClearDuplicateEdges(locDuplicateIndices, subpolygon);
+                const bool isClosedLoop = CheckIfPolygonIsClosedLoop(subpolygon);
+                if (!isClosedLoop) {
+                    badVolumes.Push(polyhindex);
+                    continue;
+                }
+            }
+            
+            const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
+            if (!isSubPolPlanarEnough) {
+                badVolumes.push_back(polyhindex);
+                continue;
+            }
+            
             MeshPolygon(subpolygon,polyhindex,newelements);
             CheckVolumeAngles(subpolygon,polyhindex,newelements,badVolumes);
             std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
@@ -722,6 +727,43 @@ void DFNFracture::ClearDuplicateEdges(const std::set<int>& locDuplicateIndices,
     }
     subpolygon.clear();
     for(auto i : subpolWithoutRepeated) subpolygon.push_back(i);
+}
+
+const bool DFNFracture::CheckIfPolygonIsClosedLoop(const TPZStack<int64_t>& subpolygon) const {
+    TPZGeoMesh *gmesh = fdfnMesh->Mesh();
+    
+    int64_t firstedgeindex = subpolygon[0];
+    int currentNodeIndex = -1;
+    TPZGeoEl* edge = gmesh->Element(std::abs(firstedgeindex));
+    if (edge->NNodes() != 2) DebugStop();
+    if(firstedgeindex < 0){
+        currentNodeIndex = edge->NodeIndex(0);
+    }else{
+        currentNodeIndex = edge->NodeIndex(1);
+    }
+    
+    int64_t nodIndexToCompare = -1;
+    const int size = subpolygon.size();
+    for(int i = 1 ; i < size+1 ; i++){
+        const int iloc = i%size;
+        const int64_t iedgeindex = subpolygon[iloc];
+        edge = gmesh->Element(std::abs(iedgeindex));
+        if (edge->NNodes() != 2) DebugStop();
+        if(iedgeindex < 0){
+            nodIndexToCompare = edge->NodeIndex(1);
+            if (nodIndexToCompare != currentNodeIndex) {
+                return false;
+            }
+            currentNodeIndex = edge->NodeIndex(0);
+        }else{
+            nodIndexToCompare = edge->NodeIndex(0);
+            if (nodIndexToCompare != currentNodeIndex) {
+                return false;
+            }
+            currentNodeIndex = edge->NodeIndex(1);
+        }
+    }
+    return true;
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,
@@ -903,12 +945,12 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, 
     std::set<int64_t> nodes;
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     for(int64_t line : polygon){
-		TPZGeoEl *gel = gmesh->Element(line);
+		TPZGeoEl *gel = gmesh->Element(std::abs(line));
 		nodes.insert(gel->NodeIndex(0));
 		nodes.insert(gel->NodeIndex(1));
 	}
     
-    SetLoopOrientation(polygon);
+//    SetLoopOrientation(polygon); // Now done in MeshFractureSurface()
     int nedges = polygon.size();
 //    std::cout << "Polygon coords\n";
 //    for(auto no : nodes) gmesh->NodeVec()[no].Print();
