@@ -641,10 +641,13 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
             if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
             
-            const bool isDuplicateEdges = CheckForDuplicateEdges(subpolygon);
-            if (isDuplicateEdges) {
-                badVolumes.push_back(polyhindex);
-                continue;
+            std::set<int> locDuplicateIndices;
+            const bool hasDuplicateEdges = CheckForDuplicateEdges(subpolygon,locDuplicateIndices);
+            if (hasDuplicateEdges) {
+                ClearDuplicateEdges(locDuplicateIndices, subpolygon);
+                // NS: When should we tag this as a bad volume?
+//                badVolumes.push_back(polyhindex);
+//                continue;
             }
             
             const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
@@ -693,14 +696,32 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
     #endif // PZ_LOG
 }
 
-const bool DFNFracture::CheckForDuplicateEdges(const TPZStack<int64_t>& subpolygon) const {
+const bool DFNFracture::CheckForDuplicateEdges(const TPZStack<int64_t>& subpolygon,
+                                               std::set<int>& locDuplicateIndices) const {
+    bool hasduplicate = false;
     for (int64_t i = 0; i < subpolygon.size(); i++) {
         for (int64_t j = i + 1; j < subpolygon.size(); j++) {
-            if (subpolygon[i] == subpolygon[j])
-                return true;
+            if (subpolygon[i] == subpolygon[j]){
+                locDuplicateIndices.insert(i);
+                locDuplicateIndices.insert(j);
+                hasduplicate = true;
+            }
         }
     }
-    return false;
+    return hasduplicate;
+}
+
+void DFNFracture::ClearDuplicateEdges(const std::set<int>& locDuplicateIndices,
+                                      TPZStack<int64_t>& subpolygon) const {
+    
+    if(locDuplicateIndices.size()%2 != 0) DebugStop();
+    TPZStack<int> subpolWithoutRepeated;
+    for (int i = 0; i < subpolygon.size(); i++) {
+        const bool is_in = locDuplicateIndices.find(i) != locDuplicateIndices.end();
+        if (!is_in) subpolWithoutRepeated.push_back(subpolygon[i]);
+    }
+    subpolygon.clear();
+    for(auto i : subpolWithoutRepeated) subpolygon.push_back(i);
 }
 
 void DFNFracture::BuildSubPolygon(TPZVec<std::array<int, 2>>& Polygon_per_face,

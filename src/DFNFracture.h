@@ -203,10 +203,21 @@ private:
     void MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, TPZStack<int64_t>& newelements);
     
     /**
-     * @brief Check if there are any duplicated edge elements in the subpolygon
+     * @brief Check if there are any duplicated edge elements in the subpolygon. If so, adds the local indices of
+     * the repeated entries to the return set
+     * @param subpolygon a loop of edges elements that don't necessarily occupy the same plane
+     * @param locDuplicateIndices local indices of duplicate edges in subpolygon
+     * @return true if there are duplicate edges
+     */
+    const bool CheckForDuplicateEdges(const TPZStack<int64_t>& subpolygon,
+                                      std::set<int>& locDuplicateIndices) const;
+    
+    /**
+     * @brief Clears duplicate edges in subpolygon based on the local indices in locDuplicateIndices
+     * @param locDuplicateIndices local indices of duplicate edges in subpolygon
      * @param subpolygon a loop of edges elements that don't necessarily occupy the same plane
      */
-    const bool CheckForDuplicateEdges(const TPZStack<int64_t>& subpolygon) const;
+    void ClearDuplicateEdges(const std::set<int>& locDuplicateIndices, TPZStack<int64_t>& subpolygon) const;
     
     /** @brief Projects a non-planar polygon onto its best fitting plane and uses Gmsh to mesh it
      * @param orientedpolygon an oriented loop of edges that don't necessarily occupy the same plane
