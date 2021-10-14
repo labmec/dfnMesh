@@ -102,7 +102,7 @@ class DFNGraph : public micropather::Graph
         }
 
         /// @brief Solve shortest path between 2 nodes
-        void ComputeShortestPath(int64_t start, int64_t end, TPZStack<int64_t>& Path){
+        const bool ComputeShortestPath(int64_t start, int64_t end, TPZStack<int64_t>& Path){
             float totalCost = 0.;
             // solution gets the nodes of the shortest path
             micropather::MPVector<int> solution;
@@ -120,11 +120,13 @@ class DFNGraph : public micropather::Graph
                         << "\nend_globalindex = " << end;
                 PZError << "\nConnectivity Matrix for the graph:\n";
                 fedges.Print("GraphConnectivity", PZError, MatrixOutputFormat::EFormatted);
-                fDFN->DFN_DebugStop();
+                return false;
+//                fDFN->DFN_DebugStop();
             }
             
             // if(test == MicroPather::SOLVED)
             ConvertNodePathToEdgePath(solution,Path);
+            return true;
         }
 
     private:

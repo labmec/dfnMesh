@@ -116,7 +116,12 @@ public:
 
     /// Get reference to the set of 2D elements at the surface of this fracture
 	std::set<int64_t>& Surface(){return fSurfaceFaces;}
+    const std::set<int64_t>& Surface() const {return fSurfaceFaces;}
 
+    /// Get reference to the set of 1D elements at the surface of this fracture
+    std::set<int64_t>& SurfaceEdges(){return fSurfaceEdges;}
+    const std::set<int64_t>& SurfaceEdges() const {return fSurfaceEdges;}
+    
     int MaterialId() const{return fmatid;}
     void SetMaterialId(int matid){fmatid = matid;}
     int Index() const{return fIndex;}
@@ -181,6 +186,8 @@ public:
 
 private:
 
+    /// @brief Debugging purpose function for plotting intersection between fractures
+    void PlotVTK_SharedSurface(const std::string& filepath, const DFNFracture& otherfrac, const Segment& seg) const;
     
     void Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture);
         

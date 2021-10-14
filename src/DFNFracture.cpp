@@ -2047,15 +2047,75 @@ bool DFNFracture::FindFractureIntersection(const DFNFracture& OtherFrac,
     }
     // Build a graph and solve
     DFNGraph graph(fdfnMesh,common_edges);
-    graph.ComputeShortestPath(start,end,EdgeList);
+    const bool isShortestPathAvailable = graph.ComputeShortestPath(start,end,EdgeList);
+    if (!isShortestPathAvailable) {
+        std::string filepath = "./LOG/FailedIntersection/";
+        PlotVTK_SharedSurface(filepath,OtherFrac,Segment);
+    }
 
     return EdgeList.size();
 }
 
-
-
-
-
+void DFNFracture::PlotVTK_SharedSurface(const std::string& filepath, const DFNFracture& otherfrac, const Segment& seg) const {
+    std::filesystem::create_directories(filepath);
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    
+    std::set<int64_t> commonFaces = DFN::set_intersection(fSurfaceFaces, otherfrac.Surface());
+    std::set<int64_t> commonEdges = DFN::set_intersection(fSurfaceEdges, otherfrac.SurfaceEdges());
+    
+    // ===> Creation of printable gmesh for the segment between two polygons
+    TPZGeoMesh segmentMesh;
+    const int64_t npoints = seg.size();
+    segmentMesh.ElementVec().Resize(0);
+    segmentMesh.NodeVec().Resize(npoints);
+    segmentMesh.SetMaxNodeId(npoints-1);
+    int eltype = 1; // line
+    int bogusmatid = 1; // bogus matid
+    TPZGeoNode node_obj;
+    for (int i = 0 ; i < npoints ; i++) {
+        node_obj.SetCoord(seg[i]);
+        node_obj.SetNodeId(i);
+        segmentMesh.NodeVec()[i] = node_obj;
+        if (i != 0) {
+            std::vector<int> nodeident = {i,i+1};
+            int index = i-1;
+            TPZGeoMeshBuilder::InsertElement(&segmentMesh, bogusmatid,
+                                             eltype, index, nodeident);
+        }
+    }
+    std::string outpath = filepath + "Segments.vtk";
+    std::ofstream out(outpath);
+    TPZVTKGeoMesh::PrintGMeshVTK(&segmentMesh, out, true, true);
+    
+    // ===> Creation of printable gmesh common edges and facets
+    TPZGeoMesh bogusMesh;
+    bogusMesh.ElementVec().Resize(gmesh->NElements());
+    for (int i = 0; i < bogusMesh.NElements(); i++) {
+        bogusMesh.ElementVec()[i] = nullptr;
+    }
+    bogusMesh.NodeVec() = gmesh->NodeVec();
+    
+    for (auto index : commonEdges) {
+        TPZGeoEl* commonedge = gmesh->Element(index);
+        TPZGeoEl* copiededge = commonedge->Clone(bogusMesh);
+        copiededge->SetMaterialId(2);
+    }
+    for (auto index : commonFaces) {
+        TPZGeoEl* commonface = gmesh->Element(index);
+        TPZGeoEl* copiedface = commonface->Clone(bogusMesh);
+        copiedface->SetMaterialId(3);
+    }
+    
+    outpath = filepath + "CommonElements.vtk";
+    std::ofstream out2(outpath);
+    TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out2, true, true);
+    
+    outpath = filepath + "Polygon1.vtk";
+    this->Polygon().PlotVTK(outpath);
+    outpath = filepath + "Polygon2.vtk";
+    otherfrac.Polygon().PlotVTK(outpath);
+    DebugStop();
+}
 
 
 void DFNFracture::FindFractureIntersection_Trivial(const DFNFracture& OtherFrac, TPZStack<int64_t>& EdgeList){
