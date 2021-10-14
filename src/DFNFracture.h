@@ -187,7 +187,7 @@ public:
 private:
 
     /// @brief Debugging purpose function for plotting intersection between fractures
-    void PlotVTK_SharedSurface(const std::string& filepath, const DFNFracture& otherfrac, const Segment& seg) const;
+    void PlotVTK_SharedSurface(const std::string& filepath, DFNFracture& otherfrac, const Segment& seg);
     
     void Initialize(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture);
         
@@ -302,7 +302,8 @@ public:
     /// @brief Check if 2D element on surface has at most 1 other neighbour (through edges) on this fracture surface
     bool CheckIsLegalSurfaceElement(const int64_t elindex) const;
 
-    void PlotVTK(const int surface_matid, const std::string exportname, bool putGraphicalElements = true);
+    void PlotVTK(const int surface_matid, const std::string exportname,
+                 bool putGraphicalElements = true, bool plotIntersections = true);
     void SetupGraphicsFractureIntersections(TPZStack<int>& fracfrac_int);
     void SetupGraphicsFractureBC();
 
@@ -403,8 +404,8 @@ public:
      * @details This code performs 2 geometrical searches to get, within the set of nodes of the 
      * CommonFaces, the mesh nodes that are closest to the coordinates informed in the Segment
     */
-    bool FindFractureIntersection(const DFNFracture& OtherFrac, 
-                                            TPZStack<int64_t>& EdgeList);
+    bool FindFractureIntersection(DFNFracture& OtherFrac, 
+                                  TPZStack<int64_t>& EdgeList);
 
     /** @brief Find edges that define the intersection between this and another DFNFracture, by searching for
      * 1D sides of the faces in this fracture's surface through where a neighbour can be found with the matid

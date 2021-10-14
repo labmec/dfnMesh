@@ -1984,8 +1984,8 @@ void DFNFracture::RemoveRefinedDFNFaces(const int vol_index){
     }
 }
 
-bool DFNFracture::FindFractureIntersection(const DFNFracture& OtherFrac, 
-                                                    TPZStack<int64_t>& EdgeList)
+bool DFNFracture::FindFractureIntersection(DFNFracture& OtherFrac, 
+                                           TPZStack<int64_t>& EdgeList)
 {
     using namespace DFN;
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
@@ -2051,12 +2051,12 @@ bool DFNFracture::FindFractureIntersection(const DFNFracture& OtherFrac,
     if (!isShortestPathAvailable) {
         std::string filepath = "./LOG/FailedIntersection/";
         PlotVTK_SharedSurface(filepath,OtherFrac,Segment);
-    }
+    }    
 
     return EdgeList.size();
 }
 
-void DFNFracture::PlotVTK_SharedSurface(const std::string& filepath, const DFNFracture& otherfrac, const Segment& seg) const {
+void DFNFracture::PlotVTK_SharedSurface(const std::string& filepath, DFNFracture& otherfrac, const Segment& seg) {
     std::filesystem::create_directories(filepath);
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     
@@ -2110,10 +2110,20 @@ void DFNFracture::PlotVTK_SharedSurface(const std::string& filepath, const DFNFr
     std::ofstream out2(outpath);
     TPZVTKGeoMesh::PrintGMeshVTK(&bogusMesh, out2, true, true);
     
+    // ===> Printing fracture polygons
     outpath = filepath + "Polygon1.vtk";
     this->Polygon().PlotVTK(outpath);
     outpath = filepath + "Polygon2.vtk";
     otherfrac.Polygon().PlotVTK(outpath);
+        
+    // ===> Printing fracture meshes
+    TPZVec<int> matid_backup;
+    fdfnMesh->ClearMaterials(GMESHNOMATERIAL, matid_backup);
+    outpath = filepath + "FracMesh1.vtk";
+    PlotVTK(Index(), outpath, true, false);
+    outpath = filepath + "FracMesh2.vtk";
+    otherfrac.PlotVTK(otherfrac.Index(), outpath, true, false);
+
     DebugStop();
 }
 
@@ -2226,13 +2236,14 @@ void DFNFracture::SetupGraphicsFractureBC(){
     }
 }
 
-void DFNFracture::PlotVTK(const int surface_matid, const std::string exportname, bool putGraphicalElements){
+void DFNFracture::PlotVTK(const int surface_matid, const std::string exportname,
+                          bool putGraphicalElements, bool plotIntersections){
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     this->CleanUp(surface_matid);
     TPZStack<int> fracfrac_int;
     // this->ResetSurfaceMaterial(fmatid);
     SetupGraphicsFractureBC();
-    SetupGraphicsFractureIntersections(fracfrac_int);
+    if(plotIntersections) SetupGraphicsFractureIntersections(fracfrac_int);
 
     int mat_BC = fIndex + fdfnMesh->NFractures();
     int mat_frac = fIndex;
