@@ -2007,14 +2007,62 @@ bool DFNFracture::FindFractureIntersection(DFNFracture& OtherFrac,
         return false;
     }
 
+    // If we assume the set of common edges is always contiguous, the following can be called
+    int64_t start, end;
+//    ComputeStartAndEndOfSetOfEdges(common_edges, Segment, start, end);
+    
+    // Because of recoverlimits, the intersection between two fractures
+    // can be discontiguous. In this case, we need to apply the shortest
+    // path algorithm for each contiguous set of intersectionsd
+    TPZManVector<std::set<int64_t>,2> contiguousEdges(1);
+    CreateSetsOfContiguousEdges(common_edges,contiguousEdges);
+        
+    // Build a graph and solve
+    for (auto contigCommonEdges : contiguousEdges) {
+        DFNGraph graph(fdfnMesh,contigCommonEdges);
+        ComputeStartAndEndOfSetOfEdges(contigCommonEdges,Segment,start,end);
+        /* If initial and final nodes are the same, then mesh size is too big to catch this intersection
+         * If you want to force it, you may try one or more of the following:
+         * 1. Pre-refine the mesh (see DFNMesh::PreRefine())
+         * 2. Change tolerances (see DFNMesh::fTolDist & DFNMesh::fTolAngle)
+         * 3. Design the coarse mesh to have a convenient node that can help to represent this intersection
+         */
+        if(start == end){
+            LOGPZ_DEBUG(logger, "Fracture intersection has been coalesced into a single node. Node index == " << start);
+            return false;
+        }
+        const bool isShortestPathAvailable = graph.ComputeShortestPath(start,end,EdgeList);
+        if (!isShortestPathAvailable) {
+            std::string filepath = "./LOG/FailedIntersection/";
+            PlotVTK_SharedSurface(filepath,OtherFrac,Segment);
+        }
+    }
+    
+    return EdgeList.size();
+}
+
+void DFNFracture::ComputeStartAndEndOfSetOfEdges(const std::set<int64_t>& common_edges,
+                                                 const Segment& Segment,
+                                                 int64_t& start, int64_t& end) const {
+    using namespace DFN;
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    
+    if (common_edges.size() == 1) {
+        TPZGeoEl* edge = gmesh->Element(*common_edges.begin());
+        start = edge->NodeIndex(0);
+        end = edge->NodeIndex(1);
+        return;
+    }
+    
     std::set<int64_t> nodes; // Nodes of the graph
     for(auto index : common_edges){
         TPZGeoEl* edge = gmesh->Element(index);
         nodes.insert(edge->NodeIndex(0));
         nodes.insert(edge->NodeIndex(1));
     }
-
-    // Get initial and final node for the path (closest nodes to the coordinates defined in Segment)
+    
+    
+    
     TPZStack<int64_t,2> PathNodes(2,-1);
     for(int i=0; i<2; i++){
         TPZManVector<REAL,3> jcoord(3,0.);
@@ -2032,28 +2080,65 @@ bool DFNFracture::FindFractureIntersection(DFNFracture& OtherFrac,
         }
         PathNodes[i] = closestnode;
     }
-    int64_t start = PathNodes[0];
-    int64_t end = PathNodes[1];
+    start = PathNodes[0];
+    end = PathNodes[1];
+}
 
-    /* If initial and final nodes are the same, then mesh size is too big to catch this intersection
-     * If you want to force it, you may try one or more of the following:
-     * 1. Pre-refine the mesh (see DFNMesh::PreRefine())
-     * 2. Change tolerances (see DFNMesh::fTolDist & DFNMesh::fTolAngle)
-     * 3. Design the coarse mesh to have a convenient node that can help to represent this intersection
-     */
-    if(start == end){
-        LOGPZ_DEBUG(logger, "Fracture intersection has been coalesced into a single node. Node index == " << start);
-        return false;
+void DFNFracture::CreateSetsOfContiguousEdges(std::set<int64_t> common_edges,
+                                              TPZManVector<std::set<int64_t>,2> &contiguousEdges) const {
+    
+    if (contiguousEdges.size() != 1) DebugStop();
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    
+    int i = 0; // number of different sets with contiguous edges
+    bool keepTrying = true;
+    
+    while (common_edges.size() != 0) {
+        std::set<int64_t>::iterator it = common_edges.begin();
+        contiguousEdges[i].insert(*it);
+        common_edges.erase(it);
+        std::set<int64_t>::iterator itcontig = contiguousEdges[i].begin();
+
+        bool foundNeigh = false;
+        for (; itcontig != contiguousEdges[0].end() ; ) {
+            TPZGeoEl* currentgel = gmesh->Element(*itcontig);
+            if(!currentgel || currentgel->NNodes() != 2) DebugStop();
+            TPZGeoElSide currentgelside0(currentgel,0), currentgelside1(currentgel,1);
+            it = common_edges.begin();
+            for( ; it != common_edges.end() ; it++) {
+                TPZGeoEl* gel = gmesh->Element(*it);
+                if (!gel || gel->NNodes() != 2) DebugStop();
+                TPZGeoElSide gelside0(gel,0), gelside1(gel,1);
+                const bool is0 = currentgelside0.NeighbourExists(gelside0);
+                const bool is1 = currentgelside0.NeighbourExists(gelside1);
+                const bool is2 = currentgelside1.NeighbourExists(gelside0);
+                const bool is3 = currentgelside1.NeighbourExists(gelside1);
+                if (is0 or is1 or is2 or is3) {
+                    contiguousEdges[0].insert(*it);
+                    common_edges.erase(it);
+                    itcontig = contiguousEdges[0].begin();
+                    foundNeigh = true;
+                    break;
+                }
+            }
+            if (!foundNeigh)
+                itcontig++;
+            else{
+                foundNeigh = false;
+            }
+            if (common_edges.size() == 0) {
+                break;
+            }
+        }
+        
+        if (common_edges.size() != 0) {
+            i++;
+            contiguousEdges.resize(i+1);
+        }
     }
-    // Build a graph and solve
-    DFNGraph graph(fdfnMesh,common_edges);
-    const bool isShortestPathAvailable = graph.ComputeShortestPath(start,end,EdgeList);
-    if (!isShortestPathAvailable) {
-        std::string filepath = "./LOG/FailedIntersection/";
-        PlotVTK_SharedSurface(filepath,OtherFrac,Segment);
-    }    
-
-    return EdgeList.size();
+    
+    
+    
 }
 
 void DFNFracture::PlotVTK_SharedSurface(const std::string& filepath, DFNFracture& otherfrac, const Segment& seg) {

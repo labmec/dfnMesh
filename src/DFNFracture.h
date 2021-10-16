@@ -296,6 +296,13 @@ private:
 
 
     void ResetSurfaceMaterial(const int matid);
+    
+    void CreateSetsOfContiguousEdges(std::set<int64_t> common_edges,
+                                     TPZManVector<std::set<int64_t>,2> &contiguousEdges) const;
+    
+    void ComputeStartAndEndOfSetOfEdges(const std::set<int64_t>& common_edges,
+                                        const Segment& Segment,
+                                        int64_t& start, int64_t& end) const;
 
 public:
 
