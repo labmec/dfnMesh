@@ -1778,7 +1778,7 @@ std::set<int64_t> DFNFracture::IdentifySnapRibs(){
         TPZGeoEl* facegel = gmesh->Element(faceindex);
         TPZGeoEl* SnapRibGel = DFN::GetSkeletonNeighbour(facegel,snapside);
 
-        if(!SnapRibGel){PZError << "\n You may have non-built connectivities or haven't created a necessary skeleton on TPZGeoElSide = {" << facegel << ", " << snapside << "};"; DebugStop();}
+        if(!SnapRibGel){PZError << "\n You may have non-built connectivities or haven't created a necessary skeleton on TPZGeoElSide = {" << facegel->Index() << ", " << snapside << "};"; DebugStop();}
 
         int64_t SnapRibIndex = SnapRibGel->Index();
         SnapRibs.insert(SnapRibIndex);
