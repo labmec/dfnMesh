@@ -667,7 +667,8 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             }
             
             MeshPolygon(subpolygon,polyhindex,newelements);
-            CheckVolumeAngles(subpolygon,polyhindex,newelements,badVolumes);
+            TryFaceIncorporate_Geometry(subpolygon,polyhindex,newelements,badVolumes);
+            // CheckVolumeAngles(subpolygon,polyhindex,newelements,badVolumes);
             std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
@@ -2455,6 +2456,148 @@ void DFNFracture::CheckVolumeAngles(const TPZStack<int64_t>& subpolygon, const i
             
         }
     }
+}
+
+bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygon,
+                                    const int polyhindex,
+                                    const TPZStack<int64_t>& newelements,
+                                        TPZStack<int>& badVolumes)
+{
+    const int nedges = subpolygon.size();
+    const std::string plotpath = "./LOG/FailedSubpolygon";
+    // Consistency
+#ifdef PZDEBUG
+    if(newelements.size() < 1) {DebugStop();}
+    if(nedges < 3) {DebugStop();}
+    if(polyhindex < 0 || polyhindex >= fdfnMesh->NPolyhedra()) {DebugStop();}
+#endif
+
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    const DFNPolyhedron& vol = fdfnMesh->Polyhedron(polyhindex);
+    
+    // For each edge in subpolygon, there is a neighbour on the fracture surface and 2 neighbours on the volume shell, gather those on 3 groups
+    TPZManVector<TPZGeoElSide> SurfEl(nedges,{nullptr,-1});          // 2D neighbour of the i-th edge within newelements
+    TPZManVector<TPZGeoElSide> PositiveShell(nedges,{nullptr,-1});   // 2D neighbour of the i-th edge on the positive side of the volume shell
+    TPZManVector<TPZGeoElSide> NegativeShell(nedges,{nullptr,-1});   // 2D neighbour of the i-th edge on the negative side of the volume shell
+    TPZManVector<REAL> PositiveShell_angles(nedges,-999.);
+    TPZManVector<REAL> NegativeShell_angles(nedges,-999.);
+
+    int NBadAngles_pos = 0;
+    int NBadAngles_neg = 0;
+    int NGoodAngles_pos = 0;
+    int NGoodAngles_neg = 0;
+
+
+    for(int iedge=0; iedge < nedges; iedge++){
+        int groupcounter = 0;
+        const int64_t edgeindex = abs(subpolygon[iedge]);
+        const int edgeOrient = DFN::sgn(subpolygon[iedge]);
+        TPZGeoEl* edge = gmesh->Element(edgeindex);
+        const TPZGeoElSide edgeside(edge,edge->NSides()-1);
+        TPZGeoElSide neig = edgeside.Neighbour();
+        // Group neighbours
+        for (; neig != edgeside ; ++neig) {
+            const TPZGeoEl* neigel = neig.Element();
+            if(neigel->Dimension() != 2) continue;
+            if(neigel->HasSubElement()) continue;
+
+            const int64_t indexneig = neigel->Index();
+            // Check if it's on the shell
+            if(vol.IsBoundedBy(indexneig) || vol.IsBoundedByFather(indexneig)){
+                groupcounter++;
+                const int64_t shellfaceindex = vol.IsBoundedByFather(indexneig) ? neigel->Father()->Index() : indexneig;
+                // If face_in_shell was refined, we'll compute the internal angle to the child element. So we need its orientation.
+                int fatherChildOrientation = 1;
+                if(shellfaceindex != indexneig){
+                    fatherChildOrientation = DFN::SubElOrientation(neigel->Father(),neigel->WhichSubel());
+                }
+                // Orientation of face_in_shell relative to the polyhedral volume
+                const int shellFaceOrientation = vol.IsBoundedBy(shellfaceindex,1) ? 1 : -1;
+                // Orientation of element relative to the edge in the subpolygon
+                const int faceEdgeOrientation = DFN::OrientationMatch(neig, edgeside) ? 1 : -1;
+                // Proper orientation of the internal angle
+                const int internalAngleOrientation = -faceEdgeOrientation*shellFaceOrientation*fatherChildOrientation;
+                // Shell group (positive or negative) depends on the sub-polygon orientation
+                const int shellgroup = internalAngleOrientation * edgeOrient;
+
+                switch(shellgroup){
+                    case  1: PositiveShell[iedge] = neig; break;
+                    case -1: NegativeShell[iedge] = neig; break;
+                    default: {
+                        PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubpolygon"); 
+                        DFN::PlotVTK_SideList(plotpath+"PositiveDelimiter.vtk",PositiveShell);
+                        DFN::PlotVTK_SideList(plotpath+"NegativeDelimiter.vtk",NegativeShell);
+                        DFN::PlotVTK_SideList(plotpath+"SurfaceDelimiter.vtk",SurfEl);
+                        DFN::PlotVTK_elementList(plotpath+"SurfaceMesh.vtk",newelements,gmesh);
+                        DebugStop();
+                    }
+                }
+                continue;
+            }
+
+            // Check if it's on the fracture surface
+            int64_t *p = std::find(newelements.begin(), newelements.end(), indexneig);
+            if (p != newelements.end()){
+                groupcounter++;
+                SurfEl[iedge] = neig;
+            }
+            if(groupcounter > 3) DebugStop();
+        }
+        if(groupcounter != 3){
+            PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubpolygon"); 
+            DFN::PlotVTK_elementList(plotpath+"SurfaceMesh.vtk",newelements,gmesh);
+            DFN::PlotVTK_SideList(plotpath+"PositiveDelimiter.vtk",PositiveShell);
+            DFN::PlotVTK_SideList(plotpath+"NegativeDelimiter.vtk",NegativeShell);
+            DFN::PlotVTK_SideList(plotpath+"SurfaceDelimiter.vtk",SurfEl);
+            DebugStop();
+        }
+
+        // Compute internal angle, and check against a tolerance
+        constexpr REAL tol = 5.*(M_PI/180.);
+        
+        PositiveShell_angles[iedge] = DFN::DihedralAngle(PositiveShell[iedge],SurfEl[iedge], 1);
+        if(PositiveShell_angles[iedge] < tol)
+            {NBadAngles_pos++;}
+        else
+            {NGoodAngles_pos++;}
+
+        NegativeShell_angles[iedge] = DFN::DihedralAngle(NegativeShell[iedge],SurfEl[iedge],-1);
+        if(NegativeShell_angles[iedge] < tol)
+            {NBadAngles_neg++;}
+        else
+            {NGoodAngles_neg++;}
+
+        if(NBadAngles_neg && NGoodAngles_neg && NBadAngles_pos && NGoodAngles_pos) {
+            badVolumes.push_back(vol.Index());
+            return false;
+        }
+
+    }
+    int closestSubset = 0;
+    if(NBadAngles_pos == nedges) closestSubset = +1;
+    if(NBadAngles_neg == nedges) closestSubset = -1;
+    if(NBadAngles_pos == nedges && NBadAngles_neg == nedges){
+        // @ToDo
+        // accumulate angles
+        // closestSubset gets minimum
+    }
+
+    if(closestSubset != 0){
+        TPZVec<TPZGeoElSide>& delimiter_vector = closestSubset == 1 ? PositiveShell : NegativeShell;
+        std::set<TPZGeoElSide> delimiter;
+        for(const auto& gelside : delimiter_vector){ delimiter.insert(gelside);}
+
+        std::set<int64_t> shellsubset = vol.GetShellSubset(delimiter);
+        AddOrRemoveFromSurface(shellsubset);
+        RemoveFromSurface(newelements);
+        for(const int64_t index : newelements){
+            gmesh->DeleteElement(gmesh->Element(index));
+        }
+        return true;
+    }
+
+
+    return false;
 }
 
 

@@ -442,6 +442,20 @@ public:
                             const int polyhindex,
                             const TPZStack<int64_t>& newelements,
                                   TPZStack<int>& badVolumes);
+    /**
+     * @brief Checks if the dihedral angles between a subpolygon mesh and the shell of its containing volume are below a threshold.
+     * @details If all angles violate the threshold, deletes newelements and incorporate a subset of the volume shell as fracture surface
+     * @details If one, but not all, angle violates the threshold, tags this volume as a badVolume
+     * @details If no angle violates the threshold, nothing happens
+     * @param subpolygon vector with edges of subpolygon
+     * @param polyhindex index of polyhedron
+     * @param newelements elements created to cover subpolygon area
+     * @param badVolumes list (to be filled) with polyhedra that need to be refined into simplexes
+     */
+    bool TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygon,
+                                    const int polyhindex,
+                                    const TPZStack<int64_t>& newelements,
+                                        TPZStack<int>& badVolumes);
 };
 
 inline std::ostream& operator<<(std::ostream &out, const DFNFracture& fracture){
