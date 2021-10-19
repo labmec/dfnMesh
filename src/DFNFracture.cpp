@@ -2470,7 +2470,7 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
                                         TPZStack<int>& badVolumes)
 {
     const int nedges = subpolygon.size();
-    const std::string plotpath = "./LOG/FailedSubpolygon";
+    const std::string plotpath = "./LOG/FailedSubPolygon";
     // Consistency
 #ifdef PZDEBUG
     if(newelements.size() < 1) {DebugStop();}
@@ -2530,11 +2530,11 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
                     case  1: PositiveShell[iedge] = neig; break;
                     case -1: NegativeShell[iedge] = neig; break;
                     default: {
-                        PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubpolygon"); 
-                        DFN::PlotVTK_SideList(plotpath+"PositiveDelimiter.vtk",PositiveShell);
-                        DFN::PlotVTK_SideList(plotpath+"NegativeDelimiter.vtk",NegativeShell);
-                        DFN::PlotVTK_SideList(plotpath+"SurfaceDelimiter.vtk",SurfEl);
-                        DFN::PlotVTK_elementList(plotpath+"SurfaceMesh.vtk",newelements,gmesh);
+                        PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubPolygon"); 
+                        DFN::PlotVTK_SideList(plotpath+"/PositiveDelimiter.vtk",PositiveShell);
+                        DFN::PlotVTK_SideList(plotpath+"/NegativeDelimiter.vtk",NegativeShell);
+                        DFN::PlotVTK_SideList(plotpath+"/SurfaceDelimiter.vtk",SurfEl);
+                        DFN::PlotVTK_elementList(plotpath+"/SurfaceMesh.vtk",newelements,gmesh);
                         DebugStop();
                     }
                 }
