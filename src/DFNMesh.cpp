@@ -89,6 +89,7 @@ DFNMesh::~DFNMesh(){
 	for(auto fracture : fFractures){
 		delete fracture;
 	}
+	for(auto volume : fPolyhedra) delete volume;
 }
 
 
@@ -891,7 +892,7 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
 	std::list<int64_t> groupIntact;
 	int nels = fPolyhedra.size();
 	for(int ipolyh=1; ipolyh < nels; ipolyh++){
-		DFNPolyhedron& polyh = fPolyhedra[ipolyh];
+		DFNPolyhedron& polyh = Polyhedron(ipolyh);
 		if(polyh.IsRefined()) continue;
 
 		stream << "Surface Loop(" << polyh.Index()+gmshshift << ") = {";
@@ -1045,7 +1046,7 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
         return;
     }
 	// Use the boundary polyhedron to get boundary conditions
-	DFNPolyhedron& boundary = fPolyhedra[0];
+	DFNPolyhedron& boundary = Polyhedron(0);
 	for(auto orientedface : boundary.Shell()){
 		int64_t index = orientedface.first;
 		int matid = fGMesh->Element(index)->MaterialId();
@@ -1739,17 +1740,18 @@ void DFNMesh::RestoreMaterials(TPZVec<int>& backup){
 DFNPolyhedron* DFNMesh::CreatePolyhedron(const TPZVec<std::pair<int64_t,int>>& shell,int64_t coarseindex, bool isConvex){
 	int ipolyh = fPolyhedra.size();
 	fPolyhedra.resize(ipolyh+1);
-	DFNPolyhedron& newpolyhedron = fPolyhedra[ipolyh];
-	newpolyhedron.Initialize(this,ipolyh,shell,coarseindex,isConvex);
+	DFNPolyhedron* newpolyhedron = new DFNPolyhedron;
+	fPolyhedra[ipolyh] = newpolyhedron;
+	newpolyhedron->Initialize(this,ipolyh,shell,coarseindex,isConvex);
 #if PZ_LOG
 	if(logger.isDebugEnabled()){
 		std::stringstream stream;
 		stream << "[Adding Polyhedron]";
-		newpolyhedron.Print(stream);
+		newpolyhedron->Print(stream);
 		LOGPZ_DEBUG(logger,stream.str());
 	}
 #endif // PZ_LOG
-	return &newpolyhedron;
+	return newpolyhedron;
 }
 
 
@@ -1771,7 +1773,7 @@ void DFNMesh::InitializePolyhedra(){
 
 	std::cout<<" -Initializing polyhedral volumes\r"<<std::flush;
 
-	// Gather mesh boundary first
+	// Gather boundary faces first
 	shell.clear();
 	TPZGeoElSide gelside;
 	TPZGeoElSide neig;
@@ -2022,7 +2024,7 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 		std::pair<int64_t,int> faceorient = {facingcards[i].first.fgelindex,facingcards[i].second};
 		int nextface_polyindex = GetPolyhedralIndex(faceorient);
 		if(nextface_polyindex != polyh_index){
-			if(nextface_polyindex > 0) {coarseindex = fPolyhedra[nextface_polyindex].CoarseIndex();}
+			if(nextface_polyindex > 0) {coarseindex = Polyhedron(nextface_polyindex).CoarseIndex();}
 			to_verify.push_back(faceorient);
 			SetPolyhedralIndex(faceorient,polyh_index);
 			polyhedron.push_back(faceorient);
@@ -2333,7 +2335,7 @@ void DFNMesh::InheritPolyhedra(TPZGeoEl* father){
 			}
 		}
 		SetPolyhedralIndex({father->Index(),fatherorient},-1); //< refined face doesn't need a polyhedral index
-		DFNPolyhedron& polyhedron = fPolyhedra[father_polyhindex];
+		DFNPolyhedron& polyhedron = Polyhedron(father_polyhindex);
 		polyhedron.SwapForChildren(father);
 	}
 }
@@ -2402,7 +2404,7 @@ void DFNMesh::PrintPolyhedra(std::ostream & out) const{
 		// out<<"\n\nNumber of polyhedra found: "<<npolyhedra+1;
 		out<<"\n\nNumber of polyhedra found: "<<fPolyhedra.size();
 		for(auto& polyh : fPolyhedra){
-			polyh.Print(out,false);
+			polyh->Print(out,false);
 		}
 	}
 	out.flush();
@@ -2908,9 +2910,9 @@ void DFNMesh::PrintRolodexBugReport(const int64_t AxleIndex){
 void DFNMesh::PlotVolumesByCoarseIndex(const int64_t coarseindex, const std::string dirpath) const {
     
     for (auto& pol : fPolyhedra) {
-        if(pol.CoarseIndex() != coarseindex) continue;
-        std::string filename = dirpath + "poly_" + std::to_string(pol.Index()) + "." + std::to_string(NFractures()) + ".vtk";
-        pol.PlotVTK(filename);
+        if(pol->CoarseIndex() != coarseindex) continue;
+        std::string filename = dirpath + "poly_" + std::to_string(pol->Index()) + "." + std::to_string(NFractures()) + ".vtk";
+        pol->PlotVTK(filename);
         
     }
 }

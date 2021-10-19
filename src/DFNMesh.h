@@ -44,7 +44,7 @@ private:
 	TPZVec<std::array<int,2>> fPolyh_per_face;
     
     // A set of polyhedral volumes
-    TPZStack<DFNPolyhedron,20> fPolyhedra;
+    TPZStack<DFNPolyhedron*,20> fPolyhedra;
 
     // // mat ids in use for this DFNMesh
     // std::set<int> matids_in_use;
@@ -208,7 +208,7 @@ public:
     /**
      * @brief Reference to polyhedra stack
     */
-    const TPZStack<DFNPolyhedron,20>& Polyhedra() const{return fPolyhedra;}
+    const TPZStack<DFNPolyhedron*,20>& Polyhedra() const{return fPolyhedra;}
     // template<int Talloc>
 
     /** @brief adds geoels for graphics that illustrate the tolerance*/
@@ -230,7 +230,7 @@ public:
     /// return a vector of indices for edges occupying 1D sides of a face
     TPZVec<int64_t> GetEdgeIndices(int64_t face_index){return DFN::GetEdgeIndices(fGMesh->Element(face_index));}
 
-    DFNPolyhedron& Polyhedron(int i){return fPolyhedra[i];}
+    DFNPolyhedron& Polyhedron(int i){return *fPolyhedra[i];}
 
     /// Get number of fractures in the fracture vector of this DFN
     int NFractures() const{return fFractures.size();}

@@ -1818,11 +1818,11 @@ std::set<int64_t> DFNFracture::IdentifySnapRibs(){
 std::set<int> DFNFracture::IdentifyIntersectedPolyhedra(){
     std::set<int> IntersectedPolyh;
     for(const auto& volume : fdfnMesh->Polyhedra()){
-        if(volume.Index() == 0) continue;           // skip boundary polyhedron
-        if(volume.IsRefined()) continue;            // skip refined polyhedra
-        if(!volume.IsConvex()) DebugStop();         // they should all be convex at this point
-        if(!volume.IsIntersected(*this)) continue;  // get only intersected polyhedra
-        IntersectedPolyh.insert(volume.Index());
+        if(volume->Index() == 0) continue;           // skip boundary polyhedron
+        if(volume->IsRefined()) continue;            // skip refined polyhedra
+        if(!volume->IsConvex()) DebugStop();         // they should all be convex at this point
+        if(!volume->IsIntersected(*this)) continue;  // get only intersected polyhedra
+        IntersectedPolyh.insert(volume->Index());
     }
     return IntersectedPolyh;
 }
