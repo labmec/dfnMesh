@@ -269,3 +269,9 @@ bool DFNPolyhedron::IsBoundedBy(const std::pair<int64_t, int> orientedFace) cons
 bool DFNPolyhedron::IsBoundedBy(const int64_t faceindex, const int orientation) const{
     return fIndex == fDFN->GetPolyhedralIndex(faceindex,orientation);
 }
+bool DFNPolyhedron::IsBoundedByFather(const int64_t childindex) const{
+    TPZGeoEl* father = fDFN->Mesh()->Element(childindex)->Father();
+    if(!father){return false;}
+    else       {return IsBoundedBy(father->Index());}
+}
+

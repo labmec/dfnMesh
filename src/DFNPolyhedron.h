@@ -155,6 +155,11 @@ class DFNPolyhedron
 		 * @param orientedFace: Paired {elIndex, orientation}.
 		*/
 		bool IsBoundedBy(const std::pair<int64_t, int> orientedFace) const;
+		/** @brief Same as DFNPolyhedron::IsBoundedBy(), but uses the father of the element whose index is input.
+		 * @param childindex Index of 2D geoelement whose father is to be tested
+		*/
+		bool IsBoundedByFather(const int64_t childindex) const;
+
 
 #ifdef PZDEBUG
 		void CoherentRefinementTest(const TPZVec<int64_t>& newgels);
