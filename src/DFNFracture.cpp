@@ -475,12 +475,10 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     
     // Changed on Oct 1st, 2021. See Section 3.3.2 Effects of intersection coalescing on the fracture surface
     // of Pedro's dissertation for discussion and explanations
-    const bool newMethodology = true;
     TPZGeoEl* loopedface = nullptr;
     
     std::set<int64_t> reducedSubPolygon;
     
-    if (newMethodology) {
         std::set<int64_t> nodeSet; // set with all nodes in polygon. Since it is set it will be of unique entries.
         for(const int64_t rib_index : polygon){
             TPZGeoEl* rib = gmesh->Element(rib_index);
@@ -519,21 +517,6 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
         }
                 
         loopedface = DFN::GetLoopedFace(reducedSubPolygon,gmesh);
-    }
-    else{
-        loopedface = DFN::GetLoopedFace(polygon,gmesh);
-        if(loopedface) return loopedface;
-
-        // If edges in the subpolygon don't loop around a single face, try their ancestors
-        std::set<int64_t> RibElders;
-        for(const int64_t rib_index : polygon){
-            TPZGeoEl* rib = gmesh->Element(rib_index);
-            TPZGeoEl* elder = (rib->Father()?rib->EldestAncestor():rib);
-            RibElders.insert(elder->Index());
-        }
-        
-        loopedface = DFN::GetLoopedFace(RibElders,gmesh);
-    }
 
     return loopedface;
     
@@ -1552,15 +1535,14 @@ void DFNFracture::RemoveFromSurface(TPZGeoEl* gel){
     switch (gel->Dimension()){
         case 1: fSurfaceEdges.erase(gel->Index()); break;
         case 2: fSurfaceFaces.erase(gel->Index()); break;
-        default: DebugStop();;
+        default: DebugStop();
     }
 }
 void DFNFracture::AddToSurface(TPZGeoEl* gel){
-    // gel->SetMaterialId(fmatid);
     switch (gel->Dimension()){
         case 1: fSurfaceEdges.insert(gel->Index()); break;
         case 2: fSurfaceFaces.insert(gel->Index()); break;
-        default: DebugStop();;
+        default: DebugStop();
     }
 }
 void DFNFracture::InsertFaceInSurface(int64_t elindex){

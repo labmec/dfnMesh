@@ -1864,14 +1864,10 @@ void DFNMesh::UpdatePolyhedra(){
 	
 	TPZStack<std::pair<int64_t,int>,20> polyhedron(20,{-1,0});
 	// loop over 2D skeleton elements
-	// int debug_nelements = fGMesh->NElements();
-	// for(int64_t iel=0; iel < debug_nelements; iel++){
 	for(int64_t iel=0; iel < fGMesh->NElements(); iel++){
 		TPZGeoEl* initial_face = fGMesh->Element(iel);
 		if(!initial_face) continue;
 		if(initial_face->Dimension() != 2) continue;
-		// if(initial_face->MaterialId() != DFNMaterial::Eskeleton && 
-		// 	initial_face->MaterialId() != DFNMaterial::Efracture) continue;
 		int64_t initial_id = initial_face->Index();
 		
 		// look for polyhedron on each orientation of the initial_face
@@ -1889,9 +1885,6 @@ void DFNMesh::UpdatePolyhedra(){
 			bool IsConvex = true;
 			int coarseindex = -1;
 
-            // If you're runing this on a terminal, this will draw a cool buffering 'animation'
-//			std::cout<< ' ' << loading[(buffering++%4)] << '\r' << std::flush;
-				
 			BuildVolume(initial_face_orient,IsConvex,polyhedron,coarseindex);
 			DFNPolyhedron* newvolume = CreatePolyhedron(polyhedron,coarseindex,IsConvex);
 
@@ -1911,22 +1904,6 @@ void DFNMesh::UpdatePolyhedra(){
 				this->SortFacesAroundEdges();
 				--ipolyh_local;
 			}
-			// if(!IsConvex) {
-			// 	DFNPolyhedron* nonconvexvolume = CreatePolyhedron(polyhedron,coarseindex,IsConvex);
-			// 	ClearPolyhIndex(polyhedron);
-			// 	TPZStack<int64_t> newgels;
-			// 	MeshPolyhedron(polyhedron,coarseindex,newgels);
-			// 	#ifdef PZDEBUG
-			// 		nonconvexvolume->CoherentRefinementTest(newgels);
-			// 	#endif // PZDEBUG
-			// 	this->SortFacesAroundEdges();
-			// 	--ipolyh_local;
-			// 	// iel = 0;
-			// }else{
-			// 	CreatePolyhedron(polyhedron,coarseindex);
-			// 	// DFNPolyhedron new_polyhedron(this,polyh_index,polyhedron,coarseindex);
-			// 	// fPolyhedra.push_back(new_polyhedron);
-			// }
 		}
 	}
 	std::cout<<"                               \r"<<std::flush;
@@ -1990,7 +1967,6 @@ void DFNMesh::BuildVolume(std::pair<int64_t,int> initial_face_orient, bool& IsCo
 		catch(...){
 			PrintRolodexBugReport(iedge);
             PrintProblematicRolodex(initial_face_orient.first,rolodex);
-//            fPolyhedra[133].PrintVTK();
             DFN_DebugStop();
         }
 	}
