@@ -631,7 +631,13 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             // Check if would-be polygon already exists in the mesh before trying to mesh it
             TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
             if(ExistingGel){
-                if(fSurfaceFaces.find(ExistingGel->Index()) != fSurfaceFaces.end() ){
+                bool splinterFlag = false;
+                if(ExistingGel->HasSubElement()){
+                    splinterFlag = fSurfaceFaces.find(ExistingGel->SubElement(0)->Index()) != fSurfaceFaces.end();
+                }else{
+                    splinterFlag = fSurfaceFaces.find(ExistingGel->Index()) != fSurfaceFaces.end();
+                }
+                if(splinterFlag){
                     // If this is the second time we're trying to add ExistingGel to the surface, then it's a splinter and it should be removed from the surface
                     // Splinter = an element attributed to the fracture surface but kind of loose from it. Like a splinter peeling off of wood
                     TPZStack<TPZGeoEl*> children;
