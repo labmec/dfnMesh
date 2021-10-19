@@ -9,6 +9,8 @@ add_test(NAME Tetrahedra_0 COMMAND dfnGoBack "examples/tetrahedra0.json" WORKING
 # Snapping and incorporating faces of the mesh
 add_test(NAME Incorporate_1 COMMAND dfnGoBack "examples/incorporate_1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Incorporate_2 COMMAND dfnGoBack "examples/incorporate_2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_test(NAME Incorporate_3 COMMAND dfnGoBack "examples/incorporate_3.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_test(NAME Incorporate_4 COMMAND dfnGoBack "examples/incorporate_4.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Tetrahedra_1 COMMAND dfnGoBack "examples/tetrahedra1.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 add_test(NAME Tetrahedra_2 COMMAND dfnGoBack "examples/tetrahedra2.json" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 

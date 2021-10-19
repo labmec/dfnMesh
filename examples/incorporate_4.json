@@ -1,0 +1,74 @@
+{
+    "comment": "For this test, there should not be any badVolume for the last fracture",
+    "$schema": "./dfn_schema.json",
+    "PZGenGrid": {
+        "x0": [-1,-1,-1],
+        "xf": [ 1, 1, 1],
+        "MMeshType": "EHexahedral",
+        "Nels": [1,1,1]
+    },
+    "TolAngle": 0.01,
+    "TolDist": 0.05,
+    "Fractures": [
+        {
+            "Index": 0,
+            "MatID": 10,
+            "Limit": "Eextended",
+            "Nodes": [
+                [ 0, 1, 1],
+                [ 1, 0, 1],
+                [ 1,-1, 0],
+                [ 0,-1,-1],
+                [-1, 0,-1],
+                [-1, 1, 0]
+            ]
+        },
+        {
+            "Index": 1,
+            "MatID": 11,
+            "Limit": "Etruncated",
+            "Nodes": [
+                [ 1.01,-1.01, 1.01],
+                [ 1.01,-0.49, 0.49],
+                [-0.49,-0.49,-1.01],
+                [-1.01,-1.01,-1.01]
+            ]
+        },
+        {
+            "Index": 2,
+            "MatID": 12,
+            "Limit": "Etruncated",
+            "Nodes": [
+                [ 1.01,-1.01, 1.01],
+                [ 1.01,-0.49, 0.49],
+                [-0.49, 1.01, 0.49],
+                [-1.01, 1.01, 1.01]
+            ]
+        },
+        {
+            "Index": 3,
+            "MatID": 13,
+            "Limit": "Etruncated",
+            "Nodes": [
+                [-0.49,-0.49,-1.01],
+                [-1.01,-1.01,-1.01],
+                [-1.01, 1.01, 1.01],
+                [-0.49, 1.01, 0.49]
+            ]
+        },
+        {
+            "Index": 4,
+            "Comment": "The Duplicate",
+            "MatID": 13,
+            "Limit": "Eextended",
+            "Nodes": [
+                [ 0.01, 1.01, 0.99],
+                [ 1.01, 0.01, 0.99],
+                [ 1.01,-0.99,-0.01],
+                [ 0.01,-0.99,-1.01],
+                [-0.99, 0.01,-1.01],
+                [-0.99, 1.01,-0.01]
+            ]
+        }
+    ]
+}
