@@ -160,6 +160,11 @@ class DFNPolyhedron
 		*/
 		bool IsBoundedByFather(const int64_t childindex) const;
 
+		/** @brief Given a closed loop of edges on this volume's shell, get a set of faces which are exclusively to a side of this loop
+		 * @param delimiter a set of edge-sides of faces {2D_gel | 1D_side}. 1D sides should form a closed loop to partition the shell, and the 2D els should all lie on the same subset of the shell you want me to assemble.
+		 * @warning I will not verify if your delimiter is coherent. If it's not, the returned set will be the complete shell instead of a subset
+		*/
+		std::set<int64_t> GetShellSubset(const std::set<TPZGeoElSide>& delimiter) const;
 
 		/** @brief Computes total surface area of the elements in the shell of this volume*/
 		REAL ComputeArea() const;

@@ -3,6 +3,7 @@
 #include "DFNMesh.h"
 #include "TPZVTKGeoMesh.h"
 #include <filesystem>
+#include <numeric>
 
 #if PZ_LOG
     static TPZLogger logger("dfn.mesh");
@@ -274,6 +275,90 @@ bool DFNPolyhedron::IsBoundedByFather(const int64_t childindex) const{
     if(!father){return false;}
     else       {return IsBoundedBy(father->Index());}
 }
+
+std::set<int64_t> DFNPolyhedron::GetShellSubset(const std::set<TPZGeoElSide>& delimiter) const{
+    TPZGeoMesh* gmesh = fDFN->Mesh();
+#ifdef PZDEBUG
+    // Coherence
+    if(this->IsRefined()) DebugStop();
+    if(delimiter.size() < 4) DebugStop();
+    for(const auto& delim_side : delimiter){
+        const int64_t elindex = delim_side.Element()->Index();
+        if(delim_side.Element()->Dimension() != 2) DebugStop();
+        if(delim_side.Dimension() != 1) DebugStop();
+        if(!this->IsBoundedBy(elindex) && !this->IsBoundedByFather(elindex)) DebugStop();
+        // @note: To check if delimiter is definitely consistent, I'd need to have an orientation attributed to the edges (like a Sub-polygon).
+        // Better if we trust the user assembled this delimiter from a sub-polygon and therefore everything is consistent
+    }
+#endif // PZDEBUG
+
+    // Assuming delimiter forms a closed loop of 1D-sides of 2D-elements.
+    // From the 2D-elements of the shell of this volume (and their sub-elements)
+    // Build the subset of (unrefined) 2D elements all to the same side of this delimiter
+    std::set<int64_t> subset;
+    std::vector<int64_t> queue;
+    queue.reserve(4*fShell.size());
+    // Faces in the delimiter are part of the subset, so start by inserting them
+    for(auto delim_side : delimiter){
+        const auto test = subset.insert(delim_side.Element()->Index());
+        // Then queue them for neighbour verification
+        if(test.second) queue.push_back(delim_side.Element()->Index());
+    }
+
+    const int ndelimiters = queue.size();
+    // Loop over faces in queue
+    for(int i=0; i < queue.size(); i++){
+        TPZGeoEl* currentface = gmesh->Element(queue[i]);
+        const int nsides = currentface->NSides();
+        // Loop over 1D sides of queued faces
+        for(int iside = currentface->FirstSide(1); iside < nsides; iside++){
+            TPZGeoElSide gelside {currentface,iside};
+            if(gelside.Dimension() != 1) continue;
+            // Skip delimiter sides, so the subset is exclusive to the same section isolated by the delimiter
+            if(i<ndelimiters && delimiter.find(gelside) != delimiter.end()) continue;
+            
+            // Loop over unrefined 2D neighbours
+            TPZGeoElSide neig = gelside.Neighbour();
+            for(/*void*/; neig != gelside; ++neig){
+                const TPZGeoEl* neigel = neig.Element();
+                if(neig.Element()->Dimension() != 2) continue;
+                if(neigel->HasSubElement()) continue;
+                const int64_t neigindex = neigel->Index();
+                // Add neighbours that bound the same volume
+                if(this->IsBoundedBy(neigindex) || this->IsBoundedByFather(neigindex)){
+                    const auto test = subset.insert(neigindex);
+                    if(test.second) {queue.push_back(neigindex);}
+                    break;
+                }
+            }
+        }
+    }
+
+
+#ifdef PZDEBUG
+    // If subset contains the same area of fShell, than the input delimiter wasn't a closed loop and this code returned the complete shell instead of a subset
+    // const REAL shellArea = this->ComputeArea();
+    // REAL subsetArea = 0.;
+    // for(int64_t index : subset){ 
+    //     TPZGeoEl* gel = fDFN->Mesh()->Element(index);
+    //     subsetArea += gel->SideArea(gel->NSides()-1);
+    // }
+    // if(shellArea - subsetArea < gDFN_SmallNumber) {
+        // LOGPZ_ERROR(logger, "at: " << __PRETTY_FUNCTION__ 
+        //     <<"\nYou asked me for a subset of the shell of the following volume:"
+        //     << *this
+        //     <<"\nBut the delimiter of this subset does not form a closed loop of edge-sides. So I can't know what subset you want."
+        //     <<"\nDelimiter:\n" << delimiter
+        // );
+        // std::copy(delimiter.begin(),delimi)
+        // DFN::PlotVTK_SideList()
+    //     DebugStop();
+    // }
+#endif // PZDEBUG
+
+    return subset;
+}
+
 
 REAL DFNPolyhedron::ComputeArea() const{
     TPZGeoMesh* gmesh = fDFN->Mesh();
