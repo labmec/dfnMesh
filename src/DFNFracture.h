@@ -287,7 +287,10 @@ private:
     */
     void SortFacesAboveBelow(int id_above, int id_below, DFNFracture& realfracture);
     void RemoveFromSurface(TPZGeoEl* gel);
+    void RemoveFromSurface(const TPZVec<int64_t>& indices);
     void AddToSurface(TPZGeoEl* gel);
+    void AddToSurface(const std::set<int64_t>& indices);
+    void AddOrRemoveFromSurface(const std::set<int64_t>& indices);
 
     /** @brief Check if face is above or below fracture surface
      * @param use_face_centroid: true -> check using the centroid of the face; false -> check using centroid of the edges of the face.

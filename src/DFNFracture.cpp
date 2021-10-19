@@ -1530,8 +1530,46 @@ void DFNFracture::FindRibs(const std::set<int64_t>& ribset){
 }
 
 
+void DFNFracture::RemoveFromSurface(const TPZVec<int64_t>& indices){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    for(const int64_t index : indices){
+        switch (gmesh->Element(index)->Dimension()){
+            case 1: fSurfaceEdges.erase(index); break;
+            case 2: fSurfaceFaces.erase(index); break;
+            default: DebugStop();
+        }
+    }
+}
+void DFNFracture::AddToSurface(const std::set<int64_t>& indices){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    for(const int64_t index : indices){
+        switch (gmesh->Element(index)->Dimension()){
+            case 1: fSurfaceEdges.insert(index); break;
+            case 2: fSurfaceFaces.insert(index); break;
+            default: DebugStop();
+        }
+    }
+}
+void DFNFracture::AddOrRemoveFromSurface(const std::set<int64_t>& indices){
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+    for(const int64_t index : indices){
+        std::pair<std::set<int64_t>::iterator, bool> test;
+        switch (gmesh->Element(index)->Dimension()){
+            case 1: {
+                test = fSurfaceEdges.insert(index);
+                if(!test.second) fSurfaceEdges.erase(test.first);
+                break;
+            }
+            case 2: {
+                test = fSurfaceFaces.insert(index);
+                if(!test.second) fSurfaceFaces.erase(test.first);
+                break;
+            }
+            default: DebugStop();
+        }
+    }
+}
 void DFNFracture::RemoveFromSurface(TPZGeoEl* gel){
-    // gel->SetMaterialId(DFNMaterial::Erefined);
     switch (gel->Dimension()){
         case 1: fSurfaceEdges.erase(gel->Index()); break;
         case 2: fSurfaceFaces.erase(gel->Index()); break;
