@@ -234,6 +234,11 @@ namespace DFN{
 
     /** @brief Plots a list of elements to a VTK file*/
     void PlotVTK_elementList(const std::string filepath, const TPZVec<int64_t>& newgels, TPZGeoMesh* gmesh);
+    
+    /** @brief Plots a list of TPZGeoElSides to a VTK file, by superposing an element on that side.
+     * @details Elements get matID = 0, sides get matID = 1
+    */
+    void PlotVTK_SideList(const std::string filepath, const TPZVec<TPZGeoElSide>& newgels);
 
     /// Configures the logger used by Gmsh
     void GmshConfig();

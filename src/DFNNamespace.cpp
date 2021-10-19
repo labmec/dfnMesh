@@ -779,6 +779,30 @@ namespace DFN{
         std::ofstream out(filepath);
         TPZVTKGeoMesh::PrintGMeshVTK(&graphicMesh, out, true, true);
     }
+    void PlotVTK_SideList(const std::string filepath, const TPZVec<TPZGeoElSide>& gelside){
+        if(gelside.size() == 0) return;
+        TPZGeoMesh* gmesh = gelside[0].Element()->Mesh();
+        TPZGeoMesh graphicMesh;
+        graphicMesh.ElementVec().Resize(gmesh->NElements());
+        for (int i = 0; i < graphicMesh.NElements(); i++) {
+            graphicMesh.ElementVec()[i] = nullptr;
+        }
+        graphicMesh.NodeVec() = gmesh->NodeVec();
+        
+        const int64_t nels = gmesh->NElements()+gelside.size();
+        TPZVec<REAL> elData(nels,-1);
+
+        for(TPZGeoElSide side : gelside){
+            TPZGeoEl* newel = side.Element()->Clone(graphicMesh);
+            newel->SetMaterialId(0);
+            if(newel->HasSubElement()) newel->SetSubElement(0,nullptr);
+            TPZGeoEl* newbc = newel->CreateBCGeoEl(side.Side(),1);
+            elData[newbc->Index()] = side.Side();
+        }
+
+        std::ofstream out(filepath);
+        TPZVTKGeoMesh::PrintGMeshVTK(&graphicMesh, out, elData);
+    }
 
     /// @brief Check if internal angles of a planar quadrilateral SubPolygon violate a threshold.
     /// @details We're trying to avoid a quadrilateral with consecutive parallel edges, so this functions warns the code of an angle that gets too close to 180deg
