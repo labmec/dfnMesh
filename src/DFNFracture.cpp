@@ -2550,25 +2550,26 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
             if(groupcounter > 3) DebugStop();
         }
         if(groupcounter != 3){
-            PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubpolygon"); 
-            DFN::PlotVTK_elementList(plotpath+"SurfaceMesh.vtk",newelements,gmesh);
-            DFN::PlotVTK_SideList(plotpath+"PositiveDelimiter.vtk",PositiveShell);
-            DFN::PlotVTK_SideList(plotpath+"NegativeDelimiter.vtk",NegativeShell);
-            DFN::PlotVTK_SideList(plotpath+"SurfaceDelimiter.vtk",SurfEl);
+            PlotVTK_SubPolygon(subpolygon,polyhindex,"FailedSubPolygon"); 
+            DFN::PlotVTK_elementList(plotpath+"/SurfaceMesh.vtk",newelements,gmesh);
+            DFN::PlotVTK_SideList(plotpath+"/PositiveDelimiter.vtk",PositiveShell);
+            DFN::PlotVTK_SideList(plotpath+"/NegativeDelimiter.vtk",NegativeShell);
+            DFN::PlotVTK_SideList(plotpath+"/SurfaceDelimiter.vtk",SurfEl);
             DebugStop();
         }
 
         // Compute internal angle, and check against a tolerance
-        constexpr REAL tol = 5.*(M_PI/180.);
+        constexpr REAL tol0 = 5.*(M_PI/180.);
+        constexpr REAL tol2pi = 2*M_PI - tol0;
         
         PositiveShell_angles[iedge] = DFN::DihedralAngle(PositiveShell[iedge],SurfEl[iedge], 1);
-        if(PositiveShell_angles[iedge] < tol)
+        if(PositiveShell_angles[iedge] < tol0 || PositiveShell_angles[iedge] > tol2pi)
             {NBadAngles_pos++;}
         else
             {NGoodAngles_pos++;}
 
         NegativeShell_angles[iedge] = DFN::DihedralAngle(NegativeShell[iedge],SurfEl[iedge],-1);
-        if(NegativeShell_angles[iedge] < tol)
+        if(NegativeShell_angles[iedge] < tol0 || NegativeShell_angles[iedge] > tol2pi)
             {NBadAngles_neg++;}
         else
             {NGoodAngles_neg++;}
