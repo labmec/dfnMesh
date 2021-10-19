@@ -671,7 +671,7 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
-
+    if(badVolumes.size() > 0) return; // no need for skeleton elements or buildconnectivity if the mesh is getting rolled back
     // Update connectivity and skeleton of new surface elements, after surface mesh is complete
     std::cout << std::endl;
     std::cout << " -Building connectivity\r" << std::flush;
