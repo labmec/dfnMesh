@@ -275,3 +275,19 @@ bool DFNPolyhedron::IsBoundedByFather(const int64_t childindex) const{
     else       {return IsBoundedBy(father->Index());}
 }
 
+REAL DFNPolyhedron::ComputeArea() const{
+    TPZGeoMesh* gmesh = fDFN->Mesh();
+
+    // auto elArea = [gmesh](const std::pair<int64_t, int> orientedFace){
+    //     TPZGeoEl* gel = gmesh->Element(orientedFace.first);
+    //     return gel->SideArea(gel->NSides()-1);
+    // };
+    // REAL area = std::accumulate(fShell.begin(),fShell.end(),0.0,elArea);
+
+    REAL area = 0.;
+    for(const auto [index,orient] : fShell){
+        TPZGeoEl* gel = gmesh->Element(index);
+        area += gel->SideArea(gel->NSides()-1);
+    }
+    return area;
+}

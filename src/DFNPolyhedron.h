@@ -161,6 +161,9 @@ class DFNPolyhedron
 		bool IsBoundedByFather(const int64_t childindex) const;
 
 
+		/** @brief Computes total surface area of the elements in the shell of this volume*/
+		REAL ComputeArea() const;
+
 #ifdef PZDEBUG
 		void CoherentRefinementTest(const TPZVec<int64_t>& newgels);
 #endif // PZDEBUG
