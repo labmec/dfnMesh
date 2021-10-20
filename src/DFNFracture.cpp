@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <numeric>
+#include <unordered_set>
 #include "TPZRefPatternDataBase.h"
 #include "TPZGeoMeshBuilder.h"
 #include "DFNNamespace.h"
@@ -698,38 +699,31 @@ void DFNFracture::ClearDuplicateEdges(const std::set<int>& locDuplicateIndices,
 
 const bool DFNFracture::CheckIfPolygonIsClosedLoop(const TPZStack<int64_t>& subpolygon) const {
     TPZGeoMesh *gmesh = fdfnMesh->Mesh();
+    const int nedges = subpolygon.size();
     
-    int64_t firstedgeindex = subpolygon[0];
-    int currentNodeIndex = -1;
-    TPZGeoEl* edge = gmesh->Element(std::abs(firstedgeindex));
-    if (edge->NNodes() != 2) DebugStop();
-    if(firstedgeindex < 0){
-        currentNodeIndex = edge->NodeIndex(0);
-    }else{
-        currentNodeIndex = edge->NodeIndex(1);
+    // Two adjacent edges should always share a node
+    for(int i=0; i<nedges; i++){
+        TPZGeoEl* edge = gmesh->Element(std::abs(subpolygon[i]));
+        TPZGeoEl* nextedge = gmesh->Element(std::abs(subpolygon[(i+1)%nedges]));
+        const int localnodeID = int(subpolygon[i] > 0);
+        const int nextlocalnodeID = int(subpolygon[(i+1)%nedges] < 0);
+
+        const int64_t node = edge->NodeIndex(localnodeID);
+        const int64_t nextnode = edge->NodeIndex(nextlocalnodeID);
+        // they should share a node
+        if(node != nextnode) return false;
     }
-    
-    int64_t nodIndexToCompare = -1;
-    const int size = subpolygon.size();
-    for(int i = 1 ; i < size+1 ; i++){
-        const int iloc = i%size;
-        const int64_t iedgeindex = subpolygon[iloc];
-        edge = gmesh->Element(std::abs(iedgeindex));
-        if (edge->NNodes() != 2) DebugStop();
-        if(iedgeindex < 0){
-            nodIndexToCompare = edge->NodeIndex(1);
-            if (nodIndexToCompare != currentNodeIndex) {
-                return false;
-            }
-            currentNodeIndex = edge->NodeIndex(0);
-        }else{
-            nodIndexToCompare = edge->NodeIndex(0);
-            if (nodIndexToCompare != currentNodeIndex) {
-                return false;
-            }
-            currentNodeIndex = edge->NodeIndex(1);
-        }
+    if(nedges < 6) return true;
+    // Should also be a non-self-intersecting polygon
+    std::unordered_set<int64_t> uniqueNodes;
+    for(auto index : subpolygon){
+        TPZGeoEl* edge = gmesh->Element(std::abs(index));
+        uniqueNodes.insert(edge->NodeIndex(0));
+        uniqueNodes.insert(edge->NodeIndex(1));
     }
+    const int nnodes = uniqueNodes.size();
+    if(nnodes != nedges) return false;
+
     return true;
 }
 
