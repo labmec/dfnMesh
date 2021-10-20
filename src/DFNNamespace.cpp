@@ -789,7 +789,11 @@ namespace DFN{
         TPZVec<REAL> elData(nels,-1);
 
         for(TPZGeoElSide geoside : sidelist){
-            if(!geoside.Element()) continue;
+            if(!geoside.Element()){
+                int discard = graphicMesh.ElementVec().AllocateNewElement(); // To make sure elData has the same size as graphicMesh.ElementVec
+                graphicMesh.ElementVec()[discard] = nullptr;
+                continue;
+            }
             TPZGeoEl* newel = geoside.Element()->Clone(graphicMesh);
             newel->SetMaterialId(0);
             newel->ResetSubElements();
