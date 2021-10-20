@@ -16,9 +16,7 @@ static TPZLogger logger("dfn.mesh");
 
 DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 	fGMesh = gmesh;
-    fTolDist = tolDist;
-    fTolAngle = tolAngle;
-    fTolAngle_cos = std::cos(tolAngle);
+    SetTolerances(tolDist,tolAngle);
 
 	// Option to apply a uniform refinement to the coarse mesh before inserting fractures
 	PreRefine(prerefine);
@@ -55,13 +53,6 @@ DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
 #endif // PZ_LOG
 	}
 	else{PZError << "\n2D meshes are currently unsupported\n"; DebugStop();}
-	// @todo delete this after a robust decision is made on how to handle custom material ids (previously set boundary conditions, skeleton with id -1, etc...)
-#ifdef PZDEBUG
-	// Small flags so I won't forget to undo any debug tests
-	if(DFNMaterial::Eintact != 1
-		||DFNMaterial::Efracture != 2
-		||DFNMaterial::Erefined != 3){std::cout<<"\nWarning: custom DFNMaterial ids\n";}
-#endif //PZDEBUG
 }
 
 

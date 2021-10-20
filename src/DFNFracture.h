@@ -319,7 +319,7 @@ public:
     void SetupGraphicsFractureBC();
 
     /// @brief from a set of 1D elements find if they form a lineloop of an existing 2D element in the mesh
-    TPZGeoEl* FindPolygon(TPZStack<int64_t>& polygon);
+    TPZGeoEl* FindPolygon(const TPZStack<int64_t>& polygon) const;
     
     /**
      * @brief Triangulates fracture surface from outline
@@ -433,30 +433,30 @@ public:
     void RollBack(TPZGeoMesh *gmeshBackup);
     
     /**
-     * @brief Checks if the angles between a subpolygon and and a face of a polyhedron is too small. If so, pushes_back to badVolumes
-     * @param subpolygon vector with edges of subpolygon
-     * @param polyhindex index of polyhedron
-     * @param newelements elements created during cutting by fracture procedure
-     * @param badVolumes list (to be filled) with polyhedra that need to be refined into simplexes
+     * @brief Search for a 2D element which is looped by this subpolygon based only on element connectivity (no flop).
+     * @details If any is found, its youngest children are incorporated to the fracture surface.
+     * @param subpolygon [in] vector with oriented closed loop of edges
+     * @param polyhindex [in] index of volume that contains the subpolygon
+     * @param subpolygMesh [out] elements that cover subpolygon area
+     * @returns true: if a subset of the volume shell was incorporated to the fracture surface.
      */
-    void CheckVolumeAngles( const TPZStack<int64_t>& subpolygon,
-                            const int polyhindex,
-                            const TPZStack<int64_t>& newelements,
-                                  TPZStack<int>& badVolumes);
+    bool TryFaceIncorporate_Topology(const TPZStack<int64_t>& subpolygon,
+                                     const int polyhindex,
+                                           TPZStack<int64_t>& subpolygMesh);
     /**
-     * @brief Checks if the dihedral angles between a subpolygon mesh and the shell of its containing volume are below a threshold.
-     * @details If all angles violate the threshold, deletes newelements and incorporate a subset of the volume shell as fracture surface
-     * @details If one, but not all, angle violates the threshold, tags this volume as a badVolume
+     * @brief Compute internal dihedral angles between a volume shell and the surface mesh of the subpolygon created inside it. And compare it to a threshold.
+     * @details If all angles violate the threshold, deletes subpolygMesh and incorporate a subset of the volume shell to the fracture surface
+     * @details If not all, but at least one, angles violates the threshold, tags this volume as a badVolume
      * @details If no angle violates the threshold, nothing happens
-     * @param subpolygon vector with edges of subpolygon
-     * @param polyhindex index of polyhedron
-     * @param newelements elements created to cover subpolygon area (will get deleted in the case of an incorporation)
+     * @param subpolygon vector with oriented closed loop of edges
+     * @param polyhindex index of volume that contains the subpolygon
+     * @param subpolygMesh elements created to cover subpolygon area (will get deleted in the case of an incorporation)
      * @param badVolumes list (to be filled) with polyhedra that need to be refined into simplexes
      * @returns true: if a subset of the volume shell was incorporated to the fracture surface.
      */
     bool TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygon,
                                     const int polyhindex,
-                                    const TPZStack<int64_t>& newelements,
+                                    const TPZStack<int64_t>& subpolygMesh,
                                         TPZStack<int>& badVolumes);
 };
 

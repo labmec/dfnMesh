@@ -46,17 +46,13 @@ private:
     // A set of polyhedral volumes
     TPZStack<DFNPolyhedron*,20> fPolyhedra;
 
-    // // mat ids in use for this DFNMesh
-    // std::set<int> matids_in_use;
-
-    const int max_intersections = 1000;
 public:
     
     /// Constructor
     DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = DFN::default_tolDist, REAL tolerableAngle = DFN::default_tolAngle, int prerefine = 0);
 
     /// Empty constructor
-    DFNMesh(): fGMesh(nullptr){fTolAngle_cos = std::cos(fTolAngle);}
+    DFNMesh(): fGMesh(nullptr){}
     /// Destructor
     ~DFNMesh();
     /// Copy constructor
@@ -64,9 +60,6 @@ public:
     /// Assignment operator
     DFNMesh &operator=(const DFNMesh &copy);
 
-    /// Add new fracture
-    void AddFracture(DFNFracture *fracture);
-    
     /// Pointer to geometric mesh
     TPZGeoMesh *Mesh(){return fGMesh;}
 
@@ -76,9 +69,9 @@ public:
 
     /// Set tolerances
     void SetTolerances(REAL tolerableLength, REAL tolerableAngle){
-        fTolDist = tolerableLength;
-        fTolAngle = tolerableAngle;
-        fTolAngle_cos = std::cos(tolerableAngle);
+        fTolDist = std::max(tolerableLength, gDFN_SmallNumber);
+        fTolAngle = std::max(std::min(M_PI,tolerableAngle), gDFN_SmallNumber);
+        fTolAngle_cos = std::cos(fTolAngle);
         std::cout<<"\nTolerable distance:  "<<fTolDist;
         std::cout<<"\nTolerable angle:     "<<fTolAngle;
         std::cout<<"\n      cos(angle):    "<<fTolAngle_cos;
@@ -97,7 +90,7 @@ public:
     
     /** 
      * @brief Insert intersection elements of lower dimension in the geometric mesh.
-     * @note matid = -1 will use the material id of first that is found. Set it if you want to force
+     * @note matid = -1 will use the material id of first neighbour that is found. Set it if you want to force any matID
      */
     void CreateSkeletonElements(int dimension, int matid = -1);
 
@@ -162,16 +155,6 @@ public:
      * @attention Assumes boundary polyhedron is already in DFNMesh::fPolyh_by_2D_el
      */
     void UpdatePolyhedra();
-    /**
-     * @brief Identify and match polyh-index of neighbour faces that enclose the same polyhedron recursively
-     * @param initial_face_orient Index of geoEl of current face paired with orientation {index,orientation}
-     * @param IsConvex Method will flag this as false if a dihedral angle is found to be bigger than 180 degrees (non-convex polyhedron)
-     * @param polyhedron: A stack to list every face (and corresponding orientation) that share this polyhedron 
-     * @note This method is called by DFNMesh::UpdatePolyhedra to split intersected polyhedra
-     * @returns Index of intersected polyhedron to overwrite. Returns -1 if it was already overwriting
-    */
-    template<int Talloc>
-    void BuildVolume2(std::pair<int64_t,int> initial_face_orient, bool& IsConvex, TPZStack<std::pair<int64_t,int>,Talloc>& polyhedron);
     /**
      * @brief Sort faces around each 1D element of the mesh
      * @note Fills SortedFaces data

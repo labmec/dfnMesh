@@ -471,7 +471,7 @@ void DFNFracture::SetLoopOrientation(TPZStack<int64_t>& edgelist){
 
 
 
-TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
+TPZGeoEl* DFNFracture::FindPolygon(const TPZStack<int64_t>& polygon) const{
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     
     // Changed on Oct 1st, 2021. See Section 3.3.2 Effects of intersection coalescing on the fracture surface
@@ -482,14 +482,14 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
     
         std::set<int64_t> nodeSet; // set with all nodes in polygon. Since it is set it will be of unique entries.
         for(const int64_t rib_index : polygon){
-            TPZGeoEl* rib = gmesh->Element(rib_index);
+            TPZGeoEl* rib = gmesh->Element(std::abs(rib_index));
             if (rib->NNodes() != 2) DebugStop();
             for (int i = 0; i < 2; i++)
                 nodeSet.insert(rib->NodeIndex(i));
         }
         
         for(const int64_t rib_index : polygon){
-            TPZGeoEl* rib = gmesh->Element(rib_index);
+            TPZGeoEl* rib = gmesh->Element(std::abs(rib_index));
             TPZGeoEl* father = rib->Father();
             int64_t elindextoadd = -1;
             while (father) {
@@ -510,7 +510,7 @@ TPZGeoEl* DFNFracture::FindPolygon(TPZStack<int64_t>& polygon){
                 reducedSubPolygon.insert(elindextoadd);
             }
             else{
-                reducedSubPolygon.insert(rib_index);
+                reducedSubPolygon.insert(std::abs(rib_index));
             }
         }
         if (reducedSubPolygon.size() > 4) {
@@ -620,41 +620,12 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             
             // Recursively search for next face until subpolygon loop is closed
             BuildSubPolygon(Polygon_per_face,initialface_orient,inletside,subpolygon);
-            // DFN::BulkSetMaterialId(fdfnMesh->Mesh(),subpolygon,this->fmatid);
-            
-            // A subpolygon of area zero is not a valid subpolygon and should simply be skiped
-            if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
-
             polygon_counter++;
             
-            LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh# " << polyhindex);
+            // A subpolygon of area zero is not a valid subpolygon and should simply be skipped
+            if(DFN::IsValidPolygon(subpolygon,gmesh) == false) continue;
 
-            // Check if would-be polygon already exists in the mesh before trying to mesh it
-            TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
-            if(ExistingGel){
-                bool splinterFlag = false;
-                if(ExistingGel->HasSubElement()){
-                    splinterFlag = fSurfaceFaces.find(ExistingGel->SubElement(0)->Index()) != fSurfaceFaces.end();
-                }else{
-                    splinterFlag = fSurfaceFaces.find(ExistingGel->Index()) != fSurfaceFaces.end();
-                }
-                if(splinterFlag){
-                    // If this is the second time we're trying to add ExistingGel to the surface, then it's a splinter and it should be removed from the surface
-                    // Splinter = an element attributed to the fracture surface but kind of loose from it. Like a splinter peeling off of wood
-                    TPZStack<TPZGeoEl*> children;
-                    if(ExistingGel->HasSubElement()) {DebugStop(); ExistingGel->YoungestChildren(children);}
-                    else{children.push_back(ExistingGel);}
-                    
-                    for(auto subel : children)
-                        {RemoveFromSurface(subel);}
-                    LOGPZ_DEBUG(logger,"\tSplinter removed. Element index : " << ExistingGel->Index());
-                }else{
-                    LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());
-                    InsertFaceInSurface(ExistingGel->Index());
-                }
-                continue;
-            }
-            
+            // Clean up sub-polygon
             SetLoopOrientation(subpolygon);
             std::set<int> locDuplicateIndices;
             const bool hasDuplicateEdges = CheckForDuplicateEdges(subpolygon,locDuplicateIndices);            
@@ -666,7 +637,12 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
                     continue;
                 }
             }
+
+            LOGPZ_DEBUG(logger,"SubPolyg " << polygon_counter <<" : [" << subpolygon << "] in Polyh# " << polyhindex);
             
+            bool incorporatedElement = TryFaceIncorporate_Topology(subpolygon,polyhindex,newelements);
+            if(incorporatedElement) continue;
+
             const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
             if (!isSubPolPlanarEnough) {
                 badVolumes.push_back(polyhindex);
@@ -2381,89 +2357,122 @@ void DFNFracture::RollBack(TPZGeoMesh *gmeshBackup) {
     
     
 }
+bool DFNFracture::TryFaceIncorporate_Topology(const TPZStack<int64_t>& subpolygon, 
+                                            const int polyhindex,
+                                            TPZStack<int64_t>& subpolygMesh)
+{
+    const int nedges = subpolygon.size();
+    if(nedges > 4) return false;
 
-void DFNFracture::CheckVolumeAngles(const TPZStack<int64_t>& subpolygon, const int polyhindex, const TPZStack<int64_t>& newelements,TPZStack<int>& badVolumes){
-    // Consistency
-#ifdef PZDEBUG
-    if(newelements.size() < 1) {DebugStop();}
-    if(subpolygon.size() < 3) {DebugStop();}
-    if(polyhindex < 0 || polyhindex >= fdfnMesh->NPolyhedra()) {DebugStop();}
-#endif
-
-    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
-    DFNPolyhedron& pol = fdfnMesh->Polyhedron(polyhindex);
-    
-    // If N Elements == 1, Gmsh was not used to mesh this SubPolygon and we can skip this function
-    // if (newelements.size() == 1) {return;}
-    
-    // For each edge in subpolygon, there is a neighbour on the fracture surface. 
-    // Check surfel internal dihedral angle with the 2 faces in the volume shell which are its neighbours
-    // through the 1D-side occupied by the edge in the subpolygon
-    for (int64_t isubpol :subpolygon) {
-        TPZGeoEl* edge = gmesh->Element(abs(isubpol));
-        TPZGeoElSide edgeside(edge,edge->NSides()-1);
-        TPZGeoElSide neig = edgeside.Neighbour();
-        // Get 2D element on the fracture surface
-        TPZGeoElSide surfelside;
-        for (; neig != edgeside ; ++neig) {
-            if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
-                {continue;}
-
-            const int64_t indexneig = neig.Element()->Index();
-            int64_t *p = std::find(newelements.begin(), newelements.end(), indexneig);
-            if (p != newelements.end()){
-                surfelside = neig;
-                break;
-            }
+    // Check if would-be polygon already exists in the mesh before trying to mesh it
+    TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
+    if(ExistingGel){
+        bool splinterFlag = false;
+        if(ExistingGel->HasSubElement()){
+            splinterFlag = fSurfaceFaces.find(ExistingGel->SubElement(0)->Index()) != fSurfaceFaces.end();
+        }else{
+            splinterFlag = fSurfaceFaces.find(ExistingGel->Index()) != fSurfaceFaces.end();
         }
-        if (!surfelside.Element()) {
-            DebugStop();
+        if(splinterFlag){
+            // If this is the second time we're trying to add ExistingGel to the surface, then it's a splinter and it should be removed from the surface
+            // Splinter = an element attributed to the fracture surface but kind of loose from it. Like a splinter peeling off of wood
+            TPZStack<TPZGeoEl*> children;
+            if(ExistingGel->HasSubElement()) {DebugStop(); ExistingGel->YoungestChildren(children);}
+            else{children.push_back(ExistingGel);}
+            
+            for(auto subel : children)
+                {RemoveFromSurface(subel);}
+            LOGPZ_DEBUG(logger,"\tSplinter removed. Element index : " << ExistingGel->Index());
+        }else{
+            LOGPZ_DEBUG(logger,"\tIncorporated element index : " << ExistingGel->Index());
+            InsertFaceInSurface(ExistingGel->Index());
         }
-        
-        // Search for 2D gel in shell neighbour of surfel through edgeside
-        neig = edgeside.Neighbour();
-        for (; neig != edgeside ; ++neig) {
-            if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
-                continue;
-            
-            const int64_t neigindex = neig.Element()->Index();
-            // The face we're looking for is either on the volume shell, or is a subelement of an element that is
-            int64_t shellfaceindex = -1;
-            TPZGeoEl* father = neig.Element()->Father();
-            if(pol.IsBoundedBy(neigindex)){
-                shellfaceindex = neigindex;
-            }else{
-                if(!father) {continue;}
-                if(!pol.IsBoundedBy(father->Index())){continue;}
-                shellfaceindex = father->Index();
-            }
-
-            // Get orientation of internal angle
-            // If face_in_shell was refined, we'll compute the internal angle to the child element. So we need its orientation.
-            int fatherChildOrientation = 1;
-            if(father && shellfaceindex == father->Index()){
-                fatherChildOrientation = DFN::SubElOrientation(father,neig.Element()->WhichSubel());
-            }
-            // Orientation of face_in_shell relative to the polyhedral volume
-            const int shellFaceOrientation = pol.IsBoundedBy(shellfaceindex,1) ? 1 : -1;
-            // Orientation of element relative to the edge in the subpolygon
-            // const int faceEdgeOrientation = DFN::OrientationMatch(neig, edgeside) ? 1 : -1;
-            // Proper orientation of the internal angle
-            const int internalAngleOrientation = shellFaceOrientation*fatherChildOrientation;
-            
-            // Compute internal angle, and check against a tolerance
-            const REAL internalAngle = DFN::DihedralAngle(neig, surfelside, internalAngleOrientation);
-            constexpr float _5deg = 5.*(M_PI/180.);
-            // constexpr float _355deg = 2.*M_PI - 5.*(M_PI/180.);
-            // if (internalAngle < _5deg || internalAngle > _355deg) {
-            if (internalAngle < _5deg) {
-                badVolumes.push_back(pol.Index());
-                return;
-            }
-            
-        }
+        return true;
     }
+    return false;
 }
+// void DFNFracture::CheckVolumeAngles(const TPZStack<int64_t>& subpolygon, const int polyhindex, const TPZStack<int64_t>& newelements,TPZStack<int>& badVolumes){
+//     // Consistency
+// #ifdef PZDEBUG
+//     if(newelements.size() < 1) {DebugStop();}
+//     if(subpolygon.size() < 3) {DebugStop();}
+//     if(polyhindex < 0 || polyhindex >= fdfnMesh->NPolyhedra()) {DebugStop();}
+// #endif
+
+//     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+//     DFNPolyhedron& pol = fdfnMesh->Polyhedron(polyhindex);
+    
+//     // If N Elements == 1, Gmsh was not used to mesh this SubPolygon and we can skip this function
+//     // if (newelements.size() == 1) {return;}
+    
+//     // For each edge in subpolygon, there is a neighbour on the fracture surface. 
+//     // Check surfel internal dihedral angle with the 2 faces in the volume shell which are its neighbours
+//     // through the 1D-side occupied by the edge in the subpolygon
+//     for (int64_t isubpol :subpolygon) {
+//         TPZGeoEl* edge = gmesh->Element(abs(isubpol));
+//         TPZGeoElSide edgeside(edge,edge->NSides()-1);
+//         TPZGeoElSide neig = edgeside.Neighbour();
+//         // Get 2D element on the fracture surface
+//         TPZGeoElSide surfelside;
+//         for (; neig != edgeside ; ++neig) {
+//             if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
+//                 {continue;}
+
+//             const int64_t indexneig = neig.Element()->Index();
+//             int64_t *p = std::find(newelements.begin(), newelements.end(), indexneig);
+//             if (p != newelements.end()){
+//                 surfelside = neig;
+//                 break;
+//             }
+//         }
+//         if (!surfelside.Element()) {
+//             DebugStop();
+//         }
+        
+//         // Search for 2D gel in shell neighbour of surfel through edgeside
+//         neig = edgeside.Neighbour();
+//         for (; neig != edgeside ; ++neig) {
+//             if (neig.Element()->Dimension() != 2 || neig.Element()->HasSubElement())
+//                 continue;
+            
+//             const int64_t neigindex = neig.Element()->Index();
+//             // The face we're looking for is either on the volume shell, or is a subelement of an element that is
+//             int64_t shellfaceindex = -1;
+//             TPZGeoEl* father = neig.Element()->Father();
+//             if(pol.IsBoundedBy(neigindex)){
+//                 shellfaceindex = neigindex;
+//             }else{
+//                 if(!father) {continue;}
+//                 if(!pol.IsBoundedBy(father->Index())){continue;}
+//                 shellfaceindex = father->Index();
+//             }
+
+//             // Get orientation of internal angle
+//             // If face_in_shell was refined, we'll compute the internal angle to the child element. So we need its orientation.
+//             int fatherChildOrientation = 1;
+//             if(father && shellfaceindex == father->Index()){
+//                 fatherChildOrientation = DFN::SubElOrientation(father,neig.Element()->WhichSubel());
+//             }
+//             // Orientation of face_in_shell relative to the polyhedral volume
+//             const int shellFaceOrientation = pol.IsBoundedBy(shellfaceindex,1) ? 1 : -1;
+//             // Orientation of element relative to the edge in the subpolygon
+//             // const int faceEdgeOrientation = DFN::OrientationMatch(neig, edgeside) ? 1 : -1;
+//             // Proper orientation of the internal angle
+//             const int internalAngleOrientation = shellFaceOrientation*fatherChildOrientation;
+            
+//             // Compute internal angle, and check against a tolerance
+//             const REAL internalAngle = DFN::DihedralAngle(neig, surfelside, internalAngleOrientation);
+//             constexpr float _5deg = 5.*(M_PI/180.);
+//             // constexpr float _355deg = 2.*M_PI - 5.*(M_PI/180.);
+//             // if (internalAngle < _5deg || internalAngle > _355deg) {
+//             if (internalAngle < _5deg) {
+//                 badVolumes.push_back(pol.Index());
+//                 return;
+//             }
+            
+//         }
+//     }
+// }
 
 bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygon,
                                     const int polyhindex,
