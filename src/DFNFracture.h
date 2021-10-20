@@ -290,6 +290,7 @@ private:
     void RemoveFromSurface(const TPZVec<int64_t>& indices);
     void AddToSurface(TPZGeoEl* gel);
     void AddToSurface(const std::set<int64_t>& indices);
+    /// @brief Adds elements to the fracture surface by index. If an element was already on surface, removes it instead.
     void AddOrRemoveFromSurface(const std::set<int64_t>& indices);
 
     /** @brief Check if face is above or below fracture surface
@@ -449,8 +450,9 @@ public:
      * @details If no angle violates the threshold, nothing happens
      * @param subpolygon vector with edges of subpolygon
      * @param polyhindex index of polyhedron
-     * @param newelements elements created to cover subpolygon area
+     * @param newelements elements created to cover subpolygon area (will get deleted in the case of an incorporation)
      * @param badVolumes list (to be filled) with polyhedra that need to be refined into simplexes
+     * @returns true: if a subset of the volume shell was incorporated to the fracture surface.
      */
     bool TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygon,
                                     const int polyhindex,
