@@ -766,9 +766,14 @@ namespace DFN{
 
         TPZGeoMesh graphicMesh;
         graphicMesh.ElementVec().Resize(gmesh->NElements());
+#ifdef MACOSX
+        for (int i = 0; i < graphicMesh.NElements(); i++) {
+            graphicMesh.ElementVec()[i] = nullptr;
+        }
+#else
         std::fill(graphicMesh.ElementVec().begin(),graphicMesh.ElementVec().end(),nullptr);
+#endif
         graphicMesh.NodeVec() = gmesh->NodeVec();
-
         for(int64_t index : newgels){
             TPZGeoEl* newel = gmesh->Element(index)->Clone(graphicMesh);
             if(newel->HasSubElement()) newel->SetSubElement(0,nullptr);
@@ -782,7 +787,13 @@ namespace DFN{
         TPZGeoMesh* gmesh = sidelist[0].Element()->Mesh();
         TPZGeoMesh graphicMesh;
         graphicMesh.ElementVec().Resize(gmesh->NElements());
+#ifdef MACOSX
+        for (int i = 0; i < graphicMesh.NElements(); i++) {
+            graphicMesh.ElementVec()[i] = nullptr;
+        }
+#else
         std::fill(graphicMesh.ElementVec().begin(),graphicMesh.ElementVec().end(),nullptr);
+#endif
         graphicMesh.NodeVec() = gmesh->NodeVec();
         
         const int64_t nels = gmesh->NElements()+sidelist.size();
