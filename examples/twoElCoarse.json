@@ -1,0 +1,30 @@
+{
+    "$schema": "./dfn_schema.json",
+    "Mesh" : "examples/twoElCoarse.msh",
+    "TolDist": 1e-4,
+    "TolAngle": 1e-2,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0,
+            "Limit": "Etruncated",
+            "MaterialID": 12,
+            "Nodes":[
+                [0.95, 2.50,-0.50],
+                [0.95,-0.50,-0.50],
+                [0.95,-0.50, 2.50],
+                [0.95, 2.50, 2.50]
+            ]
+        }
+        // ,{//Fracture 1
+        //     "Index": 1,
+        //     "Limit": "Etruncated",
+        //     "MaterialID": 5,
+        //     "Nodes":[
+        //         [0.45, 2.50,-0.50],
+        //         [0.45,-0.50,-0.50],
+        //         [0.45,-0.50, 2.50],
+        //         [0.45, 2.50, 2.50]
+        //     ]
+        // }
+    ]
+}
