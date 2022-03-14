@@ -1,15 +1,16 @@
 {
     "$schema": "../dfn_schema.json",
-    // "PZGenGrid": {
-    //     "x0": [0.75, 1.50, 0.0],
-    //     "xf": [1.00, 2.00, 0.500001],
-    //     "Nels": [1,2,3],
-    //     "MMeshType": "EHexahedral"
-    // },
-    "Mesh": "examples/flemisch_benchmark/fl_case3.msh",
+    "PZGenGrid": {
+        "x0": [0.0, 0.0,  0.0],
+        "xf": [1.0, 2.25, 1.0],
+        // "Nels": [2,4,2],
+        "Nels": [4,9,4],
+        "MMeshType": "EHexahedral"
+    },
+    // "Mesh": "examples/flemisch_benchmark/fl_case3.msh",
     "PreRefine": 0,
-    "TolDist": 0.0022,
-    "TolAngle": 0.012,
+    "TolDist": 0.001,
+    "TolAngle": 0.0001,
     "Fractures":[
         {
             "Index": 4,

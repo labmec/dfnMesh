@@ -12,7 +12,7 @@
     "TolAngle": 0.012,
     "Fractures":[
         {
-            "Index": 4,
+            "Index": 3,
             "Limit": "Erecovered",
             "MatID": 14,
             "Comment": "The lonely vertical one",
@@ -48,7 +48,7 @@
             ]
         },
         {
-            "Index": 7,
+            "Index": 6,
             "Limit": "Erecovered",
             "MatID": 17,
             "Comment": "The horizontal big one that cuts the domain in half",
@@ -59,18 +59,18 @@
                 [0.050, 1.990, 0.500]
             ]
         },
-        {
-            "Index": 3,
-            "Limit": "Erecovered",
-            "MatID": 13,
-            "Comment": "One of the 2 that cross each other",
-            "Nodes":[ 
-                [0.170, 1.900, 0.300],
-                [0.170, 1.900, 0.700],
-                [0.230, 2.200, 0.700],
-                [0.230, 2.200, 0.300]
-            ]
-        },
+        // {
+        //     "Index": 3,
+        //     "Limit": "Erecovered",
+        //     "MatID": 13,
+        //     "Comment": "One of the 2 that cross each other",
+        //     "Nodes":[ 
+        //         [0.170, 1.900, 0.300],
+        //         [0.170, 1.900, 0.700],
+        //         [0.230, 2.200, 0.700],
+        //         [0.230, 2.200, 0.300]
+        //     ]
+        // },
         {
             "Index": 2,
             "Limit": "Erecovered",
@@ -84,7 +84,7 @@
             ]
         },
         {
-            "Index": 5,
+            "Index": 4,
             "Limit": "Erecovered",
             "MatID": 15,
             "Comment": "Big diagonal above",
@@ -96,7 +96,7 @@
             ]
         },
         {
-            "Index": 6,
+            "Index": 5,
             "Limit": "Erecovered",
             "MatID": 16,
             "Comment": "Big diagonal below",
