@@ -166,7 +166,7 @@ void DFNPolyhedron::Refine(){
 
 #ifdef PZDEBUG
 void DFNPolyhedron::CoherentRefinementTest(const TPZVec<int64_t>& newgels){
-    constexpr REAL _2deg = 2.*M_PI/180.;
+    constexpr REAL _2deg = 0.2*M_PI/180.;
     constexpr REAL tol = _2deg;
     TPZGeoElSide badangle = DFN::TestInternalAngles(fDFN->Mesh(),newgels,tol);
     if(badangle.Element()){

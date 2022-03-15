@@ -28,7 +28,7 @@ DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh)
   fCornerPoints = CornerPoints;
   ComputeAxis();
   Check_Data_Consistency();
-//   ComputeArea();
+   ComputeArea();
   // initialize the fNodesAbove data structure
   SortNodes(gmesh);
 }
@@ -279,39 +279,69 @@ TPZManVector<double, 3> DFNPolygon::CalculateIntersection(const TPZVec<REAL> &p1
  * @return False if the point is out of fracture polygon
  */
 
+
 bool DFNPolygon::IsPointInPolygon(const TPZVec<REAL> &point) const
 {
-    // Projecting all points to 2D by ignoring the max absolute component of the normal vector of this polygon
-    int x = (fMax_component+1)%3;   // Projected x 
-    int y = (x+1)%3;                // Projected y
-
-    int N_intersections = 0;
-    int ncorners = fCornerPoints.Cols();
-
-    constexpr REAL ignore = -999.;
-    TPZManVector<REAL, 3> pA(3,ignore); // First node of the i-th edge
-    TPZManVector<REAL, 3> pB(3,ignore); // Second node of the i-th edge
-    // Set a ray leaving the point and going to infinity along x axis
-    // Count how many edges of the projected polygon are intersected by the ray
-    for(int i = 0; i<ncorners; i++){
-        pA[x] = fCornerPoints.g(x,i);
-        pA[y] = fCornerPoints.g(y,i);
-        // pA[fMax_component] = ignore;
-        pB[x] = fCornerPoints.g(x,(i+1)%ncorners);
-        pB[y] = fCornerPoints.g(y,(i+1)%ncorners);
-        // pB[fMax_component] = ignore;
-        
-        // Consecutive vertices on opposite sides of the point
-        if((point[y] > pB[y]) != (point[y] > pA[y])){ // Implies pA[y]-pB[y] != 0
-            // Parametrize intersection
-            REAL alpha = (point[y] - pB[y])/(pA[y]-pB[y]);
-            // If intersection point is to the right, it's hit by the ray
-            N_intersections += (pB[x] + alpha*(pA[x]-pB[x]) > point[x]);
+    const bool isUseAreaMethod = true;
+    if (isUseAreaMethod) {
+        int ncorners = fCornerPoints.Cols();
+        REAL area = 0;
+        for(int i = 0; i<ncorners; i++){
+            //Define vectors from the point to a each one of a pair of corners
+            TPZManVector<REAL, 3> ax1(3);
+                ax1[0] = fCornerPoints.g(0,i) - point[0];
+                ax1[1] = fCornerPoints.g(1,i) - point[1];
+                ax1[2] = fCornerPoints.g(2,i) - point[2];
+            TPZManVector<REAL, 3> ax2(3);
+                ax2[0] = fCornerPoints.g(0,(i+1)%ncorners) - point[0];
+                ax2[1] = fCornerPoints.g(1,(i+1)%ncorners) - point[1];
+                ax2[2] = fCornerPoints.g(2,(i+1)%ncorners) - point[2];
+            //Compute area of trangle outlined by these vectors
+            REAL temp = pow(ax1[1]*ax2[2] - ax1[2]*ax2[1],2);
+                temp += pow(ax1[2]*ax2[0] - ax1[0]*ax2[2],2);
+                temp += pow(ax1[0]*ax2[1] - ax1[1]*ax2[0],2);
+                      
+            area += sqrtl(temp)/2;
         }
+        
+        // std::cout<<" ___ ";
+
+        //If total computed area is equal to the polygon's area, then
+        //point is in polygon
+        return( fabs(area-fArea) < gDFN_SmallNumber );
     }
-	
-    // An odd number of intersections, means point is inside polygon
-    return (N_intersections%2);
+    else {
+        // Projecting all points to 2D by ignoring the max absolute component of the normal vector of this polygon
+        int x = (fMax_component+1)%3;   // Projected x
+        int y = (x+1)%3;                // Projected y
+        
+        int N_intersections = 0;
+        int ncorners = fCornerPoints.Cols();
+        
+        constexpr REAL ignore = -999.;
+        TPZManVector<REAL, 3> pA(3,ignore); // First node of the i-th edge
+        TPZManVector<REAL, 3> pB(3,ignore); // Second node of the i-th edge
+                                            // Set a ray leaving the point and going to infinity along x axis
+                                            // Count how many edges of the projected polygon are intersected by the ray
+        for(int i = 0; i<ncorners; i++){
+            pA[x] = fCornerPoints.g(x,i);
+            pA[y] = fCornerPoints.g(y,i);
+            // pA[fMax_component] = ignore;
+            pB[x] = fCornerPoints.g(x,(i+1)%ncorners);
+            pB[y] = fCornerPoints.g(y,(i+1)%ncorners);
+            // pB[fMax_component] = ignore;
+            
+            // Consecutive vertices on opposite sides of the point
+            if((point[y] > pB[y]) != (point[y] > pA[y])){ // Implies pA[y]-pB[y] != 0
+                                                          // Parametrize intersection
+                REAL alpha = (point[y] - pB[y])/(pA[y]-pB[y]);
+                // If intersection point is to the right, it's hit by the ray
+                N_intersections += (pB[x] + alpha*(pA[x]-pB[x]) > point[x]);
+            }
+        }
+        // An odd number of intersections, means point is inside polygon
+        return (N_intersections%2);
+    }
 }
 
 
@@ -615,40 +645,69 @@ void DFNPolygon::GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector) const{
 
 
 bool DFNPolygon::ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segment& segment) const{
-    const DFNPolygon& polygA = *this;
-    const DFNPolygon& polygB = otherpolyg;
 
     int n_int = 0; //< Number of intersection points found
     segment.clear();
-
-    TPZManVector<REAL,3> p1(3,0.), p2(3,0.), intpoint(3,0.);
-    TPZManVector<const DFNPolygon*,2> polyg {this, &otherpolyg};
-    // polyg[0] = *this;
-    // polyg[1] = otherpolyg;
-
-    for(int A=0; A<2; A++){
-        int B = !A;
-        // Test edges of DFNPolygonA being cut by DFNPolygonB, then
-        // test edges of DFNPolygonB being cut by DFNPolygonA
-        int nnodesA = polyg[A]->NCornerNodes();
-        for(int inode=0; inode<nnodesA; inode++){
-            // Get 2 consecutive corners
-            // @suggestion: This code is affected by machine precision. A further extension to this implementation would be to displace p1 and p2 from polyg[A] centroid by some geometrical tolerance (using a displacement vector from the centroid to each node). Fractures that perfectly end on another may not have their intersection properly computed, and this small displacement would fix that.
-            polyg[A]->iCornerX(inode,p1);
-            polyg[A]->iCornerX((inode+1)%nnodesA,p2);
-            
-            // Check if corners lie in opposite sides, and if the 
-            // intersection point is within bounds of the polygon
-            bool intersects_Q = polyg[B]->Check_pair(p1,p2,intpoint);
-            if(!intersects_Q) continue;
-
-            segment.push_back(intpoint);
-            n_int++;
-            if(n_int == 2) return true;
+    
+    const bool isUsePlaneCrossMethod = false;
+    if (isUsePlaneCrossMethod) {
+        const DFNPolygon& polyg1 = *this;
+        const DFNPolygon& polyg2 = otherpolyg;
+        
+        TPZManVector<REAL,3> p1n,p2n,p3n,p3np2n,p1np3n,pinter;
+        polyg1.GetNormal(p1n);
+        polyg2.GetNormal(p2n);
+        Cross(p1n, p2n, p3n);
+        REAL squaredLength = 0.;
+        for (int i = 0; i < 3; ++i) squaredLength += p3n[i]*p3n[i];
+        Cross(p3n, p2n, p3np2n);
+        Cross(p1n, p3n, p1np3n);
+        REAL p1ap1n = 0., p2ap2n = 0.;
+        for (int i = 0; i < 3; ++i) {
+            p1ap1n -= polyg1.PointAndCoor(0,i)*p1n[i];
+            p2ap2n -= polyg2.PointAndCoor(0,i)*p2n[i];
         }
+        
+        for (int i = 0; i < 3; ++i) {
+            pinter[i] = p3np2n[i]*p1ap1n + p1np3n[i]*p2ap2n;
+        }
+        
+        pinter /= squaredLength;
+        
+        // Now we need to find start and end based on intersection of the
+        // line defined by the point (pinter) and the normal (p3n)
+                
     }
+    else{
+        TPZManVector<REAL,3> p1(3,0.), p2(3,0.), intpoint(3,0.);
+        TPZManVector<const DFNPolygon*,2> polyg {this, &otherpolyg};
+        // polyg[0] = *this;
+        // polyg[1] = otherpolyg;
 
-    return false;
+        for(int A=0; A<2; A++){
+            int B = !A;
+            // Test edges of DFNPolygonA being cut by DFNPolygonB, then
+            // test edges of DFNPolygonB being cut by DFNPolygonA
+            int nnodesA = polyg[A]->NCornerNodes();
+            for(int inode=0; inode<nnodesA; inode++){
+                // Get 2 consecutive corners
+                // @suggestion: This code is affected by machine precision. A further extension to this implementation would be to displace p1 and p2 from polyg[A] centroid by some geometrical tolerance (using a displacement vector from the centroid to each node). Fractures that perfectly end on another may not have their intersection properly computed, and this small displacement would fix that.
+                polyg[A]->iCornerX(inode,p1);
+                polyg[A]->iCornerX((inode+1)%nnodesA,p2);
+                
+                // Check if corners lie in opposite sides, and if the
+                // intersection point is within bounds of the polygon
+                bool intersects_Q = polyg[B]->Check_pair(p1,p2,intpoint);
+                if(!intersects_Q) continue;
+
+                segment.push_back(intpoint);
+                n_int++;
+                if(n_int == 2) return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 

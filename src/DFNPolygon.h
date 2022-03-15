@@ -88,6 +88,10 @@ class DFNPolygon
 		coord[1] = fCornerPoints.g(1,icorner);
 		coord[2] = fCornerPoints.g(2,icorner);
 	}
+    
+    const REAL PointAndCoor(int icorner, int coor) const{
+        return fCornerPoints.g(coor,icorner);
+    }
 
 	/// Return area of polygon
 	double area() const { return fArea; }
@@ -148,7 +152,7 @@ class DFNPolygon
 	TPZManVector<REAL, 3> GetProjectedX(const TPZManVector<REAL, 3> &point) const;
 
 	/// Fill a 3D vector with the components of the normal direction of this polygon
-	void GetNormal(TPZManVector<REAL,3>& normal_vec){
+	void GetNormal(TPZManVector<REAL,3>& normal_vec) const{
 		normal_vec.resize(3);
 		normal_vec[0] = fAxis(0,2);
 		normal_vec[1] = fAxis(1,2);
