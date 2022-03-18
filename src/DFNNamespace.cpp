@@ -897,6 +897,20 @@ namespace DFN{
         if(nelements < 3 || nelements > 4) DebugStop();
         newelements.clear();
         
+        // associate an elementside with each node in lineloop
+        std::map<int64_t,TPZGeoElSide> nodeconnectivity;
+        for(auto elindex : lineloop)
+        {
+            TPZGeoEl *gel = gmesh->Element(std::abs(elindex));
+            int ncorner = gel->NCornerNodes();
+            for (int ic=0; ic<ncorner; ic++) {
+                int64_t nodeindex = gel->NodeIndex(ic);
+                TPZGeoElSide gelside(gel,ic);
+                nodeconnectivity[nodeindex] = gelside;
+            }
+        }
+        // parallelEdgesQ will be true if the polygon has 4 elements and one of the internal angles
+        // is larger than 170 degrees
         bool parallelEdgesQ = false;
         int midnode = -1;
         
@@ -905,11 +919,12 @@ namespace DFN{
         if(nelements == 4){
             GetSubPolygonGlobalNodeIndices(gmesh,lineloop,globNodes);
             constexpr REAL cos170 = -0.984807753;
+            // midnode is the node that is aligned
             parallelEdgesQ = CheckSubPolygonInternalAngles(gmesh,lineloop,cos170,midnode);
             if (parallelEdgesQ && midnode == -1) DebugStop();
         }
 
-        
+        // we are generating 2 triangles from 4 sides
         if (parallelEdgesQ){
             TPZManVector<int64_t,3> cornerindices0(3,-1),cornerindices1(3,-1);
             cornerindices0[0] = globNodes[midnode];
@@ -949,12 +964,12 @@ namespace DFN{
                     // @maybeToDo set Node connectivity
                 }
             }
-            
+            // set the connectivity along the line that connects both triangles
             TPZGeoElSide faceside0(new_el0,5);
             TPZGeoElSide faceside1(new_el1,5);
             faceside0.SetConnectivity(faceside1);
         }
-        else{
+        else{ // create a triangle or quadrilateral
             TPZManVector<int64_t,4> cornerindices(nelements,-1);
             int i=0;
             for(int64_t edge : lineloop){
@@ -985,6 +1000,22 @@ namespace DFN{
                 faceside.SetConnectivity(edgeside);
                 // @maybeToDo set Node connectivity
             }
+        }
+        for(auto el : newelements)
+        {
+            TPZGeoEl *gel = gmesh->Element(el);
+            int nc = gel->NCornerNodes();
+            for (int ic = 0; ic<nc; ic++) {
+                TPZGeoElSide gelside(gel,ic);
+                int64_t nodeindex = gel->NodeIndex(ic);
+#ifdef PZDEBUG
+                if(gelside.Neighbour()) DebugStop();
+                if(nodeconnectivity.find(nodeindex) == nodeconnectivity.end()) DebugStop();
+#endif
+                gelside.SetConnectivity(nodeconnectivity[nodeindex]);
+            }
+            TPZGeoElSide gelside(gel);
+            gelside.SetConnectivity(gelside);
         }
     }
 
