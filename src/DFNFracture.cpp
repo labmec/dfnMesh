@@ -188,7 +188,7 @@ void DFNFracture::CreateFaces(){
         // Setup a refinement mesh whose quality measures are checked in DFNFace::NeedsSnap()
         // insert the face in the DFNFracture data structure. A copy of DFNFace is created
         AddFace(face);
-        std::cout<<"\r#Faces intersected = "<<fFaces.size()<<std::flush;
+//        std::cout<<"\r#Faces intersected = "<<fFaces.size()<<std::flush;
     }
 
     // Depending on the fracture limit directive (DFNFracture::fLimit) we may have to extend 
@@ -250,7 +250,7 @@ void DFNFracture::CreateRibs(){
             DFNRib rib(gel, this);
             rib.SetIntersectionCoord(intpoint);
             AddRib(rib);
-            std::cout<<"\r#Ribs intersected = "<<fRibs.size()<<std::flush;
+//            std::cout<<"\r#Ribs intersected = "<<fRibs.size()<<std::flush;
         }
     }
     std::cout<<std::endl;
@@ -653,7 +653,7 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             MeshPolygon(subpolygon,polyhindex,newelements);
             TryFaceIncorporate_Geometry(subpolygon,polyhindex,newelements,badVolumes);
             // CheckVolumeAngles(subpolygon,polyhindex,newelements,badVolumes);
-            std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
+//            std::cout<<"\r#SubPolygons meshed = "<<polygon_counter<<std::flush;
         }
     }
     if(badVolumes.size() > 0) return; // no need for skeleton elements or buildconnectivity if the mesh is getting rolled back
@@ -942,6 +942,26 @@ void DFNFracture::MeshPolygon(TPZStack<int64_t>& polygon, const int polyhindex, 
         PZError << "Plotted SubPolygon to ./LOG/FailedSubPolygon/";
         fdfnMesh->DFN_DebugStop();
     }
+#ifdef PZDEBUG
+    for(const int64_t index : newelements){
+        TPZGeoEl *gel = gmesh->Element(index);
+        int nsides = gel->NSides();
+        for (int is = 0; is<nsides; is++) {
+            TPZGeoElSide gelside(gel,is);
+            TPZGeoElSide neighbour = gelside.Neighbour();
+            int count = 0;
+            while (neighbour != gelside && count < 1000) {
+                neighbour = neighbour.Neighbour();
+                count++;
+            }
+            if(count == 1000)
+            {
+                DebugStop();
+            }
+        }
+    }
+#endif
+
     InsertFaceInSurface(newelements);
 
     #if PZ_LOG
@@ -2473,6 +2493,27 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
                                     const TPZStack<int64_t>& newelements,
                                         TPZStack<int>& badVolumes)
 {
+    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
+
+#ifdef PZDEBUG
+    for(const int64_t index : newelements){
+        TPZGeoEl *gel = gmesh->Element(index);
+        int nsides = gel->NSides();
+        for (int is = 0; is<nsides; is++) {
+            TPZGeoElSide gelside(gel,is);
+            TPZGeoElSide neighbour = gelside.Neighbour();
+            int count = 0;
+            while (neighbour != gelside && count < 1000) {
+                neighbour = neighbour.Neighbour();
+                count++;
+            }
+            if(count == 1000)
+            {
+                DebugStop();
+            }
+        }
+    }
+#endif
     // Tolerance for incorporation. We should maybe give this as option to the user
     constexpr REAL tol0 = 5.*(M_PI/180.);
     constexpr REAL tol2pi = 2*M_PI - tol0;
@@ -2486,7 +2527,6 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
     if(polyhindex < 0 || polyhindex >= fdfnMesh->NPolyhedra()) {DebugStop();}
 #endif
 
-    TPZGeoMesh* gmesh = fdfnMesh->Mesh();
     const DFNPolyhedron& vol = fdfnMesh->Polyhedron(polyhindex);
     
     // For each edge in subpolygon, there is a neighbour on the fracture surface and 2 neighbours on the volume shell, gather those on 3 groups
@@ -2576,14 +2616,19 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
             else
                 {NGoodAngles_neg++;}
         }
+        if(PositiveShell_angles[iedge] > 3.*M_PI/2.) PositiveShell_angles[iedge] -= 2.*M_PI;
+        if(NegativeShell_angles[iedge] > 3.*M_PI/2.) NegativeShell_angles[iedge] -= 2.*M_PI;
         
-        if(PositiveShell_angles[iedge] > M_PI && PositiveShell_angles[iedge] < tol2pi) DebugStop();
-        if(NegativeShell_angles[iedge] > M_PI && NegativeShell_angles[iedge] < tol2pi) DebugStop();
-        // If one, but not all, angle violates the threshold, tag this volume as a badVolume
-        if(NBadAngles_neg && NGoodAngles_neg && NBadAngles_pos && NGoodAngles_pos) {
-            badVolumes.push_back(vol.Index());
-            return false;
+#ifdef PZDEBUG
+        {
+            REAL sum = PositiveShell_angles[iedge]+NegativeShell_angles[iedge];
+            // the total opening angle should be less than PI, otherwise the volume is not convex
+            if(M_PI-sum < -1.e-6) DebugStop();
         }
+#endif
+        
+//        if(PositiveShell_angles[iedge] > M_PI && PositiveShell_angles[iedge] < tol2pi) DebugStop();
+//        if(NegativeShell_angles[iedge] > M_PI && NegativeShell_angles[iedge] < tol2pi) DebugStop();
     }
     // If one, but not all, angle violates the threshold, tag this volume as a badVolume
     if((NBadAngles_neg && NGoodAngles_neg && !NBadAngles_pos)
