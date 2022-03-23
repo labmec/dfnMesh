@@ -1199,6 +1199,8 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
                     IsBoundarySide = false;
                     break;
                 }
+                // TODO: if the matid of the neighbor is equal to one of the fractures that intersect with *this, then it is not a boundary. Something like:
+//                this->setOfInterfrac.find()
             }
             if(!IsBoundarySide) continue;
             TPZGeoEl* gelbc = DFN::GetSkeletonNeighbour(gel,iside);

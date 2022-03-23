@@ -35,7 +35,7 @@
 	#include <filesystem>
 //includes
 
-
+using namespace std;
 
 /**
  * @brief information and assumptions
@@ -50,7 +50,7 @@ void PrintPreamble(){
 
 }
 
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine);
+TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine);
 
 
 
@@ -88,7 +88,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 //  | |  | |  / ___ \  | | | |\  |
 //  |_|  |_| /_/   \_\ |_| |_| \_|
 //-------------------------------------------------------------------------------------------------
-using namespace std;
+
 
 int main(int argc, char* argv[]){
 #if PZ_LOG
@@ -99,14 +99,12 @@ int main(int argc, char* argv[]){
 	PrintPreamble();
     /// this data structure defines the fractures which will cut the mesh
     // each matrix is dimension (3xn) where n is the number of vertices
-	TPZStack<TPZFMatrix<REAL>> polyg_stack;
 	TPZGeoMesh *gmesh = nullptr;
 	REAL tol_dist = 1.e-4;
-	REAL tol_angle = 1.e-6; 
-	TPZManVector<int> matid;
-	TPZManVector<FracLimit> limit_directives;
+	REAL tol_angle = 1.e-6;
 	int prerefine = 0;
-	gmesh = ReadInput(argc,argv,polyg_stack,tol_dist,tol_angle,matid,limit_directives,prerefine);
+    map<int, DFNRawData> map_dfnrawdata;
+	gmesh = ReadInput(argc,argv,map_dfnrawdata,tol_dist,tol_angle,prerefine);
 	gmsh::initialize();
 	
 	// ScriptForBug2(gmesh);
@@ -121,13 +119,20 @@ int main(int argc, char* argv[]){
 
 
     // Loop over fractures and refine mesh around them
-	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
+//	for(int iplane = 0, nfractures = polyg_stack.size(); iplane < nfractures; iplane++){
+    int iplane = 0;
+    std::cout << "\n\n==========>  Total number of fractures " << map_dfnrawdata.size() << std::endl;
+    map<int, DFNRawData>::iterator it_dfnrawdata = map_dfnrawdata.begin();
+    for ( ; it_dfnrawdata != map_dfnrawdata.end() ; it_dfnrawdata++) {
+        std::cout << "\n\n\t\t-----------------  Beginning fracture " << iplane << "  -----------------\n" << std::endl;
+        if (iplane == 0) it_dfnrawdata = map_dfnrawdata.begin(); // in case it rolls back the first fracture
+        DFNRawData &dfnrawdata = it_dfnrawdata->second;
         // a polygon represents a set of points in a plane
         // poly_stack[iplane] is a matrix 3xn where n is the number of points 
-		DFNPolygon polygon(polyg_stack[iplane], gmesh);
+		DFNPolygon polygon(dfnrawdata.fpolygonmatrices, gmesh);
         // Initialize the basic data of fracture
         // initialize an empty DFNFracture object
-		DFNFracture *fracture = dfn.CreateFracture(polygon,limit_directives[iplane],matid[iplane]);
+		DFNFracture *fracture = dfn.CreateFracture(polygon,dfnrawdata.flimit_directives,dfnrawdata.fmatid);
         
 		// Find intersected ribs and create a corresponding DFNRib object (administered by DFNFracture)
 		fracture->CreateRibs();
@@ -169,7 +174,7 @@ int main(int argc, char* argv[]){
 	}
 
 	
-	if(polyg_stack.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
+	if(map_dfnrawdata.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
 	std::cout<<"\nTotal running time:\n"<<time<<" ms"<<std::endl;
 	//Print graphics
@@ -184,7 +189,7 @@ int main(int argc, char* argv[]){
 
 
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
-TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_stack, REAL &toldist, REAL &tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine){
+TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine){
 	TPZGeoMesh* gmesh = nullptr;
 	std::string default_example("examples/two-hex-and-a-frac.json");
 	std::string example = default_example;
@@ -208,7 +213,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], TPZStack<TPZFMatrix<REAL>> &polyg_
 		}
 	}
 	std::cout<<"input file: "<<example<<"\n";
-	gmesh = SetupExampleFromFile(example,polyg_stack,mshfile,toldist,tolangle,matid,limit_directives,prerefine);
+	gmesh = SetupExampleFromFile(example,dfnrawdata,mshfile,toldist,tolangle,prerefine);
 	return gmesh;
 }
 

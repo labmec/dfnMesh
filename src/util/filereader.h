@@ -18,6 +18,8 @@
 
 #include "json.hpp"
 
+#include "dfnrawdata.h"
+
 
 
 
@@ -30,7 +32,7 @@
  * @param mshfile: [optional] path to .msh file (if applicable)
  * @returns pointer to geometric mesh created/read
 */
-TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives);
+TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle);
 
 
 void ReadFile(	const std::string			& filename, 
@@ -44,16 +46,14 @@ void ReadFile(	const std::string			& filename,
 				TPZManVector<int>			& matid,
 				TPZManVector<FracLimit>		& limit_directives
 				);
-void ReadFileJSON(const std::string			& filename, 
-				TPZStack<TPZFMatrix<REAL>>	& polygonmatrices, 
+void ReadFileJSON(const std::string			& filename,
+                std::map<int, DFNRawData>& dfnrawdata,
 				std::string 				& mshfile,
 				TPZManVector<REAL,3> 		& x0,
 				TPZManVector<REAL,3> 		& xf,
 				TPZManVector<int,3> 		& nels,
 				MMeshType					& eltype,
-				TPZManVector<REAL,2>		& tol,
-				TPZManVector<int>			& matid,
-				TPZManVector<FracLimit>		& limit_directives
+				TPZManVector<REAL,2>		& tol
 				);
 
 
@@ -322,16 +322,14 @@ void ReadFile(	const std::string			& filename,
 
 
 
-void ReadFileJSON(const std::string			& filename, 
-				TPZStack<TPZFMatrix<REAL>>	& polygonmatrices, 
+void ReadFileJSON(const std::string			& filename,
+                std::map<int, DFNRawData>&  map_dfnrawdata,
 				std::string 				& mshfile,
 				TPZManVector<REAL,3> 		& x0,
 				TPZManVector<REAL,3> 		& xf,
 				TPZManVector<int,3> 		& nels,
 				MMeshType					& eltype,
 				TPZManVector<REAL,2>		& tol,
-				TPZManVector<int>			& matid,
-				TPZManVector<FracLimit>		& limit_directives,
 				int                         & prerefine
 				)
 {
@@ -505,31 +503,32 @@ void ReadFileJSON(const std::string			& filename,
 	
 	// Fractures
 	int nfractures = input["Fractures"].size();
-	matid.Resize(nfractures,DFNMaterial::Efracture);
-	limit_directives.Resize(nfractures,FracLimit::Etruncated);
-	polygonmatrices.Resize(nfractures);
 	for(auto& fracture : input["Fractures"]){
 		int i = fracture["Index"];
-		if(polygonmatrices[i].Cols() != 0){
-			PZError << "\nInput file has fractures with repeated indices. Index = " << i << "\n"; DebugStop();
-		}
-		if(fracture.find("MaterialID") != fracture.end()){
-			matid[i] = (int)fracture["MaterialID"];
-		}else if(fracture.find("MatID") != fracture.end()){
-			matid[i] = (int)fracture["MatID"];
-		}
-		if(fracture.find("Limit") != fracture.end()){
-			limit_directives[i] = DFN::StringToFracLimit((std::string)fracture["Limit"]);
-		}
-		int npoints = fracture["Nodes"].size();
-		polygonmatrices[i].Resize(3,npoints);
-		for(int j=0; j<npoints; j++){
-			for(int k=0; k<3; k++){
-				polygonmatrices[i](k,j) = (REAL)fracture["Nodes"][j][k];
-			}
-		}
-		// polygonmatrices[i].Print(std::cout);
-		// std::cout.flush();
+        
+        if(map_dfnrawdata.find(i) != map_dfnrawdata.end()){ // repeated indexes!
+            DebugStop();
+        }
+        else{
+            DFNRawData mydata;
+            if(fracture.find("MaterialID") != fracture.end()){
+                mydata.fmatid = (int)fracture["MaterialID"];
+            }else if(fracture.find("MatID") != fracture.end()){
+                mydata.fmatid = (int)fracture["MatID"];
+            }
+            if(fracture.find("Limit") != fracture.end()){
+                mydata.flimit_directives = DFN::StringToFracLimit((std::string)fracture["Limit"]);
+            }
+            int npoints = fracture["Nodes"].size();
+            mydata.fpolygonmatrices.Resize(3,npoints);
+            for(int j=0; j<npoints; j++){
+                for(int k=0; k<3; k++){
+                    mydata.fpolygonmatrices(k,j) = (REAL)fracture["Nodes"][j][k];
+                }
+            }
+            map_dfnrawdata[i] = mydata; // this makes a copy.
+        }
+        
 	}
 
 }
@@ -544,7 +543,7 @@ void ReadFileJSON(const std::string			& filename,
 
 
 
-TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL> > &polyg_stack, std::string mshfile, REAL& toldist, REAL& tolangle,TPZManVector<int>& matid,TPZManVector<FracLimit>& limit_directives, int& prerefine){
+TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine){
 
 
 	MMeshType eltype = MMeshType::ENoType;
@@ -557,10 +556,12 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, TPZStack<TPZFMatrix<REAL>
 	std::string extension;
 	try{extension = filename.substr(filename.find_last_of('.'));}
 	catch(std::out_of_range){extension = '?';}
-	if(extension == ".txt")	
-		{ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives,prerefine);}
+    if(extension == ".txt"){
+        DebugStop(); // DEPRECATED!
+//        {ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives,prerefine);}
+    }
 	else if(extension == ".json" || extension == ".jsonc")
-		{ReadFileJSON(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives,prerefine);}
+		{ReadFileJSON(filename,dfnrawdata,mshfile,x0,x1,nels,eltype,tol,prerefine);}
 	else{
 		PZError << "\nUnrecognized file extension:"
 				<< "\nFile = " << filename
