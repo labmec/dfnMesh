@@ -39,7 +39,7 @@ ENDIF(APPLE)
 IF (WIN32)
 	find_package( NeoPZ PATHS "C:/Arquivos de Programas/PZ" REQUIRED NO_DEFAULT_PATH)
 ELSE()
-	find_package( NeoPZ REQUIRED HINTS "../lib/neopz-develop")
+	find_package( NeoPZ REQUIRED HINTS "../neopz_install/" "../lib/neopz-develop")
 ENDIF (WIN32)
 
 # include_directories(${PZ_INCLUDE_DIRS})
@@ -114,8 +114,8 @@ endif()
 
 
 # linking with GMSH
-find_library(GMSH_LIB gmsh HINTS "/home/pedro/projetos/library/gmsh-install/lib" "../lib/gmsh-install/lib" NO_DEFAULT_PATH)
-find_path(GMSH_INC gmsh.h HINTS "/home/pedro/projetos/library/gmsh-install/include" "../lib/gmsh-install/include" NO_DEFAULT_PATH)
+find_library(GMSH_LIB gmsh HINTS "/home/pedro/projetos/library/gmsh-install/lib" "../lib/gmsh-install/lib" "../gmsh-4.8.4-MacOSX-sdk/lib" NO_DEFAULT_PATH)
+find_path(GMSH_INC gmsh.h HINTS "/home/pedro/projetos/library/gmsh-install/include" "../lib/gmsh-install/include" "../gmsh-4.8.4-MacOSX-sdk/include" NO_DEFAULT_PATH)
 
 link_libraries(${GMSH_LIB})
 if(NOT GMSH_LIB)

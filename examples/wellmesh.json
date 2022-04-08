@@ -1,0 +1,41 @@
+{
+    "$schema": "./dfn_schema.json",
+    "Mesh" : "examples/wellmesh.msh",
+    "TolDist": 1e-5,
+    "TolAngle": 1e-4,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0,
+            "Limit": "Erecovered",
+            "MaterialID": 12,
+            "Nodes":[
+                [4, 3, 3],
+                [4, 8, 3],
+                [4, 8, 8],
+                [4, 3, 8]
+            ]
+        },
+        { //Fracture 1
+            "Index": 1,
+            "Limit": "Erecovered",
+            "MaterialID": 13,
+            "Nodes":[
+                [7, 3, 3],
+                [7, 8, 3],
+                [7, 8, 8],
+                [7, 3, 8]
+            ]
+        }        
+        // ,{//Fracture 1
+        //     "Index": 1,
+        //     "Limit": "Etruncated",
+        //     "MaterialID": 5,
+        //     "Nodes":[
+        //         [0.45, 2.50,-0.50],
+        //         [0.45,-0.50,-0.50],
+        //         [0.45,-0.50, 2.50],
+        //         [0.45, 2.50, 2.50]
+        //     ]
+        // }
+    ]
+}
