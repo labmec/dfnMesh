@@ -1,0 +1,38 @@
+/** @brief: Test the inter-fracture intersection search using shortest path solver micropath
+It contains 2 fractures that intersect and are nearly co-planar. Enough that snap algorithms
+will force them to overlap.
+*/
+{
+    "$schema": "./dfn_schema.json",
+    "PZGenGrid": {
+        "x0": [-1,-1,-1],
+        "xf": [1,1,1],
+        "MMeshType": "EHexahedral",
+        "Nels": [1,2,2]
+    },
+    "TolDist": 0.01,
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Eextended",
+            "MaterialID": 10,
+            "Nodes": [
+                [-0.07,-1.02, -0.1],
+                [ 1.10,-1.02, -0.1],
+                [ 1.10, 1.02, -0.5],
+                [-0.07, 1.02, -0.5]
+            ]
+        },
+        {
+            "Index": 1,
+            "Limit": "Eextended",
+            "MaterialID": 11,
+            "Nodes": [
+                [-0.07,-1.02, 0.1],
+                [ 1.10,-1.02, 0.1],
+                [ 1.10, 1.02, 0.5],
+                [-0.07, 1.02, 0.5]
+            ]
+        }
+    ]
+}
