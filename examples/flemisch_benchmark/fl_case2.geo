@@ -21,4 +21,5 @@ Extrude {0, 0, 1} {
     Recombine;
 }
 
-Physical Volume(1) = Volume{:};
+Physical Volume(1) = Volume{:};//+
+Show "*";

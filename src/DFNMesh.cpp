@@ -995,34 +995,36 @@ void DFNMesh::ExportGMshCAD_fractures(std::ofstream& out){
 	for(DFNFracture* frac : this->fFractures){
 		ifrac++;
 		if(frac->Surface().size() == 0) continue;
-		stream << "\nfrac" << ifrac << "[] = {";
+		stream << "\nfrac" << frac->Index() << "[] = {";
 		for(int64_t gelindex : frac->Surface()){
 			stream << gelindex+gmshshift << ",";
 		}
 		stream.seekp(stream.str().length()-1);
 		stream << "};";
-		fracturegroups.insert({frac->MaterialId(),ifrac});
+		fracturegroups.insert({frac->Index(),frac->MaterialId()});
 		// stream<<"Physical Surface(\"Fracture "<< ifrac << "\","<<frac->MaterialId()<<") = frac" << ifrac <<"[];\n";
 	}
 	// If fractures share a material id, we can (must?) merge their listings into the same physical group
 	int igroup = fracturegroups.begin()->first;
+    int index = fracturegroups.begin()->second;
 	stream 	<< "\n\nPhysical Surface(\"Fracture"
-			<< igroup
+            << igroup
 			<< "\","
-			<< igroup
+			<< index
 			<<") = {";
 	for(auto& itr : fracturegroups){
 		if(itr.first != igroup){
 			igroup = itr.first;
+            index = itr.second;
 			stream.seekp(stream.str().length()-2);
 			stream << "};";
 			stream 	<< "\nPhysical Surface(\"Fracture"
 					<< igroup
 					<< "\","
-					<< igroup
+					<< index
 					<<") = {";
 		}
-		stream << "frac" << itr.second  << "[], ";
+		stream << "frac" << igroup  << "[], ";
 	}
 	stream.seekp(stream.str().length()-2);
 	stream << "};\n";

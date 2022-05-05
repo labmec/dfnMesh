@@ -572,7 +572,9 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 	// Get tolerances
 	toldist = tol[0];
 	tolangle = tol[1];
-
+#ifdef MACOSX
+    mshfile = "../"+mshfile;
+#endif
 
 	// Creating the Geo mesh
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
