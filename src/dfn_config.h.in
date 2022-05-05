@@ -1,0 +1,3 @@
+#ifndef INPUTMESHESDIR
+#define INPUTMESHES "@INPUTMESHESDIR@"
+#endif

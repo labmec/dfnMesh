@@ -540,11 +540,13 @@ void ReadFileJSON(const std::string			& filename,
 
 
 
-
+#include "dfn_config.h"
 
 
 TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name){
 
+	std::string basemeshpath(INPUTMESHES);
+	filename = basemeshpath + "/" + filename;
 
 	MMeshType eltype = MMeshType::ENoType;
 	TPZStack<Matrix> planestack;
@@ -572,9 +574,6 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 	// Get tolerances
 	toldist = tol[0];
 	tolangle = tol[1];
-#ifdef MACOSX
-    mshfile = "../"+mshfile;
-#endif
 
 	// Creating the Geo mesh
 	TPZGeoMesh *gmesh = new TPZGeoMesh;
