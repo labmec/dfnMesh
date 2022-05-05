@@ -6,39 +6,40 @@
 	{
 		"k33" :
 		{
-			"K": 1.0e-9,
-			"phi": 0.8
+			"K": 1.0e-5,
+			"phi": 0.25
 		},
 		"k31" :
 		{
-			"K": 1.0e-9,
-			"phi": 0.8
+			"K": 1.0e-6,
+			"phi": 0.2
 		}
 	},
+	"NCoarseGroups": 12,
 	"Boundary":
 	{
 		"inlet":
 		{
 			"type": 0, // imposed pressure
 			"value": 1.0
-		},
+		},		
 		"outlet":
 		{
 			"type": 0,
 			"value": 0.0
-		}
-		"noflux"
+		},
+		"noflux":
 		{
 			"type": 1, // imposed flux
 			"value": 0.0
 		}
-	}
+	},
+	"FractureInitMatId": 100,
     "Fractures": [
         {
             "Index": 0,
-			"K" : 1.0e-9,
-			"phi": 0.8,
-			"MatID": 20,
+			"K" : 1.0e-3,
+			"phi": 0.4,
             "Limit": "Etruncated",
             "Nodes": [
                 [-20, -20, 92],

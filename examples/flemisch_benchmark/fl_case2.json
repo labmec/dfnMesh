@@ -18,11 +18,11 @@
 			"phi": 0.8
 		}
 	},
-	
+	"NCoarseGroups": 512,
+    "FractureInitMatId": 100,
     "Fractures": [
         {
             "Index": 0,
-			"MatID": 20,
             "Limit": "Etruncated",
 			"K" : 1.0e-9,
 			"phi": 0.8,
@@ -35,7 +35,6 @@
         },
         {
             "Index": 1,
-			"MatID": 21,
             "Limit": "Etruncated",
             "Nodes": [
                 [-0.010, 0.500,-0.010],
@@ -46,7 +45,6 @@
         },
         {
             "Index": 2,
-			"MatID": 22,
             "Limit": "Etruncated",
             "Nodes": [
                 [-0.010,-0.010, 0.500],
@@ -57,7 +55,6 @@
         },
         {
             "Index": 3,
-			"MatID": 23,
             "Limit": "Etruncated",
             "Nodes": [
                 [ 0.750, 0.490, 0.490],
@@ -68,7 +65,6 @@
         },
         {
             "Index": 4,
-			"MatID": 24,
             "Limit": "Etruncated",
             "Nodes": [
                 [ 0.490, 0.750, 0.490],
@@ -79,7 +75,6 @@
         },
         {
             "Index": 5,
-			"MatID": 25,
             "Limit": "Etruncated",
             "Nodes": [
                 [ 0.490, 0.490, 0.750],
@@ -90,7 +85,6 @@
         },
         {
             "Index": 6,
-			"MatID": 26,
             "Limit": "Etruncated",
             "Nodes": [
                 [ 0.625, 0.490, 0.490],
@@ -101,7 +95,6 @@
         },
         {
             "Index": 7,
-			"MatID": 27,
             "Limit": "Etruncated",
             "Nodes": [
                 [ 0.490, 0.625, 0.490],
@@ -112,7 +105,6 @@
         },
         {
             "Index": 8,
-			"MatID": 28,
             "Limit": "Etruncated",
             "Nodes": [
                 [ 0.490, 0.490, 0.625],

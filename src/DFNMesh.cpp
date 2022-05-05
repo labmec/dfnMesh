@@ -900,21 +900,24 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
 
 	// Give physical tags to differenciate coarse element groups
 	stream << "\n\n// COARSE ELEMENTS GROUPING\n";
+	int countEls = 0;
 	if(coarse_groups.size()){
 		int current_coarse = coarse_groups.begin()->first;
-		stream 	<< "\nPhysical Volume(\"c"
-				<< current_coarse+gmshshift
-				<< "\","
+		std::stringstream groupname;
+		groupname << "\"c" << countEls++ << "\",";
+		stream 	<< "\nPhysical Volume("
+				<< groupname.str()
 				<< current_coarse+gmshshift
 				<<") = {";
 		for(auto& itr : coarse_groups){
 			if(itr.first != current_coarse){
 				current_coarse = itr.first;
+				groupname.str(std::string());
+				groupname << "\"c" << countEls++ << "\",";
 				stream.seekp(stream.str().length()-1);
 				stream << "};";
-				stream 	<< "\nPhysical Volume(\"c"
-						<< current_coarse+gmshshift
-						<< "\","
+				stream 	<< "\nPhysical Volume("
+						<< groupname.str()
 						<< current_coarse+gmshshift
 						<<") = {";
 			}
@@ -1103,10 +1106,11 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 	
 	for(DFNFracture* fracture : fFractures){
 		int bcindex = 10;
+		const int bcFracMatId = fracture->MaterialId() + 1;
 		fracture->ExportFractureBC(bcindex+fracture->Index(),out);
 		out << "Physical Curve(\"BCfrac" 
 			<< fracture->Index() 
-			<< "\", " << fracture->Index() + bcindex
+			<< "\", " << bcFracMatId
 			<< ") = {BCfrac"
 			<< fracture->Index()
 			<< "[]};\n";

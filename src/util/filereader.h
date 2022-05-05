@@ -485,6 +485,10 @@ void ReadFileJSON(const std::string			& filename,
 	else if(input.find("prerefine") != input.end())
 		{prerefine = input["prerefine"];}
 	
+	//Init matid for fractures
+	const int fracInitMatId = input["FractureInitMatId"];
+	int actualMatId = fracInitMatId;
+	
 	// Fractures
 	int nfractures = input["Fractures"].size();
 	for(auto& fracture : input["Fractures"]){
@@ -496,10 +500,15 @@ void ReadFileJSON(const std::string			& filename,
         else{
             DFNRawData mydata;
             if(fracture.find("MaterialID") != fracture.end()){
+				DebugStop(); // Not using this structure anymore
                 mydata.fmatid = (int)fracture["MaterialID"];
             }else if(fracture.find("MatID") != fracture.end()){
+				DebugStop(); // Not using this structure anymore
                 mydata.fmatid = (int)fracture["MatID"];
-            }
+            }else{
+				mydata.fmatid = actualMatId;
+				actualMatId += 2;
+			}
             if(fracture.find("Limit") != fracture.end()){
                 mydata.flimit_directives = DFN::StringToFracLimit((std::string)fracture["Limit"]);
             }
