@@ -19,4 +19,4 @@ __py*
 graphics
 **/results
 *.log
-sec/dfn_config.h
+src/dfn_config.h
