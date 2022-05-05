@@ -14,8 +14,9 @@
 static TPZLogger logger("dfn.mesh");
 #endif
 
-DFNMesh::DFNMesh(TPZGeoMesh *gmesh, REAL tolDist, REAL tolAngle, int prerefine){
+DFNMesh::DFNMesh(TPZGeoMesh *gmesh, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL tolDist, REAL tolAngle, int prerefine){
 	fGMesh = gmesh;
+	m_dim_physical_tag_and_name = dim_physical_tag_and_name;
     SetTolerances(tolDist,tolAngle);
 
 	// Option to apply a uniform refinement to the coarse mesh before inserting fractures
@@ -1062,19 +1063,32 @@ void DFNMesh::ExportGMshCAD_boundaryconditions(std::ofstream& out){
 	stream << "\n\n// BOUNDARY CONDITIONS\n";
 	if(physicalgroups.size()){
 		int current_bc = physicalgroups.begin()->first;
-		stream 	<< "\nPhysical Surface(\"bc"
-				<< current_bc
-				<< "\","
+		std::stringstream bcname;
+		std::map<int,std::string>::const_iterator it = m_dim_physical_tag_and_name[2].find(current_bc);
+		if(it != m_dim_physical_tag_and_name[2].end())
+			bcname << "\"" <<  it->second << "\",";
+		else
+			bcname << "\"bc" << current_bc << "\",";
+		
+			
+		stream 	<< "\nPhysical Surface("
+				<< bcname.str()
 				<< current_bc
 				<<") = {";
 		for(auto& itr : physicalgroups){
 			if(itr.first != current_bc){
 				current_bc = itr.first;
 				stream.seekp(stream.str().length()-1);
+				it = m_dim_physical_tag_and_name[2].find(current_bc);
+				bcname.str(std::string());
+				if(it != m_dim_physical_tag_and_name[2].end())
+					bcname << "\"" <<  it->second << "\",";
+				else
+					bcname << "\"bc" << current_bc << "\",";
+				
 				stream << "};";
-				stream 	<< "\nPhysical Surface(\"bc"
-						<< current_bc
-						<< "\","
+				stream 	<< "\nPhysical Surface("
+						<< bcname.str()
 						<< current_bc
 						<<") = {";
 			}

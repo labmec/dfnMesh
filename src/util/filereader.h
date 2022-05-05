@@ -32,7 +32,7 @@
  * @param mshfile: [optional] path to .msh file (if applicable)
  * @returns pointer to geometric mesh created/read
 */
-TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle);
+TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
 
 
 void ReadFile(	const std::string			& filename, 
@@ -543,7 +543,7 @@ void ReadFileJSON(const std::string			& filename,
 
 
 
-TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine){
+TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name){
 
 
 	MMeshType eltype = MMeshType::ENoType;
@@ -595,7 +595,21 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 	}else{ // mesh file
 		TPZGmshReader reader;
 		gmesh = reader.GeometricGmshMesh(mshfile, gmesh);
+		dim_physical_tag_and_name = reader.GetDimPhysicalTagName();
+#ifdef PZDEBUG
+		std::cout << "------------------- Materials from supplied coarse mesh ---------------" << std::endl;
+		for(int i = 0 ; i < reader.GetDimPhysicalTagName().size() ; i++){
+			std::cout << "=========> dimension " << i << std::endl;
+			std::map<int,std::string>& stringPhysTag = reader.GetDimPhysicalTagName()[i];
+			for(auto el : stringPhysTag){
+				std::cout << "phystag: " << el.first;
+				std::cout << "\t\tname: " << el.second << std::endl;
+			}
+		}
+#endif
 	}
+	
+	
 
 	std::ofstream out1("graphics/CoarseMesh.vtk");
 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);

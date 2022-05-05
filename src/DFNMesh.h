@@ -45,11 +45,14 @@ private:
     
     // A set of polyhedral volumes
     TPZStack<DFNPolyhedron*,20> fPolyhedra;
+	
+	/// For each dimension (0,1,2,3), it stores the physicalTag (Material ID in PZ) and Name
+	TPZManVector<std::map<int,std::string>,4> m_dim_physical_tag_and_name;
 
 public:
     
     /// Constructor
-    DFNMesh(TPZGeoMesh *gmesh, REAL tolerableLength = DFN::default_tolDist, REAL tolerableAngle = DFN::default_tolAngle, int prerefine = 0);
+    DFNMesh(TPZGeoMesh *gmesh, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL tolerableLength = DFN::default_tolDist, REAL tolerableAngle = DFN::default_tolAngle, int prerefine = 0);
 
     /// Empty constructor
     DFNMesh(): fGMesh(nullptr){}

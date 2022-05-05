@@ -47,7 +47,7 @@ void PrintPreamble(){
 
 using namespace std;
 
-TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine);
+TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
 void CheckForOverlappingFractures(DFNMesh& dfn);
 
 #if PZ_LOG
@@ -76,15 +76,17 @@ int main(int argc, char* argv[]){
 	REAL tol_dist = 1.e-4;
 	REAL tol_angle = 1.e-6; 
     map<int, DFNRawData> map_dfnrawdata;
+	TPZManVector<std::map<int,std::string>,4> dim_physical_tag_and_name;
 	int prerefine = 0;
-	gmesh = ReadInput(argc,argv,map_dfnrawdata,tol_dist,tol_angle,prerefine);
+	gmesh = ReadInput(argc,argv,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name);
 	gmsh::initialize();
 	DFN::GmshConfig();
+	
 	
 	// ScriptForBug2(gmesh);
 	time.start();
     /// Constructor of DFNMesh initializes the skeleton mesh
-	DFNMesh dfn(gmesh,tol_dist,tol_angle,prerefine);
+	DFNMesh dfn(gmesh,dim_physical_tag_and_name,tol_dist,tol_angle,prerefine);
     dfn.ExportGMshCAD("dfnExportCoarse.geo");
 
 	// std::ofstream out1("graphics/CoarseMesh.vtk");
@@ -229,7 +231,7 @@ int main(int argc, char* argv[]){
 
 
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
-TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine){
+TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name) {
 	TPZGeoMesh* gmesh = nullptr;
 	std::string default_example("examples/two-hex-and-a-frac.json");
 	std::string example = default_example;
@@ -253,7 +255,7 @@ TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, 
 		}
 	}
 	std::cout<<"input file: "<<example<<"\n";
-	gmesh = SetupExampleFromFile(example,dfnrawdata,mshfile,toldist,tolangle,prerefine);
+	gmesh = SetupExampleFromFile(example,dfnrawdata,mshfile,toldist,tolangle,prerefine,dim_physical_tag_and_name);
 	return gmesh;
 }
 
