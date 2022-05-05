@@ -19,10 +19,7 @@
 #include "json.hpp"
 
 #include "dfnrawdata.h"
-
-
-
-
+#include "dfn_config.h"
 
 
 /**
@@ -55,14 +52,6 @@ void ReadFileJSON(const std::string			& filename,
 				MMeshType					& eltype,
 				TPZManVector<REAL,2>		& tol
 				);
-
-
-
-
-
-
-
-
 
 
 void ReadFile(	const std::string			& filename, 
@@ -317,11 +306,6 @@ void ReadFile(	const std::string			& filename,
 }
 
 
-
-
-
-
-
 void ReadFileJSON(const std::string			& filename,
                 std::map<int, DFNRawData>&  map_dfnrawdata,
 				std::string 				& mshfile,
@@ -532,15 +516,6 @@ void ReadFileJSON(const std::string			& filename,
 	}
 
 }
-
-
-
-
-
-
-
-
-#include "dfn_config.h"
 
 
 TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name){
