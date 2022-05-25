@@ -11,6 +11,19 @@ project (DFNMesh)
 # Adds definition of macro PROJECT_ROOT, which contains a string of the path to project directory
 add_compile_definitions("PROJECT_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 
+# Install paths
+include(GNUInstallDirs)
+
+set(DFNLIB_INSTALL_PREFIX "dfnlib")
+set(CMAKE_INSTALL_LIBDIR ${DFNLIB_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_INSTALL_INCLUDEDIR ${DFNLIB_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
+set(CMAKE_INSTALL_BINDIR ${DFNLIB_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
+
+file(RELATIVE_PATH relDir
+${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
+)
+
 
 IF (WIN32)
 	# Prevents timespec redefinition problem with Visual Studio 2015
@@ -140,5 +153,56 @@ file(COPY "examples" DESTINATION "./src")
 add_subdirectory(src)
 # add_subdirectory(testcollapsed)
 
-# Test enabling
+############# INSTALL #############
+message(STATUS "CMAKE_INSTALL_LIBDIR = ${CMAKE_INSTALL_LIBDIR}")
+message(STATUS "CMAKE_INSTALL_INCLUDEDIR = ${CMAKE_INSTALL_INCLUDEDIR}")
+message(STATUS "CMAKE_INSTALL_BINDIR = ${CMAKE_INSTALL_BINDIR}")
+
+
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "C:/neopz" CACHE PATH "Directory where PZ will be installed" FORCE)
+  else()
+    set(CMAKE_INSTALL_PREFIX "/opt/neopz" CACHE PATH "Directory where PZ will be installed" FORCE)
+    message(FATAL_ERROR "Please set install prefix")
+  endif()
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
+install(TARGETS dfnlib
+        EXPORT DFNTargets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        )
+#where cmake config files are going to be set
+set(DFN_CMAKE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/dfnmesh)
+
+# install(EXPORT DFNTargets
+#         FILE DFNTargets.cmake
+#         NAMESPACE DFN::
+#         DESTINATION ${DFN_CMAKE_INSTALL_DIR}
+#         )
+
+# NS: Not sure if we need this      
+# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoPZConfig.cmake.in
+#   "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfig.cmake" @ONLY)
+
+# NS: Not sure if we need this      
+# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoPZConfigVersion.cmake.in
+#   "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfigVersion.cmake" @ONLY)
+
+# NS: Not sure if we need this      
+# install(FILES
+#         "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfig.cmake"
+#         "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfigVersion.cmake"
+#         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_pz_target.cmake"
+#         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_pz_opt.cmake"
+#         DESTINATION ${DFN_CMAKE_INSTALL_DIR}
+#         )
+
+# include(cmake/InstallPZConfigFile.cmake)
+
+
+############# Testing #############
 enable_testing()

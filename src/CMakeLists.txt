@@ -21,14 +21,19 @@ add_library(dfnlib ${headers} ${sources})
 target_link_libraries(dfnlib PUBLIC ${GMSH_LIB} NeoPZ::pz)
 target_include_directories(dfnlib PUBLIC ${DFN_INCLUDE_DIRS})
 
+install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+target_sources(dfnlib PRIVATE ${headers} ${sources})
+
 
 
 # Default Target
-add_executable(dfnTest main.cpp)
-target_link_libraries(dfnTest PRIVATE dfnlib)
+# Main Go back is the default now (may 2022)
+# add_executable(dfnTest main.cpp)
+# target_link_libraries(dfnTest PRIVATE dfnlib)
 # A cleaner more efficient target for animations
-add_executable(animations main_animations.cpp)
-target_link_libraries(animations PRIVATE dfnlib)
+# add_executable(animations main_animations.cpp)
+# target_link_libraries(animations PRIVATE dfnlib)
+
 # add_pz_target(
 #   NAME dfnTest
 #   SOURCES ${headers} "main.cpp" ${sources}
