@@ -1,0 +1,50 @@
+{
+    "$schema": "./dfn_schema.json",
+    "Mesh" : "examples/twoElCoarse.msh",
+    "TolDist": 1e-4,
+    "TolAngle": 1e-2,
+    "Domains": [
+        {
+            "name": "k33",
+            "matid": 1,
+            "K": 1.0,
+            "phi": 0.2
+        }
+    ],
+    "NCoarseGroups": 2,
+    "Boundary": [
+        {
+            "name": "bc1",
+            "matid": 2,
+            "type": 0, // imposed pressure
+            "value": 1.0
+        }  
+    ],
+    "FractureHybridPressureMatId": 299,
+    "FractureInitMatId": 300,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0,
+            "K" : 1.0,
+            "phi": 0.2,
+            "Limit": "Etruncated",
+            "Nodes":[
+                [0.95, 2.50,-0.50],
+                [0.95,-0.50,-0.50],
+                [0.95,-0.50, 2.50],
+                [0.95, 2.50, 2.50]
+            ]
+        }
+        // ,{//Fracture 1
+        //     "Index": 1,
+        //     "Limit": "Etruncated",
+        //     "MaterialID": 5,
+        //     "Nodes":[
+        //         [0.45, 2.50,-0.50],
+        //         [0.45,-0.50,-0.50],
+        //         [0.45,-0.50, 2.50],
+        //         [0.45, 2.50, 2.50]
+        //     ]
+        // }
+    ]
+}
