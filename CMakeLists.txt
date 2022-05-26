@@ -178,28 +178,19 @@ install(TARGETS dfnlib
 #where cmake config files are going to be set
 set(DFN_CMAKE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/dfnmesh)
 
-# install(EXPORT DFNTargets
-#         FILE DFNTargets.cmake
-#         NAMESPACE DFN::
-#         DESTINATION ${DFN_CMAKE_INSTALL_DIR}
-#         )
+install(EXPORT DFNTargets
+        FILE DFNTargets.cmake
+        NAMESPACE DFN::
+        DESTINATION ${DFN_CMAKE_INSTALL_DIR}
+        )
 
-# NS: Not sure if we need this      
-# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoPZConfig.cmake.in
-#   "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfig.cmake" @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/DFNConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/DFNConfig.cmake" @ONLY)
 
-# NS: Not sure if we need this      
-# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/NeoPZConfigVersion.cmake.in
-#   "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfigVersion.cmake" @ONLY)
-
-# NS: Not sure if we need this      
-# install(FILES
-#         "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfig.cmake"
-#         "${CMAKE_CURRENT_BINARY_DIR}/NeoPZConfigVersion.cmake"
-#         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_pz_target.cmake"
-#         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_pz_opt.cmake"
-#         DESTINATION ${DFN_CMAKE_INSTALL_DIR}
-#         )
+install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/DFNConfig.cmake"
+        DESTINATION ${DFN_CMAKE_INSTALL_DIR}
+        )
 
 # include(cmake/InstallPZConfigFile.cmake)
 

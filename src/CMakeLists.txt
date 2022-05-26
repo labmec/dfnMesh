@@ -14,12 +14,27 @@ list(FILTER sources EXCLUDE REGEX ".*Temp.cpp|main.*|quicktests.cpp")
 # list(FILTER sources EXCLUDE REGEX "quicktests.cpp")
 
 # include_directories(PUBLIC ${PZ_INCLUDE_DIRS})
-set(DFN_INCLUDE_DIRS ${PZ_INCLUDE_DIRS} ${GMSH_INC} "." "util")
+set(DFN_INCLUDE_DIRS ${PZ_INCLUDE_DIRS} ${GMSH_INC} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/util)
 
 # Create a library for the project so separate targets won't require rebuilding of project source code
 add_library(dfnlib ${headers} ${sources})
 target_link_libraries(dfnlib PUBLIC ${GMSH_LIB} NeoPZ::pz)
-target_include_directories(dfnlib PUBLIC ${DFN_INCLUDE_DIRS})
+# target_include_directories(dfnlib PUBLIC ${DFN_INCLUDE_DIRS} )
+target_include_directories(dfnlib PUBLIC ${PZ_INCLUDE_DIRS})
+
+target_include_directories(dfnlib PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+
+target_include_directories(dfnlib PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/util>
+    )
+
+target_include_directories(dfnlib PUBLIC 
+    $<BUILD_INTERFACE:${GMSH_INC}>
+    $<INSTALL_INTERFACE:${GMSH_INC}>
+    )
 
 install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 target_sources(dfnlib PRIVATE ${headers} ${sources})

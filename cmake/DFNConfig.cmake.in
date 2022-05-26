@@ -1,0 +1,22 @@
+# - Config file for the DFN package
+# It defines the following variables
+#  DFN_INCLUDE_DIRS - include directories for using DFN
+#  DFN_LIBRARIES    - DFN library to link against
+
+@PACKAGE_INIT@
+
+include(@DFN_CMAKE_INSTALL_DIR@/DFNTargets.cmake)
+set(DFN_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@")
+
+## Compute paths
+#set(DFN_BRANCH "@DFN_BRANCH@")
+#set(DFN_REVISION "@DFN_REVISION@")
+#set(DFN_REVISION_DATE "@DFN_REVISION_DATE@")
+
+# These are IMPORTED targets created by DFNTargets.cmake
+if(NOT TARGET DFN::dfnlib)
+  message(FATAL_ERROR "Could not find DFN libs!")
+endif()
+set(DFN_LIBRARIES DFN::dfnlib)
+message(STATUS "DFN_INCLUDE_DIRS: ${DFN_INCLUDE_DIRS}")
+message(STATUS "Link to: ${DFN_LIBRARIES}")
