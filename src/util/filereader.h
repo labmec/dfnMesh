@@ -465,6 +465,7 @@ void ReadFileJSON(const std::string			& filename,
 	}
 
 	// Tolerances
+    tol.resize(2);
 	if(input.find("TolDist") != input.end())
 		{tol[0] = input["TolDist"];}
 	else if(input.find("toldist") != input.end())

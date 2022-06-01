@@ -31,7 +31,7 @@ class DFNPolygon
 	Matrix fCornerPoints;
 	
 	/// Axis that define polygon orientation (Ax0 from node1 to node0, Ax1 from node1 to node2 and Ax2 the normal vector). Matrix 3x3
-	Matrix fAxis ;
+	TPZFNMatrix<9,REAL> fAxis ;
 
 	/// Area of polygon
 	double fArea = -1.0;
@@ -58,10 +58,10 @@ class DFNPolygon
     DFNPolygon(const Matrix &CornerPoints);
 
 	/// Copy constructor
-	DFNPolygon(const DFNPolygon &copy);
+	DFNPolygon(const DFNPolygon &copy) = default;
 
 	/// Assignment operator
-	DFNPolygon &operator=(const DFNPolygon &copy);
+	DFNPolygon &operator=(const DFNPolygon &copy) = default;
     
 	/// Return number of corners of polygon
 	int NCornerNodes() const{return fCornerPoints.Cols();}

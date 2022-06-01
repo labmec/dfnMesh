@@ -38,12 +38,13 @@ DFNPolygon::DFNPolygon(const Matrix &CornerPoints) {
 }
 
 // Copy constructor
+/*
 DFNPolygon::DFNPolygon(const DFNPolygon &copy){
     this->operator=(copy);
 }
+*/
 
-
-
+/*
  DFNPolygon &DFNPolygon::operator=(const DFNPolygon &copy)
  {
 	fCornerPoints = copy.fCornerPoints;
@@ -54,7 +55,7 @@ DFNPolygon::DFNPolygon(const DFNPolygon &copy){
     fMax_component = copy.fMax_component;
 	return *this;
  }
-
+*/
 void DFNPolygon::ComputeAxis()
 {
     int cols = fCornerPoints.Cols();
@@ -68,7 +69,7 @@ void DFNPolygon::ComputeAxis()
         std::cout<<"Check the input data (number of corner points for a fracture seems to be less than 3)\n";
         DebugStop();
     }
-
+    fAxis.Redim(3,3);
     //Ax0
     fAxis(0,0) = fCornerPoints(0,0) - fCornerPoints(0,1);
     fAxis(1,0) = fCornerPoints(1,0) - fCornerPoints(1,1);
