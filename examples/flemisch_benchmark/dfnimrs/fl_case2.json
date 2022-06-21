@@ -1,0 +1,170 @@
+{
+    // @note I've noticed that the most efficient way to define a fracture that perfectly matches the limits existing in mesh is 
+    // to have its corners slightly crossing the desired position, while setting Limit directive to "Etruncated".
+    // E.g. that's why the corner coordinates of some of these fractures have a value like 1.01, when we actually want it to be 1.0.
+    "$schema": "../dfn_schema.json",
+    "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case2_coarse.msh",
+    "TolDist":  0.1,
+    
+	"Domains": [
+    {
+        "name": "k33",
+        "matid": 2,
+        "K": 0.1,
+        "phi": 0.1
+    },
+    {
+        "name": "k31",
+        "matid": 1,
+        "K": 1.0,
+        "phi": 0.1
+    }
+        
+	],
+    "Boundary": [
+        {
+            "name": "outlet",
+            "matid": 4,
+            "type": 1,  // imposed flux
+            "value": -1.0
+        },
+        
+        {
+            "name": "inlet",
+            "matid": 3,
+            "type": 0, // imposed pressure
+            "value": 1.0
+        },
+      
+        {
+            "name": "noflux",
+            "matid": 5,
+            "type": 1, // imposed flux
+            "value": 0.0
+        }
+        
+    ],
+    
+	"NCoarseGroups": 512,
+    "FractureHybridPressureMatId": 299,
+    "FractureInitMatId": 300,
+    "Fractures": [
+        {
+            "Index": 0,
+            "Limit": "Etruncated",
+			"K" : 1.0,
+			"phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [ 0.500,-0.010,-0.010],
+                [ 0.500, 1.010,-0.010],
+                [ 0.500, 1.010, 1.010],
+                [ 0.500,-0.010, 1.010]
+            ]
+        },
+        {
+            "Index": 1,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [-0.010, 0.500,-0.010],
+                [ 1.010, 0.500,-0.010],
+                [ 1.010, 0.500, 1.010],
+                [-0.010, 0.500, 1.010]
+            ]
+        },
+        {
+            "Index": 2,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [-0.010,-0.010, 0.500],
+                [ 1.010,-0.010, 0.500],
+                [ 1.010, 1.010, 0.500],
+                [-0.010, 1.010, 0.500]
+            ]
+        },
+        {
+            "Index": 3,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [ 0.750, 0.490, 0.490],
+                [ 0.750, 1.010, 0.490],
+                [ 0.750, 1.010, 1.010],
+                [ 0.750, 0.490, 1.010]
+            ]
+        },
+        {
+            "Index": 4,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [ 0.490, 0.750, 0.490],
+                [ 1.010, 0.750, 0.490],
+                [ 1.010, 0.750, 1.010],
+                [ 0.490, 0.750, 1.010]
+            ]
+        },
+        {
+            "Index": 5,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [ 0.490, 0.490, 0.750],
+                [ 1.010, 0.490, 0.750],
+                [ 1.010, 1.010, 0.750],
+                [ 0.490, 1.010, 0.750]
+            ]
+        },
+        {
+            "Index": 6,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [ 0.625, 0.490, 0.490],
+                [ 0.625, 0.760, 0.490],
+                [ 0.625, 0.760, 0.760],
+                [ 0.625, 0.490, 0.760]
+            ]
+        },
+        {
+            "Index": 7,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [ 0.490, 0.625, 0.490],
+                [ 0.760, 0.625, 0.490],
+                [ 0.760, 0.625, 0.760],
+                [ 0.490, 0.625, 0.760]
+            ]
+        },
+        {
+            "Index": 8,
+            "Limit": "Etruncated",
+            "K" : 1.0,
+            "phi": 0.9,
+            "width": 1e-4,
+            "Nodes": [
+                [ 0.490, 0.490, 0.625],
+                [ 0.760, 0.490, 0.625],
+                [ 0.760, 0.760, 0.625],
+                [ 0.490, 0.760, 0.625]
+            ]
+        }
+    ]
+}
