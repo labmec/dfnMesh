@@ -8,8 +8,8 @@
     // },
     "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case3_coarse.msh",
     "PreRefine": 0,
-    "TolDist": 0.022,
-    "TolAngle": 0.012,
+    "TolDist": 0.1,
+    "TolAngle": 1.0e-4,
     "Domains": [
         {
             "name": "k33",
