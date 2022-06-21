@@ -6,7 +6,7 @@
     //     "Nels": [1,2,3],
     //     "MMeshType": "EHexahedral"
     // },
-    "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case3.msh",
+    "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case3_coarse.msh",
     "PreRefine": 0,
     "TolDist": 0.022,
     "TolAngle": 0.012,

@@ -701,6 +701,14 @@ bool DFNPolygon::ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segmen
                 bool intersects_Q = polyg[B]->Check_pair(p1,p2,intpoint);
                 if(!intersects_Q) continue;
 
+				// Check distance between new point and the one in segment vector.
+				// If they are in the same position, do not add it.
+				if(segment.size()){
+					TPZManVector<REAL,3> distvec = {segment[0][0]-intpoint[0], segment[0][1]-intpoint[1], segment[0][2]-intpoint[2]};
+					const REAL dist = Norm<REAL>(distvec);
+					if(dist < ZeroTolerance())
+						continue;					
+				}
                 segment.push_back(intpoint);
                 n_int++;
                 if(n_int == 2) return true;
