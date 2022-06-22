@@ -1193,9 +1193,9 @@ void DFNFracture::ExportFractureBC(int matid, std::ofstream& out){
             bool IsBoundarySide = true;
             for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
                 if(neig.Element()->Dimension() != 2) continue;
-                if(neig.Element()->HasSubElement()) continue;
-                // if(fSurfaceFaces.find(neig.Element()->Index()) != fSurfaceFaces.end()){
-                if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
+                if(neig.Element()->HasSubElement()) continue;                 
+//                if(neig.Element()->MaterialId() == gelside.Element()->MaterialId()){
+				if(fSurfaceFaces.find(neig.Element()->Index()) != fSurfaceFaces.end()){
                     IsBoundarySide = false;
                     break;
                 }
