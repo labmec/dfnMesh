@@ -979,8 +979,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	// out << "\nCoherence;";
 	out << "\nCoherence Mesh;";
 	out << "\nTransfinite Curve {:} = 2;";
-	out << "\nTransfinite Surface{:};";
-	out << "\nTransfinite Volume{:};";
+//	out << "\nTransfinite Surface{:};";
+//	out << "\nTransfinite Volume{:};";
 	out << "\nRecombine Surface{:};";
 	out << "\nRecombine Volume{:};";
 	out.flush();
