@@ -29,6 +29,7 @@
 	#include <filesystem>
 
     #include "dfnrawdata.h"
+    #include <filesystem>
 //includes
 
 
@@ -49,13 +50,23 @@ using namespace std;
 
 TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
 void CheckForOverlappingFractures(DFNMesh& dfn);
+void createOutputFolder(std::string& outputFolder);
 
 #if PZ_LOG
 	static TPZLogger logger("dfn.mesh");
 #endif // PZ_LOG
 
 
+void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::string& coarseOutputName,
+                        std::string& fineOutputName, std::string& pathToJson, std::string& meshFile);
+namespace fs = std::filesystem;
 
+bool fileExists(const fs::path& p, fs::file_status s = fs::file_status{}) {
+    if(fs::status_known(s) ? fs::exists(s) : fs::exists(p))
+        return true;
+    else
+        return false;
+}
 
 
 //-------------------------------------------------------------------------------------------------
@@ -78,16 +89,27 @@ int main(int argc, char* argv[]){
     map<int, DFNRawData> map_dfnrawdata;
 	TPZManVector<std::map<int,std::string>,4> dim_physical_tag_and_name;
 	int prerefine = 0;
+    std::string coarseOutputName,fineOutputName,outputFolder,pathToJson,meshFile;
+    getOutputFileNames(argc,argv,outputFolder,coarseOutputName,fineOutputName,pathToJson,meshFile);
 	gmesh = ReadInput(argc,argv,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name);
 	gmsh::initialize();
 	DFN::GmshConfig();
+    
+    // Creating output folder
+    createOutputFolder(outputFolder);
+    // Copying json to output folder
+    std::string basemeshpath(INPUTMESHES);
+    fs::copy(basemeshpath + "/" + pathToJson, "Outputs/" + outputFolder, fs::copy_options::update_existing);
+    if(meshFile != "none"){
+        fs::copy(basemeshpath + "/" + meshFile, "Outputs/" + outputFolder + "/" + outputFolder + "_coarse.msh", fs::copy_options::update_existing);
+    }
 	
 	
 	// ScriptForBug2(gmesh);
 	time.start();
     /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh,dim_physical_tag_and_name,tol_dist,tol_angle,prerefine);
-    dfn.ExportGMshCAD("dfnExportCoarse.geo");
+    dfn.ExportGMshCAD(coarseOutputName);
 
 	// std::ofstream out1("graphics/CoarseMesh.vtk");
 	// TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);
@@ -211,7 +233,7 @@ int main(int argc, char* argv[]){
     CheckForOverlappingFractures(dfn);
 
 	// Generate submesh
-    dfn.ExportGMshCAD("dfnExport.geo");
+    dfn.ExportGMshCAD(fineOutputName);
 
 	if(map_dfnrawdata.size() == 0){std::cout<<"\nNo fractures were recognized.\n";}
 	time.stop();
@@ -298,6 +320,54 @@ void CheckForOverlappingFractures(DFNMesh& dfn) {
     }
 }
 
+void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::string& coarseOutputName,
+                        std::string& fineOutputName, std::string& pathToJson, std::string& meshFile){
+    std::string example;
+    for(int iarg=1; iarg < argc; ++iarg){
+        std::string aux = argv[iarg];
+        try{
+            if(argv[iarg][0] != '-'){example = argv[iarg];}
+            else if(aux == "-f"){example = argv[++iarg];}
+        }catch(...){
+            PZError << "\nUnrecognized argument passed:\n\t\""<< argv[iarg] << "\"\n" << std::endl;
+            DebugStop();
+        }
+    }
+    pathToJson = example;
+    example = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
+    example = example.substr(0, example.find("."));
+    outputFolder = example;
+    fineOutputName = "Outputs/" + example + "/" + example + "_fine.geo";
+    coarseOutputName = "Outputs/" + example + "/" + example + "_coarse.geo";
+    
+    // Getting mesh if available
+    nlohmann::json input;
+    std::string basemeshpath(INPUTMESHES);
+    std::ifstream file(basemeshpath + "/" + pathToJson);
+    input = nlohmann::json::parse(file,nullptr,true,true); // to ignore comments in json file
+    meshFile = "none";
+    if(input.find("Mesh") != input.end()){
+        meshFile = (std::string)input["Mesh"];
+        meshFile = meshFile.substr(meshFile.find("examples/") + 9,meshFile.length());
+    }
+}
 
+void createOutputFolder(std::string& outputFolder) {
+    const fs::path outputsPath{"Outputs"};
+    if(!fileExists(outputsPath)){
+        if (!fs::create_directory("Outputs"))
+            DebugStop();
+        else
+            cout << "Directory created with name Outputs" << endl;
+    }
+    
+    std::string outputProblemPath = "Outputs/"+outputFolder;
+    if(!fileExists(outputProblemPath)){
+        if (!fs::create_directory(outputProblemPath))
+            DebugStop();
+        else
+            cout << "Directory created with name " << outputProblemPath << endl;
+    }
+}
 
 

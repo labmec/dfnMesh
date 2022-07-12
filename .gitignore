@@ -20,3 +20,5 @@ graphics
 **/results
 *.log
 src/dfn_config.h
+
+Outputs
