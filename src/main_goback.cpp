@@ -47,10 +47,12 @@ void PrintPreamble(){
 }
 
 using namespace std;
+namespace fs = std::filesystem;
 
 TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
 void CheckForOverlappingFractures(DFNMesh& dfn);
-void createOutputFolder(std::string& outputFolder);
+void CreateOutputFolders(std::string& outputFolder);
+void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFolder,std::string& meshFile);
 
 #if PZ_LOG
 	static TPZLogger logger("dfn.mesh");
@@ -59,14 +61,7 @@ void createOutputFolder(std::string& outputFolder);
 
 void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::string& coarseOutputName,
                         std::string& fineOutputName, std::string& pathToJson, std::string& meshFile);
-namespace fs = std::filesystem;
-
-bool fileExists(const fs::path& p, fs::file_status s = fs::file_status{}) {
-    if(fs::status_known(s) ? fs::exists(s) : fs::exists(p))
-        return true;
-    else
-        return false;
-}
+bool fileExists(const fs::path& p, fs::file_status s = fs::file_status{});
 
 
 //-------------------------------------------------------------------------------------------------
@@ -96,13 +91,8 @@ int main(int argc, char* argv[]){
 	DFN::GmshConfig();
     
     // Creating output folder
-    createOutputFolder(outputFolder);
-    // Copying json to output folder
-    std::string basemeshpath(INPUTMESHES);
-    fs::copy(basemeshpath + "/" + pathToJson, "Outputs/" + outputFolder, fs::copy_options::update_existing);
-    if(meshFile != "none"){
-        fs::copy(basemeshpath + "/" + meshFile, "Outputs/" + outputFolder + "/" + outputFolder + "_coarse.msh", fs::copy_options::update_existing);
-    }
+    CreateOutputFolders(outputFolder);
+    CopyJsonAndMeshToOutputFolder(pathToJson,outputFolder,meshFile);
 	
 	
 	// ScriptForBug2(gmesh);
@@ -352,7 +342,7 @@ void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::
     }
 }
 
-void createOutputFolder(std::string& outputFolder) {
+void CreateOutputFolders(std::string& outputFolder) {
     const fs::path outputsPath{"Outputs"};
     if(!fileExists(outputsPath)){
         if (!fs::create_directory("Outputs"))
@@ -369,5 +359,17 @@ void createOutputFolder(std::string& outputFolder) {
             cout << "Directory created with name " << outputProblemPath << endl;
     }
 }
+bool fileExists(const fs::path& p, fs::file_status s) {
+    if(fs::status_known(s) ? fs::exists(s) : fs::exists(p))
+        return true;
+    else
+        return false;
+}
 
-
+void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFolder,std::string& meshFile){
+    std::string basemeshpath(INPUTMESHES);
+    fs::copy(basemeshpath + "/" + pathToJson, "Outputs/" + outputFolder, fs::copy_options::update_existing);
+    if(meshFile != "none"){
+        fs::copy(basemeshpath + "/" + meshFile, "Outputs/" + outputFolder + "/" + outputFolder + "_coarse.msh", fs::copy_options::update_existing);
+    }
+}
