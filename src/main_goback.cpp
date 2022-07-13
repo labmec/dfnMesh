@@ -323,17 +323,45 @@ void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::
             DebugStop();
         }
     }
-    pathToJson = example;
-//    example = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
-    example = example.substr(0, example.find("."));
+    
+    // Checking if a folder or a json was provided. If folder, append the json file in the folder to the string example
+    int njson = 0;
+    std::string basemeshpath(INPUTMESHES);
+    std::string outFilneName;
+    if(example.find(".") == std::string::npos){
+        if(!fileExists(basemeshpath + "/" + example)){
+            cout << "\n\n=====> ERROR! Folder " << basemeshpath + "/" + example << " does not exist" << endl;
+            DebugStop();
+        }
+        for (auto const& dir_entry : std::filesystem::directory_iterator{basemeshpath + "/" + example}){
+            std::string filename = dir_entry.path().string();
+            std::cout << dir_entry.path().string() << endl;
+            if(filename.substr(filename.find(".")) == ".json"){
+                if(njson == 0){
+                    outFilneName = filename.substr(filename.find_last_of("/") + 1);
+                    pathToJson = example + "/" + outFilneName;
+                    outFilneName = outFilneName.substr(0,outFilneName.find("."));
+                    argv[1] = (char *)pathToJson.c_str();
+                    njson++;
+                }
+                else {
+                    cout << "\n\n=====> ERROR! There are two json files in the provided input folder" << endl;
+                    DebugStop();
+                }
+            }
+        }
+    }else{
+        pathToJson = example;
+        example = example.substr(0, example.find("."));
+        outFilneName = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
+    }
+    
     outputFolder = "Outputs/" + example + "/";
-    std::string outFilneName = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
     fineOutputName = outputFolder + outFilneName + "_fine.geo";
     coarseOutputName = outputFolder + outFilneName + "_coarse.geo";
     
     // Getting mesh if available
     nlohmann::json input;
-    std::string basemeshpath(INPUTMESHES);
     std::ifstream file(basemeshpath + "/" + pathToJson);
     input = nlohmann::json::parse(file,nullptr,true,true); // to ignore comments in json file
     meshFile = "none";
