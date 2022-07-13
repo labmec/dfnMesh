@@ -324,11 +324,12 @@ void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::
         }
     }
     pathToJson = example;
-    example = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
+//    example = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
     example = example.substr(0, example.find("."));
-    outputFolder = example;
-    fineOutputName = "Outputs/" + example + "/" + example + "_fine.geo";
-    coarseOutputName = "Outputs/" + example + "/" + example + "_coarse.geo";
+    outputFolder = "Outputs/" + example + "/";
+    std::string outFilneName = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
+    fineOutputName = outputFolder + outFilneName + "_fine.geo";
+    coarseOutputName = outputFolder + outFilneName + "_coarse.geo";
     
     // Getting mesh if available
     nlohmann::json input;
@@ -343,22 +344,25 @@ void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::
 }
 
 void CreateOutputFolders(std::string& outputFolder) {
-    const fs::path outputsPath{"Outputs"};
-    if(!fileExists(outputsPath)){
-        if (!fs::create_directory("Outputs"))
-            DebugStop();
-        else
-            cout << "Directory created with name Outputs" << endl;
-    }
-    
-    std::string outputProblemPath = "Outputs/"+outputFolder;
-    if(!fileExists(outputProblemPath)){
-        if (!fs::create_directory(outputProblemPath))
-            DebugStop();
-        else
-            cout << "Directory created with name " << outputProblemPath << endl;
+
+    std::string folders = outputFolder;
+    char c = '/';
+    std::string folderToCreate = "";
+    int nfolders = 0;
+    while (folders.find("/") != std::string::npos) {
+        if(nfolders == 0) folderToCreate = folders.substr(0,folders.find("/"));
+        else folderToCreate = folderToCreate + "/" + folders.substr(0,folders.find("/"));
+        folders = folders.substr(folders.find("/")+1);
+        if(!fileExists(folderToCreate)){
+            if (!fs::create_directory(folderToCreate))
+                DebugStop();
+            else
+                cout << "Directory created with name " << folderToCreate << endl;
+        }
+        nfolders++;
     }
 }
+
 bool fileExists(const fs::path& p, fs::file_status s) {
     if(fs::status_known(s) ? fs::exists(s) : fs::exists(p))
         return true;
@@ -368,8 +372,11 @@ bool fileExists(const fs::path& p, fs::file_status s) {
 
 void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFolder,std::string& meshFile){
     std::string basemeshpath(INPUTMESHES);
-    fs::copy(basemeshpath + "/" + pathToJson, "Outputs/" + outputFolder, fs::copy_options::update_existing);
+    std::string outFilneName = outputFolder.substr(outputFolder.find_last_of("/",outputFolder.length()-2)+1);
+    outFilneName = outFilneName.substr(0,outFilneName.find("/"));
+
+    fs::copy(basemeshpath + "/" + pathToJson, outputFolder, fs::copy_options::update_existing);
     if(meshFile != "none"){
-        fs::copy(basemeshpath + "/" + meshFile, "Outputs/" + outputFolder + "/" + outputFolder + "_coarse.msh", fs::copy_options::update_existing);
+        fs::copy(basemeshpath + "/" + meshFile, outputFolder + "/" + outFilneName + "_coarse.msh", fs::copy_options::update_existing);
     }
 }
