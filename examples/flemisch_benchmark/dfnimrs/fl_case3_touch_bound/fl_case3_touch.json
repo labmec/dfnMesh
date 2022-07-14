@@ -6,7 +6,7 @@
     //     "Nels": [1,2,3],
     //     "MMeshType": "EHexahedral"
     // },
-    "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case3_touch_bound/fl_case3_coarse.msh",
+    "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case3_touch_bound/fl_case3_touch_coarse.msh",
     "PreRefine": 0,
     // "TolDist": 0.0001,
     // "TolDist": 0.04,
@@ -22,7 +22,7 @@
             "phi": 0.2
         }
     ],
-    "NCoarseGroups": 216,
+    "NCoarseGroups": 468,
     "Boundary": [
         {
             "name": "inlet",
@@ -52,6 +52,7 @@
         {
             "Index": 4,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "The lonely vertical one",
@@ -65,6 +66,7 @@
         {
             "Index": 0,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 small vertical parallels",
@@ -78,6 +80,7 @@
         {
             "Index": 1,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 small vertical parallels",
@@ -91,6 +94,7 @@
         {
             "Index": 7,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "The horizontal big one that cuts the domain in half",
@@ -104,6 +108,7 @@
         {
             "Index": 3,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 that cross each other",
@@ -117,6 +122,7 @@
         {
             "Index": 2,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 that cross each other",
@@ -130,6 +136,7 @@
         {
             "Index": 5,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "Big diagonal above",
@@ -143,6 +150,7 @@
         {
             "Index": 6,
             "K" : 1.0e4,
+            "width": 1e-4,
             "phi": 0.2,
             "Limit": "Erecovered",
             "Comment": "Big diagonal below",
