@@ -49,7 +49,9 @@ void PrintPreamble(){
 using namespace std;
 namespace fs = std::filesystem;
 
-TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
+void ParseInputArguments(int argc, char* argv[], std::string &inputfiledir, std::string &meshfile, REAL &toldist, REAL &tolangle, int& prerefine);
+
+TPZGeoMesh* ReadInput(std::string &pathToJSon, std::string &MeshFileName, map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
 void CheckForOverlappingFractures(DFNMesh& dfn);
 void CreateOutputFolders(std::string& outputFolder);
 void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFolder,std::string& meshFile);
@@ -59,7 +61,7 @@ void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFo
 #endif // PZ_LOG
 
 
-void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::string& coarseOutputName,
+void getOutputFileNames(std::string inputfiledir , std::string& outputFolder, std::string& coarseOutputName,
                         std::string& fineOutputName, std::string& pathToJson, std::string& meshFile);
 bool fileExists(const fs::path& p, fs::file_status s = fs::file_status{});
 
@@ -84,9 +86,16 @@ int main(int argc, char* argv[]){
     map<int, DFNRawData> map_dfnrawdata;
 	TPZManVector<std::map<int,std::string>,4> dim_physical_tag_and_name;
 	int prerefine = 0;
+    std::string inputfiledir;
+
     std::string coarseOutputName,fineOutputName,outputFolder,pathToJson,meshFile;
-    getOutputFileNames(argc,argv,outputFolder,coarseOutputName,fineOutputName,pathToJson,meshFile);
-	gmesh = ReadInput(argc,argv,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name);
+    ParseInputArguments(argc,  argv, inputfiledir, meshFile, tol_dist, tol_angle, prerefine);
+    // if the only argument is the json filename or directory
+    // method that parses the input argument and identifies the json file
+    // outputFolder :
+    getOutputFileNames(inputfiledir,outputFolder,coarseOutputName,fineOutputName,pathToJson,meshFile);
+    
+    gmesh = ReadInput(pathToJson, meshFile ,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name);
 	gmsh::initialize();
 	DFN::GmshConfig();
     
@@ -240,34 +249,36 @@ int main(int argc, char* argv[]){
 	return 0;
 }
 
-
+void ParseInputArguments(int argc, char* argv[], std::string &inputfiledir, std::string &meshfile, REAL &toldist, REAL &tolangle, int& prerefine)
+{
+    std::string default_example("examples/two-hex-and-a-frac.json");
+    inputfiledir = default_example;
+    meshfile = "no-msh-file";
+    for(int iarg=1; iarg < argc; ++iarg){
+        std::string aux = argv[iarg];
+        try{
+            if(argv[iarg][0] != '-'){inputfiledir = argv[iarg];}
+            else if(aux == "-m"){meshfile = argv[++iarg];}
+            else if(aux == "-f"){inputfiledir = argv[++iarg];}
+            else if(aux == "-td"){toldist = std::stod(argv[++iarg]);}
+            else if(aux == "-ta"){tolangle = std::stod(argv[++iarg]);}
+            else if(aux == "-tc"){tolangle = std::acos(std::stod(argv[++iarg]));}
+            else if(aux == "-r"){prerefine = std::stoi(argv[++iarg]);}
+            else{
+                throw std::bad_exception();
+            }
+        }catch(...){
+            PZError << "\nUnrecognized argument passed:\n\t\""<< argv[iarg] << "\"\n" << std::endl;
+            DebugStop();
+        }
+    }
+}
 
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
-TPZGeoMesh* ReadInput(int argc, char* argv[], map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name) {
+TPZGeoMesh* ReadInput(std::string &pathToJSon, std::string &mshfile , map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name) {
 	TPZGeoMesh* gmesh = nullptr;
-	std::string default_example("examples/two-hex-and-a-frac.json");
-	std::string example = default_example;
-	std::string mshfile = "no-msh-file";
-	for(int iarg=1; iarg < argc; ++iarg){
-		std::string aux = argv[iarg];
-		try{
-			if(argv[iarg][0] != '-'){example = argv[iarg];}
-			else if(aux == "-m"){mshfile = argv[++iarg];}
-			else if(aux == "-f"){example = argv[++iarg];}
-			else if(aux == "-td"){toldist = std::stod(argv[++iarg]);}
-			else if(aux == "-ta"){tolangle = std::stod(argv[++iarg]);}
-			else if(aux == "-tc"){tolangle = std::acos(std::stod(argv[++iarg]));}
-			else if(aux == "-r"){prerefine = std::stoi(argv[++iarg]);}
-			else{
-				throw std::bad_exception();
-			}
-		}catch(...){
-			PZError << "\nUnrecognized argument passed:\n\t\""<< argv[iarg] << "\"\n" << std::endl; 
-			DebugStop();
-		}
-	}
-	std::cout<<"input file: "<<example<<"\n";
-	gmesh = SetupExampleFromFile(example,dfnrawdata,mshfile,toldist,tolangle,prerefine,dim_physical_tag_and_name);
+	std::cout<<"input file: "<<pathToJSon<<"\n";
+	gmesh = SetupExampleFromFile(pathToJSon,dfnrawdata,mshfile,toldist,tolangle,prerefine,dim_physical_tag_and_name);
 	return gmesh;
 }
 
@@ -310,38 +321,34 @@ void CheckForOverlappingFractures(DFNMesh& dfn) {
     }
 }
 
-void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::string& coarseOutputName,
-                        std::string& fineOutputName, std::string& pathToJson, std::string& meshFile){
-    std::string example;
-    for(int iarg=1; iarg < argc; ++iarg){
-        std::string aux = argv[iarg];
-        try{
-            if(argv[iarg][0] != '-'){example = argv[iarg];}
-            else if(aux == "-f"){example = argv[++iarg];}
-        }catch(...){
-            PZError << "\nUnrecognized argument passed:\n\t\""<< argv[iarg] << "\"\n" << std::endl;
-            DebugStop();
-        }
-    }
+void getOutputFileNames(std::string ArgName, std::string& outputFolder, std::string& coarseOutputName,
+                        std::string& fineOutputName, std::string& JsonFilename, std::string& meshFile){
     
-    // Checking if a folder or a json was provided. If folder, append the json file in the folder to the string example
+    // Checking if a folder or a json was provided. If folder, append the json file in the folder to the string ArgName
     int njson = 0;
     std::string basemeshpath(INPUTMESHES);
-    std::string outFilneName;
-    if(example.find(".") == std::string::npos){
-        if(!fileExists(basemeshpath + "/" + example)){
-            cout << "\n\n=====> ERROR! Folder " << basemeshpath + "/" + example << " does not exist" << endl;
+    std::string outFileName;
+    std::string dirname;
+    if(ArgName.find(".json") == std::string::npos){
+        dirname = basemeshpath + "/" + ArgName;
+        if(!fileExists(dirname)){
+            cout << "\n\n=====> ERROR! Folder " << dirname << " does not exist" << endl;
             DebugStop();
         }
-        for (auto const& dir_entry : std::filesystem::directory_iterator{basemeshpath + "/" + example}){
+        for (auto const& dir_entry : std::filesystem::directory_iterator{dirname}){
             std::string filename = dir_entry.path().string();
-            std::cout << dir_entry.path().string() << endl;
-            if(filename.substr(filename.find(".")) == ".json"){
+//            std::cout << "dir entry:" << dir_entry.path().string() << endl;
+            auto pos = filename.find(".json");
+            if(pos == std::string::npos) continue;
+//            std::cout << "position : " << pos << std::endl;
+//            std::cout << "substr :" << filename.substr(pos) << std::endl;
+            if(filename.substr(pos) == ".json"){
                 if(njson == 0){
-                    outFilneName = filename.substr(filename.find_last_of("/") + 1);
-                    pathToJson = example + "/" + outFilneName;
-                    outFilneName = outFilneName.substr(0,outFilneName.find("."));
-                    argv[1] = (char *)pathToJson.c_str();
+                    outFileName = filename.substr(filename.find_last_of("/") + 1);
+                    auto example_pos = dirname.rfind("/examples/");
+                    auto dirname_noexample = dirname.substr(example_pos+10,std::string::npos);
+                    JsonFilename = "../examples/" + dirname_noexample + "/" + outFileName;
+                    outFileName = outFileName.substr(0,outFileName.find("."));
                     njson++;
                 }
                 else {
@@ -351,24 +358,35 @@ void getOutputFileNames(int argc, char* argv[], std::string& outputFolder, std::
             }
         }
     }else{
-        pathToJson = example;
-        example = example.substr(0, example.find("."));
-        outFilneName = example.substr(example.find_last_of("/")+1,example.length()-example.find_last_of("/"));
+        JsonFilename = ArgName;
+        ArgName = ArgName.substr(0, ArgName.find("."));
+        auto lastslashpos = ArgName.find_last_of("/");
+        dirname = ArgName.substr(0,lastslashpos);
+        // everything after the last "/"
+        outFileName = ArgName.substr(lastslashpos+1,ArgName.length()-lastslashpos);
     }
-    
-    outputFolder = "Outputs/" + example + "/";
-    fineOutputName = outputFolder + outFilneName + "_fine.geo";
-    coarseOutputName = outputFolder + outFilneName + "_coarse.geo";
+    auto example_pos = dirname.rfind("/examples/");
+//    std::cout << "dirname size " << dirname.size() << std::endl;
+    auto dirname_noexample = dirname.substr(example_pos+10,std::string::npos);
+    outputFolder = "Outputs/" + dirname_noexample + "/";
+    fineOutputName = outputFolder + outFileName + "_fine.geo";
+    coarseOutputName = outputFolder + outFileName + "_coarse.geo";
     
     // Getting mesh if available
     nlohmann::json input;
-    std::ifstream file(basemeshpath + "/" + pathToJson);
+    std::ifstream file(basemeshpath+"/"+JsonFilename);
+    if(!file) DebugStop();
     input = nlohmann::json::parse(file,nullptr,true,true); // to ignore comments in json file
-    meshFile = "none";
+    meshFile.clear();
     if(input.find("Mesh") != input.end()){
         meshFile = (std::string)input["Mesh"];
         meshFile = meshFile.substr(meshFile.find("examples/") + 9,meshFile.length());
     }
+    std::cout << "outputFolder : " << outputFolder << std::endl;
+    std::cout << "coarseOutputName : " << coarseOutputName << std::endl;
+    std::cout << "fineOutputName : " << fineOutputName << std::endl;
+    std::cout << "JsonFilename : " << JsonFilename << std::endl;
+    std::cout << "meshFile : " << meshFile << std::endl;
 }
 
 void CreateOutputFolders(std::string& outputFolder) {
@@ -400,11 +418,12 @@ bool fileExists(const fs::path& p, fs::file_status s) {
 
 void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFolder,std::string& meshFile){
     std::string basemeshpath(INPUTMESHES);
-    std::string outFilneName = outputFolder.substr(outputFolder.find_last_of("/",outputFolder.length()-2)+1);
-    outFilneName = outFilneName.substr(0,outFilneName.find("/"));
+    std::string outFileName = outputFolder.substr(outputFolder.find_last_of("/",outputFolder.length()-2)+1);
+    auto slashpos = meshFile.find_last_of("/");
+    outFileName = meshFile.substr(slashpos+1,std::string::npos);
 
     fs::copy(basemeshpath + "/" + pathToJson, outputFolder, fs::copy_options::update_existing);
-    if(meshFile != "none"){
-        fs::copy(basemeshpath + "/" + meshFile, outputFolder + "/" + outFilneName + "_coarse.msh", fs::copy_options::update_existing);
+    if(meshFile.size() && meshFile != "none"){
+        fs::copy(basemeshpath + "/" + meshFile, outputFolder + outFileName, fs::copy_options::update_existing);
     }
 }

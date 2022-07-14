@@ -24,9 +24,12 @@
 
 /**
  * @brief Define which example to run. See example file sintax in function definition
- * @param filename: path to the file that defines the example
- * @param polyg_stack: vector to fill with corners of the fractures
- * @param mshfile: [optional] path to .msh file (if applicable)
+ * @param filename: path to the json file that defines the example
+ * @param dfnrawdata : data containing fracture geometries - output read from json file
+ * @param mshfile: [optional] path to .msh file (if applicable) ??? read from json file
+ * @param toldist: distance tolerance - read from json file
+ * @param tolangle : angle tolerance - read from jscon file
+ * @param dim_physical_tag_and_name : name of the physical tags read from gmsh - read from gmsh file
  * @returns pointer to geometric mesh created/read
 */
 TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
@@ -43,6 +46,7 @@ void ReadFile(	const std::string			& filename,
 				TPZManVector<int>			& matid,
 				TPZManVector<FracLimit>		& limit_directives
 				);
+
 void ReadFileJSON(const std::string			& filename,
                 std::map<int, DFNRawData>& dfnrawdata,
 				std::string 				& mshfile,
@@ -54,7 +58,15 @@ void ReadFileJSON(const std::string			& filename,
 				);
 
 
-void ReadFile(	const std::string			& filename, 
+// filename : name of file that can be opened
+// map_dfnrawdata : polygon data and properties of each fracture
+// meshfile : name of gmsh file that will be used for intersection - as read in the json file
+// x0 : no idea - coordinates of what?
+// xf : no idea - coordinates of what?
+// nels : number of elements ??
+// tol : distance and angle tolerance
+// prefine : number of refinements??
+void ReadFile(	const std::string			& filename,
 				TPZStack<TPZFMatrix<REAL>>	& polygonmatrices, 
 				std::string 				& mshfile,
 				TPZManVector<REAL,3> 		& x0,
@@ -305,7 +317,14 @@ void ReadFile(	const std::string			& filename,
 	
 }
 
-
+// filename : name of file that can be opened
+// map_dfnrawdata : polygon data and properties of each fracture
+// meshfile : name of gmsh file that will be used for intersection - as read in the json file
+// x0 : no idea - coordinates of what?
+// xf : no idea - coordinates of what?
+// nels : number of elements ??
+// tol : distance and angle tolerance
+// prefine : number of refinements??
 void ReadFileJSON(const std::string			& filename,
                 std::map<int, DFNRawData>&  map_dfnrawdata,
 				std::string 				& mshfile,
@@ -527,7 +546,10 @@ void ReadFileJSON(const std::string			& filename,
 
 }
 
-
+// filename : a name that with INPUTMESHES directory leads to a json file
+// dnfrawdata : no idea - output of this function
+// mshfile : name of a file that with INPUTMESHES directory leads to gmsh file
+// toldist : distance tolerance input/output should be in the json file
 TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name){
 
 	std::string basemeshpath(INPUTMESHES);
@@ -547,8 +569,9 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
         DebugStop(); // DEPRECATED!
 //        {ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives,prerefine);}
     }
-	else if(extension == ".json" || extension == ".jsonc")
-		{ReadFileJSON(filename,dfnrawdata,mshfile,x0,x1,nels,eltype,tol,prerefine);}
+    else if(extension == ".json" || extension == ".jsonc") {
+		ReadFileJSON(filename,dfnrawdata,mshfile,x0,x1,nels,eltype,tol,prerefine);
+    }
 	else{
 		PZError << "\nUnrecognized file extension:"
 				<< "\nFile = " << filename
@@ -580,7 +603,12 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 		}
 	}else{ // mesh file
 		TPZGmshReader reader;
-		gmesh = reader.GeometricGmshMesh(mshfile, gmesh);
+        std::string fullfilename = mshfile;
+#ifdef MACOSX
+        fullfilename = "../" + mshfile;
+#endif
+        fullfilename = basemeshpath + "/" + fullfilename;
+		gmesh = reader.GeometricGmshMesh(fullfilename, gmesh);
 		dim_physical_tag_and_name = reader.GetDimPhysicalTagName();
 #ifdef PZDEBUG
 		std::cout << "------------------- Materials from supplied coarse mesh ---------------" << std::endl;
