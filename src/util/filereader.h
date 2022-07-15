@@ -478,6 +478,9 @@ void ReadFileJSON(const std::string			& filename,
 	}
 	else if(input.find("Mesh") != input.end()){
 		mshfile = (std::string)input["Mesh"];
+        auto lastslash = filename.find_last_of("/");
+        auto dirname = filename.substr(0,lastslash+1);
+        mshfile = dirname+mshfile;
 	}
 	else{
 		PZError << "\nMissing coarse mesh definition.\n"; DebugStop();
@@ -548,7 +551,7 @@ void ReadFileJSON(const std::string			& filename,
 
 // filename : a name that with INPUTMESHES directory leads to a json file
 // dnfrawdata : no idea - output of this function
-// mshfile : name of a file that with INPUTMESHES directory leads to gmsh file
+// mshfile : I dont know. It is not used - overwritten by the .json file
 // toldist : distance tolerance input/output should be in the json file
 TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name){
 
@@ -604,10 +607,10 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 	}else{ // mesh file
 		TPZGmshReader reader;
         std::string fullfilename = mshfile;
-#ifdef MACOSX
-        fullfilename = "../" + mshfile;
-#endif
-        fullfilename = basemeshpath + "/" + fullfilename;
+//#ifdef MACOSX
+//        fullfilename = "../" + mshfile;
+//#endif
+//        fullfilename = basemeshpath + "/" + fullfilename;
 		gmesh = reader.GeometricGmshMesh(fullfilename, gmesh);
 		dim_physical_tag_and_name = reader.GetDimPhysicalTagName();
 #ifdef PZDEBUG
