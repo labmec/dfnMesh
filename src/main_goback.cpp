@@ -103,12 +103,12 @@ int main(int argc, char* argv[]){
     CreateOutputFolders(outputFolder);
     CopyJsonAndMeshToOutputFolder(pathToJson,outputFolder,meshFile);
 	
-	
+//    dfn.ExportGMshCAD(coarseOutputName);
 	// ScriptForBug2(gmesh);
 	time.start();
     /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh,dim_physical_tag_and_name,tol_dist,tol_angle,prerefine);
-    dfn.ExportGMshCAD(coarseOutputName);
+    
 
 	// std::ofstream out1("graphics/CoarseMesh.vtk");
 	// TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);
@@ -359,11 +359,13 @@ void getOutputFileNames(std::string ArgName, std::string& outputFolder, std::str
         }
     }else{
         JsonFilename = ArgName;
-        ArgName = ArgName.substr(0, ArgName.find("."));
+//        ArgName = ArgName.substr(0, ArgName.find_last_of("."));
         auto lastslashpos = ArgName.find_last_of("/");
         dirname = ArgName.substr(0,lastslashpos);
         // everything after the last "/"
         outFileName = ArgName.substr(lastslashpos+1,ArgName.length()-lastslashpos);
+        outFileName = outFileName.substr(0, outFileName.find_last_of("."));
+        dirname = dirname + "/" + outFileName;
     }
     auto example_pos = dirname.rfind("/examples/");
 //    std::cout << "dirname size " << dirname.size() << std::endl;
@@ -374,13 +376,18 @@ void getOutputFileNames(std::string ArgName, std::string& outputFolder, std::str
     
     // Getting mesh if available
     nlohmann::json input;
+    auto filename = basemeshpath+"/"+JsonFilename;
+    std::cout << "opening file :" << filename << std::endl;
     std::ifstream file(basemeshpath+"/"+JsonFilename);
     if(!file) DebugStop();
     input = nlohmann::json::parse(file,nullptr,true,true); // to ignore comments in json file
     meshFile.clear();
     if(input.find("Mesh") != input.end()){
         meshFile = (std::string)input["Mesh"];
-        meshFile = meshFile.substr(meshFile.find("examples/") + 9,meshFile.length());
+        auto lastslash = JsonFilename.find_last_of("/");
+        auto meshdirname = JsonFilename.substr(0,lastslash+1);
+//        meshFile = meshFile.substr(meshFile.find("examples/") + 9,meshFile.length());
+        meshFile = basemeshpath + "/" +meshdirname + meshFile;
     }
     std::cout << "outputFolder : " << outputFolder << std::endl;
     std::cout << "coarseOutputName : " << coarseOutputName << std::endl;
@@ -420,10 +427,24 @@ void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFo
     std::string basemeshpath(INPUTMESHES);
     std::string outFileName = outputFolder.substr(outputFolder.find_last_of("/",outputFolder.length()-2)+1);
     auto slashpos = meshFile.find_last_of("/");
+    auto dirname = meshFile.substr(0,slashpos+1);
+    auto extensionpos = meshFile.rfind(".msh");
+    auto rootname = meshFile.substr(slashpos+1,extensionpos-slashpos-1);
+    
+    auto JsonSlash = pathToJson.find_last_of("/");
+    auto JsonExt = pathToJson.rfind(".json");
+    auto JsonRootname = pathToJson.substr(JsonSlash+1,JsonExt-JsonSlash-1);
     outFileName = meshFile.substr(slashpos+1,std::string::npos);
-
+    auto geoinputname = dirname + rootname + ".geo";
+    auto geooutputname = outputFolder + rootname + ".geo";
+    auto geooutputnameJson = outputFolder + JsonRootname + "_coarse.geo";
+    auto meshoutputnameJson = outputFolder + JsonRootname + "_coarse.msh";
+    
     fs::copy(basemeshpath + "/" + pathToJson, outputFolder, fs::copy_options::update_existing);
     if(meshFile.size() && meshFile != "none"){
-        fs::copy(basemeshpath + "/" + meshFile, outputFolder + outFileName, fs::copy_options::update_existing);
+        fs::copy(meshFile, outputFolder + outFileName, fs::copy_options::update_existing);
     }
+    fs::copy(geoinputname,geooutputname,fs::copy_options::update_existing);
+    fs::copy(geoinputname,geooutputnameJson,fs::copy_options::update_existing);
+    fs::copy(meshFile,meshoutputnameJson,fs::copy_options::update_existing);
 }
