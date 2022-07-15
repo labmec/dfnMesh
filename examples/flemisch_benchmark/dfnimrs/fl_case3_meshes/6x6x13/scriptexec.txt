@@ -1,0 +1,6 @@
+./dfnGoback ../examples/flemisch_benchmark/dfnimrs/fl_case3_meshes/6x6x13/fl_case3_dis_0_p005_tol_1em4.json
+./dfnGoback ../examples/flemisch_benchmark/dfnimrs/fl_case3_meshes/6x6x13/fl_case3_dis_0_p01_tol_1em4.json
+./dfnGoback ../examples/flemisch_benchmark/dfnimrs/fl_case3_meshes/6x6x13/fl_case3_dis_0_p03_tol_5em3.json
+./dfnGoback ../examples/flemisch_benchmark/dfnimrs/fl_case3_meshes/6x6x13/fl_case3_dis_0_p04_tol_5em3.json
+./dfnGoback ../examples/flemisch_benchmark/dfnimrs/fl_case3_meshes/6x6x13/fl_case3_dis_0_p05_tol_5em3.json
+./dfnGoback ../examples/flemisch_benchmark/dfnimrs/fl_case3_meshes/6x6x13/fl_case3_dis_0_p1_tol_1em4.json
