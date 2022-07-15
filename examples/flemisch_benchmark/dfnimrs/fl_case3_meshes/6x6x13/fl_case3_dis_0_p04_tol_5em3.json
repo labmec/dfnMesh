@@ -1,0 +1,176 @@
+{
+    "$schema": "../dfn_schema.json",
+    // "PZGenGrid": {
+    //     "x0": [0.75, 1.50, 0.0],
+    //     "xf": [1.00, 2.00, 0.500001],
+    //     "Nels": [1,2,3],
+    //     "MMeshType": "EHexahedral"
+    // },
+    "Mesh": "fl_case3.msh", // filename in the current directory
+    "PreRefine": 0,
+    "TolDist": 0.04,
+    "TolAngle": 5.0e-3,
+    "Domains": [
+        {
+            "name": "k33",
+            "matid": 1,
+            "K": 1.0,
+            "phi": 0.2
+        }
+    ],
+    "NCoarseGroups": 468,
+    "FractureGlueMatId": 1000000,
+    "FractureGluePerm": 0.5e2,
+    "Boundary": [
+        {
+            "name": "inlet",
+            "matid": 2,
+            "type": 1, // imposed flux
+            "value": -1.0
+        },
+        {
+            "name": "outlet1",
+            "matid": 3,
+            "type": 0,  // imposed pressure
+            "value": 0.0
+        },
+        {
+            "name": "outlet2",
+            "matid": 5,
+            "type": 0,  // imposed pressure
+            "value": 0.0
+        },
+        {
+            "name": "noflux",
+            "matid": 4,
+            "type": 1, // imposed flux
+            "value": 0.0
+        }
+        
+    ],
+	"FractureHybridPressureMatId": 299,
+    "FractureInitMatId": 300,
+    "Fractures":[
+        {
+            "Index": 4,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "The lonely vertical one",
+            "Nodes":[ 
+                [0.500, 0.050, 0.050],
+                [0.500, 0.300, 0.050],
+                [0.500, 0.300, 0.950],
+                [0.500, 0.050, 0.950]
+            ]
+        },
+        {
+            "Index": 0,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "One of the 2 small vertical parallels",
+            "Nodes":[ 
+                [0.830, 1.900, 0.300],
+                [0.830, 1.900, 0.700],
+                [0.830, 2.200, 0.700],
+                [0.830, 2.200, 0.300]
+            ]
+        },
+        {
+            "Index": 1,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "One of the 2 small vertical parallels",
+            "Nodes":[ 
+                [0.770, 1.900, 0.300],
+                [0.770, 1.900, 0.700],
+                [0.770, 2.200, 0.700],
+                [0.770, 2.200, 0.300]
+            ]
+        },
+        {
+            "Index": 7,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "The horizontal big one that cuts the domain in half",
+            "Nodes":[ 
+                [0.050, 0.240, 0.500],
+                [0.950, 0.240, 0.500],
+                [0.950, 1.990, 0.500],
+                [0.050, 1.990, 0.500]
+            ]
+        },
+        {
+            "Index": 3,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "One of the 2 that cross each other",
+            "Nodes":[ 
+                [0.170, 1.900, 0.300],
+                [0.170, 1.900, 0.700],
+                [0.230, 2.200, 0.700],
+                [0.230, 2.200, 0.300]
+            ]
+        },
+        {
+            "Index": 2,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "One of the 2 that cross each other",
+            "Nodes":[ 
+                [0.230, 1.900, 0.300],
+                [0.230, 1.900, 0.700],
+                [0.170, 2.200, 0.700],
+                [0.170, 2.200, 0.300]
+            ]
+        },
+        {
+            "Index": 5,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "Big diagonal above",
+            "Nodes":[ 
+                [0.950, 1.000, 0.500],
+                [0.950, 2.200, 0.850],
+                [0.050, 2.200, 0.850],
+                [0.050, 1.000, 0.500]
+            ]
+        },
+        {
+            "Index": 6,
+            "K" : 1.0e2,
+            "phi": 0.2,
+            "width": 1.0e-4,
+            "Limit": "Erecovered",
+            "Comment": "Big diagonal below",
+            "Nodes":[ 
+                [0.950, 1.000, 0.480],
+                [0.950, 2.200, 0.140],
+                [0.050, 2.200, 0.140],
+                [0.050, 1.000, 0.480]
+            ]
+        }
+    ]
+}
+
+
+
+// "PZGenGrid": {
+//     "x0": [0.5, 2.00, 0.0],
+//     "xf": [1.00, 2.25, 0.5],
+//     "MMeshType": "EHexahedral",
+//     "Nels": [2,1,3]
+// },
