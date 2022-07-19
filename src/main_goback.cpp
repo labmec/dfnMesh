@@ -92,7 +92,10 @@ int main(int argc, char* argv[]){
     ParseInputArguments(argc,  argv, inputfiledir, meshFile, tol_dist, tol_angle, prerefine);
     // if the only argument is the json filename or directory
     // method that parses the input argument and identifies the json file
-    // outputFolder :
+    // inputfiledir = either a filename with path or a directory name.
+    //   if inputfiledir is the name of json file, then this file will be read to find the meshFile
+    //   if inputFiledir is the name of a directory, then the pathToJson is a unique json file in the directory
+    // meshFile - file from the argument or read from the json file
     getOutputFileNames(inputfiledir,outputFolder,coarseOutputName,fineOutputName,pathToJson,meshFile);
     
     gmesh = ReadInput(pathToJson, meshFile ,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name);
@@ -202,6 +205,9 @@ int main(int argc, char* argv[]){
                 
                 std::cout << "\n====> Found volumes with bad angles. Rolled back fracture and refined polyhedra into simplexes..." << std::endl;
                 std::cout << badVolumes.size() << " bad volume" << (badVolumes.size()>1?'s':' ') << std::endl;
+                if(badVolumes.size() < 20) {
+                    std::cout << "Bad volume indices " << badVolumes << std::endl;
+                }
                 std::cout << "This is the " << count << " time rollback is applied to fracture index " << it_dfnrawdata->first << std::endl;
                 continue;
             }
@@ -423,28 +429,39 @@ bool fileExists(const fs::path& p, fs::file_status s) {
         return false;
 }
 
+// pathToJson is the relative name - needs to be complemented with basenamepath
+// meshFile is the absolute path
 void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFolder,std::string& meshFile){
     std::string basemeshpath(INPUTMESHES);
     std::string outFileName = outputFolder.substr(outputFolder.find_last_of("/",outputFolder.length()-2)+1);
     auto slashpos = meshFile.find_last_of("/");
     auto dirname = meshFile.substr(0,slashpos+1);
     auto extensionpos = meshFile.rfind(".msh");
-    auto rootname = meshFile.substr(slashpos+1,extensionpos-slashpos-1);
+    auto Meshrootname = meshFile.substr(slashpos+1,extensionpos-slashpos-1);
     
     auto JsonSlash = pathToJson.find_last_of("/");
     auto JsonExt = pathToJson.rfind(".json");
     auto JsonRootname = pathToJson.substr(JsonSlash+1,JsonExt-JsonSlash-1);
     outFileName = meshFile.substr(slashpos+1,std::string::npos);
-    auto geoinputname = dirname + rootname + ".geo";
-    auto geooutputname = outputFolder + rootname + ".geo";
-    auto geooutputnameJson = outputFolder + JsonRootname + "_coarse.geo";
-    auto meshoutputnameJson = outputFolder + JsonRootname + "_coarse.msh";
+    auto jsoninputname = dirname + JsonRootname + ".json";
+    auto jsonoutputname = outputFolder + JsonRootname + ".json";
+    auto geoinputname = dirname + Meshrootname + ".geo";
+    auto geooutputname = outputFolder + Meshrootname + ".geo";
+//    auto geooutputnameJson = outputFolder + JsonRootname + "_coarse.json";
+    auto meshoutputname = outputFolder + Meshrootname + ".msh";
     
     fs::copy(basemeshpath + "/" + pathToJson, outputFolder, fs::copy_options::update_existing);
     if(meshFile.size() && meshFile != "none"){
         fs::copy(meshFile, outputFolder + outFileName, fs::copy_options::update_existing);
     }
-    fs::copy(geoinputname,geooutputname,fs::copy_options::update_existing);
-    fs::copy(geoinputname,geooutputnameJson,fs::copy_options::update_existing);
-    fs::copy(meshFile,meshoutputnameJson,fs::copy_options::update_existing);
+    if(fs::exists(geoinputname))
+    {
+        fs::copy(geoinputname,geooutputname,fs::copy_options::update_existing);
+    }
+    else
+    {
+        std::cout << "Original geo file " << geoinputname << " is not in the folder\n"; 
+    }
+    fs::copy(jsoninputname,jsonoutputname,fs::copy_options::update_existing);
+    fs::copy(meshFile,meshoutputname,fs::copy_options::update_existing);
 }

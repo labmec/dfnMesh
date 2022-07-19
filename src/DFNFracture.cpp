@@ -635,6 +635,14 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
                 const bool isClosedLoop = CheckIfPolygonIsClosedLoop(subpolygon);
                 if (!isClosedLoop) {
                     badVolumes.Push(polyhindex);
+#ifdef PZDEBUG
+                    {
+                        auto &poly = dfnMesh()->Polyhedron(polyhindex);
+                        std::stringstream sout;
+                        sout << "poly_" << polyhindex << ".vtk";
+                        poly.PlotVTK(sout.str());
+                    }
+#endif
                     continue;
                 }
             }
@@ -647,6 +655,14 @@ void DFNFracture::MeshFractureSurface(TPZStack<int> &badVolumes){
             const bool isSubPolPlanarEnough = CheckSubPolygonPlanarity(subpolygon,polyhindex);
             if (!isSubPolPlanarEnough) {
                 badVolumes.push_back(polyhindex);
+#ifdef PZDEBUG
+                    {
+                        auto &poly = dfnMesh()->Polyhedron(polyhindex);
+                        std::stringstream sout;
+                        sout << "poly_" << polyhindex << ".vtk";
+                        poly.PlotVTK(sout.str());
+                    }
+#endif
                 continue;
             }
             
@@ -2373,6 +2389,21 @@ void DFNFracture::RollBack(TPZGeoMesh *gmeshBackup) {
     
     
 }
+
+static void addnodes(TPZGeoEl *gel, std::set<int64_t> &nodes)
+{
+    int nnodes = gel->NCornerNodes();
+    for(int i=0; i<nnodes; i++) nodes.insert(gel->NodeIndex(i));
+    if(gel->HasSubElement())
+    {
+        int ns = gel->NSubElements();
+        for(int s=0; s<ns; s++) {
+            TPZGeoEl *subel = gel->SubElement(s);
+            addnodes(subel,nodes);
+        }
+    }
+};
+
 bool DFNFracture::TryFaceIncorporate_Topology(const TPZStack<int64_t>& subpolygon, 
                                             const int polyhindex,
                                             TPZStack<int64_t>& subpolygMesh)
@@ -2382,6 +2413,42 @@ bool DFNFracture::TryFaceIncorporate_Topology(const TPZStack<int64_t>& subpolygo
 
     // Check if would-be polygon already exists in the mesh before trying to mesh it
     TPZGeoEl* ExistingGel = FindPolygon(subpolygon);
+    
+    if(0)
+    {
+        auto vol = this->dfnMesh()->Polyhedron(polyhindex);
+        bool isTetra = vol.IsTetrahedron();
+        if(!ExistingGel && isTetra)
+        {
+            std::cout << "subpolygon " << subpolygon << std::endl;
+            std::set<int64_t> polynodes, volnodes;
+            for(auto it : subpolygon){
+                TPZGeoEl *gel = this->dfnMesh()->Mesh()->Element(abs(it));
+                std::cout << "poly " << it << " nodes ";
+                for(int i=0; i<gel->NCornerNodes(); i++) {
+                    polynodes.insert(gel->NodeIndex(i));
+                    std::cout << gel->NodeIndex(i) << " ";
+                }
+                std::cout << std::endl;
+            }
+            vol.Print();
+            auto edges = vol.GetEdges();
+            std::cout << "\nvolume edges \n";
+            for(auto it: edges) {
+                TPZGeoEl *gel = this->dfnMesh()->Mesh()->Element(abs(it));
+                addnodes(gel,volnodes);
+                std::set<int64_t> locnodes;
+                addnodes(gel,locnodes);
+                std::cout << "vol geoel index " << it << " nodes ";
+                for(auto i : locnodes) std::cout << i << " ";
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+            if(!std::includes(volnodes.begin(),volnodes.end(),polynodes.begin(),polynodes.end())){
+                DebugStop();
+            }
+        }
+    }
     if(ExistingGel){
         bool splinterFlag = false;
         if(ExistingGel->HasSubElement()){
@@ -2498,6 +2565,7 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
     TPZGeoMesh* gmesh = fdfnMesh->Mesh();
 
 #ifdef PZDEBUG
+    // check consistency of neighbouring information
     for(const int64_t index : newelements){
         TPZGeoEl *gel = gmesh->Element(index);
         int nsides = gel->NSides();
@@ -2636,7 +2704,23 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
     if((NBadAngles_neg && NGoodAngles_neg && !NBadAngles_pos)
         || (NBadAngles_pos && NGoodAngles_pos && !NBadAngles_neg) ) 
     {
-        badVolumes.push_back(vol.Index());
+        auto &poly = dfnMesh()->Polyhedron(vol.Index());
+        if(!poly.IsTetrahedron()) {
+            badVolumes.push_back(vol.Index());
+#ifdef PZDEBUG
+            {
+                auto &poly = dfnMesh()->Polyhedron(vol.Index());
+                std::stringstream sout;
+                sout << "poly_" << polyhindex << ".vtk";
+                poly.PlotVTK(sout.str());
+            }
+#endif
+        } else
+        {
+#ifdef PZDEBUG
+            std::cout << "Tetrahedron with bad angle detected a polyhedron index " << vol.Index();
+#endif
+        }
         return false;
     }
     }catch(...){
