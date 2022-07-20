@@ -18,9 +18,10 @@
             "phi": 0.2
         }
     ],
+	"useMHM": false,
     "NCoarseGroups": 468,
     "FractureGlueMatId": 1000000,
-    "FractureGluePerm": 0.5e2,
+    "FractureGluePerm": 1.0,
     "Boundary": [
         {
             "name": "inlet",
@@ -55,7 +56,7 @@
             "Index": 4,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "The lonely vertical one",
             "Nodes":[ 
@@ -69,7 +70,7 @@
             "Index": 0,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 small vertical parallels",
             "Nodes":[ 
@@ -83,7 +84,7 @@
             "Index": 1,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 small vertical parallels",
             "Nodes":[ 
@@ -97,7 +98,7 @@
             "Index": 7,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "The horizontal big one that cuts the domain in half",
             "Nodes":[ 
@@ -111,7 +112,7 @@
             "Index": 3,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 that cross each other",
             "Nodes":[ 
@@ -125,7 +126,7 @@
             "Index": 2,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "One of the 2 that cross each other",
             "Nodes":[ 
@@ -139,7 +140,7 @@
             "Index": 5,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "Big diagonal above",
             "Nodes":[ 
@@ -153,7 +154,7 @@
             "Index": 6,
             "K" : 1.0e2,
             "phi": 0.2,
-            "width": 1.0e-4,
+            "width": 1.0e-2,
             "Limit": "Erecovered",
             "Comment": "Big diagonal below",
             "Nodes":[ 

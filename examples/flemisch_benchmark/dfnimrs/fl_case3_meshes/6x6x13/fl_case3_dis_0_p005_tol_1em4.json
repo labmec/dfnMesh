@@ -18,9 +18,10 @@
             "phi": 0.2
         }
     ],
+	"useMHM": false,
     "NCoarseGroups": 468,
     "FractureGlueMatId": 1000000,
-    "FractureGluePerm": 0.5e2,
+    "FractureGluePerm": 1.0,
     "Boundary": [
         {
             "name": "inlet",

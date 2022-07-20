@@ -6,10 +6,10 @@
     //     "Nels": [1,2,3],
     //     "MMeshType": "EHexahedral"
     // },
-    "Mesh": "fl_case3.msh", // filename in the current directory
-    "PreRefine": 0,
-    "TolDist": 0.03,
-    "TolAngle": 5.0e-3,
+    "Mesh": "fl_case3.msh",
+    "PreRefine": 1,
+    "TolDist": 0.0022,
+    "TolAngle": 0.012,
     "Domains": [
         {
             "name": "k33",

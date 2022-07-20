@@ -6,10 +6,11 @@
     //     "Nels": [1,2,3],
     //     "MMeshType": "EHexahedral"
     // },
-    "Mesh": "fl_case3.msh", // filename in the current directory
+    "Mesh": "fl_case3.msh",
     "PreRefine": 0,
-    "TolDist": 0.03,
-    "TolAngle": 5.0e-3,
+    "TolDist": 0.0022,
+    "TolAngle": 0.012,
+	"useMHM": false,
     "Domains": [
         {
             "name": "k33",
@@ -18,10 +19,9 @@
             "phi": 0.2
         }
     ],
-	"useMHM": false,
     "NCoarseGroups": 468,
     "FractureGlueMatId": 1000000,
-    "FractureGluePerm": 1.0,
+    "FractureGluePerm": 0.5e2,
     "Boundary": [
         {
             "name": "inlet",
