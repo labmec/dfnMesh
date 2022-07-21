@@ -1657,7 +1657,8 @@ void DFNMesh::CreateSkeletonElements(int dimension, int matid)
         for (int iside = nsides-2; iside >= ncorners; iside--)
         {
             TPZGeoElSide gelside = gel->Neighbour(iside);
-
+            std::cout<<"geldim: "<<gelside.Element()->Dimension()<<std::endl;
+            std::cout<<"gelsideDim: "<<gelside.Dimension()<<std::endl;
             if (gelside.Dimension() != dimension){continue;}
             bool haskel = HasEqualDimensionNeighbour(gelside);
             if (haskel == false)
