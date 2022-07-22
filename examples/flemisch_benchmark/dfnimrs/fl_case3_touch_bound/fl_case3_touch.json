@@ -6,7 +6,7 @@
     //     "Nels": [1,2,3],
     //     "MMeshType": "EHexahedral"
     // },
-    "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case3_touch_bound/fl_case3_touch_coarse.msh",
+    "Mesh": "fl_case3_touch_coarse.msh",
     "PreRefine": 0,
     // "TolDist": 0.0001,
     // "TolDist": 0.04,
