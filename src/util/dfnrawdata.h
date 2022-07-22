@@ -9,6 +9,7 @@ struct DFNRawData {
     TPZFMatrix<REAL> fpolygonmatrices;
     int fmatid = DFNMaterial::Efracture;
     FracLimit flimit_directives = FracLimit::Etruncated;
+    int fnrefborder = -1;
 };
 
 #endif

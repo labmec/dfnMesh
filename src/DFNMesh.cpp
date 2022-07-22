@@ -361,11 +361,11 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 // }
 
 
-DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid){
+DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid, int nreffracborder){
 	// For the export graphics code, we're starting with this limit of max_intersections and reserving material ids within every 1000 for frac_frac_intersections. It's just for graphics
 	// int frac_tag = this->NFractures() + 1;
 	// materialid = frac_tag*max_intersections;
-	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling, materialid);
+	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling,materialid,nreffracborder);
 
 #if PZ_LOG
     LOGPZ_INFO(logger, "[Start][Fracture " << fracture->Index() << "]");
@@ -979,6 +979,13 @@ void DFNMesh::ExportGMshCAD(std::string filename){
 	// out << "\nCoherence;";
 	out << "\nCoherence Mesh;";
 	out << "\nTransfinite Curve {:} = 2;";
+    for(DFNFracture* fracture : fFractures){
+        if(fracture->NRefFracBorder() == -1) continue;
+        out << "\nTransfinite Curve {";
+        out << "BCfrac" << fracture->Index() << "[]";
+        out << "} = " << fracture->NRefFracBorder() << ";";
+    }
+    
 //	out << "\nTransfinite Surface{:};";
 //	out << "\nTransfinite Volume{:};";
 	out << "\nRecombine Surface{:};";

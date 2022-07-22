@@ -58,6 +58,7 @@
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
+            "NRefFracBorder": 8,
             "Comment": "The lonely vertical one",
             "Nodes":[ 
                 [0.500, 0.050, 0.050],
@@ -72,6 +73,7 @@
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
+            "NRefFracBorder": 8,
             "Comment": "One of the 2 small vertical parallels",
             "Nodes":[ 
                 [0.830, 1.900, 0.300],
@@ -86,6 +88,7 @@
  //            "phi": 0.2,
  //            "width": 1.0e-2,
  //            "Limit": "Erecovered",
+ //            "NRefFracBorder": 8,
  //            "Comment": "One of the 2 small vertical parallels",
  //            "Nodes":[
  //                [0.770, 1.900, 0.300],
@@ -100,6 +103,7 @@
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
+            "NRefFracBorder": 8,
             "Comment": "The horizontal big one that cuts the domain in half",
             "Nodes":[ 
                 [0.050, 0.240, 0.500],
@@ -114,6 +118,7 @@
   //           "phi": 0.2,
   //           "width": 1.0e-2,
   //           "Limit": "Erecovered",
+  //           "NRefFracBorder": 8,
   //           "Comment": "One of the 2 that cross each other",
   //           "Nodes":[
   //               [0.170, 1.900, 0.300],
@@ -128,6 +133,7 @@
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
+            "NRefFracBorder": 8,
             "Comment": "One of the 2 that cross each other",
             "Nodes":[ 
                 [0.230, 1.900, 0.300],
@@ -142,6 +148,7 @@
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
+            "NRefFracBorder": 8,
             "Comment": "Big diagonal above",
             "Nodes":[ 
                 [0.950, 1.000, 0.500],
@@ -156,6 +163,7 @@
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
+            "NRefFracBorder": 8,
             "Comment": "Big diagonal below",
             "Nodes":[ 
                 [0.950, 1.000, 0.480],

@@ -75,6 +75,9 @@ private:
     TPZStack<int> f_frac_frac_intersections;
 
     int fmatid_BC = fmatid-1;
+    
+    // indicates how many refinements should be set for gmsh to refine the fracture border. If -1, does nothing
+    int fNRefFracBorder = -1;
 
 public:
 
@@ -98,7 +101,7 @@ public:
     /**
      * @brief Constructor from a DFNPolygon
      */
-    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture);
+    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture, int nreffracborder = -1);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -183,6 +186,10 @@ public:
     /** @brief Removes refined DFNFaces from the fFaces datastructure
     */
     void RemoveRefinedDFNFaces(const int vol_index);
+    
+    
+    /// Returns the number of refinements to be used in the border or the fracture in gmsh
+    const int NRefFracBorder() {return fNRefFracBorder;}
 
 private:
 

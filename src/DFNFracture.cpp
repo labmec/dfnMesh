@@ -30,13 +30,14 @@ DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid)
+DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid, int nreffracborder)
     :fPolygon(Polygon),
     fmatid(matid)
 {
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
     fIndex = dfnMesh->NFractures();
+    fNRefFracBorder = nreffracborder;
 #ifdef PZDEBUG
     fPolygon.PlotVTK("./LOG/CurrentFracture.vtk",fmatid,fIndex);
 #endif // PZDEBUG

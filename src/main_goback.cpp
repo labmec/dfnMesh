@@ -160,7 +160,7 @@ int main(int argc, char* argv[]){
 		DFNPolygon polygon(dfnrawdata.fpolygonmatrices, dfn.Mesh());
         // Initialize the basic data of fracture
         // initialize an empty DFNFracture object
-		DFNFracture *fracture = dfn.CreateFracture(polygon,dfnrawdata.flimit_directives,dfnrawdata.fmatid);
+		DFNFracture *fracture = dfn.CreateFracture(polygon,dfnrawdata.flimit_directives,dfnrawdata.fmatid,dfnrawdata.fnrefborder);
         
 		// Find intersected ribs and create a corresponding DFNRib object (administered by DFNFracture)
 		fracture->CreateRibs();

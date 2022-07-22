@@ -98,7 +98,7 @@ public:
     void CreateSkeletonElements(int dimension, int matid = -1);
 
     /** @brief Standard command to create a DFNFracture */
-    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended, int materialid = DFNMaterial::Efracture);
+    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended, int materialid = DFNMaterial::Efracture, int nreffracborder = -1);
     
     
     /// Exports a .geo file for this mesh

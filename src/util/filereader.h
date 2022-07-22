@@ -535,6 +535,9 @@ void ReadFileJSON(const std::string			& filename,
             if(fracture.find("Limit") != fracture.end()){
                 mydata.flimit_directives = DFN::StringToFracLimit((std::string)fracture["Limit"]);
             }
+            if(fracture.find("NRefFracBorder") != fracture.end()){
+                mydata.fnrefborder = (int)fracture["NRefFracBorder"];
+            }
             int npoints = fracture["Nodes"].size();
             mydata.fpolygonmatrices.Resize(3,npoints);
             for(int j=0; j<npoints; j++){
