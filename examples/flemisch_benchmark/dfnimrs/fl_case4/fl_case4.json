@@ -6,7 +6,7 @@
     //     "Nels": [1,2,3],
     //     "MMeshType": "EHexahedral"
     // },
-"Mesh": "flemisch_benchmark/dfnimrs/fl_case4/fl_case4_coarse.msh",
+"Mesh": "fl_case4_coarse.msh",
 
     // "TolAngle": 1.57,
     // "TolDist": 10.0,
@@ -22,7 +22,7 @@
         "name": "k33",
         "matid":1,
         "K": 1.0,
-        "phi": 1.0e-2
+        "phi": 0.2
     }
     ],
     "Boundary": [

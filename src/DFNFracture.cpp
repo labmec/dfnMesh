@@ -2585,7 +2585,7 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
     }
 #endif
     // Tolerance for incorporation. We should maybe give this as option to the user
-    constexpr REAL tol0 = 5.*(M_PI/180.);
+    constexpr REAL tol0 = 2.*(M_PI/180.);
     constexpr REAL tol2pi = 2*M_PI - tol0;
 
     const int nedges = subpolygon.size();
