@@ -1,26 +1,26 @@
 ht=250;
 
-nelx1=4;
-nelx2=1;
-nelx3=1;
-nelx4=1;
-nelx5=1;
-nelx6=1;
+nelx1=3;
+nelx2=4;
+nelx3=4;
+nelx4=4;
+nelx5=4;
+nelx6=3;
 
-nely1=4;
-nely2=1;
-nely3=1;
-nely4=1;
-nely5=1;
-nely6=1;
-nely7=1;
+nely1=3;
+nely2=4;
+nely3=9;
+nely4=5;
+nely5=9;
+nely6=4;
+nely7=3;
 
-nelz1=4;
-nelz2=1;
-nelz3=1;
-nelz4=1;
-nelz5=1;
-nelz6=1;
+nelz1=2;
+nelz2=2;
+nelz3=2;
+nelz4=2;
+nelz5=2;
+nelz6=2;
 
 Point(57)= {-500., 1500., -100., ht};
 Point(58)= {-358.333, 1500., -100., ht};
