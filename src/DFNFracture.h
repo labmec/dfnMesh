@@ -78,6 +78,9 @@ private:
     
     // indicates how many refinements should be set for gmsh to refine the fracture border. If -1, does nothing
     int fNRefFracBorder = -1;
+    
+    /// Size of the edges that touch a point on the fracture border. If NEGATIVE value, it is NOT USED
+    REAL fSizeOfEdgesTouchFracBorder = -1.;
 
 public:
 
@@ -101,7 +104,7 @@ public:
     /**
      * @brief Constructor from a DFNPolygon
      */
-    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture, int nreffracborder = -1);
+    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture, int nreffracborder = -1, REAL sizeOfEdgesTouchFracBorder = -1.);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -189,7 +192,10 @@ public:
     
     
     /// Returns the number of refinements to be used in the border or the fracture in gmsh
-    const int NRefFracBorder() {return fNRefFracBorder;}
+    const int NRefFracBorder() const {return fNRefFracBorder;}
+    
+    /// Returns size of edge of elements in fracture border for gmsh mesh generation
+    const REAL SizeOfEdgesTouchFracBorder() const {return fSizeOfEdgesTouchFracBorder;}
 
 private:
 

@@ -51,7 +51,7 @@ namespace fs = std::filesystem;
 
 void ParseInputArguments(int argc, char* argv[], std::string &inputfiledir, std::string &meshfile, REAL &toldist, REAL &tolangle, int& prerefine);
 
-TPZGeoMesh* ReadInput(std::string &pathToJSon, std::string &MeshFileName, map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
+TPZGeoMesh* ReadInput(std::string &pathToJSon, std::string &MeshFileName, map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL& meshEdgesBaseSize);
 void CheckForOverlappingFractures(DFNMesh& dfn);
 void CreateOutputFolders(std::string& outputFolder);
 void CopyJsonAndMeshToOutputFolder(std::string& pathToJson,std::string& outputFolder,std::string& meshFile);
@@ -86,6 +86,7 @@ int main(int argc, char* argv[]){
     map<int, DFNRawData> map_dfnrawdata;
 	TPZManVector<std::map<int,std::string>,4> dim_physical_tag_and_name;
 	int prerefine = 0;
+    REAL meshEdgesBaseSize = -1.; // Not used if negative
     std::string inputfiledir;
 
     std::string coarseOutputName,fineOutputName,outputFolder,pathToJson,meshFile;
@@ -98,7 +99,7 @@ int main(int argc, char* argv[]){
     // meshFile - file from the argument or read from the json file
     getOutputFileNames(inputfiledir,outputFolder,coarseOutputName,fineOutputName,pathToJson,meshFile);
     
-    gmesh = ReadInput(pathToJson, meshFile ,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name);
+    gmesh = ReadInput(pathToJson, meshFile ,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name,meshEdgesBaseSize);
 	gmsh::initialize();
 	DFN::GmshConfig();
     
@@ -110,7 +111,7 @@ int main(int argc, char* argv[]){
 	// ScriptForBug2(gmesh);
 	time.start();
     /// Constructor of DFNMesh initializes the skeleton mesh
-	DFNMesh dfn(gmesh,dim_physical_tag_and_name,tol_dist,tol_angle,prerefine);
+	DFNMesh dfn(gmesh,dim_physical_tag_and_name,tol_dist,tol_angle,prerefine,meshEdgesBaseSize);
     
 
 	// std::ofstream out1("graphics/CoarseMesh.vtk");
@@ -160,7 +161,7 @@ int main(int argc, char* argv[]){
 		DFNPolygon polygon(dfnrawdata.fpolygonmatrices, dfn.Mesh());
         // Initialize the basic data of fracture
         // initialize an empty DFNFracture object
-		DFNFracture *fracture = dfn.CreateFracture(polygon,dfnrawdata.flimit_directives,dfnrawdata.fmatid,dfnrawdata.fnrefborder);
+		DFNFracture *fracture = dfn.CreateFracture(polygon,dfnrawdata.flimit_directives,dfnrawdata.fmatid,dfnrawdata.fnrefborder,dfnrawdata.fSizeOfEdgesTouchFracBorder);
         
 		// Find intersected ribs and create a corresponding DFNRib object (administered by DFNFracture)
 		fracture->CreateRibs();
@@ -281,10 +282,10 @@ void ParseInputArguments(int argc, char* argv[], std::string &inputfiledir, std:
 }
 
 // Takes program input and creates a mesh, matrices with the point coordinates, and writes tolerances
-TPZGeoMesh* ReadInput(std::string &pathToJSon, std::string &mshfile , map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name) {
+TPZGeoMesh* ReadInput(std::string &pathToJSon, std::string &mshfile , map<int, DFNRawData>& dfnrawdata, REAL &toldist, REAL &tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL& meshEdgesBaseSize) {
 	TPZGeoMesh* gmesh = nullptr;
 	std::cout<<"input file: "<<pathToJSon<<"\n";
-	gmesh = SetupExampleFromFile(pathToJSon,dfnrawdata,mshfile,toldist,tolangle,prerefine,dim_physical_tag_and_name);
+	gmesh = SetupExampleFromFile(pathToJSon,dfnrawdata,mshfile,toldist,tolangle,prerefine,dim_physical_tag_and_name,meshEdgesBaseSize);
 	return gmesh;
 }
 

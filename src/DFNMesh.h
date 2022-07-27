@@ -48,11 +48,14 @@ private:
 	
 	/// For each dimension (0,1,2,3), it stores the physicalTag (Material ID in PZ) and Name
 	TPZManVector<std::map<int,std::string>,4> m_dim_physical_tag_and_name;
+    
+    /// Global size of element edges. If negative, it is not used
+    REAL fMeshEdgesBaseSize = -1.;    
 
 public:
     
     /// Constructor
-    DFNMesh(TPZGeoMesh *gmesh, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL tolerableLength = DFN::default_tolDist, REAL tolerableAngle = DFN::default_tolAngle, int prerefine = 0);
+    DFNMesh(TPZGeoMesh *gmesh, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL tolerableLength = DFN::default_tolDist, REAL tolerableAngle = DFN::default_tolAngle, int prerefine = 0, REAL meshEdgesBaseSize = -1);
 
     /// Empty constructor
     DFNMesh(): fGMesh(nullptr){}
@@ -98,12 +101,12 @@ public:
     void CreateSkeletonElements(int dimension, int matid = -1);
 
     /** @brief Standard command to create a DFNFracture */
-    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended, int materialid = DFNMaterial::Efracture, int nreffracborder = -1);
+    DFNFracture* CreateFracture(DFNPolygon &Polygon, FracLimit limithandling = Eextended, int materialid = DFNMaterial::Efracture, int nreffracborder = -1, REAL sizeOfEdgesTouchFracBorder = -1.);
     
     
     /// Exports a .geo file for this mesh
     void ExportGMshCAD(std::string filename);
-    void ExportGMshCAD_nodes(std::ofstream& out);
+    void ExportGMshCAD_nodes(std::ofstream& out, std::vector<int>& fracBorderNodesToFracIndex);
     void ExportGMshCAD_edges(std::ofstream& out);
     void ExportGMshCAD_faces(std::ofstream& out);
     void ExportGMshCAD_volumes(std::ofstream& out);
@@ -147,10 +150,9 @@ public:
     
     inline int Dimension() const{return fGMesh->Dimension();}
     
-    
-    
-    
-    
+    /// Initializes vector with ids of fracture each node of the mesh belongs to. Vector is indexed by index of node and
+    /// only fills it if node is on border of frac. Default is -1. If not tolerance is set in any fracture, it does not resize the vector
+    const bool InitializeVectorOfBorderNodes(std::vector<int>& borderNodeEdgeSizes);
     
     
     /**

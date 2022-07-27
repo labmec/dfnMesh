@@ -30,9 +30,10 @@ DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid, int nreffracborder)
+DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid, int nreffracborder, REAL sizeOfEdgesTouchFracBorder)
     :fPolygon(Polygon),
-    fmatid(matid)
+    fmatid(matid),
+    fSizeOfEdgesTouchFracBorder(sizeOfEdgesTouchFracBorder)
 {
     fdfnMesh = dfnMesh;
     fLimit = limithandling;

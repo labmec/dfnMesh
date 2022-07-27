@@ -14,7 +14,8 @@
 static TPZLogger logger("dfn.mesh");
 #endif
 
-DFNMesh::DFNMesh(TPZGeoMesh *gmesh, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL tolDist, REAL tolAngle, int prerefine){
+DFNMesh::DFNMesh(TPZGeoMesh *gmesh, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL tolDist, REAL tolAngle, int prerefine, REAL meshEdgesBaseSize){
+    fMeshEdgesBaseSize = meshEdgesBaseSize;
 	fGMesh = gmesh;
 	m_dim_physical_tag_and_name = dim_physical_tag_and_name;
     SetTolerances(tolDist,tolAngle);
@@ -361,11 +362,11 @@ void DFNMesh::PlotTolerance(TPZManVector<int64_t>& indices){
 // }
 
 
-DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid, int nreffracborder){
+DFNFracture* DFNMesh::CreateFracture(DFNPolygon &Polygon, FracLimit limithandling, int materialid, int nreffracborder, REAL sizeOfEdgesTouchFracBorder){
 	// For the export graphics code, we're starting with this limit of max_intersections and reserving material ids within every 1000 for frac_frac_intersections. It's just for graphics
 	// int frac_tag = this->NFractures() + 1;
 	// materialid = frac_tag*max_intersections;
-	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling,materialid,nreffracborder);
+	DFNFracture* fracture = new DFNFracture(Polygon,this,limithandling,materialid,nreffracborder,sizeOfEdgesTouchFracBorder);
 
 #if PZ_LOG
     LOGPZ_INFO(logger, "[Start][Fracture " << fracture->Index() << "]");
@@ -723,9 +724,11 @@ bool DFN::IsInterface(TPZGeoEl* gel){
 
 
 
-void DFNMesh::ExportGMshCAD_nodes(std::ofstream& out){
-	const float meshsize = 0.0;
-    // write nodes
+void DFNMesh::ExportGMshCAD_nodes(std::ofstream& out, std::vector<int>& fracBorderNodesToFracIndex){
+	REAL meshsize = 0.0;
+    if(fMeshEdgesBaseSize > 0) meshsize = fMeshEdgesBaseSize;
+    const bool checkFracBordSize = fracBorderNodesToFracIndex.size();
+        
     out<< "// POINTS DEFINITION \n\n";
     out<< "h = " << meshsize << ";\n\n";
     int64_t nnodes = fGMesh->NNodes();
@@ -733,12 +736,20 @@ void DFNMesh::ExportGMshCAD_nodes(std::ofstream& out){
 		if(fGMesh->NodeVec()[inode].Id() < 0) continue;
         TPZManVector<REAL, 3> co(3,0.);
         fGMesh->NodeVec()[inode].GetCoordinates(co);
-        out << "Point(" << inode+gmshshift << ") = {" 
+        const int fracIndex = checkFracBordSize ? fracBorderNodesToFracIndex[inode] : -1; // if the point is on a frac border, it may have different edge size
+        const REAL pointSize = fracIndex < 0 ? -1. : fFractures[fracIndex]->SizeOfEdgesTouchFracBorder();
+        out << "Point(" << inode+gmshshift << ") = {"
 		    << co[0] << ',' 
 			<< co[1] << ',' 
-			<< co[2] 
-			<< ", h"
-			<<"};\n";
+            << co[2];
+        if(pointSize > 0){
+            out << ", " << pointSize
+                <<"};\n";
+        }
+        else{
+            out << ", h"
+                <<"};\n";
+        }
     }
 }
 
@@ -935,7 +946,63 @@ void DFNMesh::ExportGMshCAD_volumes(std::ofstream& out){
 
 
 
-
+const bool DFNMesh::InitializeVectorOfBorderNodes(std::vector<int>& fracBorderNodesToFracIndex){
+    // First, check if we need the vector at all
+    bool needToInitVec = false;
+    for(DFNFracture* fracture : fFractures){
+        if(fracture->SizeOfEdgesTouchFracBorder() > 0){
+            needToInitVec = true;
+            break;
+        }
+    }
+    
+    if (!needToInitVec) {
+        return false;
+    }
+    
+    TPZGeoMesh* gmesh = Mesh();
+    const int64_t nnodes = gmesh->NNodes();
+    fracBorderNodesToFracIndex.resize(nnodes, -1);
+    
+    int fracdim = gmesh->Dimension()-1;
+    int bcdim = fracdim-1;
+    for(DFNFracture* fracture : fFractures){
+        if(fracture->SizeOfEdgesTouchFracBorder() < 0){
+            continue;
+        }
+        
+        // Find nodes on fracture border and set them in vector fracBorderNodesToFracIndex
+        TPZGeoEl* gel = nullptr;
+        for(int64_t index : fracture->Surface()){
+            gel = gmesh->Element(index);
+            if(!gel) continue;
+            if(gel->Dimension() != fracdim) continue;
+            if(gel->HasSubElement()) PZError << "\nYou should call DFNFracture::CleanUp before calling this method.\n";
+            int nsides = gel->NSides();
+            for(int iside = gel->FirstSide(bcdim); iside < nsides-1; iside++){
+                TPZGeoElSide gelside(gel,iside);
+                bool IsBoundarySide = true;
+                for(TPZGeoElSide neig = gelside.Neighbour(); neig != gelside; ++neig){
+                    if(neig.Element()->Dimension() != 2) continue;
+                    if(neig.Element()->HasSubElement()) continue;
+                    if(fracture->Surface().find(neig.Element()->Index()) != fracture->Surface().end()){
+                        IsBoundarySide = false;
+                        break;
+                    }
+                }
+                if(!IsBoundarySide) continue;
+                // If we got here, it means gelside is an edge that is in the border of the fracture
+                const int nsidenodes = gelside.NSideNodes();
+                for (int i = 0; i < nsidenodes; i++) {
+                    const int nodeindex = gelside.SideNodeIndex(i);
+                    fracBorderNodesToFracIndex[nodeindex] = fracture->Index();
+                }
+                
+            }
+        }
+    }
+    return true;
+}
 
 
 
@@ -956,9 +1023,13 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     // Title
     out<<"//  Geo file generated by DFNMesh project\n//\thttps://github.com/labmec/dfnMesh";
     std::cout << "And the filename is ... " << filename << std::endl;
+    
+    // Vector with ids of fracture it belongs for each node. Only fills if node is on border of frac. Default is -1
+    std::vector<int> fracBorderNodesToFracIndex;
+    const bool isFracBorderSizeSet = InitializeVectorOfBorderNodes(fracBorderNodesToFracIndex);
 
 	// write nodes
-    ExportGMshCAD_nodes(out);
+    ExportGMshCAD_nodes(out,fracBorderNodesToFracIndex);
     // write edges
     ExportGMshCAD_edges(out);
     // write faces
@@ -978,14 +1049,24 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     // out<<"Recombine Surface {Physical Surface("<<DFNMaterial::Erefined<<")};\n";
 	// out << "\nCoherence;";
 	out << "\nCoherence Mesh;";
-	out << "\nTransfinite Curve {:} = 2;";
-    for(DFNFracture* fracture : fFractures){
-        if(fracture->NRefFracBorder() == -1) continue;
-        out << "\nTransfinite Curve {";
-        out << "BCfrac" << fracture->Index() << "[]";
-        out << "} = " << fracture->NRefFracBorder() << ";";
-    }
     
+    // Check if using edge size tolerance for mesh or number of refinements of edges
+    const bool isUseSizeTolerance = fMeshEdgesBaseSize > 0 || isFracBorderSizeSet;
+    
+    // Number of refinements of all edges in the .geo files. Should not set if using fSizeOfElementsTouchFracBorder
+    if (!isUseSizeTolerance){
+        out << "\nTransfinite Curve {:} = 2;";
+
+        // Number of refinements of the fracture
+        for(DFNFracture* fracture : fFractures){
+            if(fracture->NRefFracBorder() == -1) continue;
+            out << "\nTransfinite Curve {";
+            out << "BCfrac" << fracture->Index() << "[]";
+            out << "} = " << fracture->NRefFracBorder() << ";";
+        }
+    }
+	
+        
 //	out << "\nTransfinite Surface{:};";
 //	out << "\nTransfinite Volume{:};";
 	out << "\nRecombine Surface{:};";

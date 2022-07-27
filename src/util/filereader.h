@@ -32,7 +32,7 @@
  * @param dim_physical_tag_and_name : name of the physical tags read from gmsh - read from gmsh file
  * @returns pointer to geometric mesh created/read
 */
-TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name);
+TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL& meshEdgesBaseSize);
 
 
 void ReadFile(	const std::string			& filename, 
@@ -54,7 +54,8 @@ void ReadFileJSON(const std::string			& filename,
 				TPZManVector<REAL,3> 		& xf,
 				TPZManVector<int,3> 		& nels,
 				MMeshType					& eltype,
-				TPZManVector<REAL,2>		& tol
+				TPZManVector<REAL,2>		& tol,
+                REAL                        & meshEdgesBaseSize
 				);
 
 
@@ -333,7 +334,8 @@ void ReadFileJSON(const std::string			& filename,
 				TPZManVector<int,3> 		& nels,
 				MMeshType					& eltype,
 				TPZManVector<REAL,2>		& tol,
-				int                         & prerefine
+				int                         & prerefine,
+                REAL                        & meshEdgesBaseSize
 				)
 {
 		/*_______________________________________________________________
@@ -511,6 +513,10 @@ void ReadFileJSON(const std::string			& filename,
 	//Init matid for fractures
 	const int fracInitMatId = input["FractureInitMatId"];
 	int actualMatId = fracInitMatId;
+    
+    // Mesh size
+    if(input.find("MeshEdgesBaseSize") != input.end())
+        {meshEdgesBaseSize = (REAL)input["MeshEdgesBaseSize"];}
 	
 	// Fractures
 	int nfractures = input["Fractures"].size();
@@ -538,6 +544,10 @@ void ReadFileJSON(const std::string			& filename,
             if(fracture.find("NRefFracBorder") != fracture.end()){
                 mydata.fnrefborder = (int)fracture["NRefFracBorder"];
             }
+            if(fracture.find("SizeEdgesTouchFracBorder") != fracture.end()){
+                if(meshEdgesBaseSize < 0) DebugStop();
+                mydata.fSizeOfEdgesTouchFracBorder = (REAL)fracture["SizeEdgesTouchFracBorder"];
+            }
             int npoints = fracture["Nodes"].size();
             mydata.fpolygonmatrices.Resize(3,npoints);
             for(int j=0; j<npoints; j++){
@@ -556,7 +566,7 @@ void ReadFileJSON(const std::string			& filename,
 // dnfrawdata : no idea - output of this function
 // mshfile : I dont know. It is not used - overwritten by the .json file
 // toldist : distance tolerance input/output should be in the json file
-TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name){
+TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, int& prerefine, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL& meshEdgesBaseSize){
 
 	std::string basemeshpath(INPUTMESHES);
 	filename = basemeshpath + "/" + filename;
@@ -576,7 +586,7 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 //        {ReadFile(filename,polyg_stack,mshfile,x0,x1,nels,eltype,tol,matid,limit_directives,prerefine);}
     }
     else if(extension == ".json" || extension == ".jsonc") {
-		ReadFileJSON(filename,dfnrawdata,mshfile,x0,x1,nels,eltype,tol,prerefine);
+		ReadFileJSON(filename,dfnrawdata,mshfile,x0,x1,nels,eltype,tol,prerefine,meshEdgesBaseSize);
     }
 	else{
 		PZError << "\nUnrecognized file extension:"
