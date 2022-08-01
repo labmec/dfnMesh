@@ -34,6 +34,17 @@ ycuts = np.multiply(ycuts,(ymax-ymin)/nycuts)
 # NOTE: pay attention to boundary conditions when setting zcuts!!
 zcuts = [0.3333,0.6667]
 
+# Bounding box for inlet
+xminIn = -0.01; xmaxIn = 1.01
+yminIn = -0.01; ymaxIn = 0.01
+zminIn = 1./3.-0.001; zmaxIn = 2./3.+0.001
+
+# Bounding box for outlet
+xminOut = -0.01; xmaxOut = 1.01
+yminOut = 2.249; ymaxOut = 2.251
+zminOut = -0.01; zmaxOut = 1./3.+0.001
+zminOut2 = 2./3.-0.001; zmaxOut2 = 1.01
+
 # ----------- Functions -----------
 def create_plane(fixedPos: -1, fixedVal: float, elsize: float):
     assert(fixedPos == 0 or fixedPos == 1 or fixedPos == 2)
@@ -118,9 +129,6 @@ gmsh.model.add_physical_group(dimToGet, regions, tagDom, nameDom)
 # Creating Physical group for left inlet
 dimToGet = 2
 taginlet = 2
-xminIn = -0.01; xmaxIn = 1.01
-yminIn = -0.01; ymaxIn = 0.01
-zminIn = 1./3.-0.001; zmaxIn = 2./3.+0.001
 surfacesIn = gmsh.model.getEntitiesInBoundingBox(xminIn,yminIn,zminIn,xmaxIn,ymaxIn,zmaxIn,dimToGet)
 regionsIn = [reg[1] for reg in surfacesIn]
 nameIn = "inlet"
@@ -129,12 +137,8 @@ gmsh.model.add_physical_group(dimToGet, regionsIn, taginlet, nameIn)
 # Creating Physical group for right outlets
 dimToGet = 2
 tagoutlet = 3
-xminOut = -0.01; xmaxOut = 1.01
-yminOut = 2.249; ymaxOut = 2.251
-zminOut = -0.01; zmaxOut = 1./3.+0.001
 surfacesOut = gmsh.model.getEntitiesInBoundingBox(xminOut,yminOut,zminOut,xmaxOut,ymaxOut,zmaxOut,dimToGet)
-zminOut = 2./3.-0.001; zmaxOut = 1.01
-surfaces2 = gmsh.model.getEntitiesInBoundingBox(xminOut,yminOut,zminOut,xmaxOut,ymaxOut,zmaxOut,dimToGet)
+surfaces2 = gmsh.model.getEntitiesInBoundingBox(xminOut,yminOut,zminOut2,xmaxOut,ymaxOut,zmaxOut2,dimToGet)
 [surfacesOut.append(tup) for tup in surfaces2]
 regionsOut = [reg[1] for reg in surfacesOut]
 nameOut = "outlet"
