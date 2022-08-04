@@ -23,16 +23,21 @@ elsize = 2.0 # not used if setting transfinite curve
 
 # whre should it be cut
 # ===> In x
-xcuts = [0.25,0.5,0.75]
+xcuts = [0.05,0.167,0.334,0.5,0.667,0.833,0.95]
 
 # ===> In y
-nycuts = 10
-ycuts = np.array(range(nycuts))
-ycuts = np.multiply(ycuts,(ymax-ymin)/nycuts)
+ystart = 0.0; yend = 2.25
+nycuts = 13
+ycuts = np.array(range(nycuts-1)) + 1
+ycuts = np.multiply(ycuts,(yend-ystart)/nycuts)
+ycuts = np.insert(ycuts,0,0.05)
+ycuts = np.insert(ycuts,ycuts.size,2.2)
+
+
 
 # ===> In z
 # NOTE: pay attention to boundary conditions when setting zcuts!!
-zcuts = [0.3333,0.6667]
+zcuts = [0.05,0.167,0.334,0.5,0.667,0.833,0.95]
 
 # Bounding box for inlet
 xminIn = -0.01; xmaxIn = 1.01

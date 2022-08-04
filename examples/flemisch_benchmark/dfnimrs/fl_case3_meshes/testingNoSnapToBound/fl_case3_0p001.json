@@ -19,7 +19,7 @@
             "phi": 0.2
         }
     ],
-    "NCoarseGroups": 468,
+    "NCoarseGroups": 768,
     "FractureGlueMatId": 1000000,
     "FractureGluePerm": 1.0,
     "Boundary": [
@@ -30,14 +30,8 @@
             "value": -1.0
         },
         {
-            "name": "outlet1",
+            "name": "outlet",
             "matid": 3,
-            "type": 0,  // imposed pressure
-            "value": 0.0
-        },
-        {
-            "name": "outlet2",
-            "matid": 5,
             "type": 0,  // imposed pressure
             "value": 0.0
         },
