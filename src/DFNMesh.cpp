@@ -1067,8 +1067,8 @@ void DFNMesh::ExportGMshCAD(std::string filename){
     }
 	
         
-//	out << "\nTransfinite Surface{:};";
-//	out << "\nTransfinite Volume{:};";
+	out << "\n//Transfinite Surface{:};";
+	out << "\n//Transfinite Volume{:};";
 	out << "\nRecombine Surface{:};";
 	out << "\nRecombine Volume{:};";
 	out.flush();

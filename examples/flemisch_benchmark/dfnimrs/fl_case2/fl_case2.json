@@ -3,9 +3,9 @@
     // to have its corners slightly crossing the desired position, while setting Limit directive to "Etruncated".
     // E.g. that's why the corner coordinates of some of these fractures have a value like 1.01, when we actually want it to be 1.0.
     "$schema": "../dfn_schema.json",
-    "Mesh": "examples/flemisch_benchmark/dfnimrs/fl_case2_coarse.msh",
+    "Mesh": "fl_case2_coarse.msh",
     "TolDist":  0.1,
-    
+    "useMHM": false,
 	"Domains": [
     {
         "name": "k33",

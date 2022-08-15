@@ -1,0 +1,57 @@
+{
+    "$schema": "./dfn_schema.json", // Should be always here
+    "Mesh" : "box_coarse.msh", // Coarse mesh in Gmsh format
+    "TolDist": 1e-4, // Absolute tolerance to perform snapping of fracture to mesh face/edge
+    "TolAngle": 1e-2, // Absolute angle tolerance to perform snapping
+    "Domains": [ // Vector with all matrix properties
+        {
+            "name": "k33", // name of property
+            "matid": 1, // material id used in NeoPZ environment
+            "K": 1.0, // Isotropic permeability value
+            "phi": 0.2 // Porosity
+        }
+    ],
+    "useMHM": false, // Tells code if it is to use MHM in the simulatiom
+    "NCoarseGroups": 2, // Number of elements in the initial coarse mesh (used for multiscale method)
+    "Boundary": [ // Vector with all BCs of 3D matrix domain
+        {
+            "name": "inlet", // name of BC
+            "matid": 2, // material id used in NeoPZ environment
+            "type": 0, // 0: Imposed pressure, 1: Imposed flux
+            "value": 1.0 // value pressure or flux imposed
+        },
+        {
+            "name": "outlet", // name of BC
+            "matid": 3, // material id used in NeoPZ environment
+            "type": 0, // 0: Imposed pressure, 1: Imposed flux
+            "value": 0.0 // value pressure or flux imposed
+        },
+        {
+            "name": "noflux", // name of BC
+            "matid": 4, // material id used in NeoPZ environment
+            "type": 1, // 0: Imposed pressure, 1: Imposed flux
+            "value": 0.0 // value pressure or flux imposed
+        }  
+
+    ],
+    "FractureHybridPressureMatId": 299, // Material id for hybrid pressure material
+    "FractureInitMatId": 300, // Initial matid to be given to the fractures. Example frac1 - matid: 300, frac2 - matid: 305, etc.
+    "FractureGlueMatId": 1000000,
+    "FractureGluePerm": 1.0,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0, // Fracture index
+            "Limit": "Etruncated", // Type of fracture limit cut to be performed
+            "K" : 1.0, // Fracture permeability
+            "phi": 0.2, // Fracture porosity
+            "width": 0.1, // Fracture opening
+            "Nodes":[ // Nodes that define the polygon that defines the fracture location
+                [0.0, -1.1, -1.1],
+                [0.0,  1.1, -1.1],
+                [0.0,  1.1,  1.1],
+                [0.0, -1.1,  1.1]
+            ]
+        }
+    ]
+}
+
