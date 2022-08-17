@@ -127,8 +127,8 @@ endif()
 
 
 # linking with GMSH
-find_library(GMSH_LIB gmsh HINTS "/home/pedro/projetos/library/gmsh-install/lib" "../lib/gmsh-install/lib" "../gmsh-4.10.5-MacOSX-sdk/lib" NO_DEFAULT_PATH)
-find_path(GMSH_INC gmsh.h HINTS "/home/pedro/projetos/library/gmsh-install/include" "../lib/gmsh-install/include" "../gmsh-4.10.5-MacOSX-sdk/include" NO_DEFAULT_PATH)
+find_library(GMSH_LIB gmsh HINTS "/home/pedro/projetos/library/gmsh-install/lib" "../lib/gmsh-install/lib" "../gmsh-4.10.5-MacOSX-sdk/lib" "../gmsh_install/lib" NO_DEFAULT_PATH)
+find_path(GMSH_INC gmsh.h HINTS "/home/pedro/projetos/library/gmsh-install/include" "../lib/gmsh-install/include" "../gmsh-4.10.5-MacOSX-sdk/include" "../gmsh_install/include" NO_DEFAULT_PATH)
 
 link_libraries(${GMSH_LIB})
 if(NOT GMSH_LIB)
