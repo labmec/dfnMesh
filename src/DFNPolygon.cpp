@@ -22,19 +22,22 @@
 DFNPolygon::DFNPolygon(const Matrix &CornerPoints, const TPZGeoMesh* gmesh) 
 :   fPointsIndex(CornerPoints.Cols(),-1), 
     fArea(-1.),
-    fAxis(3,3,0.)
+    fAxis(3,3,0.),
+    fCenter(3,0.)
 {
-  //If data is consistent, fAxis was computed during consistency check
-  fCornerPoints = CornerPoints;
-  ComputeAxis();
-  Check_Data_Consistency();
-   ComputeArea();
-  // initialize the fNodesAbove data structure
-  SortNodes(gmesh);
+    //If data is consistent, fAxis was computed during consistency check
+    fCornerPoints = CornerPoints;
+    ComputeAxis();
+    ComputeCentroid(fCenter);
+    Check_Data_Consistency();
+    ComputeArea();
+    // initialize the fNodesAbove data structure
+    SortNodes(gmesh);
 }
 
 DFNPolygon::DFNPolygon(const Matrix &CornerPoints) {
     fCornerPoints = CornerPoints;
+    ComputeCentroid(fCenter);
 }
 
 // Copy constructor
@@ -489,17 +492,40 @@ TPZGeoEl* DFNPolygon::InsertGeoEl(TPZGeoMesh* gmesh, int matid, TPZVec<int64_t>*
 }
 
 void DFNPolygon::ComputeCentroid(TPZVec<REAL>& centroid){
+    
+    const bool moreRobustWay = false;
+    
     centroid.resize(3);
     centroid.Fill(0.);
-    int nnodes = this->NCornerNodes();
-    for(int inode=0; inode<nnodes; ++inode){
-        centroid[0] += fCornerPoints(0,inode);
-        centroid[1] += fCornerPoints(1,inode);
-        centroid[2] += fCornerPoints(2,inode);
+    if (moreRobustWay) {
+        int cols = fCornerPoints.Cols();
+        REAL totalL = 0.;
+        for (int i = 0; i < cols; i++) {
+            const int in = (i % cols) + 1;
+            TPZManVector<REAL,3> lineCenter(3,0.), line(3,0.);
+            for (int ic = 0; ic < 3; ic++) {
+                lineCenter[ic] = (fCornerPoints(ic,i) + fCornerPoints(ic,in) ) / 2.;
+                line[ic] = fCornerPoints(ic,i) - fCornerPoints(ic,in);
+            }
+            const REAL lineLength = Norm(line);
+            totalL += lineLength;
+            for (int ic = 0; ic < 3; ic++) {
+                centroid[ic] += lineLength*lineCenter[ic];
+            }
+        }
+        centroid /= totalL;
     }
-    centroid[0] /= nnodes;
-    centroid[1] /= nnodes;
-    centroid[2] /= nnodes;
+    else{
+        int nnodes = this->NCornerNodes();
+        for(int inode=0; inode<nnodes; ++inode){
+            centroid[0] += fCornerPoints(0,inode);
+            centroid[1] += fCornerPoints(1,inode);
+            centroid[2] += fCornerPoints(2,inode);
+        }
+        centroid[0] /= nnodes;
+        centroid[1] /= nnodes;
+        centroid[2] /= nnodes;
+    }
 }
 
 
@@ -534,8 +560,8 @@ TPZVec<TPZGeoEl*> DFNPolygon::InsertGeomRepresentation(TPZGeoMesh* gmesh, int ma
             // Create centroid
             nodeindex = gmesh->NodeVec().AllocateNewElement();
             polyg_nodes[nnodes] = nodeindex;
-            this->ComputeCentroid(coord);
-            gmesh->NodeVec()[nodeindex].Initialize(coord,*gmesh);
+//            this->ComputeCentroid(coord);
+            gmesh->NodeVec()[nodeindex].Initialize(fCenter,*gmesh);
             el_nodes[0] = polyg_nodes[nnodes]; ///< centroid
             // Create 2D elements
             for(int iel=0; iel<nels2D; ++iel){
@@ -768,11 +794,9 @@ using namespace DFN;
 
 const REAL DFNPolygon::GetWorstAngleCos() {
     REAL area = 0.;
-    TPZManVector<REAL,3> centroid(3,0.);
-    ComputeCentroid(centroid);
     const int npts = fCornerPoints.Cols();
     for (int i = 0; i < npts; i++) {
-        area += SubTriangleArea(centroid, i);
+        area += SubTriangleArea(fCenter, i);
     }
     
     TPZManVector<REAL,3> crossprod;
