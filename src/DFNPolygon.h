@@ -31,7 +31,10 @@ class DFNPolygon
 	Matrix fCornerPoints;
 	
 	/// Axis that define polygon orientation (Ax0 from node1 to node0, Ax1 from node1 to node2 and Ax2 the normal vector). Matrix 3x3
-	TPZFNMatrix<9,REAL> fAxis ;
+	TPZFNMatrix<9,REAL> fAxis;
+    
+    /// If nodes of this polygon have been added to a geometric mesh, this vector holds GeoNodes indices
+    TPZManVector<REAL,3> fCenter;
 
 	/// Area of polygon
 	double fArea = -1.0;
@@ -78,6 +81,8 @@ class DFNPolygon
 
 	/// Get matrix with axis 0, 1 and 2 on each column
 	Matrix axis() const {return fAxis;}
+    
+    TPZManVector<REAL,3>& Center() {return fCenter;}
 
 	/// Return corner coordinates
 	const Matrix& GetCornersX() const;
