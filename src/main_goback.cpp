@@ -65,7 +65,6 @@ void getOutputFileNames(std::string inputfiledir , std::string& outputFolder, st
                         std::string& fineOutputName, std::string& pathToJson, std::string& meshFile);
 bool fileExists(const fs::path& p, fs::file_status s = fs::file_status{});
 
-
 //-------------------------------------------------------------------------------------------------
 //   __  __      _      _   _   _     
 //  |  \/  |    / \    | | | \ | |
@@ -100,6 +99,7 @@ int main(int argc, char* argv[]){
     getOutputFileNames(inputfiledir,outputFolder,coarseOutputName,fineOutputName,pathToJson,meshFile);
     
     gmesh = ReadInput(pathToJson, meshFile ,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name,meshEdgesBaseSize);
+    DFNPolygon::fTolIntersect = 1.1*tol_dist;
 	gmsh::initialize();
 	DFN::GmshConfig();
     

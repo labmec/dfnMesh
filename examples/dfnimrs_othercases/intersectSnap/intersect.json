@@ -1,7 +1,7 @@
 {
     "$schema": "./dfn_schema.json",
     "Mesh" : "intersect_coarse.msh",
-    "TolDist": 1e-4,
+    "TolDist": 1e-1,
     "TolAngle": 1e-2,
     "Domains": [
         {

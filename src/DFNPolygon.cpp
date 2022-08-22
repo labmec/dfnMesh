@@ -11,7 +11,7 @@
 #include "DFNMesh.h"
 #include "pzvec_extras.h"
 
-
+REAL DFNPolygon::fTolIntersect = -1.;
 
 #if PZ_LOG
     static TPZLogger logger("dfn.mesh");
@@ -670,47 +670,28 @@ void DFNPolygon::GetEdgeVector(int edgeindex, TPZVec<REAL>& edgevector) const{
 
 }
 
+bool sortbyfirst2(const std::pair<REAL,std::pair<int,int>> &a,
+              const std::pair<REAL,std::pair<int,int>> &b)
+{
+    return (a.first < b.first);
+}
 
 bool DFNPolygon::ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segment& segment) const{
 
     int n_int = 0; //< Number of intersection points found
     segment.clear();
     
-    const bool isUsePlaneCrossMethod = false;
-    if (isUsePlaneCrossMethod) {
-        const DFNPolygon& polyg1 = *this;
-        const DFNPolygon& polyg2 = otherpolyg;
+    TPZManVector<REAL,3> p1(3,0.), p2(3,0.);
+    TPZManVector<TPZStack<TPZManVector<REAL,3> >,2> intpoints(2);
+    TPZManVector<const DFNPolygon*,2> polyg {this, &otherpolyg};
+    
+    const bool oldMethodNoTolerance = false;
+    
+    // polyg[0] = *this;
+    // polyg[1] = otherpolyg;
+    if (oldMethodNoTolerance) {
         
-        TPZManVector<REAL,3> p1n,p2n,p3n,p3np2n,p1np3n,pinter;
-        polyg1.GetNormal(p1n);
-        polyg2.GetNormal(p2n);
-        Cross(p1n, p2n, p3n);
-        REAL squaredLength = 0.;
-        for (int i = 0; i < 3; ++i) squaredLength += p3n[i]*p3n[i];
-        Cross(p3n, p2n, p3np2n);
-        Cross(p1n, p3n, p1np3n);
-        REAL p1ap1n = 0., p2ap2n = 0.;
-        for (int i = 0; i < 3; ++i) {
-            p1ap1n -= polyg1.PointAndCoor(0,i)*p1n[i];
-            p2ap2n -= polyg2.PointAndCoor(0,i)*p2n[i];
-        }
-        
-        for (int i = 0; i < 3; ++i) {
-            pinter[i] = p3np2n[i]*p1ap1n + p1np3n[i]*p2ap2n;
-        }
-        
-        pinter /= squaredLength;
-        
-        // Now we need to find start and end based on intersection of the
-        // line defined by the point (pinter) and the normal (p3n)
-                
-    }
-    else{
-        TPZManVector<REAL,3> p1(3,0.), p2(3,0.), intpoint(3,0.);
-        TPZManVector<const DFNPolygon*,2> polyg {this, &otherpolyg};
-        // polyg[0] = *this;
-        // polyg[1] = otherpolyg;
-
+        TPZManVector<REAL,3> intpoint(3,0.);
         for(int A=0; A<2; A++){
             int B = !A;
             // Test edges of DFNPolygonA being cut by DFNPolygonB, then
@@ -726,25 +707,223 @@ bool DFNPolygon::ComputePolygonIntersection(const DFNPolygon& otherpolyg, Segmen
                 // intersection point is within bounds of the polygon
                 bool intersects_Q = polyg[B]->Check_pair(p1,p2,intpoint);
                 if(!intersects_Q) continue;
+                
+                // Check distance between new point and the one in segment vector.
+                // If they are in the same position, do not add it.
+                if(segment.size()){
+                    TPZManVector<REAL,3> distvec = {segment[0][0]-intpoint[0], segment[0][1]-intpoint[1], segment[0][2]-intpoint[2]};
+                    const REAL dist = Norm<REAL>(distvec);
+                    if(dist < ZeroTolerance())
+                        continue;
+                }
 
-				// Check distance between new point and the one in segment vector.
-				// If they are in the same position, do not add it.
-				if(segment.size()){
-					TPZManVector<REAL,3> distvec = {segment[0][0]-intpoint[0], segment[0][1]-intpoint[1], segment[0][2]-intpoint[2]};
-					const REAL dist = Norm<REAL>(distvec);
-					if(dist < ZeroTolerance())
-						continue;					
-				}
                 segment.push_back(intpoint);
                 n_int++;
                 if(n_int == 2) return true;
             }
         }
-
         return false;
+    }
+    else{
+        // Check if polygons are parallel up to tolerance
+        {
+            TPZManVector<REAL,3> na,nb,nc(3,0.);
+            this->GetNormal(na);
+            otherpolyg.GetNormal(nb);
+            const REAL dot = Dot(na, nb); // na and nb area already unit
+            if(fabs(fabs(dot)-1.) < ZeroTolerance()) return false;
+        }
+        
+        // Check for points that are close due to tolerance
+        for(int A=0; A<2; A++){
+            int B = !A;
+            const int isFound = polyg[A]->FindIntersectionPointsByTol(polyg[B],intpoints[A]);
+        }
+        
+        // if no intersection point was found for either planes, just return false (no intersection)
+        if(intpoints[0].size() == 0 && intpoints[1].size() == 0){
+            return false;
+        }
+        
+        // If two points are found for each polygon (most common case with intersection) then
+        // then sort them by distance to check for the intersection between between the intersection lines
+        if(intpoints[0].size() == 2 && intpoints[1].size() == 2){
+            // Get direction perp to both planes
+            TPZManVector<REAL,3> na,nb,nc(3,0.);
+            this->GetNormal(na);
+            otherpolyg.GetNormal(nb);
+            Cross(na, nb, nc);
+            const REAL ncNorm = Norm(nc);
+            for(int i = 0 ; i < 3 ; i++){
+                nc[i] *= 1./ncNorm;
+            }
+            
+            // data structure with all the distances for each plane and point
+            std::vector<std::pair<REAL,std::pair<int/*plane*/,int/*index*/>>> distAlongLine;
+            
+            // compute (signed) distance of all points to first point
+            TPZManVector<REAL,3>& firstpt = intpoints[0][0];
+            int iplane = 0, ipt = 0;
+            for (auto stack : intpoints) {
+                for (auto intpt : stack) {
+                    TPZManVector<REAL,3> sub = intpt - firstpt;
+                    const REAL dist = Dot(sub, nc);
+                    distAlongLine.push_back(std::make_pair(dist, std::make_pair(iplane, ipt)));
+                    ipt++;
+                }
+                iplane++;
+                ipt=0;
+            }
+            
+            // Sort by distance
+            std::sort(distAlongLine.begin(), distAlongLine.end(),sortbyfirst2);
+            
+            if(distAlongLine[0].second.first == distAlongLine[1].second.first){ // if same plane in the first two points, no intersection
+                return false;
+            }
+            else {
+                // there is intersection and they are the second and third points in the ordered data structure
+                segment.push_back(intpoints[distAlongLine[1].second.first][distAlongLine[1].second.second]);
+                segment.push_back(intpoints[distAlongLine[2].second.first][distAlongLine[2].second.second]);
+            }
+            return true;
+        }
+        else{
+            if(intpoints[0].size() == 2){
+                // They do not intersect
+            }
+            else if (intpoints[1].size() == 2){
+                // They do not intersect
+            }
+            else{
+                TPZManVector<REAL,3> na,nb,nc(3,0.);
+                this->GetNormal(na);
+                otherpolyg.GetNormal(nb);
+                std::cout << "na: " << na << std::endl;
+                std::cout << "nb: " << nb << std::endl;
+                DebugStop(); // How is this possible?
+            }
+            return false; // No intersection, just return false
+        }
+    }
+    
+}
+
+bool sortbyfirst(const std::pair<REAL,TPZManVector<REAL,3>> &a,
+              const std::pair<REAL,TPZManVector<REAL,3>> &b)
+{
+    return (a.first < b.first);
+}
+
+const bool DFNPolygon::FindIntersectionPointsByTol(const DFNPolygon* polygB, TPZStack<TPZManVector<REAL,3> >& intpoints) const {
+    
+    if(intpoints.size() > 1) DebugStop();
+    const int oldSize = intpoints.size();
+    
+    TPZStack<TPZManVector<REAL,3> > intpointsLoc = intpoints;
+    
+    TPZManVector<REAL,3> pointOnIntersec(3,0.), directionToCent(3,0.);
+    
+    // Get direction perp to both planes
+    TPZManVector<REAL,3> na,nb,nc(3,0.);
+    this->GetNormal(na);
+    polygB->GetNormal(nb);
+    Cross(na, nb, nc);
+    const REAL ncNorm = Norm(nc);
+    for(int i = 0 ; i < 3 ; i++){
+        nc[i] *= 1./ncNorm;
+    }
+    
+    PointOnIntersection(polygB,nc,pointOnIntersec); // get the intersection of 3 planes (*this, polygB and the plane with normal = *this_normal x polygB_normal and center = to center of *this)
+    DirectionToCenter(polygB,nc,directionToCent); // direction perpendicular to the intersection line of the planes in the plane of polygon *this
+    
+    // Calculates the distance of all vertices of *this to intersection line in the direction directionToCent
+    if (fTolIntersect < 0) DebugStop(); // please set the tolerance
+    
+    const int nCornerNodes = this->NCornerNodes();
+    TPZVec<REAL> distancesPolygonToInter(nCornerNodes,0.);
+    
+    // First check intersections by tolerance
+    for (int i = 0; i < nCornerNodes; i++) {
+        TPZManVector<REAL,3> p(3,0.);
+        this->iCornerX(i,p);
+        p = p - pointOnIntersec;
+        const REAL distToIntersectLine = Dot(directionToCent, p);
+        distancesPolygonToInter[i] = distToIntersectLine;
+        
+        if (fabs(distToIntersectLine) < fTolIntersect) {
+            const REAL distAlongIntersectLine = Dot(nc, p);
+            for(int idim = 0 ; idim < 3; idim++){ // do the projection of point on the intersection
+                p[idim] = pointOnIntersec[idim] + distAlongIntersectLine * nc[idim];
+            }
+            intpointsLoc.Push(p);
+        }
+    }
+    
+    // Then, real intersections between plane with the intersection line
+    for (int i = 0; i < nCornerNodes; i++) {
+        const int in = ((i+1) % nCornerNodes) ;
+        const REAL dist1 = distancesPolygonToInter[i], dist2 = distancesPolygonToInter[in];
+        if (dist1*dist2 < 0) {
+            TPZManVector<REAL,3> realintpt(3,0.), p1(3,0.), p2(3,0.);
+            this->iCornerX(i, p1);
+            this->iCornerX(in, p2);
+            for (int idim = 0; idim < 3; idim++) {
+                realintpt[idim] = (p1[idim] * dist2 - p2[idim] * dist1) / (dist2-dist1);
+            }
+            intpointsLoc.Push(realintpt);
+        }
+    }
+    
+    const bool isNewPoints = intpointsLoc.size() - oldSize;
+    if(!isNewPoints || intpointsLoc.size() < 2) return false;
+    
+    // At this point, we have all the intersections, real and by tol, of the polygon
+    // Now we pick the two with biggest distance from each other
+    std::vector<std::pair<REAL,TPZManVector<REAL,3>>> distancesAlongInter;
+    for (auto intpt : intpointsLoc) {
+        const REAL dist = Dot(nc,intpt);
+        distancesAlongInter.push_back(std::make_pair(dist, intpt));
+    }
+    
+    std::sort(distancesAlongInter.begin(), distancesAlongInter.end(),sortbyfirst);
+    intpoints.clear();
+    intpoints.push_back((*distancesAlongInter.begin()).second);
+    intpoints.push_back((*distancesAlongInter.rbegin()).second);
+    
+    return isNewPoints;
+        
+}
+
+void DFNPolygon::DirectionToCenter(const DFNPolygon* polygB, TPZManVector<REAL,3>& nc,TPZManVector<REAL,3>& directionToCent) const {
+    TPZManVector<REAL,3> na;
+    this->GetNormal(na);
+    Cross(na,nc,directionToCent);
+    const REAL dirToCentNorm = Norm(directionToCent);
+    for(int i = 0 ; i < 3 ; i++){
+        directionToCent[i] *= 1./dirToCentNorm;
     }
 }
 
+void DFNPolygon::PointOnIntersection(const DFNPolygon* polygB, TPZManVector<REAL,3>& nc,TPZManVector<REAL,3>& pointOnIntersec) const {
+    
+    // This function simply solves the the equations of 3 planes = 0.
+    // This was done in Mathematica to accelerate computations
+    
+    TPZManVector<REAL,3> na,nb;
+    this->GetNormal(na);
+    polygB->GetNormal(nb);
+
+    const REAL na1 = na[0], na2 = na[1], na3 = na[2], nb1 = nb[0], nb2 = nb[1], nb3 = nb[2], nc1 = nc[0], nc2 = nc[1], nc3 = nc[2];
+    const REAL ctea = - this->Center()[0] * na1 - this->Center()[1] * na2 - this->Center()[2] * na3;
+    const REAL cteb = - polygB->Center()[0] * nb1 - polygB->Center()[1] * nb2 - polygB->Center()[2] * nb3;
+    const REAL ctec = - this->Center()[0] * nc1 - this->Center()[1] * nc2 - this->Center()[2] * nc3;
+    
+    // Done in Mathematica
+    pointOnIntersec[0] = (ctec*na3*nb2 - ctec*na2*nb3 - cteb*na3*nc2 + ctea*nb3*nc2 + cteb*na2*nc3 - ctea*nb2*nc3)/(-(na3*nb2*nc1) + na2*nb3*nc1 + na3*nb1*nc2 - na1*nb3*nc2 - na2*nb1*nc3 + na1*nb2*nc3);
+    pointOnIntersec[1] = (ctec*na3*nb1 - ctec*na1*nb3 - cteb*na3*nc1 + ctea*nb3*nc1 + cteb*na1*nc3 - ctea*nb1*nc3)/(na3*nb2*nc1 - na2*nb3*nc1 - na3*nb1*nc2 + na1*nb3*nc2 + na2*nb1*nc3 - na1*nb2*nc3);
+    pointOnIntersec[2] = (ctec*na2*nb1 - ctec*na1*nb2 - cteb*na2*nc1 + ctea*nb2*nc1 + cteb*na1*nc2 - ctea*nb1*nc2)/(-(na3*nb2*nc1) + na2*nb3*nc1 + na3*nb1*nc2 - na1*nb3*nc2 - na2*nb1*nc3 + na1*nb2*nc3);
+}
 
 void DFNPolygon::PlotVTK(const std::string filepath, const int materialID, const int64_t index) const{
     std::ofstream file(filepath);

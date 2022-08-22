@@ -17,12 +17,13 @@ typedef TPZFMatrix<REAL> Matrix;
 /// so we can represent it by the coordinates of its nodes
 typedef TPZStack<TPZManVector<REAL,3>,2> Segment;
 
-/*! 
- *  @brief     Describes a planar convex polygon from it's corner points. (not to be confused with DFNPolyhedron)
- *  @details Enumeration of corner points should follow standard PZ topology, where 
- *  corner nodes are numbered counter-clockwise (clockwise should work as well) from
- *  zero to N. (This condition will automatically be met for triangles, but not 
- *  always for quadrilaterals and higher order polygons)
+/*!
+ *
+ * @brief     Describes a planar convex polygon from it's corner points. (not to be confused with DFNPolyhedron)
+ * @details Enumeration of corner points should follow standard PZ topology, where
+ * corner nodes are numbered counter-clockwise (clockwise should work as well) from
+ * zero to N. (This condition will automatically be met for triangles, but not
+ * always for quadrilaterals and higher order polygons)
  */
 class DFNPolygon
 {
@@ -47,6 +48,7 @@ class DFNPolygon
 	
 	/// Index of biggest absolute component of normal vector (for costless projection)
 	int fMax_component = -1;
+    
 	
   public:
 	/// Empty constructor
@@ -83,6 +85,8 @@ class DFNPolygon
 	Matrix axis() const {return fAxis;}
     
     TPZManVector<REAL,3>& Center() {return fCenter;}
+    const TPZManVector<REAL,3>& Center() const {return fCenter;}
+   
 
 	/// Return corner coordinates
 	const Matrix& GetCornersX() const;
@@ -183,7 +187,28 @@ class DFNPolygon
 	*/
 	TPZVec<TPZGeoEl*> InsertGeomRepresentation(TPZGeoMesh* gmesh, int matid = 100, int exclusive_dim = 0);
 
+    
+    /// Returns centroid of the polygon
+    /// @param centroid coordinates of centroid
 	void ComputeCentroid(TPZVec<REAL>& centroid);
+    
+    /// Finds intersection points by tolerance (if polygon node is very close to intersection line but does not touch) and returns true if it found. It also adds the projected point to the vector intpoints
+    /// @param polygB second polygon to check
+    /// @param intpoints vector with intersection points for these two polygons
+    const bool FindIntersectionPointsByTol(const DFNPolygon* polygB, TPZStack<TPZManVector<REAL,3> >& intpoints) const;
+    
+    /// Gets the point at the intersection of polygon planes. This is done by solving the equations of 3 planes = 0
+    /// @param polygB polygon intersecting with this
+    /// @param nc normal that is calculated as this.normal x polygB.normal
+    /// @param pointOnIntersec point on intersection
+    void PointOnIntersection(const DFNPolygon* polygB, TPZManVector<REAL,3>& nc, TPZManVector<REAL,3>& pointOnIntersec) const;
+    
+    
+    /// Returns the direction on polygon this perpendicular to the intersection line between this and polygB
+    /// @param polygB polygon that may intersect with this
+    /// @param nc normal that is calculated as this.normal x polygB.normal
+    /// @param directionToCent direction to center perpendicular to intersection line
+    void DirectionToCenter(const DFNPolygon* polygB, TPZManVector<REAL,3>& nc,TPZManVector<REAL,3>& directionToCent) const;
 
 	/// Plot polygon graphic to VTK file. You can set a material id and an element index to it and they'll be exported to VTK file
 	void PlotVTK(const std::string filepath, const int materialID = 0, const int64_t index = 0) const;
@@ -206,6 +231,9 @@ class DFNPolygon
 
     /// For a subpolygon, returns the cosine of the "worst angle". The bigger is the angles, the less planar is the subpolygon
     const REAL GetWorstAngleCos();
+    
+    /// Tolerance to consider that a close point is an intersection
+    static REAL fTolIntersect;
     
   private:
 	/// Checks consistency and initializes the datastructure of the object
