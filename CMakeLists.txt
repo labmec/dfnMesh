@@ -11,6 +11,11 @@ project (DFNMesh)
 # Adds definition of macro PROJECT_ROOT, which contains a string of the path to project directory
 add_compile_definitions("PROJECT_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 
+# Create folder with input files
+set(INPUTMESHESDIR ${CMAKE_SOURCE_DIR}/examples)
+set (CONFIG_H "${CMAKE_SOURCE_DIR}/src/dfn_config.h")
+configure_file ("${CMAKE_SOURCE_DIR}/src/dfn_config.h.in" ${CONFIG_H})
+
 # Install paths
 include(GNUInstallDirs)
 

@@ -80,8 +80,3 @@ target_link_libraries(dfnGoBack PRIVATE dfnlib)
 # CTests are in a separate file
 include(CTestDFN.cmake)
 
-# Create folder with input files
-set(INPUTMESHESDIR ${CMAKE_SOURCE_DIR}/examples)
-set (CONFIG_H "${CMAKE_SOURCE_DIR}/src/dfn_config.h")
-configure_file ("${CMAKE_SOURCE_DIR}/src/dfn_config.h.in" ${CONFIG_H})
-
