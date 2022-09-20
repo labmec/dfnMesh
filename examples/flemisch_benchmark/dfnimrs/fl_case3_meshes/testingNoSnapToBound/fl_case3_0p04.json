@@ -11,6 +11,9 @@
     "TolDist": 0.04,
     "TolAngle": 1.0e-4,
 	"useMHM": false,
+    "RunWithTransport": false,
+    "DeltaT": 1.0e-2,
+    "NSteps": 100,
     "Domains": [
         {
             "name": "k33",
@@ -19,7 +22,7 @@
             "phi": 0.2
         }
     ],
-    "NCoarseGroups": 768,
+    "NCoarseGroups": 960,
     "FractureGlueMatId": 1000000,
     "FractureGluePerm": 1.0,
     "Boundary": [
@@ -48,7 +51,7 @@
     "Fractures":[
         {
             "Index": 4,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
@@ -62,7 +65,7 @@
         },
         {
             "Index": 0,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
@@ -76,7 +79,7 @@
         },
         {
             "Index": 1,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
@@ -90,7 +93,7 @@
         },
         {
             "Index": 7,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
@@ -104,7 +107,7 @@
         },
         {
             "Index": 3,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
@@ -118,7 +121,7 @@
         },
         {
             "Index": 2,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
@@ -132,7 +135,7 @@
         },
         {
             "Index": 5,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",
@@ -146,7 +149,7 @@
         },
         {
             "Index": 6,
-            "K" : 1.0e2,
+            "K" : 1.0e4,
             "phi": 0.2,
             "width": 1.0e-2,
             "Limit": "Erecovered",

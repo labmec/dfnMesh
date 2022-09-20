@@ -11,8 +11,8 @@
             "phi": 0.2 // Porosity
         }
     ],
-    "useMHM": false, // Tells code if it is to use MHM in the simulatiom
-    "NCoarseGroups": 2, // Number of elements in the initial coarse mesh (used for multiscale method)
+    "useMHM": true, // Tells code if it is to use MHM in the simulatiom
+    "NCoarseGroups": 3, // Number of elements in the initial coarse mesh (used for multiscale method)
     "Boundary": [ // Vector with all BCs of 3D matrix domain
         {
             "name": "inlet", // name of BC

@@ -23,13 +23,14 @@ elsize = 200.0 # not used if setting transfinite curve
 
 # whre should it be cut
 # ===> In x
-xcuts = []
+gap = 2./3.
+xcuts = [0.]
 
 # ===> In y
-ycuts = []
+ycuts = [0.]
 
 # ===> In z
-zcuts = [0]
+zcuts = []
 
 # Bounding box for inlet
 eps = 0.01

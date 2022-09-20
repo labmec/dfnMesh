@@ -99,7 +99,8 @@ int main(int argc, char* argv[]){
     getOutputFileNames(inputfiledir,outputFolder,coarseOutputName,fineOutputName,pathToJson,meshFile);
     
     gmesh = ReadInput(pathToJson, meshFile ,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name,meshEdgesBaseSize);
-    DFNPolygon::fTolIntersect = 1.1*tol_dist;
+//    DFNPolygon::fTolIntersect = 1.1*tol_dist;
+    DFNPolygon::fTolIntersect = 0.001;
 	gmsh::initialize();
 	DFN::GmshConfig();
     
