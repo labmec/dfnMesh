@@ -20,6 +20,11 @@ set(DFN_INCLUDE_DIRS ${PZ_INCLUDE_DIRS} ${GMSH_INC} ${CMAKE_CURRENT_SOURCE_DIR} 
 add_library(dfnlib ${headers} ${sources})
 target_link_libraries(dfnlib PUBLIC ${GMSH_LIB} NeoPZ::pz)
 # target_include_directories(dfnlib PUBLIC ${DFN_INCLUDE_DIRS} )
+
+# This package is here because iMRS is the only one that uses it
+find_package(libInterpolate REQUIRED HINTS ${CMAKE_SOURCE_DIR}/../libinterpolate_install ${CMAKE_SOURCE_DIR}/libinterpolate_install)
+link_libraries(dfnlib libInterpolate::Interpolate)
+
 target_include_directories(dfnlib PUBLIC ${PZ_INCLUDE_DIRS})
 
 target_include_directories(dfnlib PUBLIC 

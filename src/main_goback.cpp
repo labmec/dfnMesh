@@ -100,6 +100,7 @@ int main(int argc, char* argv[]){
     
     gmesh = ReadInput(pathToJson, meshFile ,map_dfnrawdata,tol_dist,tol_angle,prerefine,dim_physical_tag_and_name,meshEdgesBaseSize);
 //    DFNPolygon::fTolIntersect = 1.1*tol_dist;
+   
     DFNPolygon::fTolIntersect = 0.001;
 	gmsh::initialize();
 	DFN::GmshConfig();
@@ -113,7 +114,8 @@ int main(int argc, char* argv[]){
 	time.start();
     /// Constructor of DFNMesh initializes the skeleton mesh
 	DFNMesh dfn(gmesh,dim_physical_tag_and_name,tol_dist,tol_angle,prerefine,meshEdgesBaseSize);
-    
+//    dfn.ExportGMshCAD(fineOutputName);
+    // Generate submesh
 
 	// std::ofstream out1("graphics/CoarseMesh.vtk");
 	// TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);
@@ -162,7 +164,7 @@ int main(int argc, char* argv[]){
 		DFNPolygon polygon(dfnrawdata.fpolygonmatrices, dfn.Mesh());
         // Initialize the basic data of fracture
         // initialize an empty DFNFracture object
-		DFNFracture *fracture = dfn.CreateFracture(polygon,dfnrawdata.flimit_directives,dfnrawdata.fmatid,dfnrawdata.fnrefborder,dfnrawdata.fSizeOfEdgesTouchFracBorder);
+		DFNFracture *fracture = dfn.CreateFracture(polygon,it_dfnrawdata->first,dfnrawdata.flimit_directives,dfnrawdata.fmatid,dfnrawdata.fnrefborder,dfnrawdata.fSizeOfEdgesTouchFracBorder);
         
 		// Find intersected ribs and create a corresponding DFNRib object (administered by DFNFracture)
 		fracture->CreateRibs();

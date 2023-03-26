@@ -1,0 +1,113 @@
+{
+    "$schema": "../dfn_schema.json",
+    "Mesh": "unisim_coarse.msh",
+    "TolDist":  1.50,
+    "TolAngle": 0.2,
+    "Domains": [
+        {
+            "name": "k33",
+            "matid": 1,
+            "K": 1.0e-6,
+            "phi": 0.25
+        },
+        {
+            "name": "k31",
+            "matid": 2,
+            "K": 1.0e-4,
+            "phi": 0.2
+        }
+    ],
+    "Boundary": [
+        {
+            "name": "inlet",
+            "matid": 3,
+            "type": 0, // imposed pressure
+            "value": 4.0e6
+        },
+        {
+            "name": "outlet",
+            "matid": 4,
+            "type": 0, // imposed pressure
+            "value": 1.0e6
+        },
+        {
+            "name": "noflux",
+            "matid": 5,
+            "type": 1, // imposed flux
+            "value": 0.0
+        }
+        
+    ],
+
+    "NCoarseGroups": 2481,
+    "FractureHybridPressureMatId": 299,
+    "FractureInitMatId": 300,
+    "FractureGlueMatId": 1000000,
+    "FractureGluePerm": 1.0,
+    "useMHM":true,
+    "needsMerge":true,
+    "RunWithTransport": true,
+    "DeltaT": 8.6e5,
+    "NSteps": 100,
+    "SimulationDim": 3,
+    "Fractures": [
+        {
+            "Index": 0,
+            "K" : 1.0e-8,
+            "phi": 0.1,
+            "width": 0.001,
+            "Limit": "Erecovered",
+            "Nodes": [
+                [5488.89, 3580.03, 450.00],
+                [3519.06, 2257.89, 450.00],
+                [3519.06, 2257.89, 0.00],
+                [5488.89, 3580.03, 0.00]
+
+            ]
+        }
+    // {
+    //     "Index": 0,
+    //     "K" : 1.0e-8,
+    //     "phi": 0.1,
+    //     "width": 0.001,
+    //     "Limit": "Etruncated",
+    //     "Nodes": [
+    //         [5488.89, 3580.03, 250.00],
+    //         [3519.06, 2257.89, 250.00],
+    //         [3519.06, 2257.89, 0.00],
+    //         [5488.89, 3580.03, 0.00]
+    //
+    //     ]
+    // }
+		
+    // {
+ //        "Index": 0,
+ //        "K" : 1.0e-8,
+ //        "phi": 0.1,
+ //        "width": 0.001,
+ //        "Limit": "Etruncated",
+ //        "Nodes": [
+ //            [-10.00, -10.00, 40.00],
+ //            [-10.00, 6500.00, 40.00],
+ //            [8500.00, 6500.00, 40.00],
+ //            [8500.00, -10.00, 40.00]
+ //        ]
+ //    },
+ //    {
+ //        "Index": 1,
+ //        "K" : 1.0e-8,
+ //        "phi": 0.1,
+ //        "width": 0.001,
+ //        "Limit": "Etruncated",
+ //        "Nodes": [
+ //            [-10.00, -10.00, 120.00],
+ //            [-10.00, 6500.00, 120.00],
+ //            [8500.00, 6500.00, 120.00],
+ //            [8500.00, -10.00, 120.00]
+ //        ]
+ //    }
+ //
+	
+        
+    ]
+}

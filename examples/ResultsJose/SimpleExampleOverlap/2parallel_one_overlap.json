@@ -1,0 +1,76 @@
+{
+    "$schema": "./dfn_schema.json",
+    // "PZGenGrid":{
+    //     "Origin": [0.0, 0.0, 0.0],
+    //     // "x0": [0.0, 0.0, 0.0],
+    //     // "minX": [0.0, 0.0, 0.0],
+    //     // "maxX": [0.0, 0.0, 0.0],
+    //     // "xf": [2.0, 2.0, 2.0],
+    //     // "Endpoint": [2.0, 2.0, 2.0],
+    //     "Dimensions": [2.0, 2.0, 2.0],
+    //     "MMeshType": "EHexahedral",
+    //     "Nels": [2,1,1]
+    //     // "nelDiv": [1,1,1]
+    // },
+    "Mesh" : "2parallel_coarse.msh",
+    "TolDist": 0.06,
+    "TolAngle": 1e-1,
+    // "Mesh" : "examples/cube.msh",
+        "Domains": [
+        {
+            "name": "domain",
+            "matid": 1,
+            "K": 1.0,
+            "phi": 0.2
+        }
+    ],
+    "NCoarseGroups": 2,
+    "Boundary": [
+        {
+            "name": "bc",
+            "matid": 2,
+            "type": 0, // imposed pressure
+            "value": 1.0
+        }
+    ],
+    "FractureHybridPressureMatId": 299,
+    "FractureInitMatId": 300,
+    "Fractures":[
+        { //Fracture 0
+            "Index": 0,
+            "K" : 1.0,
+            "phi": 0.2,
+            "Limit": "Etruncated",
+            "Nodes":[
+                [0.750, 2.50,-0.50],
+                [0.750,-0.50,-0.50],
+                [0.750,-0.50, 2.50],
+                [0.750, 2.50, 2.50]
+            ]
+        },
+        { //Fracture 1
+            "Index": 1,
+            "K" : 1.0,
+            "phi": 0.2,
+            "Limit": "Etruncated",
+            "Nodes":[
+                [0.90, 2.50,-0.50],
+                [0.90,-0.50,-0.50],
+                [0.90,-0.50, 2.50],
+                [0.90, 2.50, 2.50]
+            ]
+        }
+        ,{//Fracture 2
+            "Index": 2,
+            "K" : 1.0,
+            "phi": 0.2,
+            "Limit": "Etruncated",
+            "Nodes":[
+                [1.05, 2.50,-0.50],
+                [1.05,-0.50,-0.50],
+                [1.05,-0.50, 2.50],
+                [1.05, 2.50, 2.50]
+            ]
+        }
+    ]
+}

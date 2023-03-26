@@ -65,6 +65,7 @@ MESSAGE( STATUS "PZ_INCLUDE_DIRS:         " ${PZ_INCLUDE_DIRS} )
 MESSAGE( STATUS "PZ_DIR:                  " ${NeoPZ_DIR} )
 
 
+
 # Location to search files or libraries
 set(SEARCH_DIRS ENV PATH /usr/local/opt/ /usr/local/opt/qt5/lib/cmake/ /usr/include /usr/local/include /usr/local/include/boost /usr/local/include/log4cxx /usr/local/include/tbb /usr/lib /usr/lib64 /usr/local/lib ./. ./.. ./../libs ./../libs/fad ./../libs/metis ./../libs/metis/include ./../libs/metis/lib ./../externallibs ./../externallibs/fad ./../externallibs/pthread ./../externallibs/metis ./../externallibs/metis/include ./../externallibs/metis/lib ./..metis ./../metis/include ./../metis/lib ./externallibs/lib ./externallibs/include ./../externallibs/lib ./../externallibs/include)
 
@@ -131,6 +132,7 @@ endif()
 
 
 
+
 # linking with GMSH
 find_library(GMSH_LIB gmsh HINTS "/home/pedro/projetos/library/gmsh-install/lib" "../lib/gmsh-install/lib" "../gmsh-4.10.5-MacOSX-sdk/lib" "../gmsh_install/lib" NO_DEFAULT_PATH)
 find_path(GMSH_INC gmsh.h HINTS "/home/pedro/projetos/library/gmsh-install/include" "../lib/gmsh-install/include" "../gmsh-4.10.5-MacOSX-sdk/include" "../gmsh_install/include" NO_DEFAULT_PATH)
@@ -172,6 +174,9 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     message(FATAL_ERROR "Please set install prefix")
   endif()
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
+
+
 
 install(TARGETS dfnlib
         EXPORT DFNTargets

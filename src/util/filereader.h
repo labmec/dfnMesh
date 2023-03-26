@@ -21,6 +21,7 @@
 #include "dfnrawdata.h"
 #include "dfn_config.h"
 
+#include <libInterpolate/Interpolate.hpp>
 
 /**
  * @brief Define which example to run. See example file sintax in function definition
@@ -33,7 +34,9 @@
  * @returns pointer to geometric mesh created/read
 */
 TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>& dfnrawdata, std::string mshfile, REAL& toldist, REAL& tolangle, TPZManVector<std::map<int,std::string>,4>& dim_physical_tag_and_name, REAL& meshEdgesBaseSize);
-
+void ModifyTopeAndBase2(TPZGeoMesh * gmesh ,int nlayers);
+void ReadData(std::string name, bool print_table_Q, std::vector<double> &x, std::vector<double> &y, std::vector<double> &z);
+TPZGeoMesh* GenerateUnisimMesh(int nlayers);
 
 void ReadFile(	const std::string			& filename, 
 				TPZStack<TPZFMatrix<REAL>>	& polygonmatrices, 
@@ -620,11 +623,22 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 	}else{ // mesh file
 		TPZGmshReader reader;
         std::string fullfilename = mshfile;
+//        mshfile    std::string    "/Users/jose/Documents/GitHub/dfnMesh/examples/../examples/ResultsJose/UNISIM_Test/fl_case1.msh"
 //#ifdef MACOSX
 //        fullfilename = "../" + mshfile;
 //#endif
 //        fullfilename = basemeshpath + "/" + fullfilename;
 		gmesh = reader.GeometricGmshMesh(fullfilename, gmesh);
+        
+        //
+        
+       // gmesh=GenerateUnisimMesh(2);
+//        TPZPersistenceManager::OpenRead("/Users/jose/Documents/GitHub/dfnMesh/examples/ResultsJose/UNISIM_Test/test_coarse.txt");
+//        TPZSavable *restore = TPZPersistenceManager::ReadFromFile();
+//        gmesh = dynamic_cast<TPZGeoMesh *>(restore);
+        
+        //
+        
 		dim_physical_tag_and_name = reader.GetDimPhysicalTagName();
 #ifdef PZDEBUG
 		std::cout << "------------------- Materials from supplied coarse mesh ---------------" << std::endl;
@@ -645,4 +659,183 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 	TPZVTKGeoMesh::PrintGMeshVTK(gmesh, out1, true, true);
 	return gmesh;
 }
+TPZGeoMesh * GenerateUnisimMesh(int nlayers){
+    
+    TPZManVector<std::map<std::string,int>,4> dim_name_and_physical_tagCoarse(4); // From 0D to 3D
+    /*
+     2 4 "inlet"
+     2 5 "outlet"
+     2 6 "noflux"
+     3 3 "k33"
+     3 10 "k31"
+     */
+    dim_name_and_physical_tagCoarse[2]["k33"] = 1;
+    dim_name_and_physical_tagCoarse[2]["k31"] = 2;
+    dim_name_and_physical_tagCoarse[1]["inlet"] = 3;
+    dim_name_and_physical_tagCoarse[1]["outlet"] = 4;
+    dim_name_and_physical_tagCoarse[1]["noflux"] = 5;
+    
+    // Creating gmsh reader
+    TPZGmshReader  GeometryFine;
+    TPZGeoMesh *gmesh2D;
+    REAL l = 1.0;
+    GeometryFine.SetCharacteristiclength(l);
+    std::string filename("/Users/jose/Documents/GitHub/dfnMesh/examples/ResultsJose/UNISIM_Test/unisim_2D.msh");
+    // Reading mesh
+    GeometryFine.SetDimNamePhysical(dim_name_and_physical_tagCoarse);
+    gmesh2D = GeometryFine.GeometricGmshMesh(filename,nullptr,false);
+    gmesh2D->BuildConnectivity();
+    std::cout<<"Dim: "<<gmesh2D->Dimension()<<std::endl;
+    std::cout<<"Nels: "<<gmesh2D->NElements()<<std::endl;
+    
+    std::ofstream file2("COARSEfromDFN2D.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(gmesh2D, file2);
+    
+    
+    
+   
+    int topID= 5;
+    int baseID = 5;
+    int w=200;
+    
+    TPZGeoMesh * returnedMesh = nullptr;
+    
+    
+    TPZExtendGridDimension extend(gmesh2D, w);
+    extend.SetElType(1);
+    returnedMesh = extend.ExtendedMesh( nlayers,topID,baseID);
 
+//    ModifyTopeAndBase2(returnedMesh ,nlayers);
+//    coarse3D=returnedMesh;
+    
+    std::ofstream file("COARSEfromDFN.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(returnedMesh, file);
+    return returnedMesh;
+    
+}
+void ModifyTopeAndBase2(TPZGeoMesh * gmesh ,int nlayers){
+//    std::string filename2 = "Reservoir/base_unisimMOD.txt";
+    
+     std::string filename1 = "topeMOD.txt";
+    std::string filename2 = "baseMOD.txt";
+    std::vector<double> x, y, z, x1,y1,z1;
+    ReadData(filename1, true, x, y, z);
+    ReadData(filename2, true, x1, y1, z1);
+
+    _2D::ThinPlateSplineInterpolator <double> interpTope;
+    _2D::ThinPlateSplineInterpolator <double> interpBase;
+
+    interpTope.setData(x,y,z);
+    interpBase.setData(x1,y1,z1);
+
+    int nCoordinates = gmesh->NodeVec().NElements();
+    double sum=0.0;
+    for (auto val:z) {
+        sum += val;
+    }
+    double val_tope= sum / z.size();
+    sum=0.0;
+    for (auto val:z1) {
+        sum += val;
+    }
+    double val_base= sum / z1.size();
+//    val_base = 1000;
+//    val_tope = 5000;
+//
+//    val_tope = 3000;
+//    val_base = 3000;
+    int npointsPerLayer = nCoordinates/(nlayers+1);
+    double valinter=0.0;
+    for (int ilay = 1; ilay <= nlayers+1; ilay++) {
+        for (int ipoint = (ilay-1)*npointsPerLayer; ipoint<(ilay)*npointsPerLayer; ipoint++) {
+            TPZGeoNode node = gmesh->NodeVec()[ipoint];
+            TPZVec<REAL> co(3);
+            node.GetCoordinates(co);
+            double topeinterpol =interpTope(co[0],co[1]);
+            double baseinterpol = interpBase(co[0],co[1]);
+            if (topeinterpol==0) {
+                topeinterpol = val_tope;
+                if (co[0]>1000.00) {
+                    topeinterpol -= 120;
+                }
+            }
+            if (baseinterpol==0) {
+                
+                baseinterpol = val_base;
+                if (co[0]>1000.00) {
+                   baseinterpol = val_base-80;
+                }
+
+            }
+
+            if (ilay==1) {
+                valinter=topeinterpol;
+//                valinter = 3500;
+                co[2]=valinter;
+                gmesh->NodeVec()[ipoint].SetCoord(co);
+            }
+            if (ilay==nlayers+1) {
+                valinter = baseinterpol;
+//                valinter = 2850;
+                co[2]=valinter;
+                gmesh->NodeVec()[ipoint].SetCoord(co);
+            }
+            if (ilay>1   && ilay < nlayers+1) {
+                valinter = topeinterpol + (ilay-1)*(baseinterpol - topeinterpol)/(nlayers);
+                co[2]=valinter;
+                gmesh->NodeVec()[ipoint].SetCoord(co);
+            }
+        }
+    }
+}
+void ReadData(std::string name, bool print_table_Q, std::vector<double> &x, std::vector<double> &y, std::vector<double> &z){
+    
+    bool modpoints = true;
+    std::ifstream file;
+    std::string basemeshpath("/Users/jose/Documents/GitHub/iMRS/FracMeshes/dfnimrs/unisim_meshes/Reservoir_props/");
+    basemeshpath = basemeshpath  + name;
+    file.open(basemeshpath);
+    int i=1;
+    
+    
+    std::string line;
+    while (std::getline(file, line))
+    {
+        std::istringstream iss(line);
+        std::istringstream issText(line);
+        char l = line[0];
+        if(l != '/'){
+            i=i+1;
+            int val = i%15;
+            if(val ==0){
+                double a, b, c;
+                if(iss >> a >> b >> c) ;
+                if (modpoints) {
+                    x.push_back(a - 350808.47);
+                    y.push_back(b - 7.51376238e6);
+                    z.push_back(c);
+                }
+                else{
+                x.push_back(a);
+                y.push_back(b);
+                z.push_back(c);
+                }
+            };
+        };
+    };
+    
+    if(x.size() == 0){
+        std::cout<<"No data read."<<std::endl;
+        
+        DebugStop();
+    }
+    if(print_table_Q){
+        std::cout<<"*************************"<<std::endl;
+        std::cout<<"Reading file... ok!"<<std::endl;
+        std::cout<<"*************************"<<std::endl;
+        std::cout<<x.size()<<std::endl;
+        std::cout<<y.size()<<std::endl;
+        std::cout<<z.size()<<std::endl;
+    }
+    
+}

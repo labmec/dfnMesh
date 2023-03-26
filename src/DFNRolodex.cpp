@@ -6,7 +6,7 @@
 
 #ifdef PZDEBUG
     void TRolodex::CoherentAngleTest(const int64_t AxleIndex, const std::map<REAL, TPZGeoElSide>& SortedCards){
-        constexpr REAL _359degrees = 359.99*M_PI/180.;
+        constexpr REAL _359degrees = 359.999999*M_PI/180.;
         const REAL MaxAngle = SortedCards.rbegin()->first;
         if(MaxAngle > _359degrees){
             std::stringstream msg;

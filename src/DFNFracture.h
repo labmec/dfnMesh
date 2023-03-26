@@ -61,6 +61,7 @@ private:
 
     /// Index of this fracture at fdfnMesh fracture vector
     int fIndex = -1;
+    int fIndexFromJson = -1;
 
     /// Directive for determining if this fracture limits are truncated, extended or recovered
     FracLimit fLimit = Eextended;
@@ -104,7 +105,7 @@ public:
     /**
      * @brief Constructor from a DFNPolygon
      */
-    DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture, int nreffracborder = -1, REAL sizeOfEdgesTouchFracBorder = -1.);
+    DFNFracture(DFNPolygon &Polygon, int indexFromJson, DFNMesh *dfnMesh, FracLimit limithandling = Eextended, int matid = DFNMaterial::Efracture, int nreffracborder = -1, REAL sizeOfEdgesTouchFracBorder = -1.);
     
     /// Copy constructor
     DFNFracture(const DFNFracture &copy);
@@ -131,6 +132,7 @@ public:
     int MaterialId() const{return fmatid;}
     void SetMaterialId(int matid){fmatid = matid;}
     int Index() const{return fIndex;}
+    int IndexFromJson() const{return fIndexFromJson;}
 
     /// Number of 2D elements at the surface of this fracture
     int NSurfElements() const{return fSurfaceFaces.size();}

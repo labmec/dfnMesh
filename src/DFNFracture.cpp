@@ -30,10 +30,11 @@ DFNFracture::DFNFracture(){
 }
 
 // Constructor with corner points, a geomesh and material ID
-DFNFracture::DFNFracture(DFNPolygon &Polygon, DFNMesh *dfnMesh, FracLimit limithandling, int matid, int nreffracborder, REAL sizeOfEdgesTouchFracBorder)
+DFNFracture::DFNFracture(DFNPolygon &Polygon, int indexFromJson, DFNMesh *dfnMesh, FracLimit limithandling, int matid, int nreffracborder, REAL sizeOfEdgesTouchFracBorder)
     :fPolygon(Polygon),
     fmatid(matid),
-    fSizeOfEdgesTouchFracBorder(sizeOfEdgesTouchFracBorder)
+    fSizeOfEdgesTouchFracBorder(sizeOfEdgesTouchFracBorder),
+    fIndexFromJson(indexFromJson)
 {
     fdfnMesh = dfnMesh;
     fLimit = limithandling;
@@ -2621,7 +2622,8 @@ bool DFNFracture::TryFaceIncorporate_Geometry(const TPZStack<int64_t>& subpolygo
         const int edgeOrient = DFN::sgn(subpolygon[iedge]);
         TPZGeoEl* edge = gmesh->Element(edgeindex);
         const TPZGeoElSide edgeside(edge,edge->NSides()-1);
-        
+      
+        //
         // Group neighbours. There should only be one neighbour that matches each of the 3 criteria.
         TPZGeoElSide neig = edgeside.Neighbour();
         for (; neig != edgeside ; ++neig) {
