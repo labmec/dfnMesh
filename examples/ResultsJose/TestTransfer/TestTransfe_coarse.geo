@@ -3,15 +3,15 @@ SetFactory("OpenCASCADE");
 //+
 h=0.0;
 Point(1) = {0.0, 0.0, 0, h};
-Point(2) = {5000.0, 0.0, 0, h};
-Point(3) = {0.0, 5000.0, 0, h};
-Point(4) = {5000.0, 5000.0, 0, h};
+Point(2) = {10.0, 0.0, 0, h};
+Point(3) = {0.0, 10.0, 0, h};
+Point(4) = {10.0, 10.0, 0, h};
 
-Point(5) = {0.0, 0.0, 300, h};
-Point(6) = {5000.0, 0.0, 300, h};
+Point(5) = {0.0, 0.0, 15, h};
+Point(6) = {10.0, 0.0, 15, h};
 
-Point(7) = {0.0, 5000.0, 300, h};
-Point(8) = {5000.0, 5000.0, 300, h};
+Point(7) = {0.0, 10.0, 15, h};
+Point(8) = {10.0, 10.0, 15, h};
 
 Line(1) = {1, 2};
 //+
@@ -62,21 +62,37 @@ Curve Loop(6) = {11, -3, -12, 9};
 //+
 Plane Surface(6) = {6};
 //+
+
+
 Surface Loop(1) = {3, 1, 2, 4, 6, 5};
 //+
 Volume(1) = {1};
+
 //+
-Physical Surface("inlet", 13) = {6};
+Physical Volume("k33", 1) = {1};
+
+//No Gravity
+// //+
+// Physical Surface("inlet", 3) = {6};
+// //+
+// Physical Surface("outlet", 4) = {1};
+// //+
+// Physical Surface("noflux", 5) = {2, 4, 5, 3};
+
+//Gravity
+Physical Surface("inlet", 3) = {5};
 //+
-Physical Surface("outlet", 14) = {1};
+Physical Surface("outlet", 13) = {2};
 //+
-Physical Surface("noflux", 15) = {2, 4, 5, 3};
-//+
-Physical Volume("k33", 16) = {1};
+Physical Surface("noflux", 14) = {1, 3, 4, 6};
+
+
 
 Coherence Mesh;
 Transfinite Curve {:} = 5;
+Transfinite Curve {12,11,6,5} = 5;
 Transfinite Surface{:};
 Transfinite Volume{:};
+Coherence Mesh;
 Recombine Surface{:};
-Recombine Volume{:};
+Recombine Volume{:};//+

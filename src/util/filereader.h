@@ -20,7 +20,7 @@
 
 #include "dfnrawdata.h"
 #include "dfn_config.h"
-
+#include <iomanip> // std::setprecision.
 #include <libInterpolate/Interpolate.hpp>
 
 /**
@@ -37,7 +37,10 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 void ModifyTopeAndBase2(TPZGeoMesh * gmesh ,int nlayers);
 void ReadData(std::string name, bool print_table_Q, std::vector<double> &x, std::vector<double> &y, std::vector<double> &z);
 TPZGeoMesh* GenerateUnisimMesh(int nlayers);
-
+void AllForceCoplanarity(TPZGeoMesh *gmesh);
+bool ForceCoplanarity(TPZVec<REAL> &c1, TPZVec<REAL> &c2, TPZVec<REAL> &c3, TPZVec<REAL> &c4);
+double determinante(TPZVec<TPZVec<REAL>> matriz);
+bool IsCoplanar(TPZVec<REAL> &c1, TPZVec<REAL> &c2, TPZVec<REAL> &c3, TPZVec<REAL> &c4);
 void ReadFile(	const std::string			& filename, 
 				TPZStack<TPZFMatrix<REAL>>	& polygonmatrices, 
 				std::string 				& mshfile,
@@ -628,11 +631,11 @@ TPZGeoMesh* SetupExampleFromFile(std::string filename, std::map<int, DFNRawData>
 //        fullfilename = "../" + mshfile;
 //#endif
 //        fullfilename = basemeshpath + "/" + fullfilename;
-		gmesh = reader.GeometricGmshMesh(fullfilename, gmesh);
+//		gmesh = reader.GeometricGmshMesh(fullfilename, gmesh);
         
         //
         
-       // gmesh=GenerateUnisimMesh(2);
+        gmesh=GenerateUnisimMesh(2);
 //        TPZPersistenceManager::OpenRead("/Users/jose/Documents/GitHub/dfnMesh/examples/ResultsJose/UNISIM_Test/test_coarse.txt");
 //        TPZSavable *restore = TPZPersistenceManager::ReadFromFile();
 //        gmesh = dynamic_cast<TPZGeoMesh *>(restore);
@@ -704,89 +707,178 @@ TPZGeoMesh * GenerateUnisimMesh(int nlayers){
     TPZExtendGridDimension extend(gmesh2D, w);
     extend.SetElType(1);
     returnedMesh = extend.ExtendedMesh( nlayers,topID,baseID);
-
-//    ModifyTopeAndBase2(returnedMesh ,nlayers);
+    
+    ModifyTopeAndBase2(returnedMesh ,nlayers);
+    std::ofstream file("COARSEfromDFNaNTES.vtk");
+    TPZVTKGeoMesh::PrintGMeshVTK(returnedMesh, file);
+    
+//    AllForceCoplanarity(returnedMesh);
+//    AllForceCoplanarity(returnedMesh);
+//    std::ofstream file20("COARSEfromDFN.vtk");
+//    TPZVTKGeoMesh::PrintGMeshVTK(returnedMesh, file20);
 //    coarse3D=returnedMesh;
     
-    std::ofstream file("COARSEfromDFN.vtk");
-    TPZVTKGeoMesh::PrintGMeshVTK(returnedMesh, file);
+//    std::ofstream file("COARSEfromDFN.vtk");
+//    TPZVTKGeoMesh::PrintGMeshVTK(returnedMesh, file);
     return returnedMesh;
     
 }
 void ModifyTopeAndBase2(TPZGeoMesh * gmesh ,int nlayers){
 //    std::string filename2 = "Reservoir/base_unisimMOD.txt";
     
-     std::string filename1 = "topeMOD.txt";
-    std::string filename2 = "baseMOD.txt";
-    std::vector<double> x, y, z, x1,y1,z1;
-    ReadData(filename1, true, x, y, z);
-    ReadData(filename2, true, x1, y1, z1);
-
-    _2D::ThinPlateSplineInterpolator <double> interpTope;
-    _2D::ThinPlateSplineInterpolator <double> interpBase;
-
-    interpTope.setData(x,y,z);
-    interpBase.setData(x1,y1,z1);
-
-    int nCoordinates = gmesh->NodeVec().NElements();
-    double sum=0.0;
-    for (auto val:z) {
-        sum += val;
-    }
-    double val_tope= sum / z.size();
-    sum=0.0;
-    for (auto val:z1) {
-        sum += val;
-    }
-    double val_base= sum / z1.size();
-//    val_base = 1000;
-//    val_tope = 5000;
+//     std::string filename1 = "topeMOD.txt";
+//    std::string filename2 = "baseMOD.txt";
 //
-//    val_tope = 3000;
-//    val_base = 3000;
-    int npointsPerLayer = nCoordinates/(nlayers+1);
-    double valinter=0.0;
-    for (int ilay = 1; ilay <= nlayers+1; ilay++) {
-        for (int ipoint = (ilay-1)*npointsPerLayer; ipoint<(ilay)*npointsPerLayer; ipoint++) {
-            TPZGeoNode node = gmesh->NodeVec()[ipoint];
-            TPZVec<REAL> co(3);
-            node.GetCoordinates(co);
-            double topeinterpol =interpTope(co[0],co[1]);
-            double baseinterpol = interpBase(co[0],co[1]);
-            if (topeinterpol==0) {
-                topeinterpol = val_tope;
-                if (co[0]>1000.00) {
-                    topeinterpol -= 120;
-                }
-            }
-            if (baseinterpol==0) {
+//    std::string filename1 = "baseMOD.txt";
+//   std::string filename2 = "topeMOD.txt";
+//
+//    std::vector<double> x, y, z, x1,y1,z1;
+//    ReadData(filename1, true, x, y, z);
+//    ReadData(filename2, true, x1, y1, z1);
+//
+//    //
+//    double sum=0.0;
+//    for (auto val:z) {
+//        sum += val;
+//    }
+//    double val_base= sum / z1.size();
+////    double val_tope= sum / z.size();
+//    sum=0.0;
+//    for (auto val:z1) {
+//        sum += val;
+//    }
+////    double val_base= sum / z1.size();
+//    double val_tope= sum / z.size();
+//
+//    _2D::ThinPlateSplineInterpolator <double> interpTope;
+//    _2D::ThinPlateSplineInterpolator <double> interpBase;
+//    int nCoordinates = gmesh->NodeVec().NElements();
+//
+//    interpTope.setData(x,y,z);
+//    interpBase.setData(x1,y1,z1);
+    
+//    interpBase.setData(x,y,z);
+//    interpTope.setData(x1,y1,z1);
+    
+//    double delt = 200/nlayers;
+//    double maxval =200*nlayers;
+    
+//    for(int inode=0; inode<nCoordinates; inode++){
+//        TPZGeoNode node = gmesh->NodeVec()[inode];
+//        TPZVec<REAL> co(3);
+//        node.GetCoordinates(co);
+//        double topeinterpol_val =interpTope(co[0],co[1]);
+//        double baseinterpol_val = interpBase(co[0],co[1]);
+//        double dist = std::abs(topeinterpol_val - baseinterpol_val);
+////        topeinterpol_val = baseinterpol_val - dist;
+////        baseinterpol_val = topeinterpol_val + dist;
+////        double topeinterpol_val =interpBase(co[0],co[1]);
+////        double baseinterpol_val = interpTope(co[0],co[1]);
+//        double zcord = co[2];
+//        if (topeinterpol_val==0) {
+//            topeinterpol_val = val_tope;
+//            if (co[0]>1000.00) {
+//                topeinterpol_val -= 120;
+//            }
+//        }
+//        if (baseinterpol_val==0) {
+//            baseinterpol_val = val_base;
+//            if (co[0]>1000.00) {
+//                baseinterpol_val = val_base-80;
+//            }
+//
+//        }
+//        if(zcord==0.0){
+////            co[2] = baseinterpol_val;
+//            co[2] = topeinterpol_val;
+//            gmesh->NodeVec()[inode].SetCoord(co);
+//        }
+//        else if(zcord==maxval){
+//            co[2] = baseinterpol_val;
+////            co[2] = topeinterpol_val;
+//            gmesh->NodeVec()[inode].SetCoord(co);
+//        }
+//        else{
+//            double nivel = zcord/200;
+//            std::cout<<" funciona"<<std::endl;
+//            co[2] =  topeinterpol_val + (nivel)*(baseinterpol_val - topeinterpol_val)/(nlayers);
+////            co[2] =  baseinterpol_val + (nivel)*(topeinterpol_val - baseinterpol_val)/(nlayers);
+//            gmesh->NodeVec()[inode].SetCoord(co);
+//        }
+//
+//    }
+        std::string filename1 = "topeMOD.txt";
+        std::string filename2 = "baseMOD.txt";
+        std::vector<double> x, y, z, x1,y1,z1;
+        ReadData(filename1, true, x, y, z);
+        ReadData(filename2, true, x1, y1, z1);
+    
+        _2D::ThinPlateSplineInterpolator <double> interpTope;
+        _2D::ThinPlateSplineInterpolator <double> interpBase;
+    
+        interpTope.setData(x,y,z);
+        interpBase.setData(x1,y1,z1);
+    
+        int nCoordinates = gmesh->NodeVec().NElements();
+        double sum=0.0;
+        for (auto val:z) {
+            sum += val;
+        }
+        double val_tope= sum / z.size();
+        sum=0.0;
+        for (auto val:z1) {
+            sum += val;
+        }
+        double val_base= sum / z1.size();
+    //    val_base = 1000;
+    //    val_tope = 5000;
+    //
+    //    val_tope = 3000;
+    //    val_base = 3000;
+        int npointsPerLayer = nCoordinates/(nlayers+1);
+        double valinter=0.0;
+        for (int ilay = 1; ilay <= nlayers+1; ilay++) {
+            for (int ipoint = (ilay-1)*npointsPerLayer; ipoint<(ilay)*npointsPerLayer; ipoint++) {
+                TPZGeoNode node = gmesh->NodeVec()[ipoint];
                 
-                baseinterpol = val_base;
-                if (co[0]>1000.00) {
-                   baseinterpol = val_base-80;
+                TPZVec<REAL> co(3);
+                node.GetCoordinates(co);
+                double topeinterpol =interpTope(co[0],co[1]);
+                double baseinterpol = interpBase(co[0],co[1]);
+                if (topeinterpol==0) {
+                    topeinterpol = val_tope;
+                    if (co[0]>1000.00) {
+                        topeinterpol -= 120;
+                    }
                 }
-
-            }
-
-            if (ilay==1) {
-                valinter=topeinterpol;
-//                valinter = 3500;
-                co[2]=valinter;
-                gmesh->NodeVec()[ipoint].SetCoord(co);
-            }
-            if (ilay==nlayers+1) {
-                valinter = baseinterpol;
-//                valinter = 2850;
-                co[2]=valinter;
-                gmesh->NodeVec()[ipoint].SetCoord(co);
-            }
-            if (ilay>1   && ilay < nlayers+1) {
-                valinter = topeinterpol + (ilay-1)*(baseinterpol - topeinterpol)/(nlayers);
-                co[2]=valinter;
-                gmesh->NodeVec()[ipoint].SetCoord(co);
+                if (baseinterpol==0) {
+    
+                    baseinterpol = val_base;
+                    if (co[0]>1000.00) {
+                       baseinterpol = val_base-80;
+                    }
+    
+                }
+    
+                if (ilay==1) {
+                    valinter=topeinterpol;
+    //                valinter = 3500;
+                    co[2]=valinter;
+                    gmesh->NodeVec()[ipoint].SetCoord(co);
+                }
+                if (ilay==nlayers+1) {
+                    valinter = baseinterpol;
+    //                valinter = 2850;
+                    co[2]=valinter;
+                    gmesh->NodeVec()[ipoint].SetCoord(co);
+                }
+                if (ilay>1   && ilay < nlayers+1) {
+                    valinter = topeinterpol + (ilay-1)*(baseinterpol - topeinterpol)/(nlayers);
+                    co[2]=valinter;
+                    gmesh->NodeVec()[ipoint].SetCoord(co);
+                }
             }
         }
-    }
 }
 void ReadData(std::string name, bool print_table_Q, std::vector<double> &x, std::vector<double> &y, std::vector<double> &z){
     
@@ -837,5 +929,240 @@ void ReadData(std::string name, bool print_table_Q, std::vector<double> &x, std:
         std::cout<<y.size()<<std::endl;
         std::cout<<z.size()<<std::endl;
     }
+    
+}
+void AllForceCoplanarity(TPZGeoMesh *gmesh){
+    std::setprecision(15);
+    int nCoordinates = gmesh->NodeVec().NElements();
+    std::vector<int> verify(nCoordinates,-1);
+//    TPZGeoNode node = gmesh->NodeVec()[ipoint];
+//    TPZVec<REAL> co(3);
+//    node.GetCoordinates(co);
+    int nmods = 0;
+    int nels =gmesh->NElements();
+    std::set<std::pair<TPZGeoElSide, std::set<int>>> infNonCoplanar;
+    int coplanaarfaces =0;
+    int Noncoplanaarfaces =0;
+    for(int iel = 0; iel< nels; iel++){
+        TPZGeoEl *gel = gmesh->Element(iel);
+        int nnodesEl = gel->NNodes();
+        if(nnodesEl!=8){
+            continue;
+        }
+        
+        TPZFMatrix<REAL> cooridnates;
+        int init=gel->FirstSide(2)-1;
+        int end = gel->FirstSide(3);
+        int nside = gel->NSides();
+        if(gel->Index()==4676){
+            int ok=0;
+        }
+        for(int iside= init; iside < end; iside++){
+            int nNodesSide = gel->NSideNodes(iside);
+            if(nNodesSide<3){
+                continue;
+            }
+            TPZGeoNode *node1 =  gel->SideNodePtr(iside, 0);
+            TPZGeoNode *node2 =  gel->SideNodePtr(iside, 1);
+            TPZGeoNode *node3 =  gel->SideNodePtr(iside, 2);
+            TPZGeoNode *node4 =  gel->SideNodePtr(iside, 3);
+
+            TPZVec<REAL> co1(3),co2(3),co3(3),co4(3);
+            node1->GetCoordinates(co1);
+            node2->GetCoordinates(co2);
+            node3->GetCoordinates(co3);
+            node4->GetCoordinates(co4);
+
+            int id1 = node1->Id();
+            int id2 = node2->Id();
+            int id3 = node3->Id();
+            int id4 = node4->Id();
+
+            bool is_coplanar = IsCoplanar(co1, co2, co3, co4);
+            if(!is_coplanar){
+                std::set<int> indexes;
+                indexes.insert(id1);
+                indexes.insert(id2);
+                indexes.insert(id3);
+                indexes.insert(id4);
+                TPZGeoElSide gelside(gel,iside);
+                std::pair<TPZGeoElSide, std::set<int>> pair = std::make_pair(gelside, indexes);
+                infNonCoplanar.insert(pair);
+                Noncoplanaarfaces++;
+            }
+            coplanaarfaces++;
+
+        }
+    }
+    int ok=0;
+    std::map<int, std::set<TPZGeoElSide>> idCommonGeoEls;
+//    for(auto it = infNonCoplanar.begin(); it!=infNonCoplanar.end(); it++){
+//        std::pair<TPZGeoElSide, std::set<int>> puntos_partida = *it;
+//        for(auto it2 = it; it2!=infNonCoplanar.end(); it2++){
+//            std::pair<TPZGeoElSide, std::set<int>> puntos_llegada = *it2;
+//            std::set<int> intersection;
+//            std::set_intersection(puntos_partida.second.begin(), puntos_partida.second.end(),
+//                                  puntos_llegada.second.begin(), puntos_llegada.second.end(),
+//                                      std::inserter(intersection, intersection.begin()));
+//            int ncommon =intersection.size();
+//            if(ncommon==4 || ncommon ==0){
+//                continue;
+//            }
+//            if(ncommon>2){
+//                DebugStop();
+//            }
+//            std::cout<<"ncommon: "<<ncommon<< std::endl;
+//            for(auto itFin = intersection.begin(); itFin!=intersection.end(); itFin++){
+//                idCommonGeoEls[*itFin].insert(puntos_partida.first);
+//                idCommonGeoEls[*itFin].insert(puntos_llegada.first);
+//            }
+//
+//        }
+    
+    //TestRapido
+    
+    for(auto it = infNonCoplanar.begin(); it!=infNonCoplanar.end(); it++){
+        std::pair<TPZGeoElSide, std::set<int>> puntos_partida = *it;
+        for(auto it2 = it; it2!=infNonCoplanar.end(); it2++){
+            std::pair<TPZGeoElSide, std::set<int>> puntos_llegada = *it2;
+            std::set<int> intersection;
+            std::set_intersection(puntos_partida.second.begin(), puntos_partida.second.end(),
+                                  puntos_llegada.second.begin(), puntos_llegada.second.end(),
+                                      std::inserter(intersection, intersection.begin()));
+            int ncommon =intersection.size();
+            if(ncommon==4 || ncommon ==0){
+                continue;
+            }
+            if(ncommon>2){
+                DebugStop();
+            }
+            std::cout<<"ncommon: "<<ncommon<< std::endl;
+            for(auto itFin = intersection.begin(); itFin!=intersection.end(); itFin++){
+                idCommonGeoEls[*itFin].insert(puntos_partida.first);
+                idCommonGeoEls[*itFin].insert(puntos_llegada.first);
+//                verify[*itFin]=1;
+            }
+            
+        }
+    }
+        //testRaapido
+    int contador =0;
+    int nose =0;
+    int sise =0;
+        for(auto it = infNonCoplanar.begin(); it!=infNonCoplanar.end(); it++){
+            std::pair<TPZGeoElSide, std::set<int>> puntos_partida = *it;
+            TPZGeoElSide gelsideTest = puntos_partida.first;
+            TPZGeoEl *gel = gelsideTest.Element();
+            int iside = gelsideTest.Side();
+            TPZGeoNode *node1 =  gel->SideNodePtr(iside, 0);
+            TPZGeoNode *node2 =  gel->SideNodePtr(iside, 1);
+            TPZGeoNode *node3 =  gel->SideNodePtr(iside, 2);
+            TPZGeoNode *node4 =  gel->SideNodePtr(iside, 3);
+            
+            TPZVec<REAL> co1(3),co2(3),co3(3),co4(3);
+            node1->GetCoordinates(co1);
+            node2->GetCoordinates(co2);
+            node3->GetCoordinates(co3);
+            node4->GetCoordinates(co4);
+            
+            int id1 = node1->Id();
+            int id2 = node2->Id();
+            int id3 = node3->Id();
+            int id4 = node4->Id();
+            
+            if(verify[id1]==-1){
+                verify[id1]=1;
+                verify[id2]=1;
+                verify[id3]=1;
+                verify[id4]=1;
+                ForceCoplanarity(co2,co3,co4,co1);
+                node1->SetCoord(co1);
+                sise++;
+                continue;
+            }
+            if(verify[id2]==-1){
+                verify[id1]=1;
+                verify[id2]=1;
+                verify[id3]=1;
+                verify[id4]=1;
+                ForceCoplanarity(co1,co3,co4,co2);
+                node2->SetCoord(co2);
+                sise++;
+                continue;
+            }
+            if(verify[id3]==-1){
+                verify[id1]=1;
+                verify[id2]=1;
+                verify[id3]=1;
+                verify[id4]=1;
+                ForceCoplanarity(co1,co2,co4,co3);
+                node3->SetCoord(co3);
+                sise++;
+                continue;
+            }
+            if(verify[id4]==-1){
+                verify[id1]=1;
+                verify[id2]=1;
+                verify[id3]=1;
+                verify[id4]=1;
+                ForceCoplanarity(co1,co2,co3,co4);
+                node4->SetCoord(co4);
+                sise++;
+                continue;
+            }
+            std::cout<<"no se que hacer =("<<std::endl;
+            nose++;
+          
+      }
+    ok=0;
+    
+}
+bool ForceCoplanarity(TPZVec<REAL> &c1, TPZVec<REAL> &c2, TPZVec<REAL> &c3, TPZVec<REAL> &c4){
+    TPZVec<TPZVec<REAL>> v = {{c2[0] - c1[0], c3[0] - c1[0], c4[0] - c1[0]},
+                                              {c2[1] - c1[1], c3[1] - c1[1], c4[1] - c1[1]},
+                                              {c2[2] - c1[2], c3[2] - c1[2], c4[2] - c1[2]}};
+
+    REAL det = determinante(v);
+    REAL cordant = c1[2];
+        // Si los puntos ya son coplanares
+        if (std::abs(det) < 1e-12) {
+            std::cout << "Los puntos ya son coplanares" << std::endl;
+            
+            return false;
+        }
+
+        // Si no son coplanares, calculamos la nueva componente z de c1
+    REAL z = c1[2] - det / ((c2[0] - c1[0]) * (c3[1] - c1[1]) - (c2[1] - c1[1]) * (c3[0] - c1[0]));
+
+        c1[2] = z;
+    
+    std::cout<<" cord ant: "<<cordant <<" cord new: "<< z <<std::endl;
+    
+    return true;
+   
+}
+// Cálculo del determinante de una matriz 3x3
+double determinante(TPZVec<TPZVec<REAL>> matriz) {
+    double sum = matriz[0][0] * ((matriz[1][1] * matriz[2][2]) - (matriz[2][1] * matriz[1][2])) -
+                 matriz[0][1] * ((matriz[1][0] * matriz[2][2]) - (matriz[1][2] * matriz[2][0])) +
+                 matriz[0][2] * ((matriz[1][0] * matriz[2][1]) - (matriz[1][1] * matriz[2][0]));
+
+    return sum;
+}
+bool IsCoplanar(TPZVec<REAL> &c1, TPZVec<REAL> &c2, TPZVec<REAL> &c3, TPZVec<REAL> &c4){
+    TPZVec<TPZVec<REAL>> v = {{c2[0] - c1[0], c3[0] - c1[0], c4[0] - c1[0]},
+                                              {c2[1] - c1[1], c3[1] - c1[1], c4[1] - c1[1]},
+                                              {c2[2] - c1[2], c3[2] - c1[2], c4[2] - c1[2]}};
+
+    REAL det = determinante(v);
+    REAL cordant = c1[2];
+        // Si los puntos ya son coplanares
+        if (std::abs(det) < 1e-12) {
+            std::cout << "Los puntos ya son coplanares" << std::endl;
+            
+            return true;
+        }
+    
+    return false;
     
 }
