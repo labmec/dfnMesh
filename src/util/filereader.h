@@ -683,7 +683,8 @@ TPZGeoMesh * GenerateUnisimMesh(int nlayers){
     TPZGeoMesh *gmesh2D;
     REAL l = 1.0;
     GeometryFine.SetCharacteristiclength(l);
-    std::string filename("/Users/jose/Documents/GitHub/dfnMesh/examples/ResultsJose/UNISIM_Test/unisim_2D.msh");
+   // std::string filename("/Users/jose/Documents/GitHub/dfnMesh/examples/ResultsJose/UNISIM_Test/unisim_2D.msh");
+    std::string filename("/home/jose/GitHub/dfnMesh/dfnMesh/examples/ResultsJose/UNISIM_Test/unisim_2D.msh");
     // Reading mesh
     GeometryFine.SetDimNamePhysical(dim_name_and_physical_tagCoarse);
     gmesh2D = GeometryFine.GeometricGmshMesh(filename,nullptr,false);
