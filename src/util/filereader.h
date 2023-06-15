@@ -886,7 +886,7 @@ void ReadData(std::string name, bool print_table_Q, std::vector<double> &x, std:
     
     bool modpoints = true;
     std::ifstream file;
-    std::string basemeshpath("/Users/jose/Documents/GitHub/iMRS/FracMeshes/dfnimrs/unisim_meshes/Reservoir_props/");
+    std::string basemeshpath("/home/jose/GitHub/iMRS/iMRS/FracMeshes/dfnimrs/unisim_meshes/Reservoir_props/");
     basemeshpath = basemeshpath  + name;
     file.open(basemeshpath);
     int i=1;
